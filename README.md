@@ -79,12 +79,20 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 /home/bdeng/miniforge3/envs/mace-agent/bin/python -m src.mcp_server.mace_server
 ```
 
+## Agent Intelligence & Automation
+This project is optimized for use with coding AI copilots like **Antigravity**. It includes specialized instructions and pre-defined workflows to automate complex research tasks.
+
+### The `.agent/` Directory
+- **Rules (`.agent/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Antigravity automatically parses these to ensure all simulations and code follow best practices.
+- **Workflows (`.agent/workflows/`)**: Defines standardized research procedures (e.g., calculating melting points or fine-tuning alloys). Antigravity can execute these step-by-step, managing the complex transitions between different conda environments and simulation stages.
+
 ## Project Structure
 - `src/`: Core package containing wrappers and servers.
   - `mcp_server/`: FastMCP server implementations.
   - `utils/`: Utility functions for structures, DFT, and MLIP management.
+- `conda-envs/`: YAML exports of all required conda environments.
 - `tests/`: Integration tests for servers and tools.
-- `.agent/`: Agent-specific rules, instructions, and workflows.
+- `.agent/`: Agent-specific rules and workflows.
 - `research/`: Directory for storing simulation results and research logs.
 
 ## Contributing
