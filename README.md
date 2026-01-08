@@ -1,9 +1,8 @@
 # Simulation MCP: Machine Learning Interatomic Potential Agent
 
 ## Overview
-Simulation MCP is a comprehensive framework designed to integrate Machine Learning Interatomic Potentials (MLIPs) with automated simulation workflows. It leverages the Model Context Protocol (MCP) to expose powerful atomistic simulation tools, property calculations, and fine-tuning capabilities to AI agents.
+Simulation MCP is a comprehensive framework designed to integrate Machine Learning Interatomic Potentials (MLIPs) with automated simulation workflows. It leverages the Model Context Protocol (MCP) to expose powerful atomistic simulation tools, property calculations, and fine-tuning capabilities to coding AI copilots like Antigravity.
 
-The project aims to provide a seamless bridge between natural language scientific questions and rigorous atomistic simulations.
 
 ## Key Features
 
@@ -20,7 +19,7 @@ Expose complex simulation tasks as simple tools:
 - **Barrier Calculations**: Nudged Elastic Band (NEB) for reaction pathways.
 - **Thermal Properties**: Phonon calculations and Quasi-Harmonic Approximation (QHA).
 
-### 3. Advanced Data Augmentation & Sampling
+### 3. Data Augmentation & Sampling
 Generate robust training data for fine-tuning:
 - **Off-Equilibrium Sampling**: MD-based sampling with clustering.
 - **Near-Equilibrium Sampling**: Targeted sampling around ground states.
@@ -60,9 +59,21 @@ conda env create -f conda-envs/fairchem-environment.yml
 ```
 
 ## Running the MCP Servers
-The project is configured to run as a set of MCP servers. The configuration is stored in `mcp_config.json`.
+The project is configured to run as a set of MCP servers. The base configuration is provided in [mcp_config.json](mcp_config.json).
 
-To run a server manually (e.g., MACE):
+### Integrating with Antigravity
+To use these tools within Antigravity, you need to merge the server configurations into your local Antigravity MCP config:
+
+1. Locate your Antigravity MCP configuration file (typically at `~/.gemini/antigravity/mcp_config.json`).
+2. Copy the `mcpServers` definitions from this project's [mcp_config.json](mcp_config.json).
+3. Paste them into your local configuration file.
+4. Restart Antigravity to load the new tools.
+
+> [!TIP]
+> Ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/home/bdeng/projects/simulation_mcp`).
+
+### Manual Execution
+To run a server manually (e.g., MACE) for debugging:
 ```bash
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 /home/bdeng/miniforge3/envs/mace-agent/bin/python -m src.mcp_server.mace_server
