@@ -5,7 +5,7 @@ import shutil
 from ase.build import bulk
 from ase.io import write
 from pymatgen.io.ase import AseAtomsAdaptor
-from mlip_mcp_wrappers.mcp_server import fairchem_server
+from src.mcp_server import fairchem_server
 
 @pytest.fixture(scope="module", autouse=True)
 def cleanup():

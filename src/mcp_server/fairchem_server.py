@@ -43,8 +43,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Import the migrated FAIRCHEM wrapper
-from mlip_mcp_wrappers.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
-from mlip_mcp_wrappers.utils.structure_utils import load_structure_from_file
+from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
+from src.utils.structure_utils import load_structure_from_file
 
 # Additional imports for relaxation
 from ase.io import read, write

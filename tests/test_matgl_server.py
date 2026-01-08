@@ -4,7 +4,7 @@ import os
 import shutil
 from ase.build import bulk
 from pymatgen.io.ase import AseAtomsAdaptor
-from mlip_mcp_wrappers.mcp_server import matgl_server
+from src.mcp_server import matgl_server
 
 @pytest.fixture(scope="module", autouse=True)
 def cleanup():

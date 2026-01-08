@@ -10,8 +10,8 @@ import torch
 from ase import Atoms
 from ase.calculators.calculator import Calculator
 
-from mlip_mcp_wrappers.utils.mlips.base import MLIPModel
-from mlip_mcp_wrappers.utils.wandb_utils import init_wandb, log_training_history, finish_wandb
+from src.utils.mlips.base import MLIPModel
+from src.utils.wandb_utils import init_wandb, log_training_history, finish_wandb
 
 logger = logging.getLogger(__name__)
 

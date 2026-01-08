@@ -16,15 +16,15 @@ from mcp.server.fastmcp import FastMCP
 from typing import Dict, Any, Optional
 from pathlib import Path
 
-from mlip_mcp_wrappers.utils.dft.vasp_writer import write_vasp_input_files
-from mlip_mcp_wrappers.utils.dft.vasp_parser import VASPParser
-from mlip_mcp_wrappers.utils.structure_utils import (
+from src.utils.dft.vasp_writer import write_vasp_input_files
+from src.utils.dft.vasp_parser import VASPParser
+from src.utils.structure_utils import (
     load_structure_from_file, 
     get_structure_by_formula, 
     get_structure_by_chemsys, 
     get_structure_by_id
 )
-from mlip_mcp_wrappers.utils.api_keys import get_mp_key
+from src.utils.api_keys import get_mp_key
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

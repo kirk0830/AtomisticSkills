@@ -32,9 +32,9 @@ def recursive_tolist(obj):
         return obj
 
 # Import the migrated MACE wrapper
-from mlip_mcp_wrappers.utils.mlips.mace.mace_wrapper import MACEWrapper
-from mlip_mcp_wrappers.utils.mlips.feature_calculators import MaceCrystalFeatureCalculator
-from mlip_mcp_wrappers.utils.data_augmenter.sampler import StructureSampler
+from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+from src.utils.mlips.feature_calculators import MaceCrystalFeatureCalculator
+from src.utils.data_augmenter.sampler import StructureSampler
 
 # Initialize FastMCP server
 mcp = FastMCP("MACE")

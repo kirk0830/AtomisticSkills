@@ -31,9 +31,9 @@ def recursive_tolist(obj):
         return obj
 
 # Import the migrated MatGL wrapper
-from mlip_mcp_wrappers.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-from mlip_mcp_wrappers.utils.mlips.feature_calculators import MatGLCrystalFeatureCalculator
-from mlip_mcp_wrappers.utils.data_augmenter.sampler import StructureSampler
+from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+from src.utils.mlips.feature_calculators import MatGLCrystalFeatureCalculator
+from src.utils.data_augmenter.sampler import StructureSampler
 
 # Initialize FastMCP server
 mcp = FastMCP("MatGL")

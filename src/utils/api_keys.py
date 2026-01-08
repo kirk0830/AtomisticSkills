@@ -24,7 +24,7 @@ def load_api_keys(config_path: Optional[str] = None) -> Dict[str, Any]:
     """
     if config_path is None:
         # Look for api_keys.yaml in the project root
-        # File is at mlip_mcp_wrappers/utils/api_keys.py
+        # File is at src/utils/api_keys.py
         # Root is simulation_mcp/
         project_root = Path(__file__).parent.parent.parent
         config_path = project_root / "api_keys.yaml"

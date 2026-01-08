@@ -4,7 +4,7 @@ import os
 import shutil
 from ase.build import bulk
 from pymatgen.io.ase import AseAtomsAdaptor
-from mlip_mcp_wrappers.mcp_server import mace_server
+from src.mcp_server import mace_server
 
 # Helper to clean up output
 @pytest.fixture(scope="module", autouse=True)
