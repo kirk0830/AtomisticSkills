@@ -1,0 +1,623 @@
+"""
+MatGL model wrapper for MLIP Agent
+"""
+
+import logging
+import os
+from typing import Dict, Any, Optional, List, Tuple
+from pathlib import Path
+import numpy as np
+import torch
+import torch.serialization
+from ase import Atoms
+from ase.calculators.calculator import Calculator
+import matplotlib.pyplot as plt
+
+# Force DGL backend for MatGL to support M3GNet and CHGNet in matgl 2.0.4
+if "MATGL_BACKEND" not in os.environ:
+    os.environ["MATGL_BACKEND"] = "DGL"
+
+from ..base import MLIPModel
+from ..device_utils import get_best_device
+
+logger = logging.getLogger(__name__)
+
+# Try to import MatGL components with clear error messages
+MATGL_AVAILABLE = False
+TRAINER_AVAILABLE = False
+
+try:
+    import matgl
+    from matgl.ext.ase import PESCalculator
+    
+    # Import models safely
+    try:
+        from matgl.models import M3GNet
+    except ImportError:
+        M3GNet = None
+    
+    try:
+        from matgl.models import CHGNet
+    except ImportError:
+        CHGNet = None
+        
+    try:
+        from matgl.models import TensorNet
+    except ImportError:
+        TensorNet = None
+        
+    MATGL_AVAILABLE = True
+    
+    # Import training components
+    TRAINER_AVAILABLE = False
+    try:
+        from matgl.utils.training import PotentialLightningModule
+        from matgl.graph.data import MGLDataLoader, MGLDataset, collate_fn_pes
+        try:
+            from matgl.graph.data import split_dataset
+        except ImportError:
+            from dgl.data.utils import split_dataset
+        TRAINER_AVAILABLE = True
+    except ImportError as e:
+        logger.debug(f"Primary MatGL training imports failed: {e}")
+        try:
+             # MatGL < 1.0 or specific versions might have it here
+             from matgl.utils._training_dgl import PotentialLightningModule
+             from matgl.graph.data import MGLDataLoader, MGLDataset, collate_fn_pes
+             from dgl.data.utils import split_dataset
+             TRAINER_AVAILABLE = True
+        except ImportError as e2:
+             logger.debug(f"Secondary MatGL training imports failed: {e2}")
+             pass
+    
+    from matgl.ext.pymatgen import Structure2Graph, get_element_list
+    import lightning as pl
+    if not TRAINER_AVAILABLE:
+        # Check if lightning is available even if matgl training isn't
+        try:
+            import lightning as pl
+        except ImportError:
+            pass
+    
+    # Add AtomRef to safe globals for torch.load (PyTorch 2.6+ compatibility)
+    try:
+        from matgl.layers._atom_ref_dgl import AtomRef
+        if hasattr(torch.serialization, "add_safe_globals"):
+            torch.serialization.add_safe_globals([AtomRef])
+    except (ImportError, AttributeError):
+        pass
+
+except ImportError as e:
+    import os
+    import traceback
+    current_env = os.environ.get('CONDA_DEFAULT_ENV', 'unknown')
+    # If we are in matgl-agent but import fails, it's a real issue
+    if 'matgl' in current_env.lower() or 'matgl' in str(e).lower():
+        logger.warning(f"Failed to import matgl in environment {current_env}: {e}")
+    logger.error(f"Failed to import matgl: {e}\n{traceback.format_exc()}")
+    MATGL_AVAILABLE = False
+
+
+# Available MatGL models and checkpoints
+AVAILABLE_MATGL_MODELS = {
+    # M3GNet models - Materials Project trained
+    "M3GNet": "M3GNet-MP-2021.2.8-PES",
+    "M3GNet-MP": "M3GNet-MP-2021.2.8-PES",
+    "M3GNet-MP-2021.2.8-PES": "M3GNet-MP-2021.2.8-PES",
+    
+    # M3GNet models - MatPES trained
+    "M3GNet-MatPES-r2SCAN": "M3GNet-MatPES-r2SCAN-v2025.1-PES",
+    "M3GNet-MatPES-PBE": "M3GNet-MatPES-PBE-v2025.1-PES",
+    
+    # CHGNet models - MatPES trained
+    "CHGNet": "CHGNet-MatPES-PBE-2025.2.10-2.7M-PES",
+    "CHGNet-MatPES-PBE": "CHGNet-MatPES-PBE-2025.2.10-2.7M-PES",
+    "CHGNet-MatPES-r2SCAN": "CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES",
+    
+    # TensorNet models - MatPES trained
+    "TensorNet": "TensorNet-MatPES-r2SCAN-v2025.1-PES",
+}
+
+# Update TensorNet models to DGL versions if backend is DGL
+if os.environ.get("MATGL_BACKEND") == "DGL" and MATGL_AVAILABLE:
+    updated_models = {}
+    for k, v in AVAILABLE_MATGL_MODELS.items():
+        if "TensorNet" in k and not v.startswith("TensorNetDGL") and "TensorNet-MatPES" in v:
+            updated_models[k] = v.replace("TensorNet-", "TensorNetDGL-")
+    AVAILABLE_MATGL_MODELS.update(updated_models)
+
+# Standard MatGL model types
+STANDARD_MATGL_MODELS = ["M3GNet", "CHGNet", "TensorNet"]
+
+
+if MATGL_AVAILABLE and TRAINER_AVAILABLE:
+    class TrainingHistoryCallback(pl.Callback):
+        """Callback to collect training history during fine-tuning."""
+        
+        def __init__(self):
+            super().__init__()
+            self.training_history = {
+                'energy_distribution': [],
+                'force_distribution': [],
+                'stress_distribution': [],
+                'energy_mae_train': [],
+                'energy_mae_val': [],
+                'force_mae_train': [],
+                'force_mae_val': [],
+                'stress_mae_train': [],
+                'stress_mae_val': [],
+                'loss_train': [],
+                'loss_val': []
+            }
+        
+        def on_train_epoch_end(self, trainer, pl_module):
+            if trainer.sanity_checking: return
+            metrics = trainer.callback_metrics
+            
+            def get_metric(keys):
+                for key in keys:
+                    if key in metrics:
+                        val = metrics[key]
+                        return float(val.item()) if hasattr(val, 'item') else float(val)
+                return None
+            
+            loss = get_metric(['train_Total_Loss', 'train_loss', 'loss'])
+            if loss is not None: self.training_history['loss_train'].append(loss)
+            
+            e_mae = get_metric(['train_Energy_MAE', 'train_energy_mae', 'energy_mae'])
+            if e_mae is not None: self.training_history['energy_mae_train'].append(e_mae)
+            
+            f_mae = get_metric(['train_Force_MAE', 'train_force_mae', 'force_mae'])
+            if f_mae is not None: self.training_history['force_mae_train'].append(f_mae)
+            
+            s_mae = get_metric(['train_Stress_MAE', 'train_stress_mae', 'stress_mae'])
+            if s_mae is not None: self.training_history['stress_mae_train'].append(s_mae)
+
+        def on_validation_epoch_end(self, trainer, pl_module):
+            if trainer.sanity_checking: return
+            metrics = trainer.callback_metrics
+            
+            def get_metric(keys):
+                for key in keys:
+                    if key in metrics:
+                        val = metrics[key]
+                        return float(val.item()) if hasattr(val, 'item') else float(val)
+                return None
+            
+            loss = get_metric(['val_Total_Loss', 'val_loss', 'loss'])
+            if loss is not None: self.training_history['loss_val'].append(loss)
+            
+            e_mae = get_metric(['val_Energy_MAE', 'val_energy_mae', 'energy_mae'])
+            if e_mae is not None: self.training_history['energy_mae_val'].append(e_mae)
+            
+            f_mae = get_metric(['val_Force_MAE', 'val_force_mae', 'force_mae'])
+            if f_mae is not None: self.training_history['force_mae_val'].append(f_mae)
+            
+            s_mae = get_metric(['val_Stress_MAE', 'val_stress_mae', 'stress_mae'])
+            if s_mae is not None: self.training_history['stress_mae_val'].append(s_mae)
+
+        def collect_label_distributions(self, training_data: List[Dict[str, Any]]):
+             # Placeholder for distribution collection (implemented in base or locally)
+             from ..base import MLIPModel
+             # We can't easily call base._collect_label_distributions here without an instance
+             # but we can implement a simple version or just skip it if it's less critical
+             pass
+
+    def move_to_device(obj, device):
+        """Recursively move tensors/graphs in nested structures to device."""
+        if hasattr(obj, 'to'):
+            try:
+                # Special handling for DGL graphs
+                if hasattr(obj, 'device') and str(obj.device) == str(device):
+                    return obj
+                return obj.to(device)
+            except Exception:
+                return obj
+        elif isinstance(obj, dict):
+            return {k: move_to_device(v, device) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return type(obj)([move_to_device(x, device) for x in obj])
+        return obj
+
+    def ensure_dgl_device(func):
+        """Decorator to ensure DGL graphs and tensors are on the correct device."""
+        from functools import wraps
+        import inspect
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            device = getattr(self, 'device', None)
+            if device is None:
+                try:
+                    params = list(self.parameters())
+                    if params: device = params[0].device
+                except Exception: pass
+            if device is None: device = torch.device('cpu')
+            
+            # Prioritize device from input if self is CPU
+            if str(device) == 'cpu':
+                for obj in list(args) + list(kwargs.values()):
+                    if hasattr(obj, 'device') and str(obj.device).startswith('cuda'):
+                        device = obj.device
+                        break
+            
+            # Aggressively move self to device
+            if hasattr(self, 'to'):
+                try:
+                    self.to(device)
+                    for val in self.__dict__.values():
+                        if hasattr(val, 'to'): move_to_device(val, device)
+                except Exception: pass
+            
+            new_args = [move_to_device(arg, device) for arg in args]
+            new_kwargs = {k: move_to_device(v, device) for k, v in kwargs.items()}
+            
+            with torch.device(device):
+                return func(self, *new_args, **new_kwargs)
+        return wrapper
+
+    def apply_matgl_patches():
+        """Apply essential monkey-patches to MatGL for device consistency."""
+        if os.environ.get("MATGL_BACKEND") == "DGL":
+            # 1. Patch DGL Potential forward
+            try:
+                import matgl.apps._pes_dgl as pes_dgl
+                if hasattr(pes_dgl, 'Potential') and not hasattr(pes_dgl.Potential.forward, "__wrapped__"):
+                    pes_dgl.Potential.forward = ensure_dgl_device(pes_dgl.Potential.forward)
+            except (ImportError, AttributeError): pass
+
+            # 2. Patch DGL training modules
+            for path in ['matgl.utils.training', 'matgl.utils._training_dgl']:
+                try:
+                    mod = __import__(path, fromlist=['PotentialLightningModule'])
+                    if hasattr(mod, 'PotentialLightningModule'):
+                        cls = getattr(mod, 'PotentialLightningModule')
+                        if not hasattr(cls.forward, "__wrapped__"):
+                            cls.forward = ensure_dgl_device(cls.forward)
+                        if hasattr(cls, 'step') and not hasattr(cls.step, "__wrapped__"):
+                            cls.step = ensure_dgl_device(cls.step)
+                except (ImportError, AttributeError): continue
+            
+            # 3. Patch AtomRef
+            try:
+                from matgl.layers._atom_ref_dgl import AtomRef
+                if not hasattr(AtomRef.forward, "__wrapped__"):
+                    AtomRef.forward = ensure_dgl_device(AtomRef.forward)
+            except (ImportError, AttributeError): pass
+    
+    apply_matgl_patches()
+
+
+class MatGLWrapper(MLIPModel):
+    """
+    MatGL model wrapper implementing the MLIPModel interface.
+    """
+    
+    def __init__(
+        self, 
+        model_name: str = "M3GNet", 
+        model_version: str = "latest",
+        device: str = "auto"
+    ):
+        """Initialize MatGL wrapper."""
+        super().__init__(model_name, model_version)
+        self.device = get_best_device(device)
+        self.model = None
+        self.is_loaded = False
+        
+    def load(self, model_path: Optional[str] = None) -> None:
+        """Load a MatGL model."""
+        if not MATGL_AVAILABLE:
+            raise ImportError("MatGL is not available in the current environment.")
+            
+        model_name_or_path = model_path or self.model_name
+        
+        # Check if it looks like a custom checkpoint (file ending in .pth/.pt)
+        if Path(str(model_name_or_path)).is_file() and (str(model_name_or_path).endswith('.pth') or str(model_name_or_path).endswith('.pt')):
+            try:
+                # Try to load as checkpoint to get base model name
+                checkpoint = torch.load(str(model_name_or_path), map_location='cpu')
+                if isinstance(checkpoint, dict) and 'model_name' in checkpoint:
+                    base_model_name = checkpoint['model_name']
+                    logger.info(f"Detected checkpoint for base model: {base_model_name}")
+                    
+                    # Temporarily set model_name to base model for loading architecture
+                    original_name = self.model_name
+                    self.model_name = base_model_name
+                    
+                    # Load base model (recursive call with None path)
+                    self.load(model_path=None)
+                    
+                    # Restore original name if needed, or keep base name?
+                    # self.model_name = original_name 
+                    
+                    # Load weights from checkpoint
+                    self.load_checkpoint(str(model_name_or_path))
+                    return
+            except Exception as e:
+                logger.warning(f"Failed to load as checkpoint, falling back to standard load: {e}")
+
+        # Case-insensitive lookup for standard models
+        if model_path is None:
+            for key, val in AVAILABLE_MATGL_MODELS.items():
+                if self.model_name.upper() == key.upper():
+                    model_name_or_path = val
+                    break
+        
+        try:
+            logger.info(f"Loading MatGL model {model_name_or_path} on {self.device}")
+            # Use map_location for initial load if it's a path
+            if Path(model_name_or_path).exists():
+                # MatGL load_model handles directory or file
+                self.model = matgl.load_model(str(model_name_or_path))
+            else:
+                self.model = matgl.load_model(model_name_or_path)
+            
+            self.model.to(self.device)
+            self.is_loaded = True
+            logger.info(f"Successfully loaded {self.model_name} on {self.device}")
+            
+        except Exception as e:
+            logger.error(f"Failed to load MatGL model: {e}")
+            raise RuntimeError(f"Failed to load MatGL model: {e}")
+
+    def create_calculator(self) -> Calculator:
+        """Create an ASE calculator from the model."""
+        if not self.is_loaded:
+            raise RuntimeError("Model not loaded. Call load() first.")
+            
+        # Ensure model is on the correct device (and patch if needed)
+        self.model.to(self.device)
+        
+        # matgl 2.0.4 with DGL backend expects calc_charge on the Potential object
+        if not hasattr(self.model, "calc_charge"):
+            self.model.calc_charge = False
+            
+        return PESCalculator(potential=self.model, device=self.device)
+
+    def fine_tune(
+        self,
+        training_data: List[Dict[str, Any]],
+        validation_data: Optional[List[Dict[str, Any]]] = None,
+        training_config: Optional[Dict[str, Any]] = None,
+        output_dir: Optional[str] = None,
+        wandb_config: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """Fine-tune the MatGL model using PyTorch Lightning."""
+        if not self.is_loaded:
+            raise RuntimeError("Model must be loaded before fine-tuning")
+        
+        if not TRAINER_AVAILABLE:
+            raise ImportError("Required fine-tuning components (lightning, dgl) are not available.")
+
+        config = {
+            "max_epochs": 10,
+            "learning_rate": 1e-3,
+            "batch_size": 4,
+            "val_split": 0.1,
+        }
+        if training_config: config.update(training_config)
+        
+        # Check for model/checkpoint override
+        if training_config:
+            new_model = training_config.get("foundation_model") or training_config.get("checkpoint_path")
+            if new_model and new_model != self.model_name:
+                logger.info(f"Reloading model for fine-tuning: {self.model_name} -> {new_model}")
+                self.model_name = new_model
+                self.is_loaded = False
+                self.load()
+
+        # 1. Prepare Data
+        train_atoms, train_energies, train_forces, train_stresses = self._prepare_training_data(training_data)
+        
+        from pymatgen.io.ase import AseAtomsAdaptor
+        adaptor = AseAtomsAdaptor()
+        structures = [adaptor.get_structure(a) for a in train_atoms]
+        element_types = get_element_list(structures)
+        
+        # Get cutoff from model
+        cutoff = getattr(self.model.model, 'cutoff', 5.0)
+        threebody_cutoff = getattr(self.model.model, 'threebody_cutoff', 4.0)
+        if not hasattr(self.model.model, 'threebody_cutoff') and hasattr(self.model.model, 'three_body_cutoff'):
+            threebody_cutoff = getattr(self.model.model, 'three_body_cutoff')
+            
+        converter = Structure2Graph(element_types=element_types, cutoff=cutoff)
+        
+        def to_list(obj):
+            if hasattr(obj, 'tolist'):
+                return obj.tolist()
+            return obj
+
+        labels = {
+            "energies": to_list(train_energies),
+            "forces": [to_list(f) for f in train_forces],
+            "stresses": [to_list(s) for s in train_stresses],
+        }
+        
+        import tempfile
+        dataset_dir = tempfile.mkdtemp(prefix="mgl_dataset_")
+        
+        is_chgnet = "CHGNet" in self.model_name
+        dataset = MGLDataset(
+            structures=structures,
+            converter=converter,
+            labels=labels,
+            threebody_cutoff=threebody_cutoff,
+            include_line_graph=True,
+            directed_line_graph=is_chgnet,
+            save_dir=dataset_dir,
+        )
+        
+        if validation_data:
+            val_atoms, val_energies, val_forces, val_stresses = self._prepare_training_data(validation_data)
+            val_structures = [adaptor.get_structure(a) for a in val_atoms]
+            val_dataset = MGLDataset(
+                structures=val_structures,
+                converter=converter,
+                labels={
+                    "energies": to_list(val_energies),
+                    "forces": [to_list(f) for f in val_forces],
+                    "stresses": [to_list(s) for s in val_stresses],
+                },
+                threebody_cutoff=threebody_cutoff,
+                include_line_graph=True,
+                directed_line_graph=is_chgnet,
+                save_dir=os.path.join(dataset_dir, "val"),
+            )
+            train_ds, val_ds = dataset, val_dataset
+        else:
+            if len(dataset) > 1:
+                train_ds, val_ds = split_dataset(dataset, [1.0 - config['val_split'], config['val_split']], shuffle=True)
+            else:
+                train_ds, val_ds = dataset, None
+
+        # Custom collate to move to device
+        def my_collate(batch):
+            return move_to_device(collate_fn_pes(batch, include_line_graph=True), self.device)
+
+        train_loader, val_loader = MGLDataLoader(
+            train_data=train_ds,
+            val_data=val_ds,
+            collate_fn=my_collate,
+            batch_size=config['batch_size'],
+            num_workers=0,
+        )
+
+        # 2. Setup Training Module
+        prop_offset = getattr(self.model, 'element_refs', None)
+        if prop_offset and hasattr(prop_offset, 'property_offset'):
+            prop_offset = prop_offset.property_offset
+            
+        # Freezing backbone (Default: True)
+        freeze_backbone = config.get("freeze_backbone", True)
+        if freeze_backbone:
+            # Freeze all parameters first
+            for param in self.model.model.parameters():
+                param.requires_grad = False
+            
+            # Unfreeze readout/head layers
+            unfrozen_count = 0
+            for name, module in self.model.model.named_modules():
+                # Target common readout layer names in MatGL models
+                if any(x in name.lower() for x in ["readout", "mlp_out", "final", "output"]):
+                    for param in module.parameters():
+                        param.requires_grad = True
+                        unfrozen_count += 1
+            
+            if unfrozen_count == 0:
+                logging.warning("No MatGL readout parameters found to unfreeze!")
+            else:
+                logging.info(f"MatGL backbone frozen. Unfrozen {unfrozen_count} parameters in readout layers.")
+
+        lit_model = PotentialLightningModule(
+            model=self.model.model,
+            element_refs=prop_offset,
+            lr=config['learning_rate'],
+            include_line_graph=True,
+            stress_weight=1.0 if np.any(train_stresses) else 0.0,
+        )
+        
+        # 3. Trainer
+        history_callback = TrainingHistoryCallback()
+        history_callback.training_history.update(self._collect_label_distributions(training_data))
+        
+        trainer = pl.Trainer(
+            max_epochs=config['max_epochs'],
+            accelerator="gpu" if self.device.startswith("cuda") else "cpu",
+            devices=1,
+            callbacks=[history_callback],
+            enable_checkpointing=True,
+            default_root_dir=output_dir,
+            logger=False,
+        )
+        
+        logger.info(f"Starting MatGL fine-tuning for {config['max_epochs']} epochs")
+        trainer.fit(lit_model, train_loader, val_loader)
+        
+        self.is_fine_tuned = True
+        self._training_history = history_callback.training_history
+        
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+            self.save_checkpoint(os.path.join(output_dir, "fine_tuned_model.pth"))
+            
+            if self.is_fine_tuned:
+                 plot_path = Path(output_dir) / "training_history.png"
+                 try:
+                     self.plot_training_history(save_path=str(plot_path), show=False)
+                     logger.info(f"Training history plot saved to {plot_path}")
+                 except Exception as e:
+                     logger.warning(f"Failed to generate training history plot: {e}")
+
+        
+        return {
+            "status": "success",
+            "epochs": trainer.current_epoch,
+            "final_loss": history_callback.training_history['loss_train'][-1] if history_callback.training_history['loss_train'] else None
+        }
+
+    def save_checkpoint(self, checkpoint_path: str) -> None:
+        """Save checkpoint."""
+        if not self.is_loaded: raise RuntimeError("Model not loaded")
+        
+        data = {
+            'model_state_dict': self.model.state_dict(),
+            'model_name': self.model_name,
+            'is_fine_tuned': self.is_fine_tuned,
+            'training_history': getattr(self, '_training_history', None)
+        }
+        torch.save(data, checkpoint_path)
+
+    def load_checkpoint(self, checkpoint_path: str) -> None:
+        """Load checkpoint."""
+        if not self.is_loaded: self.load()
+        checkpoint = torch.load(checkpoint_path, map_location=self.device)
+        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.is_fine_tuned = checkpoint.get('is_fine_tuned', True)
+        self._training_history = checkpoint.get('training_history')
+        self.is_loaded = True
+
+    def get_supported_elements(self) -> List[str]:
+        """Get supported elements from the loaded model."""
+        if self.is_loaded:
+            # MatGL models usually store element types in the trainer or model metadata
+            potential = self.model
+            if hasattr(potential, 'model'):
+                inner_model = potential.model
+                # Check for AtomRef
+                if hasattr(inner_model, 'atom_ref') and inner_model.atom_ref is not None:
+                    if hasattr(inner_model.atom_ref, 'element_types'):
+                        return list(inner_model.atom_ref.element_types)
+                # Check directly on model
+                if hasattr(inner_model, 'element_types'):
+                    return list(inner_model.element_types)
+                    
+            # Fallback for standard models if not loaded but known
+            if self.model_name.startswith("M3GNet") or self.model_name.startswith("CHGNet"):
+                # Standard MP-trained models support 89 elements
+                return ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Ac", "Th", "Pa", "U", "Np", "Pu"]
+                
+        return []
+
+    def get_model_capabilities(self) -> Dict[str, bool]:
+        """Get model capabilities."""
+        return {
+            "energy": True,
+            "forces": True,
+            "stress": True,
+            "charges": self.model_name.startswith("CHGNet") if self.is_loaded else False,
+            "dipole": False
+        }
+
+    def _prepare_training_data(self, training_data: List[Dict[str, Any]]) -> Tuple:
+        """Helper to extract data into parallel lists."""
+        atoms_list, energies, forces, stresses = [], [], [], []
+        for d in training_data:
+            atoms = d['structure']
+            if not isinstance(atoms, Atoms):
+                # Handle conversion if needed
+                continue
+            atoms_list.append(atoms)
+            energies.append(d.get('energy', 0.0))
+            forces.append(d.get('forces', np.zeros((len(atoms), 3))))
+            stresses.append(d.get('stress', np.zeros(6)))
+        return atoms_list, np.array(energies), forces, stresses

@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "matgl": {
+      "command": "/home/bdeng/miniforge3/envs/matgl-agent/bin/python",
+      "args": [
+        "-m",
+        "mlip_mcp_wrappers.mcp_server.matgl_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+      }
+    },
+    "mace": {
+      "command": "/home/bdeng/miniforge3/envs/mace-agent/bin/python",
+      "args": [
+        "-m",
+        "mlip_mcp_wrappers.mcp_server.mace_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+      }
+    },
+    "fairchem": {
+      "command": "/home/bdeng/miniforge3/envs/fairchem-agent/bin/python",
+      "args": [
+        "-m",
+        "mlip_mcp_wrappers.mcp_server.fairchem_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+      }
+    },
+    "materials_tools": {
+      "command": "/home/bdeng/miniforge3/envs/mlip-agent/bin/python",
+      "args": [
+        "-m",
+        "mlip_mcp_wrappers.mcp_server.materials_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+      }
+    }
+  }
+}
