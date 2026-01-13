@@ -25,6 +25,7 @@ from src.utils.structure_utils import (
     get_structure_by_id
 )
 from src.utils.api_keys import get_mp_key
+from src.utils.dft.atomate2_utils import Atomate2Handler
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -51,27 +52,19 @@ def search_materials_project_by_formula(
     Returns:
         Path to the saved structure file (CIF format).
     """
-    try:
-        mp_key = api_key or get_mp_key()
-        if not mp_key:
-            return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
-            
-        try:
-            from mp_api.client import MPRester
-        except ImportError:
-            return "Error: mp-api package not installed. Please install it with 'pip install mp-api'."
+    mp_key = api_key or get_mp_key()
+    if not mp_key:
+        return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
+        
+    from mp_api.client import MPRester
 
-        with MPRester(mp_key) as mprester:
-            atoms = get_structure_by_formula(formula, mprester)
-                
-        if atoms is None:
-            return f"Error: No structure found for formula {formula} in Materials Project."
+    with MPRester(mp_key) as mprester:
+        atoms = get_structure_by_formula(formula, mprester)
             
-        return _save_atoms(atoms, formula, save_to_file)
-
-    except Exception as e:
-        logger.error(f"Error searching materials by formula: {e}")
-        return f"Error searching materials by formula: {str(e)}"
+    if atoms is None:
+        return f"Error: No structure found for formula {formula} in Materials Project."
+        
+    return _save_atoms(atoms, formula, save_to_file)
 
 @mcp.tool()
 def search_materials_project_by_chemsys(
@@ -91,27 +84,19 @@ def search_materials_project_by_chemsys(
     Returns:
         Path to the saved structure file (CIF format).
     """
-    try:
-        mp_key = api_key or get_mp_key()
-        if not mp_key:
-            return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
-            
-        try:
-            from mp_api.client import MPRester
-        except ImportError:
-            return "Error: mp-api package not installed. Please install it with 'pip install mp-api'."
+    mp_key = api_key or get_mp_key()
+    if not mp_key:
+        return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
+        
+    from mp_api.client import MPRester
 
-        with MPRester(mp_key) as mprester:
-            atoms = get_structure_by_chemsys(chemsys, mprester)
-                
-        if atoms is None:
-            return f"Error: No structure found for chemical system {chemsys} in Materials Project."
+    with MPRester(mp_key) as mprester:
+        atoms = get_structure_by_chemsys(chemsys, mprester)
             
-        return _save_atoms(atoms, chemsys, save_to_file)
-
-    except Exception as e:
-        logger.error(f"Error searching materials by chemsys: {e}")
-        return f"Error searching materials by chemsys: {str(e)}"
+    if atoms is None:
+        return f"Error: No structure found for chemical system {chemsys} in Materials Project."
+        
+    return _save_atoms(atoms, chemsys, save_to_file)
 
 @mcp.tool()
 def search_materials_project_by_id(
@@ -130,27 +115,19 @@ def search_materials_project_by_id(
     Returns:
         Path to the saved structure file (CIF format).
     """
-    try:
-        mp_key = api_key or get_mp_key()
-        if not mp_key:
-            return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
-            
-        try:
-            from mp_api.client import MPRester
-        except ImportError:
-            return "Error: mp-api package not installed. Please install it with 'pip install mp-api'."
+    mp_key = api_key or get_mp_key()
+    if not mp_key:
+        return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
+        
+    from mp_api.client import MPRester
 
-        with MPRester(mp_key) as mprester:
-            atoms = get_structure_by_id(material_id, mprester)
-                
-        if atoms is None:
-            return f"Error: No structure found for ID {material_id} in Materials Project."
+    with MPRester(mp_key) as mprester:
+        atoms = get_structure_by_id(material_id, mprester)
             
-        return _save_atoms(atoms, material_id, save_to_file)
-
-    except Exception as e:
-        logger.error(f"Error searching materials by ID: {e}")
-        return f"Error searching materials by ID: {str(e)}"
+    if atoms is None:
+        return f"Error: No structure found for ID {material_id} in Materials Project."
+        
+    return _save_atoms(atoms, material_id, save_to_file)
 
 def _save_atoms(atoms: Any, name_hint: str, save_to_file: Optional[str] = None) -> str:
     """Helper to save ASE atoms to file."""
@@ -197,70 +174,62 @@ def prepare_vasp_inputs(
     Returns:
         Summary message indicating where files were written.
     """
-    try:
-        input_path = Path(structure_path)
-        out_path = Path(output_dir)
+    input_path = Path(structure_path)
+    out_path = Path(output_dir)
+    
+    # Prepare VASP inputs
+    
+    # Check if input is a directory (Batch processing)
+    if input_path.is_dir():
+        structure_files = list(input_path.rglob("*.cif")) + \
+                          list(input_path.rglob("*.xyz")) + \
+                          list(input_path.rglob("POSCAR"))
         
-        # Prepare VASP inputs
-        
-        # Check if input is a directory (Batch processing)
-        if input_path.is_dir():
-            structure_files = list(input_path.rglob("*.cif")) + \
-                              list(input_path.rglob("*.xyz")) + \
-                              list(input_path.rglob("POSCAR"))
+        if not structure_files:
+            return f"Error: No structure files found in directory {structure_path}"
             
-            if not structure_files:
-                return f"Error: No structure files found in directory {structure_path}"
+        summary = []
+        for i, struct_file in enumerate(sorted(structure_files)):
+            # Create subdirectory for each structure
+            # Use filename stem or index if generic
+            sub_name = struct_file.stem
+            if sub_name == "POSCAR":
+                sub_name = struct_file.parent.name
                 
-            summary = []
-            for i, struct_file in enumerate(sorted(structure_files)):
-                # Create subdirectory for each structure
-                # Use filename stem or index if generic
-                sub_name = struct_file.stem
-                if sub_name == "POSCAR":
-                    sub_name = struct_file.parent.name
-                    
-                # If names are generic like "structure_0", preserve them
-                # Otherwise ensure uniqueness
-                sub_dir = out_path / sub_name
-                sub_dir.mkdir(parents=True, exist_ok=True)
+            # If names are generic like "structure_0", preserve them
+            # Otherwise ensure uniqueness
+            sub_dir = out_path / sub_name
+            sub_dir.mkdir(parents=True, exist_ok=True)
+            
+            structure = load_structure_from_file(str(struct_file))
+            if structure:
+                write_vasp_input_files(
+                    atoms=structure,
+                    output_dir=str(sub_dir),
+                    preset_type=preset_type,
+                    calculation_type=calculation_type,
+                    config=config or vasp_settings
+                )
+                summary.append(sub_name)
                 
-                try:
-                    structure = load_structure_from_file(str(struct_file))
-                    if structure:
-                        write_vasp_input_files(
-                            atoms=structure,
-                            output_dir=str(sub_dir),
-                            preset_type=preset_type,
-                            calculation_type=calculation_type,
-                            config=config or vasp_settings
-                        )
-                        summary.append(sub_name)
-                except Exception as e:
-                    logger.warning(f"Failed to process {struct_file}: {e}")
-                    
-            return f"Successfully prepared VASP inputs for {len(summary)} structures in {output_dir}. Subdirectories: {summary[:5]}..."
-            
-        else:
-            # Single file processing
-            structure = load_structure_from_file(structure_path)
-            if structure is None:
-                return f"Error: Could not load structure from {structure_path}"
-            
-            # Write files
-            files = write_vasp_input_files(
-                atoms=structure,
-                output_dir=output_dir,
-                preset_type=preset_type,
-                calculation_type=calculation_type,
-                config=config or vasp_settings
-            )
-            
-            return f"Successfully wrote VASP input files to {output_dir}. Files: {list(files.keys())}"
+        return f"Successfully prepared VASP inputs for {len(summary)} structures in {output_dir}. Subdirectories: {summary[:5]}..."
         
-    except Exception as e:
-        logger.error(f"Error preparing VASP inputs: {e}")
-        return f"Error preparing VASP inputs: {str(e)}"
+    else:
+        # Single file processing
+        structure = load_structure_from_file(structure_path)
+        if structure is None:
+            return f"Error: Could not load structure from {structure_path}"
+        
+        # Write files
+        files = write_vasp_input_files(
+            atoms=structure,
+            output_dir=output_dir,
+            preset_type=preset_type,
+            calculation_type=calculation_type,
+            config=config or vasp_settings
+        )
+        
+        return f"Successfully wrote VASP input files to {output_dir}. Files: {list(files.keys())}"
 
 @mcp.tool()
 def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> Dict[str, Any]:
@@ -285,59 +254,158 @@ def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> D
         - For multiple calculations:
             - 'results': List of result dictionaries for each structure
     """
-    try:
-        parser = VASPParser(output_dir)
-        
-        # Detect result type (single or multiple)
-        # For simplicity, we expose the single parser logic via parsing all and returning list
-        # or checking if it's a single calculation
-        
-        # Check if it has direct result files
-        has_direct_result = (
-            (parser.output_dir / "vasprun.xml").exists() or 
-            (parser.output_dir / "result.json").exists()
-        )
-        
-        if has_direct_result:
-            try:
-                # Try UMA format first
-                if parser.uma_result_path.exists():
-                    return parser.parse_uma_result()
-                # Try VASP format
-                elif parser.vasprun_path.exists():
-                    result = parser.parse_vasprun()
-                    outcar_result = parser.parse_outcar()
-                    result.update(outcar_result)
-                    
-                    # Serialize for JSON
-                    results = parser._prepare_for_json(result)
-                    
-                    if save_to_file:
-                        with open(save_to_file, 'w') as f:
-                            json.dump(results, f, indent=2)
-                            
-                    return results
-            except Exception as e:
-                return {"error": f"Failed to parse results in {output_dir}: {str(e)}"}
-        
-        # If not direct, try parsing all subdirectories
-        all_results = parser.parse_all()
-        if not all_results:
-            return {"error": f"No valid VASP or UMA results found in {output_dir}"}
+    parser = VASPParser(output_dir)
+    
+    # Detect result type (single or multiple)
+    # For simplicity, we expose the single parser logic via parsing all and returning list
+    # or checking if it's a single calculation
+    
+    # Check if it has direct result files
+    has_direct_result = (
+        (parser.output_dir / "vasprun.xml").exists() or 
+        (parser.output_dir / "result.json").exists()
+    )
+    
+    if has_direct_result:
+        # Try UMA format first
+        if parser.uma_result_path.exists():
+            return parser.parse_uma_result()
+        # Try VASP format
+        elif parser.vasprun_path.exists():
+            result = parser.parse_vasprun()
+            outcar_result = parser.parse_outcar()
+            result.update(outcar_result)
             
-        # Return summary or full list? Returning full list might be large.
-        # Let's return serialized list.
-        results = {"results": parser._prepare_for_json(all_results)}
+            # Serialize for JSON
+            results = parser._prepare_for_json(result)
+            
+            if save_to_file:
+                with open(save_to_file, 'w') as f:
+                    json.dump(results, f, indent=2)
+                    
+            return results
+    
+    # If not direct, try parsing all subdirectories
+    all_results = parser.parse_all()
+    if not all_results:
+        return {"error": f"No valid VASP or UMA results found in {output_dir}"}
         
-        if save_to_file:
-            with open(save_to_file, 'w') as f:
-                json.dump(results, f, indent=2)
-                
-        return results
+    # Return summary or full list? Returning full list might be large.
+    # Let's return serialized list.
+    results = {"results": parser._prepare_for_json(all_results)}
+    
+    if save_to_file:
+        with open(save_to_file, 'w') as f:
+            json.dump(results, f, indent=2)
+            
+    return results
+
+@mcp.tool()
+def run_atomate2_vasp_calculation(
+    structures_path: str,
+    output_dir: str,
+    preset_type: str = "omat",
+    calculation_type: str = "static",
+    config: Optional[Dict[str, Any]] = None,
+    execution_mode: str = "local",
+    check_only: bool = False,
+    job_id: Optional[str] = None
+) -> str:
+    """
+    Run VASP calculations using atomate2 flows.
+    
+    This tool supports MatPES presets (matpes-pbe, matpes-r2scan) and standard MP presets.
+    It can run calculations locally (blocking) or remote.
+    
+    Args:
+        structures_path: Path to structure files or directory.
+        output_dir: Directory to save results and logs.
+        preset_type: VASP input preset ("omat", "mp", "matpes-pbe", "matpes-r2scan").
+        calculation_type: "static" or "relaxation".
+        config: Optional custom INCAR settings to override preset.
+        execution_mode: "local" (blocking) or "remote".
+        check_only: If True, only check environment or job status without running.
+        job_id: Optional Job ID to check status or extract results from.
         
-    except Exception as e:
-        logger.error(f"Error parsing VASP results: {e}")
-        return {"error": f"Error parsing VASP results: {str(e)}"}
+    Returns:
+        Status message or results summary.
+    """
+    handler = Atomate2Handler(output_dir)
+    
+    # 1. Job status / Result extraction check
+    if job_id:
+        if check_only:
+            status = handler.check_status(job_id)
+            return json.dumps(status, indent=2)
+        else:
+            results = handler.extract_results(job_id)
+            if "error" in results:
+                return results["error"]
+            return f"Successfully extracted results for {len(results.get('results', []))} jobs."
+
+    # 2. Environment check
+    env_checks = handler.check_environment()
+    if not all([env_checks["atomate2"], env_checks["vasp"], env_checks["potcar"]]):
+        return f"Environment check failed: {env_checks['error']}"
+    
+    if check_only:
+        return "Environment is ready for Atomate2 VASP calculations."
+
+    # 3. Load structures
+    structures = handler.load_structures(structures_path)
+    if not structures:
+        return f"No structures found at {structures_path}"
+
+    # 4. Create flows
+    flow_maker = handler.get_flow_maker(preset_type, calculation_type, config)
+    flows = []
+    flow_metadata = []
+    
+    from datetime import datetime
+    import pickle
+    job_id = f"atomate2_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    
+    for i, struct in enumerate(structures):
+        flow = flow_maker.make(struct)
+        flow.name = f"{preset_type}_{calculation_type}_{i}"
+        flows.append(flow)
+        flow_metadata.append({
+            "index": i,
+            "uuid": str(flow.uuid),
+            "name": flow.name
+        })
+
+    # 5. Run flows
+    if execution_mode == "local":
+        from jobflow import run_locally
+        all_responses = {}
+        for i, flow in enumerate(flows):
+            struct_dir = handler.results_dir / f"structure_{i}"
+            struct_dir.mkdir(exist_ok=True)
+            responses = run_locally(flow, create_folders=True, ensure_success=True, root_dir=str(struct_dir))
+            all_responses[str(flow.uuid)] = {"responses": responses, "dir": str(struct_dir)}
+        
+        # Save responses for extraction
+        with open(handler.output_path / f"{job_id}_responses.pkl", 'wb') as f:
+            pickle.dump(all_responses, f)
+        
+        # Save status
+        status = {"status": "completed", "completed": len(flows), "failed": 0, "total": len(flows)}
+        with open(handler.output_path / f"{job_id}_status.json", 'w') as f:
+            json.dump(status, f)
+            
+        return f"Calculations completed locally. Job ID: {job_id}"
+
+    elif execution_mode == "remote":
+        # For remote execution, we submit a parent flow containing all structure flows
+        from jobflow import Flow
+        parent_flow = Flow(flows, name=f"batch_{preset_type}_{calculation_type}")
+        job_id = handler.run_remote(parent_flow)
+        
+        return f"Calculations submitted remotely. Job ID: {job_id}. Execution mode: remote."
+    
+    else:
+        return f"Unknown execution_mode: {execution_mode}"
 
 if __name__ == "__main__":
     mcp.run()

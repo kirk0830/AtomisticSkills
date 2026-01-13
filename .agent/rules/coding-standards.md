@@ -16,10 +16,9 @@ trigger: always_on
 
 ### File Organization
 - Create independent Python packages for each major functional module
-- Place test files in `tests/` directory
 - All temporary validation, testing, and summary files MUST be created under `<project_root>/.agent/test` to maintain a clean project structure
 - Use YAML or JSON format for configuration files
-- Place data files in `data/` directory
+
 
 ## Development Standards
 
@@ -30,6 +29,7 @@ trigger: always_on
 ### Testing Requirements
 - Each major functionality must have unit tests
 - Use pytest as the testing framework
+- Place test files in `tests/` directory
 
 ### Import and Dependency Management
 - NEVER implement fallback functions when package imports fail

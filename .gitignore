@@ -2,9 +2,11 @@
 research/
 fairchem_repo/
 
-# Temporary testing results
+# Temporary storage and test results
+scratch/
 .agent/test/
 tests/.agent/test/
+tests/tmp_*/
 
 # Python
 __pycache__/
