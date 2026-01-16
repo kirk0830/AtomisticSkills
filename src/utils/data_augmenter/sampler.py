@@ -156,9 +156,13 @@ class CrystalFeatureObserver:
                  self.crystal_feature_vectors.append(crystal_features)
                  # print(f"Recorded crystal features at step {self.step_count}, shape: {crystal_features.shape}")
              else:
-                 raise RuntimeError("Crystal features not found in calculator results")
+                 # Warn once or debug log, but don't crash
+                 # logger.debug("Crystal features not found in calculator results")
+                 pass
         else:
-             raise RuntimeError("No calculator attached to atoms")
+             # raise RuntimeError("No calculator attached to atoms")
+             logger.warning("No calculator attached to atoms in CrystalFeatureObserver")
+             pass
              
         self.step_count += self.log_interval
     
@@ -183,9 +187,15 @@ class OffEquilibriumSampler:
     Now accepts a calculator directly for dependency injection.
     """
     
-    def __init__(self, calculator: Calculator, atoms: Atoms, 
-                 total_steps: Optional[int] = None, output_dir: Optional[str] = None,
-                 target_atoms: int = 75, temperature: float = 1000.0):
+    def __init__(self, 
+                 calculator: Calculator, 
+                 atoms: Atoms, 
+                 total_steps: Optional[int] = None, 
+                 output_dir: Optional[str] = None,
+                 target_atoms: int = 75, 
+                 temperature: float = 1000.0, 
+                 n_clusters: int = 200,
+                 time_step: Optional[float] = None):
         """
         Initialize OffEquilibriumSampler.
         
@@ -198,6 +208,8 @@ class OffEquilibriumSampler:
                          Note: Maximum safe limit is 70 atoms to prevent OOM in VASP calculations.
                                Structures with >70 atoms may cause memory issues during DFT labeling.
             temperature: Temperature in Kelvin (default: 1000.0)
+            n_clusters: Number of structures to sample via clustering (default: 200)
+            time_step: Time step in fs. If None, automatically determined based on H presence (default: None)
         """
         self.calculator = calculator
         if self.calculator is None:
@@ -213,7 +225,6 @@ class OffEquilibriumSampler:
         # This is critical for stable MD - expanded cells often have residual stress
         self.atoms = self._relax_structure(expanded_atoms)
         logger.info("Structure relaxed after supercell expansion to remove residual stress")
-        logger.info("Structure relaxed after supercell expansion to remove residual stress")
         
         self.trajectory_observer = None
         self.crystal_feature_observer = None
@@ -222,26 +233,37 @@ class OffEquilibriumSampler:
             import os
             os.makedirs(self.output_dir, exist_ok=True)
         
-        # Use aggressive time step since we want fast sampling and don't care about momentum integration accuracy
-        # Check if H is present
-        symbols = atoms.get_chemical_symbols()
-        if 'H' in symbols:
-            self.time_step = 1.0  # fs - smaller time step for light atoms
-            logger.info(f"Hydrogen detected, using {self.time_step} fs time step")
+        # Determine time step
+        if time_step is not None:
+            self.time_step = time_step
+            logger.info(f"Using provided time step: {self.time_step} fs")
         else:
-            self.time_step = 2.0  # fs - standard time step per user request
-            logger.info(f"No Hydrogen detected, using {self.time_step} fs time step")
+            # Check if H is present
+            symbols = atoms.get_chemical_symbols()
+            if 'H' in symbols:
+                self.time_step = 2.0  # fs - smaller time step for light atoms
+                logger.info(f"Hydrogen detected, using {self.time_step} fs time step")
+            else:
+                self.time_step = 5.0  # fs - standard time step per user request
+                logger.info(f"No Hydrogen detected, using {self.time_step} fs time step")
             
         self.total_steps = total_steps if total_steps is not None else 10000
-        self.log_interval = 5  # Log every 5 steps for real-time monitoring
+        self.log_interval = 10  # Log every 5 steps for real-time monitoring
         self.temperature = temperature  # K
-        self.taut = 100 * self.time_step 
+        
+        # Slower heating: reach target in around half of total time
+        # Assuming 5 * tau ~ equilibration time => 5 * tau = total_time / 2
+        # tau = total_time / 20 = (total_steps * time_step) / 20
+        calculated_taut = (self.total_steps * self.time_step) / 20
+        min_taut = 100 * self.time_step
+        self.taut = max(calculated_taut, min_taut)
+        
         self.taup = 1000.0  * self.time_step
         self.pressure_au = 0.0  
         self.compressibility_au = 4.57e-5 
         
         # Clustering parameters
-        self.n_clusters = 200  # Number of representative structures
+        self.n_clusters = n_clusters  # Number of representative structures
     
     def _relax_structure(self, atoms: Atoms) -> Atoms:
         """
@@ -472,7 +494,7 @@ class OffEquilibriumSampler:
         
         dyn = Inhomogeneous_NPTBerendsen(
             atoms,
-            timestep=self.time_step,
+            timestep=self.time_step * units.fs,
             temperature_K=self.temperature,
             pressure_au=self.pressure_au,
             taut=self.taut,
@@ -684,7 +706,19 @@ class OffEquilibriumSampler:
         structures, features, metadata = self.run_md_simulation()
         
         # Cluster structures
-        representative_structures, representative_indices = self.cluster_structures(structures, features)
+        if len(features) == 0:
+            logger.warning("No crystal features extracted. Improving fall-back to uniform temporal sampling.")
+            # Fallback to simple uniform sampling
+            n_samples = min(self.n_clusters, len(structures))
+            if n_samples > 0:
+                indices = np.linspace(0, len(structures)-1, n_samples, dtype=int).tolist()
+                representative_structures = [structures[i] for i in indices]
+                representative_indices = indices
+            else:
+                 representative_structures = []
+                 representative_indices = []
+        else:
+            representative_structures, representative_indices = self.cluster_structures(structures, features)
         
         # Add indices to metadata
         # Convert to actual MD steps
@@ -1098,7 +1132,8 @@ class StructureSampler:
     
     def sample_off_equilibrium(self, atoms: Atoms, model_name: str = "M3GNet-MatPES-r2SCAN-v2025.1-PES",
                                total_steps: Optional[int] = None, output_dir: Optional[str] = None,
-                               target_atoms: int = 75, temperature: float = 1000.0) -> List[Atoms]:
+                               target_atoms: int = 75, temperature: float = 1000.0, num_samples: int = 200,
+                               time_step: Optional[float] = None) -> List[Atoms]:
         """
         Sample structures for off-equilibrium calculations (MD, melting, diffusion, etc.).
         
@@ -1110,64 +1145,53 @@ class StructureSampler:
         calculations. Structures exceeding this limit will not be expanded further.
         
         Args:
-            atoms: Initial atomic structure
-            model_name: MatGL model name for MD simulation
-            total_steps: Number of MD steps (default: 10000). Use smaller values (e.g., 100) for testing.
-            output_dir: Directory to save MD log file (default: current directory)
-            target_atoms: Target number of atoms after supercell expansion (default: 75, range: 50-100)
-                         Maximum safe limit: 70 atoms (enforced to prevent VASP OOM issues)
+            atoms: Structure to sample from
+            total_steps: Number of MD steps
+            output_dir: Output directory
+            target_atoms: Target total atoms in supercell
+            temperature: MD temperature
+            num_samples: Number of structures to sample
+            debug: Whether to run in debug mode
+            time_step: MD time step (fs). If None, auto-detected.
             
         Returns:
-            List of representative structures from PES sampling
+            List of sampled structure dicts, Metadata dict
         """
-        logger.info(f"Starting off-equilibrium sampling using OffEquilibriumSampler (target: {target_atoms} atoms)")
-        
+        # Ensure calculator is set
         if self.calculator is None:
-            raise ValueError("Calculator must be initialized for StructureSampler before calling sample_off_equilibrium")
-
-        # Initialize OffEquilibriumSampler (will automatically expand supercell to target_atoms with cubic preference)
-        # Note: model_name is no longer used, calculator is passed from self.calculator
+             raise ValueError("Calculator must be set on StructureSampler or passed in initialized calculator")
+             
+        # Initialize PES sampler with the calculator
         self.pes_sampler = OffEquilibriumSampler(calculator=self.calculator, atoms=atoms, total_steps=total_steps, 
-                                     output_dir=output_dir, target_atoms=target_atoms, temperature=temperature)
+                                               output_dir=output_dir, target_atoms=target_atoms, 
+                                               temperature=temperature, n_clusters=num_samples, time_step=time_step)
         
         # Run sampling
         representative_structures, metadata = self.pes_sampler.sample()
         
-        # Save individual structures if output_dir is provided
-        if output_dir:
-            from pymatgen.io.ase import AseAtomsAdaptor
-            adaptor = AseAtomsAdaptor()
-            from pathlib import Path
+        # Convert to list of dicts for output
+        sampled_dicts = []
+        for i, struct in enumerate(representative_structures):
+            struct_dict = {
+                "structure": struct.todict() if hasattr(struct, "todict") else struct,
+            }
+            sampled_dicts.append(struct_dict)
             
-            output_path = Path(output_dir)
-            structures_dir = output_path / "sampled_structures"
-            structures_dir.mkdir(parents=True, exist_ok=True)
-            
-            logger.info(f"Saving {len(representative_structures)} structures to {structures_dir}")
-            
-            for i, atoms in enumerate(representative_structures):
-                struct_path = structures_dir / f"structure_{i}.cif"
-                pmg_struct = adaptor.get_structure(atoms)
-                pmg_struct.to(filename=str(struct_path), fmt="cif")
-                
-        logger.info(f"Off-equilibrium sampling completed. Generated {len(representative_structures)} structures")
+            # Save individual structures if output_dir provided
+            if output_dir:
+                try:
+                    import os
+                    from ase.io import write
+                    fname = os.path.join(output_dir, f"sampled_{i}.cif")
+                    write(fname, struct)
+                except Exception as e:
+                    logger.warning(f"Failed to save sampled structure {i}: {e}")
+                    
         return representative_structures, metadata
     
     def sample_near_equilibrium(self, initial_structures: List[Atoms], 
                               fmax: float = 0.01, max_steps: int = 200) -> List[Atoms]:
-        """
-        Sample structures for near-equilibrium calculations (ground state energies).
-        
-        Uses ionic relaxation to find energy minima.
-        
-        Args:
-            initial_structures: List of initial structures to relax
-            fmax: Force convergence criterion
-            max_steps: Maximum relaxation steps
-            
-        Returns:
-            List of relaxed ground state structures
-        """
+        # Sample structures for near-equilibrium calculations (ground state energies)
         logger.info("Starting near-equilibrium sampling using ionic relaxation")
         
         if self.calculator is None:

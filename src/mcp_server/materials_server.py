@@ -3,6 +3,11 @@ import os
 import warnings
 import logging
 
+# Add project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
 os.environ["PYTHONWARNINGS"] = "ignore"
@@ -36,6 +41,7 @@ mcp = FastMCP("materials_tools")
 
 @mcp.tool()
 def search_materials_project_by_formula(
+
     formula: str,
     api_key: Optional[str] = None,
     save_to_file: Optional[str] = None
@@ -307,9 +313,10 @@ def run_atomate2_vasp_calculation(
     preset_type: str = "omat",
     calculation_type: str = "static",
     config: Optional[Dict[str, Any]] = None,
-    execution_mode: str = "local",
+    execution_mode: str = "remote",
     check_only: bool = False,
-    job_id: Optional[str] = None
+    job_id: Optional[str] = None,
+    remote_settings: Optional[Dict[str, str]] = None
 ) -> str:
     """
     Run VASP calculations using atomate2 flows.
@@ -326,12 +333,14 @@ def run_atomate2_vasp_calculation(
         execution_mode: "local" (blocking) or "remote".
         check_only: If True, only check environment or job status without running.
         job_id: Optional Job ID to check status or extract results from.
+        remote_settings: Optional dict for remote execution. 
+                        Keys: 'project' (default: remote_perlmutter), 'worker' (default: perlmutter_worker).
         
     Returns:
         Status message or results summary.
     """
     handler = Atomate2Handler(output_dir)
-    
+        
     # 1. Job status / Result extraction check
     if job_id:
         if check_only:
@@ -345,8 +354,16 @@ def run_atomate2_vasp_calculation(
 
     # 2. Environment check
     env_checks = handler.check_environment()
-    if not all([env_checks["atomate2"], env_checks["vasp"], env_checks["potcar"]]):
-        return f"Environment check failed: {env_checks['error']}"
+    
+    # For remote execution, we only strictly need atomate2/jobflow installed locally to build the flow.
+    # VASP and POTCARs are needed on the remote worker, not necessarily locally.
+    if execution_mode == "remote":
+        if not env_checks["atomate2"]:
+             return f"Environment check failed: atomate2 not found. {env_checks.get('error','')}"
+    else:
+        # Local execution needs everything
+        if not all([env_checks["atomate2"], env_checks["vasp"], env_checks["potcar"]]):
+            return f"Environment check failed: {env_checks['error']}"
     
     if check_only:
         return "Environment is ready for Atomate2 VASP calculations."
@@ -399,13 +416,22 @@ def run_atomate2_vasp_calculation(
     elif execution_mode == "remote":
         # For remote execution, we submit a parent flow containing all structure flows
         from jobflow import Flow
-        parent_flow = Flow(flows, name=f"batch_{preset_type}_{calculation_type}")
-        job_id = handler.run_remote(parent_flow)
+        remote_opts = remote_settings or {}
+        project = remote_opts.get("project", "remote_perlmutter")
+        worker = remote_opts.get("worker", "perlmutter_worker")
         
-        return f"Calculations submitted remotely. Job ID: {job_id}. Execution mode: remote."
+        parent_flow = Flow(flows, name=f"batch_{preset_type}_{calculation_type}")
+        
+        try:
+            job_id = handler.run_remote(parent_flow, project_name=project, worker_name=worker)
+            return f"Calculations submitted remotely to project '{project}' (worker: {worker}). Job ID: {job_id}."
+        except Exception as e:
+            return f"Remote submission failed: {e}"
     
     else:
         return f"Unknown execution_mode: {execution_mode}"
 
 if __name__ == "__main__":
     mcp.run()
+
+

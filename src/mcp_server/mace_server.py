@@ -3,6 +3,11 @@ import os
 import warnings
 import logging
 
+# Add project root to sys.path for robust manual execution
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
 os.environ["PYTHONWARNINGS"] = "ignore"
@@ -11,13 +16,41 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 logging.getLogger("torch").setLevel(logging.ERROR)
 logging.getLogger("mace").setLevel(logging.ERROR)
 
-from mcp.server.fastmcp import FastMCP
+
+import sys
+import os
+import traceback
+import time
+
+# Debug logging
+DEBUG_LOG_FILE = "/home/bdeng/projects/simulation_mcp/.agent/test/mace_server_debug.log"
+def debug_log(msg):
+    with open(DEBUG_LOG_FILE, "a") as f:
+        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
+
+debug_log("Starting mace_server.py")
+debug_log(f"Python executable: {sys.executable}")
+debug_log(f"CWD: {os.getcwd()}")
+debug_log(f"Environment: {os.environ.get('CONDA_DEFAULT_ENV', 'unknown')}")
+
+
+try:
+    from mcp.server.fastmcp import FastMCP
+except Exception as e:
+    debug_log(f"Error importing FastMCP: {e}")
+   # Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("MACE-Server")
+
+
 from typing import Dict, Any, Optional, List, Union
 import json
 import logging
 import os
 from pathlib import Path
 import numpy as np
+
+
 
 def recursive_tolist(obj):
     if isinstance(obj, np.ndarray):
@@ -32,9 +65,17 @@ def recursive_tolist(obj):
         return obj
 
 # Import the migrated MACE wrapper
+
+# Add project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+debug_log(f"Added project root to sys.path: {project_root}")
+
 from src.utils.mlips.mace.mace_wrapper import MACEWrapper
 from src.utils.mlips.feature_calculators import MaceCrystalFeatureCalculator
 from src.utils.data_augmenter.sampler import StructureSampler
+
 
 # Initialize FastMCP server
 mcp = FastMCP("MACE")
@@ -572,7 +613,9 @@ def sample_off_equilibrium(
     total_steps: int = 1000,
     temperature: float = 300.0,
     output_dir: str = "sampled_structures",
-    target_atoms: int = 75
+    target_atoms: int = 75,
+    num_samples: int = 20,
+    time_step: Optional[float] = None
 ) -> Dict[str, Any]:
     """
     Sample structures for off-equilibrium calculations (MD, diffusion).
@@ -583,6 +626,8 @@ def sample_off_equilibrium(
         temperature: Temperature in Kelvin.
         output_dir: Directory to save sampled structures.
         target_atoms: Target number of atoms for supercell (50-100).
+        num_samples: Number of structures to sample (default: 20).
+        time_step: Time step in fs (default: None, auto-detected based on elements).
         
     Returns:
         Dictionary with sampling results and output path.
@@ -613,26 +658,46 @@ def sample_off_equilibrium(
             total_steps=total_steps,
             output_dir=output_dir,
             target_atoms=target_atoms,
-            temperature=temperature
+            temperature=temperature,
+            num_samples=num_samples,
+            time_step=time_step
         )
         
-        # Serialize structures to dicts
+        # Serialize structures to dicts and save to files
         serialized_structures = []
-        for s in structures:
+        os.makedirs(output_dir, exist_ok=True)
+        
+        saved_files = []
+        for i, s in enumerate(structures):
+             # Save to file
+             filename = f"structure_{i:03d}.cif"
+             filepath = os.path.join(output_dir, filename)
+             try:
+                 # Use ASE write for CIF
+                 if hasattr(s, "write"):
+                     s.write(filepath)
+                 else:
+                     # Adapt to ASE if needed (unlikely if coming from sampler)
+                     # But sampler might return Atoms
+                     s.write(filepath)
+                 saved_files.append(filepath)
+             except Exception as e:
+                 print(f"Error saving structure {i}: {e}")
+                 
              serialized_structures.append(AseAtomsAdaptor.get_structure(s).as_dict())
              
         return {
             "sampled_structures_count": len(structures),
             "output_dir": output_dir,
+            "saved_files": saved_files,
             "metadata": metadata,
-            # Return partial list to avoid huge payload
-            "sampled_structures_preview": serialized_structures[:5] 
         }
         
     except Exception as e:
         import traceback
         traceback.print_exc()
         return {"error": f"Sampling failed: {str(e)}"}
+
 
 if __name__ == "__main__":
     mcp.run()

@@ -162,11 +162,38 @@ class Atomate2Handler:
 
         return result
 
-    def run_remote(self, flow: Any, project_name: str = "remote_test") -> str:
+    def _check_sshproxy(self, worker_name: str) -> Tuple[bool, str]:
+        """
+        Check if sshproxy is configured for NERSC/Perlmutter workers.
+        
+        Returns:
+            Tuple of (is_configured, message)
+        """
+        if "perlmutter" not in worker_name.lower():
+            return True, ""
+
+        # Check for NERSC key file
+        nersc_key = Path.home() / ".ssh" / "nersc"
+        if not nersc_key.exists():
+            return False, f"NERSC SSH key not found at {nersc_key}. Please run 'sshproxy -u <username>' to generate keys."
+            
+        # Optional: Check if key is expired (naive check based on file modification time > 24h?)
+        # For now, existence is the primary check requested.
+        
+        return True, "SSHProxy appears configured."
+
+    def run_remote(self, flow: Any, project_name: str = "remote_test", worker_name: str = None) -> str:
         """Submit a flow remotely using jobflow-remote."""
+        
+        # Check sshproxy if applicable
+        if worker_name:
+            is_configured, msg = self._check_sshproxy(worker_name)
+            if not is_configured:
+                raise RuntimeError(f"SSHProxy check failed: {msg}")
+
         from jobflow_remote import submit_flow
         
-        db_ids = submit_flow(flow, project=project_name)
+        db_ids = submit_flow(flow, project=project_name, worker=worker_name)
         # Use the first db_id as the job_id for tracking
         job_id = db_ids[0]
         
@@ -177,6 +204,7 @@ class Atomate2Handler:
                 "status": "SUBMITTED",
                 "remote": True,
                 "project": project_name,
+                "worker": worker_name,
                 "submitted_at": datetime.now().isoformat()
             }, f)
             

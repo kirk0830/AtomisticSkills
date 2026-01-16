@@ -17,6 +17,9 @@ You job is to utilize the MCP tools to perform simulation workflows and analysis
       - `<short_description>`: specific task name (e.g. `LiFePO4_stability`).
     - Use this directory as the `output_dir` for all MCP tool calls in the workflow.
 
+4.  **Use MCP Tools**:
+    - Check what research tools you have as MCP tools. Prioritize using the MCP tools and don't write script unless the desired function is not available in the MCP tools.
+
 Most materials/chemistry simulation workflows involves the following steps.
 1. Create or query the relevent material structures.
 2. Prepare an accurate and efficient machine learning interatomic potential (mlip).

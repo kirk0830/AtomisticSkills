@@ -54,6 +54,7 @@ coverage.xml
 api_keys.yaml
 .env
 auth.json
+db_credentials.yaml
 
 # OS files
 .DS_Store
