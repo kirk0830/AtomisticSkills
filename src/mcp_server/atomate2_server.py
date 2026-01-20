@@ -131,6 +131,8 @@ def run_atomate2_vasp_calculation(
         parent_flow = Flow(flows, name=f"batch_{preset_type}_{calculation_type}")
         
         try:
+            # Resolve project name
+            project = handler.get_project_name(project)
             job_id = handler.run_remote(parent_flow, project_name=project, worker_name=worker)
             return f"Calculations submitted remotely to project '{project}' (worker: {worker}). Job ID: {job_id}."
         except Exception as e:
@@ -161,6 +163,15 @@ def get_atomate2_results_by_id(
     """
     handler = Atomate2Handler()
     
+    # Resolve project name if needed (e.g. for remote results fetching inside handler)
+    if not project_name:
+         # We try to resolve it, but if it fails (e.g. local only), we catch it or let specific methods handle it.
+         # For get_results_by_id, checks happen inside handler, but we can resolve it here to be safe
+         try:
+             project_name = handler.get_project_name(project_name)
+         except Exception:
+             pass # Might be local check, so ignore if remote resolution fails
+
     results = handler.get_results_by_id(
         job_ids=job_ids,
         flow_ids=flow_ids,
@@ -207,6 +218,13 @@ def get_atomate2_results_by_formula(
     """
     handler = Atomate2Handler()
     
+    # Resolve project name if needed
+    if not project_name:
+         try:
+             project_name = handler.get_project_name(project_name)
+         except Exception:
+             pass
+
     results = handler.get_results_by_formula(
         formula=formula,
         chemsys=chemsys,
@@ -245,6 +263,12 @@ def get_atomate2_summary(
         Dictionary with database statistics.
     """
     handler = Atomate2Handler()
+    
+    try:
+        project_name = handler.get_project_name(project_name)
+    except Exception as e:
+        return {"error": f"Could not determine project name: {str(e)}"}
+        
     summary = handler.get_database_summary(project_name=project_name)
     
     if save_to_file:
@@ -274,6 +298,15 @@ def get_atomate2_recent_jobs(
         List of job information dictionaries.
     """
     handler = Atomate2Handler()
+    
+    try:
+        project_name = handler.get_project_name(project_name)
+    except Exception as e:
+        # Return empty list or specific error structure? 
+        # Tool expects List[Dict], so maybe return empty and log error, or let it fail?
+        # Let's return a list with one error dict to be visible
+        return [{"error": f"Could not determine project name: {str(e)}"}]
+        
     jobs = handler.get_recent_jobs(project_name=project_name, limit=limit)
     
     if save_to_file:
@@ -303,6 +336,13 @@ def get_atomate2_job_status(
         Dictionary with job status information.
     """
     handler = Atomate2Handler()
+    
+    # helper to check remote status
+    try:
+        project_name = handler.get_project_name(project_name)
+    except Exception:
+        pass # Might be local
+
     status = handler.check_status(job_id, project_name=project_name)
     
     if save_to_file:

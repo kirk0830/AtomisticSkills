@@ -69,6 +69,44 @@ class Atomate2Handler:
 
         return checks
 
+    def get_project_name(self, project_name: Optional[str] = None) -> str:
+        """
+        Resolve the project name.
+        
+        Logic:
+        1. If project_name is provided, use it.
+        2. If not, try to get default from jobflow-remote ConfigManager.
+        3. If ConfigManager raises ProjectUndefinedError (ambiguous projects), 
+           check ATOMATE2_REMOTE_PROJECT env var.
+        4. If still unresolved, raise error.
+        """
+        if project_name:
+            return project_name
+            
+        try:
+            from jobflow_remote.config.manager import ConfigManager, ProjectUndefinedError
+        except ImportError:
+            # Fallback for when jobflow_remote is not installed or import fails
+            if project_name:
+                return project_name
+            raise ValueError("jobflow-remote not found. Please provide project_name explicitly.")
+        
+        cm = ConfigManager()
+        try:
+            return cm.select_project_name(None)
+        except ProjectUndefinedError as e:
+            # Check env var fallback
+            env_project = os.environ.get("ATOMATE2_REMOTE_PROJECT")
+            if env_project:
+                try:
+                    # Validate the checking project exists
+                    return cm.select_project_name(env_project)
+                except Exception:
+                    logger.warning(f"ATOMATE2_REMOTE_PROJECT='{env_project}' is set but invalid/unknown.")
+            
+            # Re-raise original error if fallback failed
+            raise e
+
     def load_structures(self, structures_path: str) -> List[Structure]:
         """Load structures from path."""
         path = Path(structures_path)

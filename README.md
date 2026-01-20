@@ -58,6 +58,17 @@ conda env create -f conda-envs/mace-environment.yml
 conda env create -f conda-envs/fairchem-environment.yml
 ```
 
+
+## Configuration
+
+The agent can be configured using a `~/.mlip_agent.yaml` configuration file. This file allows you to define environment variables that will be automatically injected into the agent's environment.
+
+**Example `~/.mlip_agent.yaml`:**
+```yaml
+ATOMATE2_REMOTE_PROJECT: remote_perlmutter
+MP_API_KEY: your_api_key_here
+```
+
 ## Running the MCP Servers
 The project is configured to run as a set of MCP servers. The base configuration is provided in [mcp_config.json](mcp_config.json).
 

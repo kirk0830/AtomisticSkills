@@ -15,6 +15,13 @@ The primary configuration for this setup is located in:
   - Activates the `atomate2` conda environment.
   - Sets `export ATOMATE2_CONFIG_FILE=~/.config/atomate2/config.yaml`.
 
+### Project Name Auto-detection
+To avoid specifying `project_name` in every command, you can set the `ATOMATE2_REMOTE_PROJECT` environment variable:
+```bash
+export ATOMATE2_REMOTE_PROJECT=remote_perlmutter
+```
+When this variable is set, Atomate2 MCP tools will automatically use this project if no valid default is found in the `jobflow-remote` configuration.
+
 ## 2. Slurm Submission Policies
 To comply with NERSC Perlmutter CPU node policies, the following Slurm resources are configured:
 - **QoS**: `regular` (Automatically mapped to `regular_1` or `regular_0`).

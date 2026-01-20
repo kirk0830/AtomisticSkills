@@ -2,8 +2,12 @@ import os
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, Dict
+from src.utils.config_utils import inject_config_into_env
 
-def _load_env(project_root: Path) -> Dict[str, str]:
+# Inject configuration from ~/.mlip_agent.yaml into environment
+inject_config_into_env()
+
+def load_env(project_root: Path) -> Dict[str, str]:
     """Simple parser for .env files to avoid dependencies."""
     env_vars = {}
     env_path = project_root / ".env"
@@ -18,7 +22,7 @@ def _load_env(project_root: Path) -> Dict[str, str]:
                     env_vars[key.strip()] = value.strip().strip("'").strip('"')
     return env_vars
 
-def _save_env(project_root: Path, key: str, value: str):
+def save_env(project_root: Path, key: str, value: str):
     """Save a variable to .env, updating if exists or appending."""
     env_path = project_root / ".env"
     lines = []
@@ -56,7 +60,7 @@ def get_current_research_dir() -> Path:
     project_root = Path(__file__).parent.parent.parent.absolute()
     
     # Try to load from .env first
-    env_vars = _load_env(project_root)
+    env_vars = load_env(project_root)
     cached_dir = env_vars.get("CURRENT_RESEARCH_DIR")
     
     if cached_dir:
@@ -84,7 +88,7 @@ def get_current_research_dir() -> Path:
         final_dir.mkdir(parents=True, exist_ok=True)
         
     # Cache the result
-    _save_env(project_root, "CURRENT_RESEARCH_DIR", str(final_dir))
+    save_env(project_root, "CURRENT_RESEARCH_DIR", str(final_dir))
     
     return final_dir
 
@@ -114,6 +118,6 @@ def create_new_research_dir(topic: str) -> Path:
     new_dir.mkdir(parents=True, exist_ok=True)
     
     # Update cache to point to this new directory
-    _save_env(project_root, "CURRENT_RESEARCH_DIR", str(new_dir))
+    save_env(project_root, "CURRENT_RESEARCH_DIR", str(new_dir))
     
     return new_dir
