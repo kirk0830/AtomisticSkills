@@ -180,7 +180,6 @@ def fine_tune_model(
         result = wrapper.fine_tune(
             training_data=training_data,
             training_config=final_config,
-
             output_dir=output_dir if output_dir else str(get_current_research_dir() / "fairchem" / "fine_tuning")
         )
         
