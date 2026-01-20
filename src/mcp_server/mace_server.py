@@ -214,7 +214,7 @@ def fine_tune_model(
         result = wrapper.fine_tune(
             training_data=normalized_data,
             training_config=final_config,
-            training_config=final_config,
+
             output_dir=output_dir if output_dir else str(get_current_research_dir() / "mace" / "fine_tuning")
         )
         
@@ -553,7 +553,6 @@ def calculate_qha(
     structure_data: Union[Dict[str, Any], str],
     t_step: float = 10,
     t_max: float = 1000,
-    t_min: float = 0,
     t_min: float = 0,
     eos: str = "vinet",
     output_dir: Optional[str] = None
