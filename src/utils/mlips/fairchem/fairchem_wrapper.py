@@ -450,6 +450,7 @@ class FAIRCHEMWrapper(MLIPModel):
                     "r_forces": True,
                     "r_edges": True, # Usually True for UMA/ESCN
                     "max_neigh": 300, # Standard UMA default
+                    "task_name": task_name, # This sets data.dataset
                 },
                 "key_mapping": {
                     "energy": energy_key,
@@ -488,7 +489,7 @@ class FAIRCHEMWrapper(MLIPModel):
             energy_task = Task(
                 name=energy_key,
                 level="system",
-                property=energy_key, # Match mapped key
+                property="energy", # Match standard FairChem property key
                 loss_fn=DDPMTLoss(loss_fn=PerAtomMAELoss(), coefficient=1.0),
                 out_spec=OutputSpec(dim=[1], dtype="float32"),
                 normalizer=Normalizer(mean=0.0, rmsd=1.0), 
@@ -500,7 +501,7 @@ class FAIRCHEMWrapper(MLIPModel):
             forces_task = Task(
                 name=forces_key,
                 level="atom",
-                property=forces_key, # Match mapped key
+                property="forces", # Match standard FairChem property key
                 loss_fn=DDPMTLoss(loss_fn=L2NormLoss(), coefficient=1.0),
                 out_spec=OutputSpec(dim=[3], dtype="float32"),
                 normalizer=Normalizer(mean=0.0, rmsd=1.0),
@@ -543,13 +544,14 @@ class FAIRCHEMWrapper(MLIPModel):
             # We need to reconstruct the model for fine-tuning
             
             heads_config = {
-                "energyandforcehead": {
+                "efs_head": {
                     "module": "fairchem.core.models.uma.escn_moe.DatasetSpecificSingleHeadWrapper",
                     "head_cls": "fairchem.core.models.uma.escn_md.MLP_EFS_Head",
                     "head_kwargs": {
                         "wrap_property": False
                     },
-                    "dataset_names": [task_name]
+                    "dataset_names": [task_name],
+                    "wrap_property": True
                 }
             }
             

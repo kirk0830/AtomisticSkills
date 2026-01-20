@@ -42,6 +42,7 @@ from src.utils.data_augmenter.sampler import StructureSampler
 
 # Initialize FastMCP server
 mcp = FastMCP("MatGL")
+from src.utils.research_utils import get_current_research_dir
 
 # Global variables to hold state
 wrapper: Optional[MatGLWrapper] = None
@@ -101,7 +102,7 @@ def sample_off_equilibrium(
     structure_data: Union[Dict[str, Any], str],
     total_steps: int = 1000,
     temperature: float = 300.0,
-    output_dir: str = "sampled_structures",
+    output_dir: Optional[str] = None,
     target_atoms: int = 75
 ) -> Dict[str, Any]:
     """
@@ -142,6 +143,10 @@ def sample_off_equilibrium(
                 break
 
         if output_dir:
+            import os
+            os.makedirs(output_dir, exist_ok=True)
+        else:
+            output_dir = str(get_current_research_dir() / "matgl" / "sampled_structures")
             import os
             os.makedirs(output_dir, exist_ok=True)
             
@@ -239,7 +244,7 @@ def sample_order_disorder(
     structure_data: Union[Dict[str, Any], str],
     n_structures: int = 10,
     target_atoms: int = 50,
-    output_dir: str = "sampled_structures/order_disorder"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Sample ordered structures from a disordered input structure.
@@ -288,6 +293,9 @@ def sample_order_disorder(
 
         # Run sampling
         import os
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "matgl" / "sampled_structures" / "order_disorder")
+            
         os.makedirs(output_dir, exist_ok=True)
         
         structures = sampler.sample_order_disorder(
@@ -327,7 +335,7 @@ def relax_structure(
     fmax: float = 0.01,
     steps: int = 500,
     optimizer: str = "FIRE",
-    output_dir: str = "./results/matgl/relaxation"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Relax a structure using the loaded MatGL model and MatCalc.
@@ -354,6 +362,9 @@ def relax_structure(
         atoms = wrapper.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
+            
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "matgl" / "relaxation")
             
         os.makedirs(output_dir, exist_ok=True)
         traj_file = f"{output_dir}/relax.traj"
@@ -412,7 +423,7 @@ def run_md(
     timestep: float = 1.0,
     ensemble: str = "nvt",
     log_interval: int = 100,
-    output_dir: str = "./results/matgl/md"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -443,6 +454,9 @@ def run_md(
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
             
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "matgl" / "md")
+
         os.makedirs(output_dir, exist_ok=True)
         
         formula = atoms.get_chemical_formula()
@@ -487,7 +501,8 @@ def calculate_neb(
     start_structure: Union[Dict[str, Any], str],
     end_structure: Union[Dict[str, Any], str],
     n_images: int = 7,
-    output_dir: str = "./results/matgl/neb",
+    n_images: int = 7,
+    output_dir: Optional[str] = None,
     fmax: float = 0.1,
     climb: bool = True
 ) -> Dict[str, Any]:
@@ -525,6 +540,9 @@ def calculate_neb(
         start_struct = AseAtomsAdaptor.get_structure(start_atoms)
         end_struct = AseAtomsAdaptor.get_structure(end_atoms)
         
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "matgl" / "neb")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -562,7 +580,7 @@ def calculate_phonon(
     t_step: float = 10,
     t_max: float = 1000,
     t_min: float = 0,
-    output_dir: str = "./results/matgl/phonon"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Calculate Phonon properties using MatCalc.
@@ -588,6 +606,9 @@ def calculate_phonon(
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
             
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "matgl" / "phonon")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -624,7 +645,7 @@ def calculate_qha(
     t_max: float = 1000,
     t_min: float = 0,
     eos: str = "vinet",
-    output_dir: str = "./results/matgl/qha"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Calculate QHA thermal properties using MatCalc.
@@ -650,6 +671,9 @@ def calculate_qha(
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
             
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "matgl" / "qha")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -682,7 +706,7 @@ def calculate_qha(
 
 @mcp.tool()
 def fine_tune_model(
-    training_data: List[Dict[str, Any]],
+    training_data_path: str,
     epochs: int = 10,
     learning_rate: float = 1e-3,
     batch_size: int = 4,
@@ -693,11 +717,12 @@ def fine_tune_model(
     Fine-tune the current MatGL model.
     
     Args:
-        training_data: List of training samples. Each sample must have:
-                       - 'structure': Dict representation (ASE atoms dict or pymatgen dict)
-                       - 'energy': Total potential energy (float, eV)
-                       - 'forces': Atomic forces (list/array, eV/A)
-                       - 'stress': (Optional) Stress tensor (list/array)
+        training_data_path: Path to a JSON file containing the training data list.
+                             Each sample must have:
+                               - 'structure': Dict representation (ASE atoms dict or pymatgen dict)
+                               - 'energy': Total potential energy (float, eV)
+                               - 'forces': Atomic forces (list/array, eV/A)
+                               - 'stress': (Optional) Stress tensor (list/array)
         epochs: Number of training epochs.
         learning_rate: Learning rate.
         batch_size: Batch size.
@@ -710,6 +735,12 @@ def fine_tune_model(
         return {"error": "Model not loaded. Please call load_model first."}
     
     try:
+        with open(training_data_path, 'r') as f:
+            training_data = json.load(f)
+        
+        if not training_data:
+            return {"error": f"Training data file {training_data_path} is empty."}
+
         from pymatgen.io.ase import AseAtomsAdaptor
         
         # Pre-process training data to convert dict structures to ASE Atoms
@@ -735,7 +766,7 @@ def fine_tune_model(
         result = wrapper.fine_tune(
             training_data=processed_data,
             training_config=config,
-            output_dir=output_dir
+            output_dir=output_dir if output_dir else str(get_current_research_dir() / "matgl" / "fine_tuning")
         )
         
         # Add extra info

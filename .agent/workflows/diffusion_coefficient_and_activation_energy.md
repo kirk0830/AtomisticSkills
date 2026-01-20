@@ -6,25 +6,18 @@ description: How to calculate activation energy and diffusion coefficient using 
 
 This workflow describes how to calculate the ionic diffusion coefficient ($D$) at multiple temperatures and derive the activation energy ($E_a$) using Arrhenius and Molecular Dynamics (MD) simulations.
 
-1. **Setup Workspace**:
-   Create a dedicated directory for your research.
-   ```bash
-   mkdir -p research/$(date +%Y-%m-%d)_diffusion_study
-   # Use this as your working directory for the following steps
-   ```
-
-2. **Prepare Structure**:
-   - Obtain the crystal structure (e.g., from Materials Project or a CIF file).
-   - **Supercell Expansion**: Create a supercell large enough (typically > 10 Å in all dimensions) to minimize periodic boundary artifacts and self-interaction.
+1. **Prepare Structure**:
+   - Obtain the initial structure.
+   - If the structure has periodic boundary condition, create a supercell large enough (typically > 10 Å in all dimensions) to minimize periodic boundary artifacts and self-interaction. The total number of atoms in the cell should be around few hundred to thousand.
    - Save the structure as `supercell.cif`.
 
 3. **Select and Load MLIP**:
-   - Consult `.agent/rules/foundation-potentials.md` to choose the appropriate model (e.g., MACE, CHGNet, etc.).
+   - Consult `.agent/rules/foundation-potentials.md` to choose the appropriate foundation potential.
    - Use the `load_model` tool to load the selected model.
 
 4. **Run MD Simulations**:
-   - Run **NVT** ensembles at multiple temperatures (e.g., 4 points).
-   - **Temperatures**: Choose a range below the melting point but high enough to observe diffusion (e.g., 600K, 800K, 1000K, 1200K).
+   - Run **NVT** ensembles at multiple temperatures.
+   - **Temperatures**: Choose a range below the melting point but high enough to observe diffusion (e.g., 300K, 400K, 500K, 600K, 700K, 800K).
    - **Duration**: sufficient to reach diffusive regime (linear MSD), typically >50 ps (e.g., `steps=50000` with `timestep=2.0` fs gives 100 ps).
    - Use the `run_md` tool for each temperature.
    

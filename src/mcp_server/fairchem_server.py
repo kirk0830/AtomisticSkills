@@ -58,6 +58,7 @@ import numpy as np
 
 # Initialize FastMCP server
 mcp = FastMCP("FAIRCHEM")
+from src.utils.research_utils import get_current_research_dir
 
 # Global variables to hold state
 wrapper: Optional[FAIRCHEMWrapper] = None
@@ -124,7 +125,7 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
 
 @mcp.tool()
 def fine_tune_model(
-    training_data: List[Dict[str, Any]],
+    training_data_path: str,
     epochs: int = 100,
     learning_rate: float = 1e-4,
     output_dir: Optional[str] = None,
@@ -137,11 +138,12 @@ def fine_tune_model(
     based on the training data PBC (Periodic Boundary Conditions).
     
     Args:
-        training_data: List of training samples. Each sample must have:
-                       - 'structure': Dict representation (ASE atoms dict or pymatgen dict)
-                       - 'energy': Total potential energy (float, eV)
-                       - 'forces': Atomic forces (list/array, eV/A)
-                       - 'stress': (Optional) Stress tensor (list/array)
+        training_data_path: Path to a JSON file containing the training data list.
+            Each sample must have:
+            - 'structure': Dict representation (ASE atoms dict or pymatgen dict)
+            - 'energy': Total potential energy (float, eV)
+            - 'forces': Atomic forces (list/array, eV/A)
+            - 'stress': (Optional) Stress tensor (list/array)
         epochs: Number of training epochs.
         learning_rate: Learning rate for the optimizer.
         output_dir: Directory to save the fine-tuned model, checkpoints, and training history.
@@ -162,6 +164,12 @@ def fine_tune_model(
         return {"error": "Model not loaded. Please call load_model first."}
         
     try:
+        with open(training_data_path, 'r') as f:
+            training_data = json.load(f)
+        
+        if not training_data:
+            return {"error": f"Training data file {training_data_path} is empty."}
+
         final_config = {
             "max_epochs": epochs,
             "learning_rate": learning_rate
@@ -172,7 +180,8 @@ def fine_tune_model(
         result = wrapper.fine_tune(
             training_data=training_data,
             training_config=final_config,
-            output_dir=output_dir
+            training_config=final_config,
+            output_dir=output_dir if output_dir else str(get_current_research_dir() / "fairchem" / "fine_tuning")
         )
         
         return result
@@ -196,7 +205,7 @@ def relax_structure(
     fmax: float = 0.01,
     steps: int = 500,
     optimizer: str = "FIRE",
-    output_dir: str = "./results/fairchem/relaxation"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Relax a structure using the loaded FAIRCHEM model and MatCalc.
@@ -223,6 +232,9 @@ def relax_structure(
         atoms = wrapper.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
+            
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "fairchem" / "relaxation")
             
         os.makedirs(output_dir, exist_ok=True)
         traj_file = f"{output_dir}/relax.traj"
@@ -281,7 +293,7 @@ def run_md(
     timestep: float = 1.0,
     ensemble: str = "nvt",
     log_interval: int = 100,
-    output_dir: str = "./results/fairchem/md"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -311,6 +323,9 @@ def run_md(
         atoms = wrapper.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
+            
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "fairchem" / "md")
             
         os.makedirs(output_dir, exist_ok=True)
         
@@ -356,7 +371,7 @@ def calculate_neb(
     start_structure: Union[Dict[str, Any], str],
     end_structure: Union[Dict[str, Any], str],
     n_images: int = 7,
-    output_dir: str = "./results/fairchem/neb",
+    output_dir: Optional[str] = None,
     fmax: float = 0.1,
     climb: bool = True
 ) -> Dict[str, Any]:
@@ -394,6 +409,9 @@ def calculate_neb(
         start_struct = AseAtomsAdaptor.get_structure(start_atoms)
         end_struct = AseAtomsAdaptor.get_structure(end_atoms)
         
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "fairchem" / "neb")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -431,7 +449,7 @@ def calculate_phonon(
     t_step: float = 10,
     t_max: float = 1000,
     t_min: float = 0,
-    output_dir: str = "./results/fairchem/phonon"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Calculate Phonon properties using MatCalc.
@@ -457,6 +475,9 @@ def calculate_phonon(
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
             
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "fairchem" / "phonon")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -492,8 +513,9 @@ def calculate_qha(
     t_step: float = 10,
     t_max: float = 1000,
     t_min: float = 0,
+    t_min: float = 0,
     eos: str = "vinet",
-    output_dir: str = "./results/fairchem/qha"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Calculate QHA thermal properties using MatCalc.
@@ -519,6 +541,9 @@ def calculate_qha(
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
             
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "fairchem" / "qha")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -552,7 +577,7 @@ def calculate_qha(
 @mcp.tool()
 def mock_dft(
     dft_input_dir: str,
-    output_dir: str
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Run mock DFT calculations using the loaded FAIRCHEM model.
@@ -571,7 +596,11 @@ def mock_dft(
         
     try:
         input_path = Path(dft_input_dir)
-        output_path = Path(output_dir)
+        if output_dir:
+            output_path = Path(output_dir)
+        else:
+            output_path = get_current_research_dir() / "fairchem" / "mock_dft"
+            
         output_path.mkdir(parents=True, exist_ok=True)
         
         # Find structure files

@@ -79,6 +79,7 @@ from src.utils.data_augmenter.sampler import StructureSampler
 
 # Initialize FastMCP server
 mcp = FastMCP("MACE")
+from src.utils.research_utils import get_current_research_dir
 
 # Global variables to hold state
 wrapper: Optional[MACEWrapper] = None
@@ -137,8 +138,7 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
 
 @mcp.tool()
 def fine_tune_model(
-    training_data: Optional[List[Dict[str, Any]]] = None,
-    training_data_path: Optional[str] = None,
+    training_data_path: str,
     epochs: int = 100,
     learning_rate: float = 1e-4,
     output_dir: Optional[str] = None,
@@ -151,13 +151,12 @@ def fine_tune_model(
     Generates training history plots and CSV files in the output directory.
     
     Args:
-        training_data: List of training samples. Each sample must have:
-                       - 'structure': Dict (ASE atoms or pymatgen format)
-                       - 'energy': Total potential energy (float, eV)
-                       - 'forces': Atomic forces (list/array, eV/A)
-                       - 'stress': (Optional) Stress tensor for bulk systems
-        training_data_path: Optional path to a JSON file containing the training data list.
-                            If provided, training_data argument is ignored.
+        training_data_path: Path to a JSON file containing the training data list.
+                             Each sample must have:
+                               - 'structure': Dict (ASE atoms or pymatgen format)
+                               - 'energy': Total potential energy (float, eV)
+                               - 'forces': Atomic forces (list/array, eV/A)
+                               - 'stress': (Optional) Stress tensor for bulk systems
         epochs: Number of training epochs.
         learning_rate: Learning rate for the optimizer.
         output_dir: Directory to save the fine-tuned model and results.
@@ -179,24 +178,18 @@ def fine_tune_model(
         return {"error": "Model not loaded. Please call load_model first."}
         
     try:
-        # We need to process training_data to convert structure dicts back to objects if wrapper expects specific types
-        # Load training data from file if provided
-        if training_data_path:
-            try:
-                with open(training_data_path, 'r') as f:
-                    data = json.load(f)
-                    # Handle if wrapped in "results" key (from dft_server)
-                    if isinstance(data, dict) and "results" in data:
-                        training_data = data["results"]
-                    elif isinstance(data, list):
-                        training_data = data
-                    else:
-                        return {"error": "Invalid JSON format in training_data_path. Expected list or dict with 'results'."}
-            except Exception as e:
-                return {"error": f"Failed to load training data from {training_data_path}: {e}"}
+        with open(training_data_path, 'r') as f:
+            data = json.load(f)
+            # Handle if wrapped in "results" key (from materials_tools)
+            if isinstance(data, dict) and "results" in data:
+                training_data = data["results"]
+            elif isinstance(data, list):
+                training_data = data
+            else:
+                return {"error": "Invalid JSON format in training_data_path. Expected list or dict with 'results'."}
         
         if not training_data:
-            return {"error": "No training_data provided."}
+            return {"error": f"Training data file {training_data_path} is empty."}
 
         # Normalize keys (handle dft_server output format)
         normalized_data = []
@@ -221,7 +214,8 @@ def fine_tune_model(
         result = wrapper.fine_tune(
             training_data=normalized_data,
             training_config=final_config,
-            output_dir=output_dir
+            training_config=final_config,
+            output_dir=output_dir if output_dir else str(get_current_research_dir() / "mace" / "fine_tuning")
         )
         
         return result
@@ -245,7 +239,7 @@ def relax_structure(
     fmax: float = 0.01,
     steps: int = 500,
     optimizer: str = "FIRE",
-    output_dir: str = "./results/relaxation"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Relax a structure using the loaded MACE model and MatCalc.
@@ -273,6 +267,9 @@ def relax_structure(
         atoms = wrapper.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
+            
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "mace" / "relaxation")
             
         os.makedirs(output_dir, exist_ok=True)
         traj_file = f"{output_dir}/relax.traj"
@@ -331,7 +328,7 @@ def run_md(
     timestep: float = 1.0,
     ensemble: str = "nvt",
     log_interval: int = 100,
-    output_dir: str = "./results/md"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -361,6 +358,9 @@ def run_md(
         atoms = wrapper.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
+            
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "mace" / "md")
             
         os.makedirs(output_dir, exist_ok=True)
         
@@ -406,7 +406,7 @@ def calculate_neb(
     start_structure: Union[Dict[str, Any], str],
     end_structure: Union[Dict[str, Any], str],
     n_images: int = 7,
-    output_dir: str = "./results/neb",
+    output_dir: Optional[str] = None,
     fmax: float = 0.1,
     climb: bool = True
 ) -> Dict[str, Any]:
@@ -445,6 +445,9 @@ def calculate_neb(
         start_struct = AseAtomsAdaptor.get_structure(start_atoms)
         end_struct = AseAtomsAdaptor.get_structure(end_atoms)
         
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "mace" / "neb")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -484,7 +487,7 @@ def calculate_phonon(
     t_step: float = 10,
     t_max: float = 1000,
     t_min: float = 0,
-    output_dir: str = "./results/phonon"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Calculate Phonon properties using MatCalc.
@@ -510,6 +513,9 @@ def calculate_phonon(
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
             
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "mace" / "phonon")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -548,8 +554,9 @@ def calculate_qha(
     t_step: float = 10,
     t_max: float = 1000,
     t_min: float = 0,
+    t_min: float = 0,
     eos: str = "vinet",
-    output_dir: str = "./results/qha"
+    output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Calculate QHA thermal properties using MatCalc.
@@ -575,6 +582,9 @@ def calculate_qha(
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
             
+        if not output_dir:
+            output_dir = str(get_current_research_dir() / "mace" / "qha")
+
         os.makedirs(output_dir, exist_ok=True)
         
         calc = wrapper.create_calculator()
@@ -612,7 +622,7 @@ def sample_off_equilibrium(
     structure_data: Union[Dict[str, Any], str],
     total_steps: int = 1000,
     temperature: float = 300.0,
-    output_dir: str = "sampled_structures",
+    output_dir: Optional[str] = None,
     target_atoms: int = 75,
     num_samples: int = 20,
     time_step: Optional[float] = None
@@ -653,6 +663,9 @@ def sample_off_equilibrium(
             
         # Run sampling
         # Note: model_name is no longer needed/used by sample_off_equilibrium
+        if not output_dir:
+             output_dir = str(get_current_research_dir() / "mace" / "sampled_structures")
+
         structures, metadata = sampler.sample_off_equilibrium(
             atoms=atoms,
             total_steps=total_steps,

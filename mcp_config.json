@@ -39,6 +39,16 @@
       "env": {
         "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
       }
+    },
+    "atomate2": {
+      "command": "/home/bdeng/miniforge3/envs/atomate2-agent/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.atomate2_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+      }
     }
   }
 }

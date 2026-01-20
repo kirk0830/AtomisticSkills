@@ -448,6 +448,8 @@ class MACEWrapper(MLIPModel):
             "--lr", str(default_config["learning_rate"]),
             "--batch_size", str(default_config["batch_size"]),
             "--valid_batch_size", str(default_config["batch_size"]),
+            "--energy_key", "REF_energy",
+            "--forces_key", "REF_forces",
             "--device", device,
             "--seed", "42",
             "--checkpoints_dir", str(checkpoints_dir),
