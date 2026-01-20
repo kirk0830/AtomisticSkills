@@ -501,7 +501,6 @@ def calculate_neb(
     start_structure: Union[Dict[str, Any], str],
     end_structure: Union[Dict[str, Any], str],
     n_images: int = 7,
-
     output_dir: Optional[str] = None,
     fmax: float = 0.1,
     climb: bool = True
