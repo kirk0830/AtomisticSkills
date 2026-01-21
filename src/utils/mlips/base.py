@@ -5,6 +5,7 @@ Base MLIP model interface for MLIP MCP Wrappers
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Tuple
 import logging
+import json
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,6 +35,7 @@ class MLIPModel(ABC):
         self.calculator = None
         self.is_loaded = False
         self.is_fine_tuned = False
+        self._training_history = {}
         
     @abstractmethod
     def load(self, model_path: Optional[str] = None) -> None:
@@ -581,3 +583,43 @@ class MLIPModel(ABC):
             'force_distribution': forces,
             'stress_distribution': stresses
         }
+
+    def save_training_history(self, save_path: str) -> None:
+        """
+        Save the training history to a JSON file.
+        
+        Args:
+            save_path: Path where to save the JSON file.
+        """
+        training_history = getattr(self, '_training_history', None)
+        if training_history is None:
+            logger.warning("No training history available to save.")
+            return
+
+        # Prepare for JSON serializing (convert numpy arrays to lists)
+        serializable_history = {}
+        for key, value in training_history.items():
+            if isinstance(value, np.ndarray):
+                serializable_history[key] = value.tolist()
+            elif isinstance(value, list):
+                processed_list = []
+                for item in value:
+                    if isinstance(item, np.ndarray):
+                        processed_list.append(item.tolist())
+                    elif hasattr(item, 'item'): # Handle torch scalars or numpy scalars
+                        processed_list.append(item.item())
+                    else:
+                        processed_list.append(item)
+                serializable_history[key] = processed_list
+            else:
+                if hasattr(value, 'item'):
+                    serializable_history[key] = value.item()
+                else:
+                    serializable_history[key] = value
+
+        try:
+            with open(save_path, 'w') as f:
+                json.dump(serializable_history, f, indent=4)
+            logger.info(f"Training history saved to {save_path}")
+        except Exception as e:
+            logger.error(f"Failed to save training history to {save_path}: {e}")

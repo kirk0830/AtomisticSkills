@@ -67,16 +67,6 @@ def recursive_tolist(obj):
     else:
         return obj
 
-# ... (removed top-level wrapper/sampler imports) ...
-
-
-# Initialize FastMCP server
-mcp = FastMCP("MACE")
-from src.utils.research_utils import get_current_research_dir
-
-# Global variables to hold state
-wrapper: Optional[MACEWrapper] = None
-sampler: Optional[StructureSampler] = None
 
 @mcp.tool()
 def load_model(model_name: str = "MACE-OMAT-0-small", device: str = "auto", task_name: Optional[str] = None) -> str:

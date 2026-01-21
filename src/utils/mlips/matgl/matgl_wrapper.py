@@ -541,6 +541,10 @@ class MatGLWrapper(MLIPModel):
             self.save_checkpoint(os.path.join(output_dir, "fine_tuned_model.pth"))
             
             if self.is_fine_tuned:
+                 # Save numerical history to JSON
+                 json_path = Path(output_dir) / "training_history.json"
+                 self.save_training_history(str(json_path))
+                 
                  plot_path = Path(output_dir) / "training_history.png"
                  try:
                      self.plot_training_history(save_path=str(plot_path), show=False)

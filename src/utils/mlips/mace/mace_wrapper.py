@@ -388,7 +388,7 @@ class MACEWrapper(MLIPModel):
             output_dir = tempfile.mkdtemp(prefix="mace_fine_tuned_")
             logger.info(f"Using temporary directory for fine-tuned model: {output_dir}")
         
-        output_path = Path(output_dir)
+        output_path = Path(output_dir).absolute()
         output_path.mkdir(parents=True, exist_ok=True)
         
         # Save training data as XYZ files for MACE
@@ -767,6 +767,10 @@ if __name__ == "__main__":
             logger.info(f"Training history plot saved to {plot_path}")
         except Exception as e:
             logger.warning(f"Failed to generate training history plot: {e}")
+        
+        # Save numerical history to JSON
+        json_path = output_path / "training_history.json"
+        self.save_training_history(str(json_path))
         
         # Save training history to CSV
         csv_path = output_path / "training_history.csv"

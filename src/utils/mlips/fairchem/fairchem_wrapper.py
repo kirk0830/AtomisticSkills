@@ -11,9 +11,56 @@ from ase import Atoms
 from ase.calculators.calculator import Calculator
 
 from fairchem.core.units.mlip_unit.api.inference import InferenceSettings, guess_inference_settings
+from fairchem.core.modules.loss import DDPMTLoss, L2NormLoss, PerAtomMAELoss, MAELoss
 from ..base import MLIPModel
 
 logger = logging.getLogger(__name__)
+
+
+
+
+class FAIRCHEMHistoryLogger:
+    """Helper class to capture metrics from FAIRCHEM training loop."""
+    def __init__(self, history):
+        self.history = history
+        
+    def log_summary(self, summary):
+        """Pass-through for log_summary if needed."""
+        pass
+        
+    def log(self, metrics, step=None, commit=True):
+        """Capture metrics and store in history dictionary."""
+        # epoch is often reported as val/epoch or train/epoch
+        if 'val/epoch' in metrics:
+            epoch = int(metrics['val/epoch'])
+            if epoch not in self.history['epoch']:
+                self.history['epoch'].append(epoch)
+        
+        if 'train/loss' in metrics:
+            self.history['loss_train'].append(float(metrics['train/loss']))
+        if 'val/loss' in metrics:
+            self.history['loss_val'].append(float(metrics['val/loss']))
+            
+        # Parse task-specific metrics
+        # Keys look like: val/dataset,task,metric_name
+        for k, v in metrics.items():
+            if k.startswith('val/') and 'mae' in k:
+                val = float(v)
+                if 'energy' in k:
+                    self.history['energy_mae_val'].append(val)
+                elif 'forces' in k:
+                    self.history['force_mae_val'].append(val)
+                elif 'stress' in k:
+                    self.history['stress_mae_val'].append(val)
+            elif k.startswith('train/') and 'mae' in k:
+                # If training MAEs are ever reported
+                val = float(v)
+                if 'energy' in k:
+                    self.history['energy_mae_train'].append(val)
+                elif 'forces' in k:
+                    self.history['force_mae_train'].append(val)
+                elif 'stress' in k:
+                    self.history['stress_mae_train'].append(val)
 
 # Available FAIRCHEM models and checkpoints
 # Model configurations, default tasks, and supported tasks
@@ -247,10 +294,16 @@ class FAIRCHEMWrapper(MLIPModel):
         """
         # Unwrap configuration
         config = training_config or {}
-        epochs = config.get("epochs", config.get("max_epochs", 10))
-        learning_rate = config.get("learning_rate", 1e-4)
+        epochs = config.get("epochs", config.get("max_epochs", 2)) # Default 2 to match docs/test
+        # Official FairChem fine-tuning example uses lr=2e-4
+        learning_rate = config.get("learning_rate", config.get("lr", 2e-4)) 
         batch_size = config.get("batch_size", 4)
         task_name = config.get("task_name", None)
+        # Head selection / resumption
+        # If None, creates new head "shared_efs_head" (default behavior)
+        # If provided (e.g. "omat"), tries to extract weights from pretrained model
+        init_head_name = config.get("init_head_name", None) 
+
         
         save_dir = output_dir if output_dir else "./checkpoints"
         
@@ -296,7 +349,7 @@ class FAIRCHEMWrapper(MLIPModel):
                 if stress is not None:
                      stress = np.array(stress)
                 
-                if energy is not None or forces is not None:
+                if energy is not None or forces is not None or stress is not None:
                      calc = SinglePointCalculator(at, energy=energy, forces=forces, stress=stress)
                      at.calc = calc
 
@@ -367,9 +420,14 @@ class FAIRCHEMWrapper(MLIPModel):
             # NCCL requires all tensors to be on GPU which can be strict or fail with mismatch
             backend = "gloo"
             if torch.cuda.is_available():
-                torch.cuda.set_device(0)
+                try:
+                    torch.cuda.set_device(0)
+                except: pass
             
-            dist.init_process_group(backend=backend, init_method="tcp://localhost:12345", rank=0, world_size=1)
+            # Use a free port to avoid EADDRINUSE errors
+            from torch.distributed.elastic.utils.distributed import get_free_port
+            port = get_free_port()
+            dist.init_process_group(backend=backend, init_method=f"tcp://localhost:{port}", rank=0, world_size=1)
         
         # --- Determine Task Name ---
         # --- Determine Task Name ---
@@ -403,12 +461,13 @@ class FAIRCHEMWrapper(MLIPModel):
 
         energy_key = f"{task_name}_energy"
         forces_key = f"{task_name}_forces"
+        stress_key = f"{task_name}_stress"
 
         # Create a temporary directory for datasets and artifacts
         with tempfile.TemporaryDirectory() as temp_dir:
             logging.info(f"Created temporary directory for fine-tuning: {temp_dir}")
             
-            # --- 1. Prepare Data ---
+            # --- 1. Preparation ---
             def create_db(structures, db_path, dataset_name):
                 with ase.db.connect(db_path) as db:
                     for atoms in structures:
@@ -418,18 +477,33 @@ class FAIRCHEMWrapper(MLIPModel):
                             try:
                                 data['energy'] = atoms.get_potential_energy()
                                 data['forces'] = atoms.get_forces()
-                                # TODO: Stress support
+                                try:
+                                    data['stress'] = atoms.get_stress()
+                                except: pass
                             except Exception:
                                 pass
                         
                         kv_pairs = {}
-                        if 'energy' in atoms.info:
+                        if 'energy' in data:
+                             kv_pairs['energy'] = data['energy']
+                        elif 'energy' in atoms.info:
                              kv_pairs['energy'] = atoms.info['energy']
-                        elif hasattr(atoms, 'get_potential_energy'):
-                             try:
-                                kv_pairs['energy'] = atoms.get_potential_energy()
-                             except: pass
+                             
+                        if 'forces' in data:
+                             atoms.info['forces'] = np.array(data['forces'])
+                        def _ensure_3x3_stress(s):
+                            s = np.array(s)
+                            if s.shape == (3, 3): return s
+                            if s.size == 9: return s.reshape(3, 3)
+                            if s.size == 6:
+                                # Voigt: xx, yy, zz, yz, xz, xy
+                                v = s.flatten()
+                                return np.array([[v[0], v[5], v[4]], [v[5], v[1], v[3]], [v[4], v[3], v[2]]])
+                            return s.reshape(3, 3) # fallback to try reshape anyway
 
+                        if 'stress' in data:
+                             atoms.info['stress'] = _ensure_3x3_stress(data['stress'])
+                        
                         # Add dataset name to info so it gets picked up
                         kv_pairs['dataset_name'] = dataset_name
                         
@@ -441,25 +515,38 @@ class FAIRCHEMWrapper(MLIPModel):
             create_db(train_structures, train_db_path, task_name)
             create_db(val_structures, val_db_path, task_name)
             
+            # Check if stress is present to enable stress task
+            has_stress = any(s.get_calculator() is not None and s.get_calculator().results.get('stress') is not None for s in train_structures)
+            
             # --- 2. Configure Dataset ---
             # We use AseDBDataset. 
-            # task_name, energy_key, forces_key determined above
+            # task_name, energy_key,            # Define key mapping for AseDBDataset
+            key_mapping = {
+                "energy": energy_key,
+                "forces": forces_key,
+                "stress": stress_key,
+            }
+
+            # Configure dataset
             base_dataset_config = {
+                "src": None,  # Will be set later
                 "a2g_args": {
                     "r_energy": True,
                     "r_forces": True,
-                    "r_edges": True, # Usually True for UMA/ESCN
+                    "r_stress": True, # AtomicData will read stress as 3x3
                     "max_neigh": 300, # Standard UMA default
-                    "task_name": task_name, # This sets data.dataset
+                    "task_name": None, # Should be None if we map keys manually? Or task_name?
+                    # logic: dataset.task_name is used for dataset_name in batch.
+                    # but if we use key mapping, we might not rely on dataset_name for filtering?
+                    # Actually get_output_mask iterates dataset_name.
+                    # So we should set it.
                 },
-                "key_mapping": {
-                    "energy": energy_key,
-                    "forces": forces_key
-                },
-                 "transforms": {
-                     "common_transform": {
+                "key_mapping": key_mapping,
+                "transforms": {
+                    "common_transform": {
                         "dataset_name": task_name
-                    }
+                    },
+                    "stress_reshape_transform": {}
                 }
             }
             
@@ -485,33 +572,48 @@ class FAIRCHEMWrapper(MLIPModel):
             # --- 3. Define Tasks ---
             # We need to create Task objects manually
             
+            # --- 3. Define Tasks ---
+            tasks = []
+            
             # Energy Task
-            energy_task = Task(
+            tasks.append(Task(
                 name=energy_key,
                 level="system",
-                property="energy", # Match standard FairChem property key
-                loss_fn=DDPMTLoss(loss_fn=PerAtomMAELoss(), coefficient=1.0),
+                property="energy",
                 out_spec=OutputSpec(dim=[1], dtype="float32"),
-                normalizer=Normalizer(mean=0.0, rmsd=1.0), 
+                normalizer=Normalizer(mean=0.0, rmsd=1.0),
                 datasets=[task_name],
-                metrics=["mae", "per_atom_mae"]
-            )
-            
+                loss_fn=DDPMTLoss(loss_fn=PerAtomMAELoss(), coefficient=config.get("energy_weight", 1.0)),
+                metrics=["mae"]
+            ))
+
             # Forces Task
-            forces_task = Task(
+            tasks.append(Task(
                 name=forces_key,
                 level="atom",
-                property="forces", # Match standard FairChem property key
-                loss_fn=DDPMTLoss(loss_fn=L2NormLoss(), coefficient=1.0),
+                property="forces",
                 out_spec=OutputSpec(dim=[3], dtype="float32"),
                 normalizer=Normalizer(mean=0.0, rmsd=1.0),
                 datasets=[task_name],
-                metrics=["mae", "cosine_similarity"],
+                loss_fn=DDPMTLoss(loss_fn=L2NormLoss(), coefficient=config.get("forces_weight", 10.0)),
+                metrics=["mae"],
                 train_on_free_atoms=True,
                 eval_on_free_atoms=True
-            )
-            
-            tasks = [energy_task, forces_task]
+            ))
+            if has_stress:
+                stress_task = Task(
+                    name=stress_key,
+                    level="system",
+                    property="stress",
+                    out_spec=OutputSpec(dim=[1, 9], dtype="float32"),
+                    normalizer=Normalizer(mean=0.0, rmsd=1.0),
+                    datasets=[task_name],
+                    # TODO: FairChem doesn't support 3x3 MAE well in metrics yet, check this
+                    loss_fn=DDPMTLoss(loss_fn=MAELoss(), coefficient=config.get("stress_weight", 1.0)),
+                    metrics=["mae"]
+                )
+                tasks.append(stress_task)
+                logging.info(f"Enabling stress task for fine-tuning with weight {config.get('stress_weight', 1.0)}")
             
             # --- 4. Dataloaders ---
             collate_fn = mt_collater_adapter(tasks)
@@ -543,15 +645,38 @@ class FAIRCHEMWrapper(MLIPModel):
             # --- 5. Initialize Model ---
             # We need to reconstruct the model for fine-tuning
             
+            # Define Heads Configuration
+            heads_config = {}
+            target_head_name = "shared_efs_head"
+            
+            # If resuming a head, we need to extract its config/state first
+            pretrained_head_state_dict = None
+            if init_head_name:
+                logging.info(f"Attempting to resume head '{init_head_name}' from pretrained model...")
+                try:
+                    # Temporary load to get head info
+                    temp_model, temp_ckpt = load_inference_model(ckpt_path, strict=False)
+                    if hasattr(temp_model, "output_heads") and init_head_name in temp_model.output_heads:
+                         # Extract config if possible (often not stored directly in head, need check model_config)
+                         # But FairChem heads are usually MLP_EFS_Head. We just reuse our standard config 
+                         # but load weights.
+                         pretrained_head_state_dict = temp_model.output_heads[init_head_name].state_dict()
+                         target_head_name = init_head_name # Use the same name
+                         logging.info(f"Found head '{init_head_name}'. Weights will be reloaded after initialization.")
+                    else:
+                        logging.warning(f"Head '{init_head_name}' not found in pretrained model. Creating new head '{target_head_name}'.")
+                    del temp_model
+                    del temp_ckpt
+                    import gc
+                    gc.collect()
+                except Exception as e:
+                     logging.warning(f"Failed to extract head '{init_head_name}': {e}. Creating new head.")
+
             heads_config = {
-                "efs_head": {
-                    "module": "fairchem.core.models.uma.escn_moe.DatasetSpecificSingleHeadWrapper",
-                    "head_cls": "fairchem.core.models.uma.escn_md.MLP_EFS_Head",
-                    "head_kwargs": {
-                        "wrap_property": False
-                    },
-                    "dataset_names": [task_name],
-                    "wrap_property": True
+                target_head_name: {
+                    "module": "fairchem.core.models.uma.escn_md.MLP_EFS_Head",
+                    "wrap_property": True,  # Output dict {"energy": tensor} for each key
+                    "prefix": task_name,    # Output keys: take simple "omat" etc
                 }
             }
             
@@ -571,7 +696,7 @@ class FAIRCHEMWrapper(MLIPModel):
                 "backbone": {
                      "otf_graph": True,
                      # "max_neighbors": 300, # Use model default or config
-                     "regress_stress": False, # TODO: Add option
+                     "regress_stress": has_stress, 
                      "direct_forces": False,
                 },
                 "pass_through_head_outputs": True,
@@ -588,8 +713,21 @@ class FAIRCHEMWrapper(MLIPModel):
                 strict=False # Often needed when changing heads
             )
 
+            # Reload head weights if resuming
+            if pretrained_head_state_dict is not None and target_head_name in model.output_heads:
+                try:
+                    # The prefix might have changed (e.g. from 'omat' to 'omat' it's fine)
+                    # But if we are fine-tuning on a NEW task name, the logic in forward might use new keys?
+                    # MLP_EFS_Head uses 'prefix' arg which is set in __init__.
+                    # Since we re-initialized the head with correct prefix, loading state dict (linear weights) is safe.
+                    model.output_heads[target_head_name].load_state_dict(pretrained_head_state_dict)
+                    logging.info(f"Successfully reloaded weights for head '{target_head_name}'")
+                except Exception as e:
+                    logging.error(f"Error reloading head weights: {e}")
+
             # --- 6. Configure Optimization ---
-            # Scheduler
+            # Scheduler (Aligned with official FairChem defaults)
+            # warmup_epochs=0.01, lr_min_factor=0.01, warmup_factor=0.2
             cosine_lr_fn = lambda optimizer, n_iters_per_epoch: _get_consine_lr_scheduler(
                 warmup_factor=0.2,
                 warmup_epochs=0.01,
@@ -597,6 +735,15 @@ class FAIRCHEMWrapper(MLIPModel):
                 epochs=epochs,
                 n_iters_per_epoch=n_iters_per_epoch,
                 optimizer=optimizer
+            )
+            
+            # Optimizer (AdamW defaults from log)
+            # Log shows: lr=0.0002 (2e-4), weight_decay=0.001
+            # Must use partial because MLIPTrainEvalUnit accesses .keywords
+            optimizer_fn = partial(
+                torch.optim.AdamW, 
+                lr=learning_rate, 
+                weight_decay=config.get("weight_decay", 0.001)
             )
             
             # --- 7. Configure Runner and Unit ---
@@ -642,26 +789,43 @@ class FAIRCHEMWrapper(MLIPModel):
             OmegaConf.save(full_config, dummy_config_path)
             
             job_config = full_config.job
+            OmegaConf.set_readonly(job_config, False)
+            job_config.logger = False
+            job_config.debug = False
+
+            # --- 7. Initialize history and logger ---
+            for key in ["epoch", "loss_train", "loss_val", "energy_mae_train", "energy_mae_val", 
+                        "force_mae_train", "force_mae_val", "stress_mae_train", "stress_mae_val"]:
+                if key not in self._training_history:
+                    self._training_history[key] = []
             
+            # Create our history logger pointing directly to wrapper's history
+            history_logger = FAIRCHEMHistoryLogger(self._training_history)
+            
+            # --- 8. Setup Runner ---
             unit = MLIPTrainEvalUnit(
                 job_config=job_config,
                 model=model,
-                optimizer_fn=partial(torch.optim.AdamW, lr=learning_rate, weight_decay=1e-3),
+                optimizer_fn=optimizer_fn,
+                # Note: cosine_lr_scheduler_fn needs partial that takes (optimizer, n_iters_per_epoch)
+                # But MLIPTrainEvalUnit calls it as: self.lr_scheduler_fn(self.optimizer, self.n_iters_per_epoch)
+                # So we simply pass our pre-constructed lambda.
                 cosine_lr_scheduler_fn=cosine_lr_fn,
                 tasks=tasks,
                 print_every=1
             )
+            # Clip grad norm default 100 as per Log
+            unit.clip_grad_norm = config.get("clip_grad_norm", 100.0)
             
-            # Configure Runner
-            callback = TrainCheckpointCallback(checkpoint_every_n_steps=100)
-             
-            
+            # Overwrite logger to catch metrics
+            unit.logger = history_logger
+
             runner = TrainEvalRunner(
+                train_eval_unit=unit,
                 train_dataloader=train_loader,
                 eval_dataloader=val_loader,
-                train_eval_unit=unit,
                 max_epochs=epochs,
-                callbacks=[callback]
+                callbacks=[TrainCheckpointCallback(checkpoint_every_n_steps=100)],
             )
             
             # Manually attach job_config as it is not an argument in __init__ but used in run()
@@ -690,16 +854,8 @@ class FAIRCHEMWrapper(MLIPModel):
                 
                 try:
                     # Construct history dictionary compatible with MLIPModel.plot_training_history
-                    # Keys expected by base.py: loss_train, loss_val, energy_mae_train, force_mae_train
-                    history = {
-                        "epoch": [], 
-                        "loss_train": [], 
-                        "loss_val": [], 
-                        "energy_mae_train": [], 
-                        "energy_mae_val": [],
-                        "force_mae_train": [],
-                        "force_mae_val": []
-                    }
+                    # Metrics are already in self._training_history thanks to history_logger
+                    # We just need to add label distributions
                     
                     # Also populate label distributions for plotting
                     try:
@@ -723,12 +879,17 @@ class FAIRCHEMWrapper(MLIPModel):
                             
                         # Call the distribution collector from base class
                         dist_data = self._collect_label_distributions(train_data_dicts)
-                        history.update(dist_data)
+                        self._training_history.update(dist_data)
                     except Exception as e:
-                         logging.warning(f"Could not collect label distributions: {e}")
+                        logging.warning(f"Could not collect label distributions: {e}")
                     
-                    self.training_history = history
-                    self._training_history = history
+                    # Update the collected history with distribution data
+                    # dist_data already updated above if successful
+                    history = self._training_history
+                    
+                    # Save numerical history to JSON
+                    json_path = Path(save_dir) / "training_history.json"
+                    self.save_training_history(str(json_path))
                     
                     # Plot training history
                     plot_path = Path(save_dir) / "training_history.png"
