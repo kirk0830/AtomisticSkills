@@ -1,58 +1,61 @@
 import sys
 import os
-import warnings
+import io
 import logging
 
-# Add project root to sys.path for robust manual execution
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
+# --- ROBUST STDOUT ISOLATION ---
+# 1. Save the REAL stdout (the one used for MCP communication)
+try:
+    # Duplicate original stdout (FD 1) to a private handle
+    mcp_stdout_fd = os.dup(1)
+    
+    # 2. Redirect system-level FD 1 to /dev/null
+    # This silences library calls that write directly to stdout (the source of the 'G' error)
+    devnull_fd = os.open(os.devnull, os.O_WRONLY)
+    os.dup2(devnull_fd, 1)
+
+    # 3. Patch Python's sys.stdout to use the saved handle
+    # stdio_server uses sys.stdout.buffer to write JSON-RPC messages.
+    # We wrap the saved FD in a binary buffer and a TextIOWrapper.
+    sys.stdout = io.TextIOWrapper(
+        os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
+        encoding='utf-8', 
+        line_buffering=True
+    )
+except Exception:
+    pass
+# -------------------------------
+
+import warnings
+import warnings
+import json
+from pathlib import Path
+from mcp.server.fastmcp import FastMCP
+from typing import Dict, Any, Optional, Union, List
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
 os.environ["PYTHONWARNINGS"] = "ignore"
 
-# Silence common blabbermouth libraries
-logging.getLogger("torch").setLevel(logging.ERROR)
-logging.getLogger("mace").setLevel(logging.ERROR)
-
-
-import sys
-import os
-import traceback
-import time
-
-# Debug logging
-DEBUG_LOG_FILE = "/home/bdeng/projects/simulation_mcp/.agent/test/mace_server_debug.log"
-def debug_log(msg):
-    with open(DEBUG_LOG_FILE, "a") as f:
-        f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}\n")
-
-debug_log("Starting mace_server.py")
-debug_log(f"Python executable: {sys.executable}")
-debug_log(f"CWD: {os.getcwd()}")
-debug_log(f"Environment: {os.environ.get('CONDA_DEFAULT_ENV', 'unknown')}")
-
-
-try:
-    from mcp.server.fastmcp import FastMCP
-except Exception as e:
-    debug_log(f"Error importing FastMCP: {e}")
-   # Configure logging
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("MACE-Server")
 
+# Add project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from typing import Dict, Any, Optional, List, Union
-import json
-import logging
-import os
-from pathlib import Path
-import numpy as np
+# Initialize FastMCP server
+mcp = FastMCP("MACE")
+from src.utils.research_utils import get_current_research_dir
 
-
+# Global variables to hold state
+wrapper: Optional[Any] = None
+sampler: Optional[Any] = None
 
 def recursive_tolist(obj):
+    import numpy as np
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     elif isinstance(obj, dict):
@@ -64,17 +67,7 @@ def recursive_tolist(obj):
     else:
         return obj
 
-# Import the migrated MACE wrapper
-
-# Add project root to sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-debug_log(f"Added project root to sys.path: {project_root}")
-
-from src.utils.mlips.mace.mace_wrapper import MACEWrapper
-from src.utils.mlips.feature_calculators import MaceCrystalFeatureCalculator
-from src.utils.data_augmenter.sampler import StructureSampler
+# ... (removed top-level wrapper/sampler imports) ...
 
 
 # Initialize FastMCP server
@@ -112,6 +105,7 @@ def load_model(model_name: str = "MACE-OMAT-0-small", device: str = "auto", task
     """
     global wrapper
     try:
+        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
         wrapper = MACEWrapper(model_name=model_name, device=device, head=task_name)
         wrapper.load(model_path=model_name if os.path.exists(model_name) else None)
         
@@ -644,8 +638,12 @@ def sample_off_equilibrium(
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
     
-    # Lazily initialize sampler if needed (though load_model should have done it)
+    # Lazily initialize sampler if needed
     if sampler is None:
+         from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+         from src.utils.mlips.feature_calculators import MaceCrystalFeatureCalculator
+         from src.utils.data_augmenter.sampler import StructureSampler
+         
          base_calc = wrapper.create_calculator()
          calc = MaceCrystalFeatureCalculator(mace_calculator=base_calc)
          sampler = StructureSampler(calculator=calc)

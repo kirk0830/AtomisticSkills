@@ -1,29 +1,60 @@
 import sys
 import os
-import warnings
+import io
 import logging
+
+# --- ROBUST STDOUT ISOLATION ---
+# 1. Save the REAL stdout (the one used for MCP communication)
+try:
+    # Duplicate original stdout (FD 1) to a private handle
+    mcp_stdout_fd = os.dup(1)
+    
+    # 2. Redirect system-level FD 1 to /dev/null
+    # This silences library calls that write directly to stdout (the source of the 'G' error)
+    devnull_fd = os.open(os.devnull, os.O_WRONLY)
+    os.dup2(devnull_fd, 1)
+
+    # 3. Patch Python's sys.stdout to use the saved handle
+    # stdio_server uses sys.stdout.buffer to write JSON-RPC messages.
+    # We wrap the saved FD in a binary buffer and a TextIOWrapper.
+    sys.stdout = io.TextIOWrapper(
+        os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
+        encoding='utf-8', 
+        line_buffering=True
+    )
+except Exception:
+    pass
+# -------------------------------
+
+import warnings
+import json
+from pathlib import Path
+from mcp.server.fastmcp import FastMCP
+from typing import Dict, Any, Optional, List, Union
+
+# Suppress all warnings to prevent protocol pollution
+warnings.filterwarnings("ignore")
+os.environ["PYTHONWARNINGS"] = "ignore"
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("MatGL-Server")
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# Suppress all warnings to prevent protocol pollution
-warnings.filterwarnings("ignore")
-os.environ["PYTHONWARNINGS"] = "ignore"
+# Initialize FastMCP server
+mcp = FastMCP("MatGL")
+from src.utils.research_utils import get_current_research_dir
 
-# Silence common blabbermouth libraries
-logging.getLogger("matgl").setLevel(logging.ERROR)
-logging.getLogger("torch").setLevel(logging.ERROR)
-
-import json
-import logging
-from pathlib import Path
-import numpy as np
-from mcp.server.fastmcp import FastMCP
-from typing import Dict, Any, Optional, List, Union
+# Global variables to hold state
+wrapper: Optional[Any] = None
+sampler: Optional[Any] = None
 
 def recursive_tolist(obj):
+    import numpy as np
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     elif isinstance(obj, dict):
@@ -34,19 +65,6 @@ def recursive_tolist(obj):
         return obj.item()
     else:
         return obj
-
-# Import the migrated MatGL wrapper
-from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-from src.utils.mlips.feature_calculators import MatGLCrystalFeatureCalculator
-from src.utils.data_augmenter.sampler import StructureSampler
-
-# Initialize FastMCP server
-mcp = FastMCP("MatGL")
-from src.utils.research_utils import get_current_research_dir
-
-# Global variables to hold state
-wrapper: Optional[MatGLWrapper] = None
-sampler: Optional[StructureSampler] = None
 
 @mcp.tool()
 def load_model(model_name: str = 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', device: str = "auto") -> str:
@@ -69,6 +87,7 @@ def load_model(model_name: str = 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', device:
     """
     global wrapper, sampler
     try:
+        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
         wrapper = MatGLWrapper(model_name=model_name, device=device)
         wrapper.load()
         return f"Successfully loaded MatGL model: {model_name}"
@@ -126,6 +145,10 @@ def sample_off_equilibrium(
     
     if sampler is None:
         # Initialize sampler if not already available
+        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+        from src.utils.mlips.feature_calculators import MatGLCrystalFeatureCalculator
+        from src.utils.data_augmenter.sampler import StructureSampler
+        
         if wrapper is None:
              raise RuntimeError("Model must be loaded first using load_model")
         
@@ -210,6 +233,8 @@ def sample_near_equilibrium(
         return {"error": "Model not loaded. Please call load_model first."}
     
     if sampler is None:
+         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+         from src.utils.data_augmenter.sampler import StructureSampler
          calc = wrapper.create_calculator()
          sampler = StructureSampler(calculator=calc)
         
@@ -263,6 +288,8 @@ def sample_order_disorder(
         return {"error": "Model not loaded. Please call load_model first."}
     
     if sampler is None:
+         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+         from src.utils.data_augmenter.sampler import StructureSampler
          calc = wrapper.create_calculator()
          sampler = StructureSampler(calculator=calc)
         

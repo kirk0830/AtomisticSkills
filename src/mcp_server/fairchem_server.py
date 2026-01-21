@@ -1,67 +1,51 @@
 import sys
 import os
-import warnings
+import io
 import logging
+
+# --- ROBUST STDOUT ISOLATION ---
+# 1. Save the REAL stdout (the one used for MCP communication)
+try:
+    # Duplicate original stdout (FD 1) to a private handle
+    mcp_stdout_fd = os.dup(1)
+    
+    # 2. Redirect system-level FD 1 to /dev/null
+    # This silences library calls that write directly to stdout (the source of the 'G' error)
+    devnull_fd = os.open(os.devnull, os.O_WRONLY)
+    os.dup2(devnull_fd, 1)
+
+    # 3. Patch Python's sys.stdout to use the saved handle
+    # stdio_server uses sys.stdout.buffer to write JSON-RPC messages.
+    # We wrap the saved FD in a binary buffer and a TextIOWrapper.
+    sys.stdout = io.TextIOWrapper(
+        os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
+        encoding='utf-8', 
+        line_buffering=True
+    )
+except Exception:
+    pass
+# -------------------------------
+
+import json
+from pathlib import Path
+from mcp.server.fastmcp import FastMCP
+from typing import Dict, Any, Optional, List, Union
+
+# Configure logging to go to the real stderr
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# Suppress all warnings to prevent protocol pollution
-warnings.filterwarnings("ignore")
-os.environ["PYTHONWARNINGS"] = "ignore"
-
-# Silence common blabbermouth libraries
-logging.getLogger("fairchem").setLevel(logging.ERROR)
-logging.getLogger("torch").setLevel(logging.ERROR)
-
-import json
-import logging
-from pathlib import Path
-import numpy as np
-from mcp.server.fastmcp import FastMCP
-from typing import Dict, Any, Optional, List, Union
-
-def recursive_tolist(obj):
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, dict):
-        return {k: recursive_tolist(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [recursive_tolist(x) for x in obj]
-    elif hasattr(obj, "item"):  # numpy scalars
-        return obj.item()
-    else:
-        return obj
-
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        if isinstance(obj, np.generic):
-            return obj.item()
-        return super(NumpyEncoder, self).default(obj)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Import the migrated FAIRCHEM wrapper
-from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
-from src.utils.structure_utils import load_structure_from_file
-
-# Additional imports for relaxation
-from ase.io import read, write
-from ase.optimize import BFGS
-import numpy as np
-
 # Initialize FastMCP server
 mcp = FastMCP("FAIRCHEM")
 from src.utils.research_utils import get_current_research_dir
 
 # Global variables to hold state
-wrapper: Optional[FAIRCHEMWrapper] = None
+wrapper: Optional[Any] = None
 
 @mcp.tool()
 def load_model(
@@ -72,26 +56,12 @@ def load_model(
 ) -> str:
     """
     Load a FAIRCHEM model.
-    
-    Supported models include:
-    - UMA: 'uma-s-1p1', 'uma-m-1p1' (General domain, small and medium)
-    - ESEN: 'esen-md-direct-all-omol' (Molecular domain)
-    - ESEN: 'esen-sm-conserving-all-oc25' (Catalysis domain)
-    
-    Args:   
-        model_name: Name of the model to load (e.g., "uma-s-1p1").
-        device: Device to use ("auto", "cpu", "cuda").
-        task_name: Optional task name (e.g. "omat", "omol", "oc22").
-        inference_settings: Inference settings ("default" or "turbo"). 
-                           "turbo" enables optimizations like TF32 and expert merging.
-        
-    Returns:
-        Confirmation message.
-    
-    CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
     global wrapper
     try:
+        # Lazy import to speed up server startup and avoid timeout
+        from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
+        
         wrapper = FAIRCHEMWrapper(
             model_name=model_name, 
             device=device, 
@@ -101,24 +71,15 @@ def load_model(
         wrapper.load()
         return f"Successfully loaded FAIRCHEM model: {model_name}"
     except Exception as e:
-        # Provide helpful hint for common import errors
-        if "No module named 'fairchem'" in str(e) or "DLL load failed" in str(e):
-             return f"Error: FAIRCHEM dependencies missing. Ensure 'fairchem-core' is installed in this environment. Detail: {str(e)}"
         return f"Error loading model: {str(e)}"
 
 @mcp.tool()
 def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
     """
     Predict energy, forces, and stress for a structure.
-    
-    Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
-    
-    Returns:
-        Dictionary containing 'energy', 'forces', and optionally 'stress'.
     """
     global wrapper
-    if wrapper is None or not wrapper.is_loaded:
+    if wrapper is None:
         return {"error": "Model not loaded. Please call load_model first."}
     
     return wrapper.static_calculation(structure_data)
@@ -133,43 +94,15 @@ def fine_tune_model(
 ) -> Dict[str, Any]:
     """
     Fine-tune the current FAIRCHEM model.
-    
-    Auto-detects the appropriate task type ('omat' for bulk/surfaces, 'omol' for molecules)
-    based on the training data PBC (Periodic Boundary Conditions).
-    
-    Args:
-        training_data_path: Path to a JSON file containing the training data list.
-            Each sample must have:
-            - 'structure': Dict representation (ASE atoms dict or pymatgen dict)
-            - 'energy': Total potential energy (float, eV)
-            - 'forces': Atomic forces (list/array, eV/A)
-            - 'stress': (Optional) Stress tensor (list/array)
-        epochs: Number of training epochs.
-        learning_rate: Learning rate for the optimizer.
-        output_dir: Directory to save the fine-tuned model, checkpoints, and training history.
-                    If None, a temporary directory is used.
-        training_config: Optional dictionary for advanced training configuration.
-                         See .agent/rules/fine-tuning-guide.md for available keys (e.g., {"freeze_backbone": True}).
-        
-    Returns:
-        Dictionary containing:
-        - "is_fine_tuned": Boolean status
-        - "training_history": Dict of loss and MAE per epoch
-        - "final_metrics": Final epoch metrics
-        - "plot_path": Path to the generated training history plot
-        - "csv_path": Path to the training history CSV file
     """
     global wrapper
-    if wrapper is None or not wrapper.is_loaded:
+    if wrapper is None:
         return {"error": "Model not loaded. Please call load_model first."}
         
     try:
         with open(training_data_path, 'r') as f:
             training_data = json.load(f)
         
-        if not training_data:
-            return {"error": f"Training data file {training_data_path} is empty."}
-
         final_config = {
             "max_epochs": epochs,
             "learning_rate": learning_rate
