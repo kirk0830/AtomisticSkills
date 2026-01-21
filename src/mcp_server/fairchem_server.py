@@ -77,6 +77,9 @@ def load_model(
 def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
     """
     Predict energy, forces, and stress for a structure.
+    
+    Returns:
+        Dict: {'energy': eV, 'forces': eV/A, 'stress': eV/Å³}
     """
     global wrapper
     if wrapper is None:
@@ -94,6 +97,19 @@ def fine_tune_model(
 ) -> Dict[str, Any]:
     """
     Fine-tune the current FAIRCHEM model.
+
+    Args:
+        training_data_path: Path to a JSON file containing the training data list.
+                             Each sample must have:
+                               - 'structure': Dict (ASE atoms or pymatgen format)
+                               - 'energy': Total potential energy (float, eV)
+                               - 'forces': Atomic forces (list/array, eV/A)
+                               - 'stress': (Optional) Stress tensor (list/array) in eV/Å³. 
+                                 NOTE: Provide stress in eV/Å³. (Standard ASE unit)
+        epochs: Number of training epochs.
+        learning_rate: Learning rate.
+        output_dir: Directory to save the fine-tuned model.
+        training_config: Optional dictionary for advanced configuration.
     """
     global wrapper
     if wrapper is None:

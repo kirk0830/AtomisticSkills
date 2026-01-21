@@ -226,7 +226,7 @@ class MLIPModel(ABC):
             structure_data: Structure data compatible with check_structure_data.
             
         Returns:
-            Dictionary containing 'energy' (eV), 'forces' (eV/A), and 'stress' (GPa) if available.
+            Dictionary containing 'energy' (eV), 'forces' (eV/A), and 'stress' (eV/Å³) if available.
         """
         if not self.is_loaded:
             return {"error": "Model not loaded. Please call load_model first."}
@@ -253,10 +253,8 @@ class MLIPModel(ABC):
             # Try to get stress
             try:
                 stress = atoms.get_stress()
-                # Convert stress to GPa for consistency with some conventions, 
-                # OR keep as eV/A^3 (ASE default).
-                # To match server docstrings (often list), we return list.
-                # Usually standard ASE outputs are eV/A^3.
+                # ASE units: stress is in eV/A^3
+                # We standardize to eV/A^3 across the project for simulation compatibility
                 result["stress"] = stress.tolist()
             except Exception:
                 pass
@@ -360,7 +358,7 @@ class MLIPModel(ABC):
         if 'stress_distribution' in training_history and len(training_history['stress_distribution']) > 0:
             stresses = training_history['stress_distribution']
             ax3.hist(stresses, bins=50, alpha=0.7, color='red', edgecolor='black')
-            ax3.set_xlabel('Stress (GPa)')
+            ax3.set_xlabel('Stress (eV/Å³)')
             ax3.set_ylabel('Count')
             ax3.set_title('Stress Distribution')
             ax3.grid(True, alpha=0.3)
@@ -422,7 +420,7 @@ class MLIPModel(ABC):
             ax5.text(0.5, 0.5, 'No force MAE data', ha='center', va='center', transform=ax5.transAxes)
             ax5.set_title('Force MAE')
         
-        # 4. Training and validation MAEs for stress (GPa)
+        # 4. Training and validation MAEs for stress (eV/Å³)
         ax6 = axes[1, 2]
         stress_mae_train = [x for x in training_history.get('stress_mae_train', []) if x is not None]
         stress_mae_val = [x for x in training_history.get('stress_mae_val', []) if x is not None]
@@ -434,7 +432,7 @@ class MLIPModel(ABC):
                 epochs_val = range(1, len(stress_mae_val) + 1)
                 ax6.plot(epochs_val, np.array(stress_mae_val), 'r-', label='Validation', linewidth=2, marker='s')
             ax6.set_xlabel('Epoch')
-            ax6.set_ylabel('Stress MAE (GPa)')
+            ax6.set_ylabel('Stress MAE (eV/Å³)')
             ax6.set_title('Stress MAE')
             ax6.legend()
             ax6.grid(True, alpha=0.3)
@@ -508,13 +506,13 @@ class MLIPModel(ABC):
                 - 'structure': ASE Atoms or pymatgen Structure
                 - 'energy': Total energy (eV)
                 - 'forces': Forces array (eV/Å)
-                - 'stress': Stress tensor (GPa or eV/Å³)
+                - 'stress': Stress tensor (eV/Å³)
         
         Returns:
             Dictionary with keys:
                 - 'energy_distribution': List of per-atom energies (eV/atom)
                 - 'force_distribution': List of all force components (eV/Å)
-                - 'stress_distribution': List of all stress components (GPa)
+                - 'stress_distribution': List of all stress components (eV/Å³)
         """
         import numpy as np
         from ase import Atoms
@@ -568,14 +566,8 @@ class MLIPModel(ABC):
             if 'stress' in data and data['stress'] is not None:
                 stress_array = np.array(data['stress'])
                 if stress_array.size > 0:
-                    # Convert stress from eV/Å³ to GPa if needed
-                    # MACE and MatGL typically use eV/Å³, but we'll plot in GPa
-                    # 1 eV/Å³ ≈ 160.21766208 GPa
+                    # we standardize to eV/Å³ (ASE standard)
                     stress_flat = stress_array.flatten()
-                    # Check if values are in reasonable range for eV/Å³ (< 1) or GPa (> 1)
-                    # If in eV/Å³ range, convert to GPa
-                    if np.abs(stress_flat).max() < 10.0:  # Likely in eV/Å³
-                        stress_flat = stress_flat * 160.21766208  # Convert to GPa
                     stresses.extend(stress_flat.tolist())
         
         return {

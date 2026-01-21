@@ -158,7 +158,7 @@ class CrystalFeaturePotential(nn.Module):
                 # Volume calculation for stress conversion
                 # Use det(lattice)
                 vol = torch.abs(torch.det(lattice))
-                scale = 1.0 / vol * 160.21766208 # eV/A^3 to GPa
+                scale = 1.0 / vol # eV/A^3 (standard ASE unit)
                 stress = sts * scale
                 # Convert to Voigt or keep as tensor
                 if stress.dim() == 3:
@@ -177,12 +177,12 @@ class MatGLCrystalFeatureCalculator(Calculator):
     
     implemented_properties = ("energy", "free_energy", "forces", "stress", "hessian", "magmoms", "crystal_fea")
     
-    def __init__(self, potential, state_attr=None, stress_unit="GPa", stress_weight=1.0, use_voigt=False, device="auto", **kwargs):
+    def __init__(self, potential, state_attr=None, stress_unit="eV/Å³", stress_weight=1.0, use_voigt=False, device="auto", **kwargs):
         """
         Args:
             potential: matgl.apps.pes.Potential or matgl.models.*
             state_attr: State attributes
-            stress_unit: Unit for stress (default GPa)
+            stress_unit: Unit for stress (default eV/Å³)
             stress_weight: Weight for stress
             use_voigt: Use Voigt notation for stress
             device: Device to run on

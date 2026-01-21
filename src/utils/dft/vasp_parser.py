@@ -75,7 +75,10 @@ class VASPParser:
         
         # Extract stress if available
         if hasattr(vasprun, 'stress') and vasprun.stress is not None:
-            results['stress'] = vasprun.stress[-1]  # Final stress
+            # VASP stress is in kB. Convert to eV/A^3 (ASE standard).
+            # 1 kB = 0.1 GPa. 1 GPa = ase.units.GPa eV/A^3.
+            import ase.units
+            results['stress'] = (np.array(vasprun.stress[-1]) * 0.1 * ase.units.GPa).tolist()
         else:
             results['stress'] = None
         

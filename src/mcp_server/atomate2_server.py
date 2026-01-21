@@ -180,7 +180,7 @@ def get_atomate2_results_by_id(
         flow_ids: List of Flow IDs (UUIDs or DB IDs).
         project_name: Name of the jobflow-remote project (default: None, auto-detected).
         save_to_file: Optional path to save the results as a JSON file.
-        convert_units: Whether to convert stress from kB to GPa (default: True).
+        convert_units: Whether to convert stress from kB to eV/Å³ (default: True).
         
     Returns:
         Dictionary containing the extracted training data and count.
@@ -234,7 +234,7 @@ def get_atomate2_results_by_formula(
         chemsys: Chemical system filter (e.g., "Al-O").
         project_name: Name of the jobflow-remote project (default: None, auto-detected).
         save_to_file: Optional path to save the results as a JSON file.
-        convert_units: Whether to convert stress from kB to GPa (default: True).
+        convert_units: Whether to convert stress from kB to eV/Å³ (default: True).
         limit: Maximum number of results to retrieve (default: 100).
         
     Returns:

@@ -106,7 +106,7 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
         Dictionary containing:
         - "energy": Total potential energy (eV)
         - "forces": Atomic forces (eV/A)
-        - "stress": (Optional) Stress tensor if supported by model
+        - "stress": (Optional) Stress tensor in eV/Å³
         - "charges": (Optional) Atomic charges if supported (e.g., CHGNet)
     """
     global wrapper
@@ -748,7 +748,7 @@ def fine_tune_model(
                                - 'structure': Dict representation (ASE atoms dict or pymatgen dict)
                                - 'energy': Total potential energy (float, eV)
                                - 'forces': Atomic forces (list/array, eV/A)
-                               - 'stress': (Optional) Stress tensor (list/array)
+                               - 'stress': (Optional) Stress tensor (list/array) in eV/Å³.
         epochs: Number of training epochs.
         learning_rate: Learning rate.
         batch_size: Batch size.

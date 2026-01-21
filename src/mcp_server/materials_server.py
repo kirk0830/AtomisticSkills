@@ -304,7 +304,7 @@ def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> D
         - For single calculation:
             - 'final_energy': Total energy (eV)
             - 'forces': Atomic forces (eV/A)
-            - 'stress': Stress tensor (eV/A^3)
+            - 'stress': Stress tensor (eV/Å³)
             - 'final_structure': Pymatgen/ASE dict structure
         - For multiple calculations:
             - 'results': List of result dictionaries for each structure

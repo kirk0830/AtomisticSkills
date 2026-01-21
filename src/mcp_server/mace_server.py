@@ -112,7 +112,7 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
         structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
     
     Returns:
-        Dictionary containing 'energy', 'forces', and optionally 'stress'.
+        Dictionary containing 'energy', 'forces', and optionally 'stress' (eV/Å³).
     """
     global wrapper
     if wrapper is None or not wrapper.is_loaded:
@@ -140,7 +140,8 @@ def fine_tune_model(
                                - 'structure': Dict (ASE atoms or pymatgen format)
                                - 'energy': Total potential energy (float, eV)
                                - 'forces': Atomic forces (list/array, eV/A)
-                               - 'stress': (Optional) Stress tensor for bulk systems
+                               - 'stress': (Optional) Stress tensor for bulk systems (eV/Å³). 
+                                 NOTE: Provide stress in eV/Å³. (Standard ASE unit)
         epochs: Number of training epochs.
         learning_rate: Learning rate for the optimizer.
         output_dir: Directory to save the fine-tuned model and results.

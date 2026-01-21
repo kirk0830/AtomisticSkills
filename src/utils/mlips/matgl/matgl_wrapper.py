@@ -372,7 +372,7 @@ class MatGLWrapper(MLIPModel):
         if not hasattr(self.model, "calc_charge"):
             self.model.calc_charge = False
             
-        return PESCalculator(potential=self.model, device=self.device)
+        return PESCalculator(potential=self.model, device=self.device, stress_unit="eV/A3")
 
     def fine_tune(
         self,
@@ -614,6 +614,7 @@ class MatGLWrapper(MLIPModel):
 
     def _prepare_training_data(self, training_data: List[Dict[str, Any]]) -> Tuple:
         """Helper to extract data into parallel lists."""
+        import ase.units
         atoms_list, energies, forces, stresses = [], [], [], []
         for d in training_data:
             atoms = d['structure']
@@ -623,5 +624,14 @@ class MatGLWrapper(MLIPModel):
             atoms_list.append(atoms)
             energies.append(d.get('energy', 0.0))
             forces.append(d.get('forces', np.zeros((len(atoms), 3))))
-            stresses.append(d.get('stress', np.zeros(6)))
+            
+            s = d.get('stress')
+            if s is not None:
+                # MatGL's Potential module internally converts stress to GPa 
+                # (see matgl.apps._pes_dgl.py). Thus, labels should be in GPa.
+                # Project standard labels are in eV/A^3, so we convert to GPa for training.
+                stresses.append(np.array(s) / ase.units.GPa)
+            else:
+                stresses.append(np.zeros(6))
+                
         return atoms_list, np.array(energies), forces, stresses

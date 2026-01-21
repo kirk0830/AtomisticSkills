@@ -903,10 +903,18 @@ if __name__ == "__main__":
             if 'config_type' in data:
                 atoms.info['config_type'] = data['config_type']
             
+            import ase.units
             structures.append(atoms)
             energies.append(data['energy'])
             forces.append(np.array(data['forces']) if data.get('forces') is not None else None)
-            stresses.append(np.array(data['stress']) if data.get('stress') is not None else None)
+            
+            stress = data.get('stress')
+            if stress is not None:
+                stress_array = np.array(stress)
+                # Standardized labels are already in eV/A^3 (ASE standard)
+                stresses.append(stress_array)
+            else:
+                stresses.append(None)
         
         return structures, np.array(energies), forces, stresses
     

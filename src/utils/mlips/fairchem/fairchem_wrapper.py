@@ -294,9 +294,8 @@ class FAIRCHEMWrapper(MLIPModel):
         """
         # Unwrap configuration
         config = training_config or {}
-        epochs = config.get("epochs", config.get("max_epochs", 2)) # Default 2 to match docs/test
-        # Official FairChem fine-tuning example uses lr=2e-4
-        learning_rate = config.get("learning_rate", config.get("lr", 2e-4)) 
+        epochs = config.get("epochs", config.get("max_epochs", 10))
+        learning_rate = config.get("learning_rate", 1e-4)
         batch_size = config.get("batch_size", 4)
         task_name = config.get("task_name", None)
         # Head selection / resumption
@@ -316,6 +315,7 @@ class FAIRCHEMWrapper(MLIPModel):
             from pymatgen.io.ase import AseAtomsAdaptor
             from ase import Atoms
             from ase.calculators.singlepoint import SinglePointCalculator
+            import ase.units
             
             for d in data_list:
                 s_obj = d['structure']
@@ -348,6 +348,7 @@ class FAIRCHEMWrapper(MLIPModel):
                 
                 if stress is not None:
                      stress = np.array(stress)
+                     # Standardized labels are already in eV/A^3 (ASE standard)
                 
                 if energy is not None or forces is not None or stress is not None:
                      calc = SinglePointCalculator(at, energy=energy, forces=forces, stress=stress)
