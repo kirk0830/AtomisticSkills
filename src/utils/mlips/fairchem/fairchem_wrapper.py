@@ -23,23 +23,53 @@ class FAIRCHEMHistoryLogger:
     """Helper class to capture metrics from FAIRCHEM training loop."""
     def __init__(self, history):
         self.history = history
+        # Buffers for training metrics to average them per epoch
+        self._train_buffers = {
+            'loss_train': [],
+            'energy_mae_train': [],
+            'force_mae_train': [],
+            'stress_mae_train': []
+        }
+        self.last_epoch = -1
         
     def log_summary(self, summary):
         """Pass-through for log_summary if needed."""
         pass
         
+    def _flush_train_buffers(self):
+        """Calculate averages and append to history."""
+        for key, buffer in self._train_buffers.items():
+            if buffer:
+                avg_val = sum(buffer) / len(buffer)
+                self.history[key].append(float(avg_val))
+                self._train_buffers[key] = []
+            elif key in self.history and len(self.history[key]) < len(self.history.get('epoch', [])):
+                # If buffer is empty but we have an epoch, append None or 0 to keep lists aligned
+                # Actually, if we flushed at the end of epoch, they should align.
+                pass
+
     def log(self, metrics, step=None, commit=True):
         """Capture metrics and store in history dictionary."""
         # epoch is often reported as val/epoch or train/epoch
+        epoch = -1
         if 'val/epoch' in metrics:
             epoch = int(metrics['val/epoch'])
+        elif 'train/epoch' in metrics:
+            epoch = int(metrics['train/epoch'])
+
+        if epoch != -1 and epoch > self.last_epoch:
+            # New epoch detected! Flush the training buffers from the previous epoch
+            if self.last_epoch != -1:
+                self._flush_train_buffers()
+            
+            # Store the new epoch
             if epoch not in self.history['epoch']:
                 self.history['epoch'].append(epoch)
+            self.last_epoch = epoch
         
+        # Accumulate training metrics in buffers
         if 'train/loss' in metrics:
-            self.history['loss_train'].append(float(metrics['train/loss']))
-        if 'val/loss' in metrics:
-            self.history['loss_val'].append(float(metrics['val/loss']))
+            self._train_buffers['loss_train'].append(float(metrics['train/loss']))
             
         # Parse task-specific metrics
         # Keys look like: val/dataset,task,metric_name
@@ -53,14 +83,22 @@ class FAIRCHEMHistoryLogger:
                 elif 'stress' in k:
                     self.history['stress_mae_val'].append(val)
             elif k.startswith('train/') and 'mae' in k:
-                # If training MAEs are ever reported
                 val = float(v)
                 if 'energy' in k:
-                    self.history['energy_mae_train'].append(val)
+                    self._train_buffers['energy_mae_train'].append(val)
                 elif 'forces' in k:
-                    self.history['force_mae_train'].append(val)
+                    self._train_buffers['force_mae_train'].append(val)
                 elif 'stress' in k:
-                    self.history['stress_mae_train'].append(val)
+                    self._train_buffers['stress_mae_train'].append(val)
+        
+        # Validation loss is usually logged at the end of epoch along with val/epoch
+        if 'val/loss' in metrics:
+            self.history['loss_val'].append(float(metrics['val/loss']))
+
+    def finalize(self):
+        """Flush any remaining training logs when training ends."""
+        self._flush_train_buffers()
+
 
 # Available FAIRCHEM models and checkpoints
 # Model configurations, default tasks, and supported tasks
@@ -839,6 +877,9 @@ class FAIRCHEMWrapper(MLIPModel):
             model.train()
 
             runner.run()
+            
+            # Flush remaining training metrics
+            history_logger.finalize()
             
             # --- 9. Save Artifacts ---
             # Find best or final checkpoint
