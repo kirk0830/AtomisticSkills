@@ -60,6 +60,7 @@ from src.utils.structure_utils import (
 )
 from src.utils.api_keys import get_mp_key
 from src.utils.research_utils import create_new_research_dir
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("MaterialsServer")
