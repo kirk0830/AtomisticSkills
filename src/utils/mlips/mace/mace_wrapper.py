@@ -639,45 +639,41 @@ if __name__ == "__main__":
                 logger.info(f"MACE training stderr (last 500 chars): {result.stderr[-500:]}")
             
             if result.returncode != 0:
-                logger.error(f"MACE training failed with return code {result.returncode}")
-                logger.error(f"STDOUT: {result.stdout}")
-                logger.error(f"STDERR: {result.stderr}")
-                raise RuntimeError(f"MACE training failed: {result.stderr}")
+                logger.error(f"MACE training process exited with return code {result.returncode}")
+                # We'll check if a model was saved anyway, as MACE often fails at the end during plotting
             
             # Load the fine-tuned model
-            # MACE saves models in checkpoints directory with epoch number
-            # Also check results_dir and output_path for model files
             model_files = []
             if checkpoints_dir.exists():
                 model_files.extend(list(checkpoints_dir.glob("*.model")))
-                # Also check for checkpoint files with epoch numbers
                 model_files.extend(list(checkpoints_dir.glob("*_*.model")))
             if results_dir.exists():
                 model_files.extend(list(results_dir.glob("*.model")))
             model_files.extend(list(output_path.glob("*.model")))
             
             if model_files:
-                # Sort by modification time and get the latest
                 fine_tuned_model_path = max(model_files, key=lambda p: p.stat().st_mtime)
-                # Copy to expected location for consistency
                 if fine_tuned_model_path != model_save_path:
                     import shutil
                     shutil.copy2(fine_tuned_model_path, model_save_path)
                     logger.info(f"Copied model from {fine_tuned_model_path} to {model_save_path}")
-                self.model = "MACE"  # Store model identifier
+                self.model = "MACE"
                 self.is_fine_tuned = True
                 logger.info(f"Fine-tuned model saved to {model_save_path}")
+            elif result.returncode != 0:
+                # If no model files found and returncode was non-zero, then it's a real failure
+                logger.error(f"STDOUT: {result.stdout}")
+                logger.error(f"STDERR: {result.stderr}")
+                raise RuntimeError(f"MACE training failed: {result.stderr}")
             else:
-                # List what files were created for debugging
                 all_files = list(output_path.rglob("*"))
                 logger.warning(f"No model files found. Created files: {[str(f) for f in all_files[:20]]}")
-                raise RuntimeError("MACE training completed but no model checkpoint was saved. Check training logs for errors.")
+                raise RuntimeError("MACE training completed but no model checkpoint was saved.")
                 
-        except subprocess.TimeoutExpired:
-            logger.error("MACE training timed out after 1 hour")
-            raise RuntimeError("MACE training timed out")
+        except (subprocess.TimeoutExpired, RuntimeError) as e:
+            raise e
         except Exception as e:
-            logger.error(f"MACE training failed: {e}")
+            logger.error(f"Unexpected error during MACE fine-tuning: {e}")
             raise RuntimeError(f"Fine-tuning failed: {e}")
         
         # Store training history for plotting
@@ -1040,10 +1036,9 @@ if __name__ == "__main__":
                                 if 'mae_stress' in data:
                                     mae_s = data['mae_stress']
                                     if mae_s is not None:
-                                        mae_s_gpa = mae_s * 160.21766208
                                         while len(self._training_history['stress_mae_val']) <= epoch:
                                             self._training_history['stress_mae_val'].append(None)
-                                        self._training_history['stress_mae_val'][epoch] = mae_s_gpa
+                                        self._training_history['stress_mae_val'][epoch] = mae_s
                                 if 'loss' in data:
                                     while len(self._training_history['loss_val']) <= epoch:
                                         self._training_history['loss_val'].append(None)

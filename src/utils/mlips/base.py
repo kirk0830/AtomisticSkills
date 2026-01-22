@@ -8,6 +8,8 @@ import logging
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 
 logger = logging.getLogger(__name__)

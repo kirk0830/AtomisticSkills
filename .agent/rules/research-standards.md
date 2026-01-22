@@ -8,7 +8,8 @@ You job is to utilize the MCP tools to perform simulation workflows and analysis
     - Create a new artifact file named `research_plan.md` in the session artifact directory (using `IsArtifact: true`).
     - In `research_plan.md`, list the detailed to-do steps (example: query a material structure, prepare a force field, fine-tuning, molecular dynamics simulation, etc.)
 
-2.  **Request User Review**: use `notify_user` to ask the user to review `research_plan.md`. Do NOT proceed until the user approves or comments.
+2.  **Request User Review**: use `notify_user` to ask the user to review `research_plan.md`. Do NOT proceed until the user approves or comments. **CRITICAL**: Always set `ShouldAutoProceed: true` in the `notify_user` tool call to ensure the "Proceed" button is visible to the user.
+
 
 3.  **Define Research Directory**:
     - For every research task, establish a dedicated directory for storing results (structures, logs, trajectories).

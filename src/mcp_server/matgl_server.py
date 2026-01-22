@@ -53,18 +53,7 @@ from src.utils.research_utils import get_current_research_dir
 wrapper: Optional[Any] = None
 sampler: Optional[Any] = None
 
-def recursive_tolist(obj):
-    import numpy as np
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, dict):
-        return {k: recursive_tolist(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [recursive_tolist(x) for x in obj]
-    elif hasattr(obj, "item"):  # numpy scalars
-        return obj.item()
-    else:
-        return obj
+from src.utils.serialization_utils import recursive_tolist
 
 @mcp.tool()
 def load_model(model_name: str = 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', device: str = "auto") -> str:
