@@ -56,6 +56,11 @@ def load_model(
 ) -> str:
     """
     Load a FAIRCHEM model.
+    
+    Supported models include:
+    - UMA (Universal): 'uma-s-1p1', 'uma-m-1p1', 'uma-s-1'
+    - ESEN (Organic/Molecular): 'esen-md-direct-all-omol', 'esen-sm-conserving-all-omol', 'esen-sm-direct-all-omol'
+    - ESEN (Catalysis/OC25): 'esen-sm-conserving-all-oc25', 'esen-md-direct-all-oc25'
     """
     global wrapper
     try:

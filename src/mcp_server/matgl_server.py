@@ -72,9 +72,9 @@ def load_model(model_name: str = 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', device:
     Load a MatGL model.
     
     Supported models include:
-    - M3GNet: 'M3GNet-MP-2021.2.8-PES'
-    - CHGNet: 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES'
-    - TensorNet: 'TensorNet-MatPES-r2SCAN-v2025.1-PES' (DGL-based)
+    - PES Models: 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', 'CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES', 'CHGNet-MPtrj-2024.2.13-11M-PES', 'CHGNet-MPtrj-2023.12.1-2.7M-PES'
+    - PES Models: 'M3GNet-MP-2021.2.8-PES', 'M3GNet-MatPES-PBE-v2025.1-PES', 'M3GNet-MatPES-r2SCAN-v2025.1-PES', 'M3GNet-MP-2021.2.8-DIRECT-PES'
+    - PES Models: 'TensorNet-MatPES-PBE-v2025.1-PES', 'TensorNet-MatPES-r2SCAN-v2025.1-PES', 'M3GNet-ANI-1x-Subset-PES', 'SO3Net-ANI-1x-Subset-PES'
     
     Args:
         model_name: Name of the model to load (e.g., "M3GNet", "CHGNet").
@@ -83,7 +83,7 @@ def load_model(model_name: str = 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', device:
     Returns:
         Confirmation message.
     
-    CRITICAL: This tool must be called before using any other tool to load the model into memory.
+    CRITICAL: This tool must be called before using any other tool (except predict_bandgap) to load the model into memory.
     """
     global wrapper, sampler
     with contextlib.redirect_stdout(sys.stderr):
@@ -116,6 +116,33 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
     
     with contextlib.redirect_stdout(sys.stderr):
         return wrapper.static_calculation(structure_data)
+
+# Local variable to cache bandgap predictor separate from global PES wrapper
+_bandgap_wrapper: Optional[Any] = None
+
+@mcp.tool()
+def predict_bandgap(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+    """
+    Predict the bandgap for a structure using MEGNet.
+    Uses an isolated model instance to avoid conflicts with PES calculations.
+    
+    Args:
+        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+    
+    Returns:
+        Dictionary containing "bandgap" in eV.
+    """
+    global _bandgap_wrapper
+    with contextlib.redirect_stdout(sys.stderr):
+        try:
+            if _bandgap_wrapper is None:
+                from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+                _bandgap_wrapper = MatGLWrapper(model_name="MEGNet-MP-2019.4.1-BandGap-mfi")
+                _bandgap_wrapper.load()
+            
+            return _bandgap_wrapper.static_calculation(structure_data)
+        except Exception as e:
+            return {"error": f"Bandgap prediction failed: {str(e)}"}
 
 @mcp.tool()
 def sample_off_equilibrium(

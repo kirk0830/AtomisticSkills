@@ -456,6 +456,84 @@ class MatGLWrapper(MLIPModel):
             
         return PESCalculator(potential=self.model, device=self.device, stress_unit="eV/A3")
 
+    def static_calculation(self, structure_data: Any) -> Dict[str, Any]:
+        """
+        Run static calculation for a structure. 
+        Automatically detects if model is a PES (Potential) or a property predictor.
+        """
+        if not self.is_loaded:
+            return {"error": "Model not loaded. Please call load() first."}
+
+        # Convert to ASE Atoms
+        atoms = self.check_structure_data(structure_data)
+        if isinstance(atoms, dict) and "error" in atoms:
+            return atoms
+
+        # Check if model has PES capabilities
+        is_pes = False
+        model_class_name = type(self.model).__name__
+        logger.info(f"Model class: {model_class_name}, name: {self.model_name}")
+        
+        if "Potential" in model_class_name:
+            is_pes = True
+        
+        # Double check with attributes that only POTENTIAL models have
+        # Many property models in MatGL also have 'model' attribute, so that's not enough
+        if is_pes:
+            # Verify it actually supports forces/stresses
+            if not hasattr(self.model, "calc_forces") and not hasattr(self.model, "model"):
+                is_pes = False
+
+        logger.info(f"Identified is_pes: {is_pes}")
+
+        if is_pes:
+            # Standard PES calculation using ASE calculator
+            return super().static_calculation(atoms)
+        else:
+            logger.info("Proceeding with direct property prediction")
+            # Direct property prediction (e.g. MEGNet Bandgap, M3GNet Eform)
+            try:
+                from pymatgen.io.ase import AseAtomsAdaptor
+                structure = AseAtomsAdaptor.get_structure(atoms)
+                
+                # Check for predict_structure or call directly
+                if hasattr(self.model, "predict_structure"):
+                    prediction = self.model.predict_structure(structure)
+                else:
+                    # Manually convert to graph if predict_structure is missing
+                    # This is a fallback for some MatGL model versions
+                    from matgl.ext.pymatgen import Structure2Graph
+                    # Get element list from self.model if possible
+                    element_types = getattr(self.model, "element_types", None)
+                    if element_types is None and hasattr(self.model, "model"):
+                        element_types = getattr(self.model.model, "element_types", None)
+                    
+                    if element_types:
+                        converter = Structure2Graph(element_types=element_types, cutoff=5.0)
+                        graph, _, _ = converter.get_graph(structure)
+                        prediction = self.model(graph)
+                    else:
+                        raise AttributeError("Model has no 'predict_structure' and element_types are unknown.")
+
+                # Result handling
+                if hasattr(prediction, "item"):
+                    val = float(prediction.item())
+                else:
+                    val = float(prediction)
+                
+                # Map property name
+                prop_name = "property_prediction"
+                if "BandGap" in self.model_name or "band_gap" in self.model_name.lower():
+                    prop_name = "bandgap"
+                elif "Eform" in self.model_name or "formation" in self.model_name.lower():
+                    prop_name = "formation_energy"
+                
+                return {prop_name: val, "unit": "eV" if "BandGap" in self.model_name or "Eform" in self.model_name else "unknown"}
+            except Exception as e:
+                import traceback
+                logger.error(f"Property prediction failed: {e}\n{traceback.format_exc()}")
+                return {"error": f"Property prediction failed: {str(e)}"}
+
     def fine_tune(
         self,
         training_data: List[Dict[str, Any]],
