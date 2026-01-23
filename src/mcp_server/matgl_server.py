@@ -1,6 +1,17 @@
 import sys
 import os
 import io
+
+# set MATGL_BACKEND to DGL by default for better performance and TensorNet support
+# User can still override this in their environment (e.g. export MATGL_BACKEND=PYG)
+if "MATGL_BACKEND" not in os.environ:
+    os.environ["MATGL_BACKEND"] = "DGL"
+
+# Silence Wandb and suppress warnings to prevent protocol pollution
+os.environ["WANDB_MODE"] = "offline"
+os.environ["WANDB_SILENT"] = "true"
+os.environ["PYTHONWARNINGS"] = "ignore"
+
 import logging
 
 # --- ROBUST STDOUT ISOLATION ---
@@ -26,6 +37,7 @@ except Exception:
     pass
 # -------------------------------
 
+import contextlib
 import warnings
 import json
 from pathlib import Path
@@ -34,10 +46,9 @@ from typing import Dict, Any, Optional, List, Union
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
-os.environ["PYTHONWARNINGS"] = "ignore"
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger("MatGL-Server")
 
 # Add project root to sys.path
@@ -75,13 +86,14 @@ def load_model(model_name: str = 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', device:
     CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
     global wrapper, sampler
-    try:
-        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-        wrapper = MatGLWrapper(model_name=model_name, device=device)
-        wrapper.load()
-        return f"Successfully loaded MatGL model: {model_name}"
-    except Exception as e:
-        return f"Error loading model: {str(e)}"
+    with contextlib.redirect_stdout(sys.stderr):
+        try:
+            from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+            wrapper = MatGLWrapper(model_name=model_name, device=device)
+            wrapper.load()
+            return f"Successfully loaded MatGL model: {model_name}"
+        except Exception as e:
+            return f"Error loading model: {str(e)}"
 
 @mcp.tool()
 def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
@@ -102,8 +114,8 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
     
-
-    return wrapper.static_calculation(structure_data)
+    with contextlib.redirect_stdout(sys.stderr):
+        return wrapper.static_calculation(structure_data)
 
 @mcp.tool()
 def sample_off_equilibrium(
@@ -133,17 +145,18 @@ def sample_off_equilibrium(
         return {"error": "Model not loaded. Please call load_model first."}
     
     if sampler is None:
-        # Initialize sampler if not already available
-        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-        from src.utils.mlips.feature_calculators import MatGLCrystalFeatureCalculator
-        from src.utils.data_augmenter.sampler import StructureSampler
-        
-        if wrapper is None:
-             raise RuntimeError("Model must be loaded first using load_model")
-        
-        # Create calculator from wrapper
-        calc = MatGLCrystalFeatureCalculator(potential=wrapper.model, device=wrapper.device)
-        sampler = StructureSampler(calculator=calc)
+        with contextlib.redirect_stdout(sys.stderr):
+            # Initialize sampler if not already available
+            from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+            from src.utils.mlips.feature_calculators import MatGLCrystalFeatureCalculator
+            from src.utils.data_augmenter.sampler import StructureSampler
+            
+            if wrapper is None:
+                 raise RuntimeError("Model must be loaded first using load_model")
+            
+            # Create calculator from wrapper
+            calc = MatGLCrystalFeatureCalculator(potential=wrapper.model, device=wrapper.device)
+            sampler = StructureSampler(calculator=calc)
     
     try:
         # Map model name to specific version if available/alias
@@ -171,21 +184,16 @@ def sample_off_equilibrium(
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
 
-        result_tuple = sampler.sample_off_equilibrium(
-            atoms=atoms,
-            total_steps=total_steps,
-            output_dir=output_dir,
-            target_atoms=target_atoms,
-            temperature=temperature
-        )
-        
-        # Debugging return value mismatch
-        if not isinstance(result_tuple, (list, tuple)) or len(result_tuple) != 2:
-             print(f"DEBUG: sample_off_equilibrium returned {type(result_tuple)} with len {len(result_tuple) if hasattr(result_tuple, '__len__') else 'N/A'}")
-             if hasattr(result_tuple, '__len__') and len(result_tuple) > 0:
-                 print(f"DEBUG: First element type: {type(result_tuple[0])}")
-        
-        structures, metadata = result_tuple
+        with contextlib.redirect_stdout(sys.stderr):
+            result_tuple = sampler.sample_off_equilibrium(
+                atoms=atoms,
+                total_steps=total_steps,
+                output_dir=output_dir,
+                target_atoms=target_atoms,
+                temperature=temperature
+            )
+            
+            structures, metadata = result_tuple
         
         return {
             "status": "success",
@@ -195,7 +203,7 @@ def sample_off_equilibrium(
         }
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         return {"error": f"Off-equilibrium sampling failed: {str(e)}"}
 
 @mcp.tool()
@@ -222,10 +230,11 @@ def sample_near_equilibrium(
         return {"error": "Model not loaded. Please call load_model first."}
     
     if sampler is None:
-         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-         from src.utils.data_augmenter.sampler import StructureSampler
-         calc = wrapper.create_calculator()
-         sampler = StructureSampler(calculator=calc)
+        with contextlib.redirect_stdout(sys.stderr):
+            from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+            from src.utils.data_augmenter.sampler import StructureSampler
+            calc = wrapper.create_calculator()
+            sampler = StructureSampler(calculator=calc)
         
     try:
         # Validate and convert structure
@@ -234,11 +243,12 @@ def sample_near_equilibrium(
             return atoms
 
         # Run sampling (expects list of structures)
-        structures = sampler.sample_near_equilibrium(
-            initial_structures=[atoms],
-            fmax=fmax,
-            max_steps=max_steps
-        )
+        with contextlib.redirect_stdout(sys.stderr):
+            structures = sampler.sample_near_equilibrium(
+                initial_structures=[atoms],
+                fmax=fmax,
+                max_steps=max_steps
+            )
         
         # Convert result to predictable format (properties not calculated yet on result without calc attached)
         # But we can return the structure
@@ -277,10 +287,11 @@ def sample_order_disorder(
         return {"error": "Model not loaded. Please call load_model first."}
     
     if sampler is None:
-         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-         from src.utils.data_augmenter.sampler import StructureSampler
-         calc = wrapper.create_calculator()
-         sampler = StructureSampler(calculator=calc)
+        with contextlib.redirect_stdout(sys.stderr):
+            from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+            from src.utils.data_augmenter.sampler import StructureSampler
+            calc = wrapper.create_calculator()
+            sampler = StructureSampler(calculator=calc)
         
     try:
         # For order-disorder, we preferably need pymatgen structure with partial occupancies
@@ -294,16 +305,17 @@ def sample_order_disorder(
         # We'll try to reconstruct or use raw input if it looks like pymatgen dict
         from pymatgen.core import Structure
         try:
-             # Try assuming input is pymatgen dict directly or wrapped
-             if "lattice" in structure_data and "sites" in structure_data:
-                 pmg_structure = Structure.from_dict(structure_data)
-             else:
-                 # Fallback to ASE conversion then back to PMG (might lose disorder info)
-                 atoms = wrapper.check_structure_data(structure_data)
-                 if isinstance(atoms, dict) and "error" in atoms:
-                     return atoms
-                 from pymatgen.io.ase import AseAtomsAdaptor
-                 pmg_structure = AseAtomsAdaptor.get_structure(atoms)
+            with contextlib.redirect_stdout(sys.stderr):
+                 # Try assuming input is pymatgen dict directly or wrapped
+                 if "lattice" in structure_data and "sites" in structure_data:
+                     pmg_structure = Structure.from_dict(structure_data)
+                 else:
+                     # Fallback to ASE conversion then back to PMG (might lose disorder info)
+                     atoms = wrapper.check_structure_data(structure_data)
+                     if isinstance(atoms, dict) and "error" in atoms:
+                         return atoms
+                     from pymatgen.io.ase import AseAtomsAdaptor
+                     pmg_structure = AseAtomsAdaptor.get_structure(atoms)
         except Exception:
              return {"error": "Invalid structure format for order-disorder sampling."}
 
@@ -314,12 +326,13 @@ def sample_order_disorder(
             
         os.makedirs(output_dir, exist_ok=True)
         
-        structures = sampler.sample_order_disorder(
-            atoms=pmg_structure,
-            n_structures=n_structures,
-            target_atoms=target_atoms,
-            output_dir=output_dir
-        )
+        with contextlib.redirect_stdout(sys.stderr):
+            structures = sampler.sample_order_disorder(
+                atoms=pmg_structure,
+                n_structures=n_structures,
+                target_atoms=target_atoms,
+                output_dir=output_dir
+            )
         
         # Save results
         from ase.io import write
@@ -396,7 +409,8 @@ def relax_structure(
             interval=1
         )
         
-        result = relaxer.calc(atoms)
+        with contextlib.redirect_stdout(sys.stderr):
+            result = relaxer.calc(atoms)
         
         # Save relaxed structure to CIF
         final_struct = result["final_structure"]
@@ -428,7 +442,7 @@ def relax_structure(
         }
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         return {"error": f"Relaxation failed: {str(e)}"}
 
 @mcp.tool()
@@ -494,7 +508,8 @@ def run_md(
             relax_structure=False
         )
         
-        result = md_runner.calc(atoms)
+        with contextlib.redirect_stdout(sys.stderr):
+            result = md_runner.calc(atoms)
         
         def get_structure_dict(struct_or_atoms):
             if hasattr(struct_or_atoms, "as_dict"):
@@ -509,7 +524,7 @@ def run_md(
         }
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         return {"error": f"MD simulation failed: {str(e)}"}
 
 @mcp.tool()
@@ -569,11 +584,12 @@ def calculate_neb(
             climb=climb
         )
         
-        result = neb_calc.calc_images(
-            start_struct=start_struct,
-            end_struct=end_struct,
-            n_images=n_images
-        )
+        with contextlib.redirect_stdout(sys.stderr):
+            result = neb_calc.calc_images(
+                start_struct=start_struct,
+                end_struct=end_struct,
+                n_images=n_images
+            )
         
         mep = result.get("mep")
         mep_dict = mep.as_dict() if mep else {}
@@ -585,7 +601,7 @@ def calculate_neb(
         }
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         return {"error": f"NEB failed: {str(e)}"}
 
 @mcp.tool()
@@ -639,7 +655,8 @@ def calculate_phonon(
             write_total_dos=os.path.join(output_dir, "total_dos.dat")
         )
         
-        result = phonon_calc.calc(atoms)
+        with contextlib.redirect_stdout(sys.stderr):
+            result = phonon_calc.calc(atoms)
         
         thermal_props = result.get("thermal_properties", {})
         
@@ -650,7 +667,7 @@ def calculate_phonon(
         
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         return {"error": f"Phonon calculation failed: {str(e)}"}
 
 @mcp.tool()
@@ -703,7 +720,8 @@ def calculate_qha(
             write_thermal_expansion=os.path.join(output_dir, "thermal_expansion.dat")
         )
         
-        result = qha_calc.calc(atoms)
+        with contextlib.redirect_stdout(sys.stderr):
+            result = qha_calc.calc(atoms)
         
         output = {
             "temperatures": result.get("temperatures", []).tolist() if hasattr(result.get("temperatures"), "tolist") else result.get("temperatures"),
@@ -716,7 +734,7 @@ def calculate_qha(
         
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         return {"error": f"QHA calculation failed: {str(e)}"}
 
 @mcp.tool()
@@ -778,11 +796,12 @@ def fine_tune_model(
         if training_config:
             config.update(training_config)
         
-        result = wrapper.fine_tune(
-            training_data=processed_data,
-            training_config=config,
-            output_dir=output_dir if output_dir else str(get_current_research_dir() / "matgl" / "fine_tuning")
-        )
+        with contextlib.redirect_stdout(sys.stderr):
+            result = wrapper.fine_tune(
+                training_data=processed_data,
+                training_config=config,
+                output_dir=output_dir if output_dir else str(get_current_research_dir() / "matgl" / "fine_tuning")
+            )
         
         # Add extra info
         result["is_fine_tuned"] = True
@@ -790,7 +809,7 @@ def fine_tune_model(
         return result
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stderr)
         return {"error": f"Fine-tuning failed: {str(e)}"}
 
 if __name__ == "__main__":

@@ -633,13 +633,10 @@ if __name__ == "__main__":
             )
             
             # Log output for debugging
-            if result.stdout:
-                logger.info(f"MACE training stdout (last 500 chars): {result.stdout[-500:]}")
-            if result.stderr:
-                logger.info(f"MACE training stderr (last 500 chars): {result.stderr[-500:]}")
-            
             if result.returncode != 0:
                 logger.error(f"MACE training process exited with return code {result.returncode}")
+                logger.error(f"STDOUT: {result.stdout}")
+                logger.error(f"STDERR: {result.stderr}")
                 # We'll check if a model was saved anyway, as MACE often fails at the end during plotting
             
             # Load the fine-tuned model
@@ -1003,6 +1000,9 @@ if __name__ == "__main__":
         import json
         import re
         
+        # Ensure results_dir is a Path object
+        results_dir = Path(results_dir)
+        
         # MACE saves training metrics in text files with JSON lines format
         metrics_files = []
         if results_dir.exists():
@@ -1036,6 +1036,7 @@ if __name__ == "__main__":
                                 if 'mae_stress' in data:
                                     mae_s = data['mae_stress']
                                     if mae_s is not None:
+                                        mae_s = mae_s * 1000
                                         while len(self._training_history['stress_mae_val']) <= epoch:
                                             self._training_history['stress_mae_val'].append(None)
                                         self._training_history['stress_mae_val'][epoch] = mae_s
@@ -1044,6 +1045,23 @@ if __name__ == "__main__":
                                         self._training_history['loss_val'].append(None)
                                     self._training_history['loss_val'][epoch] = data['loss']
                             elif mode == 'opt':
+                                if 'mae_e_per_atom' in data:
+                                    mae_e = data['mae_e_per_atom'] * 1000
+                                    while len(self._training_history['energy_mae_train']) <= epoch:
+                                        self._training_history['energy_mae_train'].append(None)
+                                    self._training_history['energy_mae_train'][epoch] = mae_e
+                                if 'mae_f' in data:
+                                    mae_f = data['mae_f'] * 1000
+                                    while len(self._training_history['force_mae_train']) <= epoch:
+                                        self._training_history['force_mae_train'].append(None)
+                                    self._training_history['force_mae_train'][epoch] = mae_f
+                                if 'mae_stress' in data:
+                                    mae_s = data['mae_stress']
+                                    if mae_s is not None:
+                                        mae_s = mae_s * 1000
+                                        while len(self._training_history['stress_mae_train']) <= epoch:
+                                            self._training_history['stress_mae_train'].append(None)
+                                        self._training_history['stress_mae_train'][epoch] = mae_s
                                 if 'loss' in data:
                                     while len(self._training_history['loss_train']) <= epoch:
                                         self._training_history['loss_train'].append(None)

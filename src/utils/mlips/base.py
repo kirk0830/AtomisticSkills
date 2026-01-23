@@ -37,7 +37,17 @@ class MLIPModel(ABC):
         self.calculator = None
         self.is_loaded = False
         self.is_fine_tuned = False
-        self._training_history = {}
+        self._training_history = {
+            'loss_train': [],
+            'loss_val': [],
+            'energy_mae_train': [],
+            'energy_mae_val': [],
+            'force_mae_train': [],
+            'force_mae_val': [],
+            'stress_mae_train': [],
+            'stress_mae_val': [],
+            'epoch': []
+        }
         
     @abstractmethod
     def load(self, model_path: Optional[str] = None) -> None:

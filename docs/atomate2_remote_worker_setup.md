@@ -37,6 +37,74 @@ The setup connects to an external MongoDB instance (`mongodb05.nersc.gov:27017`)
 - **Additional Stores**:
   - `data`: Required for large datasets/specific Atomate2 outputs (`agent_db.data`).
 
+### Full-split Configuration: SSH Tunnel for Local Access
+
+If you are querying Atomate2 data from your **local laptop/workstation** (not from Perlmutter), you need an SSH tunnel to access the NERSC MongoDB.
+
+**Configuration Overview:**
+- **`jobstore`**: Uses `localhost:27017` (for local queries via SSH tunnel)
+- **`remote_jobstore`**: Uses `mongodb05.nersc.gov:27017` (for Perlmutter - direct access, no tunnel needed)
+
+#### Automatic SSH Tunnel Setup
+
+Add this to your `~/.bashrc` on your **local machine**:
+
+```bash
+# NERSC MongoDB Auto-tunnel with Key Expiration Check
+nersc_tunnel_start() {
+    local NERSC_KEY="$HOME/.ssh/nersc"
+    
+    # Check if key exists
+    if [[ ! -f "$NERSC_KEY" ]]; then
+        echo "⚠️  NERSC SSH key not found. Run: sshproxy -u <username>" >&2
+        return 1
+    fi
+    
+    # Check key age (< 24 hours)
+    local key_age_seconds=$(($(date +%s) - $(stat -c %Y "$NERSC_KEY" 2>/dev/null || stat -f %m "$NERSC_KEY")))
+    local key_age_hours=$((key_age_seconds / 3600))
+    
+    if [[ $key_age_hours -ge 24 ]]; then
+        echo "⚠️  NERSC SSH key expired ($key_age_hours hours old). Run: sshproxy -u <username>" >&2
+        return 1
+    fi
+    
+    # Check if tunnel already running
+    if pgrep -f "ssh.*mongodb05.*27017" > /dev/null 2>&1; then
+        return 0
+    fi
+    
+    # Create tunnel
+    ssh -f -N -L 27017:mongodb05.nersc.gov:27017 -i "$NERSC_KEY" <username>@perlmutter-p1.nersc.gov 2>/dev/null
+}
+
+# Auto-start tunnel on login
+nersc_tunnel_start
+
+# Helpful aliases
+alias nersc-refresh='sshproxy -u <username> && pkill -f "ssh.*mongodb05.*27017"; nersc_tunnel_start'
+alias nersc-status='pgrep -f "ssh.*mongodb05.*27017" > /dev/null && echo "✅ Tunnel running" || echo "❌ Tunnel not running"'
+```
+
+Replace `<username>` with your NERSC username.
+
+**What this does:**
+- ✅ Auto-creates SSH tunnel on login if NERSC key is fresh (< 24 hours)
+- ⚠️ Warns if key is expired (won't create broken tunnel)
+- ✅ Prevents duplicate tunnels
+- ✅ Provides easy refresh: `nersc-refresh`
+
+**Daily workflow:**
+1. Login to your laptop - tunnel auto-starts if key is valid
+2. When key expires (~24h), you'll see a warning
+3. Run `sshproxy -u <username>` to refresh (requires password + OTP)
+4. Tunnel auto-restarts on next login or manual `nersc-refresh`
+
+**Check tunnel status:**
+```bash
+ps aux | grep "mongodb05.*27017"
+```
+
 ## 4. Runner Operations
 The JobFlow Remote Runner operates as a background daemon managed by `supervisord`.
 
@@ -79,4 +147,5 @@ Once this setup is complete, you can submit jobs from your **local machine** and
 - **Runner Logs**: `~/.jfremote/remote_perlmutter/log/runner.log`
 
 ---
-*Setup completed/verified on 2026-01-15.*
+*Setup completed/verified on 2026-01-15.*  
+*SSH tunnel auto-configuration added on 2026-01-22.*

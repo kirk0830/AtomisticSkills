@@ -13,14 +13,24 @@ from ase import Atoms
 from ase.calculators.calculator import Calculator
 import matplotlib.pyplot as plt
 
-# Force DGL backend for MatGL to support M3GNet and CHGNet in matgl 2.0.4
+# MATGL_BACKEND is now set at the entry point (matgl_server.py)
+# We just ensure it's set here for direct library usage
 if "MATGL_BACKEND" not in os.environ:
     os.environ["MATGL_BACKEND"] = "DGL"
+os.environ["WANDB_MODE"] = "offline"
+os.environ["WANDB_SILENT"] = "true"
 
 from ..base import MLIPModel
 from ..device_utils import get_best_device
 
 logger = logging.getLogger(__name__)
+
+# Verify backend
+try:
+    import matgl
+    logger.info(f"MatGL initialized with backend: {matgl.config.BACKEND}")
+except ImportError:
+    pass
 
 # Try to import MatGL components with clear error messages
 MATGL_AVAILABLE = False
@@ -154,23 +164,27 @@ if MATGL_AVAILABLE and TRAINER_AVAILABLE:
             if trainer.sanity_checking: return
             metrics = trainer.callback_metrics
             
-            def get_metric(keys):
-                for key in keys:
+            def get_metric(specific_keys, fallback_keys):
+                for key in specific_keys:
+                    if key in metrics:
+                        val = metrics[key]
+                        return float(val.item()) if hasattr(val, 'item') else float(val)
+                for key in fallback_keys:
                     if key in metrics:
                         val = metrics[key]
                         return float(val.item()) if hasattr(val, 'item') else float(val)
                 return None
             
-            loss = get_metric(['train_Total_Loss', 'train_loss', 'loss'])
+            loss = get_metric(['train_Total_Loss', 'train_loss'], ['loss'])
             if loss is not None: self.training_history['loss_train'].append(loss)
             
-            e_mae = get_metric(['train_Energy_MAE', 'train_energy_mae', 'energy_mae'])
+            e_mae = get_metric(['train_Energy_MAE', 'train_energy_mae'], ['energy_mae'])
             if e_mae is not None: self.training_history['energy_mae_train'].append(e_mae)
             
-            f_mae = get_metric(['train_Force_MAE', 'train_force_mae', 'force_mae'])
+            f_mae = get_metric(['train_Force_MAE', 'train_force_mae'], ['force_mae'])
             if f_mae is not None: self.training_history['force_mae_train'].append(f_mae)
             
-            s_mae = get_metric(['train_Stress_MAE', 'train_stress_mae', 'stress_mae'])
+            s_mae = get_metric(['train_Stress_MAE', 'train_stress_mae'], ['stress_mae'])
             if s_mae is not None: self.training_history['stress_mae_train'].append(s_mae)
 
         def on_validation_epoch_end(self, trainer, pl_module):
@@ -304,6 +318,77 @@ class MatGLWrapper(MLIPModel):
         self.model = None
         self.is_loaded = False
         
+    def _load_model_agnostic(self, path_or_name: str) -> Any:
+        """
+        Load a MatGL model while automatically patching metadata to match active backend.
+        This resolves the common issue where a model saved with PyG metadata fails in a DGL environment.
+        Specifically, it patches both model.json and model.pt (which contains init_args).
+        """
+        import json
+        import torch
+        from pathlib import Path
+        from matgl.utils.io import _get_file_paths
+        
+        backend = str(os.environ.get("MATGL_BACKEND", "DGL")).upper()
+        target_suffix = "_dgl" if backend == "DGL" else "_pyg"
+        source_suffix = "_pyg" if backend == "DGL" else "_dgl"
+        
+        # Get file paths (handles local or pretrained)
+        fpaths = _get_file_paths(Path(path_or_name))
+        
+        def patch_metadata(d):
+            if isinstance(d, dict):
+                # We need a list of keys to avoid "dict size changed during iteration" errors
+                for k in list(d.keys()):
+                    v = d[k]
+                    if k == "@module" and isinstance(v, str):
+                        # Patch module paths to match active backend
+                        if source_suffix in v:
+                            d[k] = v.replace(source_suffix, target_suffix)
+                        # Also handle generic matgl.apps.pes if it needs specific backend
+                        if "matgl.apps.pes" in v:
+                             d[k] = f"matgl.apps._pes{target_suffix}"
+                    elif isinstance(v, (dict, list)):
+                        patch_metadata(v)
+            elif isinstance(d, list):
+                for item in d:
+                    patch_metadata(item)
+        
+        # Load and patch model.json
+        with open(fpaths["model.json"]) as f:
+            model_data = json.load(f)
+        patch_metadata(model_data)
+        
+        # Load and patch model.pt (init_args)
+        map_location = torch.device("cpu") if not torch.cuda.is_available() else None
+        init_args = torch.load(fpaths["model.pt"], map_location=map_location, weights_only=False)
+        patch_metadata(init_args)
+        
+        # We'll create a temporary patched directory for loading
+        import tempfile
+        import shutil
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpdir_path = Path(tmpdir)
+            # Copy state.pt directly
+            shutil.copy(fpaths["state.pt"], tmpdir_path / "state.pt")
+            
+            # Write patched files
+            with open(tmpdir_path / "model.json", "w") as f:
+                json.dump(model_data, f)
+            torch.save(init_args, tmpdir_path / "model.pt")
+            
+            # Now load from the temporary patched directory using the class from model_data
+            # We must import the CORRECT Potential class (DGL or PyG)
+            modname = model_data["@module"]
+            classname = model_data["@class"]
+            mod = __import__(modname, fromlist=[classname])
+            cls_ = getattr(mod, classname)
+            
+            model = cls_.load(tmpdir_path)
+            
+        return model
+        
     def load(self, model_path: Optional[str] = None) -> None:
         """Load a MatGL model."""
         if not MATGL_AVAILABLE:
@@ -346,11 +431,8 @@ class MatGLWrapper(MLIPModel):
         try:
             logger.info(f"Loading MatGL model {model_name_or_path} on {self.device}")
             # Use map_location for initial load if it's a path
-            if Path(model_name_or_path).exists():
-                # MatGL load_model handles directory or file
-                self.model = matgl.load_model(str(model_name_or_path))
-            else:
-                self.model = matgl.load_model(model_name_or_path)
+            # Use our agnostic loader to ensure backend compatibility
+            self.model = self._load_model_agnostic(str(model_name_or_path))
             
             self.model.to(self.device)
             self.is_loaded = True
@@ -613,12 +695,22 @@ class MatGLWrapper(MLIPModel):
         }
 
     def _prepare_training_data(self, training_data: List[Dict[str, Any]]) -> Tuple:
-        """Helper to extract data into parallel lists."""
         import ase.units
+        from pymatgen.core import Structure
+        from pymatgen.io.ase import AseAtomsAdaptor
+        adaptor = AseAtomsAdaptor()
+        
         atoms_list, energies, forces, stresses = [], [], [], []
         for d in training_data:
             atoms = d['structure']
-            if not isinstance(atoms, Atoms):
+            if isinstance(atoms, dict):
+                # Handle Pymatgen structure dict
+                try:
+                    struct = Structure.from_dict(atoms)
+                    atoms = adaptor.get_atoms(struct)
+                except Exception:
+                    continue
+            elif not isinstance(atoms, Atoms):
                 # Handle conversion if needed
                 continue
             atoms_list.append(atoms)

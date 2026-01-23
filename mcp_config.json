@@ -7,7 +7,8 @@
         "src.mcp_server.matgl_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp",
+        "MATGL_BACKEND": "DGL"
       }
     },
     "mace": {
