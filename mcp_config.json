@@ -50,6 +50,16 @@
       "env": {
         "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
       }
+    },
+    "smol": {
+      "command": "/home/bdeng/miniforge3/envs/smol-agent/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.smol_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+      }
     }
   }
 }
