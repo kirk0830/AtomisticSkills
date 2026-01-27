@@ -2,28 +2,31 @@ import sys
 import os
 import io
 
-# --- ROBUST STDOUT ISOLATION ---
-# 1. Save the REAL stdout (the one used for MCP communication)
+# --- ROBUST STDOUT/STDERR ISOLATION ---
 try:
-    # Duplicate original stdout (FD 1) to a private handle
+    # 1. Save the REAL stdout (the one used for MCP communication)
     mcp_stdout_fd = os.dup(1)
     
-    # 2. Redirect system-level FD 1 to /dev/null
-    # This silences library calls that write directly to stdout (the source of the 'G' error)
-    devnull_fd = os.open(os.devnull, os.O_WRONLY)
-    os.dup2(devnull_fd, 1)
+    # 2. Redirect EVERYTHING to a persistent log file
+    log_file_path = "/tmp/mace_mcp_server.log"
+    log_f = open(log_file_path, "a", buffering=1)
 
-    # 3. Patch Python's sys.stdout to use the saved handle
-    # stdio_server uses sys.stdout.buffer to write JSON-RPC messages.
-    # We wrap the saved FD in a binary buffer and a TextIOWrapper.
+    # 3. Redirect system-level FD 1 and FD 2
+    os.dup2(log_f.fileno(), 1)
+    os.dup2(log_f.fileno(), 2)
+
+    # 4. Patch Python sys.stdout to the original pipe handle
     sys.stdout = io.TextIOWrapper(
         os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
         encoding='utf-8', 
         line_buffering=True
     )
+    
+    # 5. Patch Python sys.stderr and others to the log file
+    sys.stderr = log_f
 except Exception:
-    pass
-# -------------------------------
+    pass 
+# --------------------------------------
 
 import logging
 import warnings
@@ -31,6 +34,8 @@ import json
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from typing import Dict, Any, Optional, Union, List
+import multiprocessing
+import traceback
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterticks = 0 # Dummy to test if we can edit
@@ -57,6 +62,112 @@ wrapper: Optional[Any] = None
 sampler: Optional[Any] = None
 
 from src.utils.serialization_utils import recursive_tolist
+
+# ---------------------------------------------------------------------
+# Worker Process for MD Isolation
+# ---------------------------------------------------------------------
+def _md_worker_process(config: Dict[str, Any], result_queue: multiprocessing.Queue):
+    """
+    Worker function to run MD in a separate process.
+    This ensures that killing the MD process doesn't kill the MCP server.
+    """
+    # Re-setup stdout redirection in worker to prevent pollution
+    try:
+        sys.stdout = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, 'w') # Or redirect to a file if debugging needed
+    except:
+        pass
+
+    try:
+        # Re-import dependencies in the worker process
+        import sys
+        if config["project_root"] not in sys.path:
+            sys.path.insert(0, config["project_root"])
+            
+        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+        from matcalc import MDCalc
+        from pymatgen.io.ase import AseAtomsAdaptor
+        from ase import units
+        import contextlib
+        
+        # Determine device
+        device = config.get("device", "auto")
+        model_name = config.get("model_name", "MACE-OMAT-0-small")
+        head = config.get("head")
+        
+        # Initialize Wrapper internally
+        worker_wrapper = MACEWrapper(model_name=model_name, device=device, head=head)
+        worker_wrapper.load(model_path=model_name if os.path.exists(model_name) else None)
+        
+        # Prepare atoms
+        atoms = worker_wrapper.check_structure_data(config["structure_data"])
+        if isinstance(atoms, dict) and "error" in atoms:
+            result_queue.put(atoms)
+            return
+
+        # Setup Output
+        output_dir = config["output_dir"]
+        os.makedirs(output_dir, exist_ok=True)
+        
+        if hasattr(atoms, "get_chemical_formula"):
+            formula = atoms.get_chemical_formula()
+        else:
+            from pymatgen.core import Structure
+            formula = atoms.composition.reduced_formula if isinstance(atoms, Structure) else "unknown"
+                
+        ensemble = config["ensemble"]
+        temperature = config["temperature"]
+        filename_base = f"{formula}_{temperature}K_{ensemble}"
+        traj_path = os.path.join(output_dir, f"{filename_base}.traj")
+        log_path = os.path.join(output_dir, f"{filename_base}.log")
+        
+        # Prepare Calculator
+        calc = worker_wrapper.create_calculator()
+        atoms.calc = calc
+        
+        # Prepare MD arguments
+        pressure = config.get("pressure", 0.0)
+        pressure_mask = config.get("pressure_mask")
+        
+        # Run MD
+        # Redirect stdout/stderr specifically for the MD run to capture logs if needed, 
+        # or rely on MDCalc's logfile.
+        md_runner = MDCalc(
+            calculator=calc,
+            ensemble=ensemble.lower(),
+            temperature=temperature,
+            timestep=config["timestep"],
+            steps=config["steps"],
+            trajfile=traj_path,
+            logfile=log_path,
+            loginterval=config["log_interval"],
+            relax_structure=False,
+            mask=pressure_mask,
+            pressure=pressure * units.bar if pressure is not None else 0.0
+        )
+        
+        result = md_runner.calc(atoms)
+        
+        # Process Results
+        final_structure = result["final_structure"]
+        final_energy = result.get("energy")
+        
+        def get_structure_dict(struct_or_atoms):
+            if hasattr(struct_or_atoms, "as_dict"):
+                return struct_or_atoms.as_dict()
+            from pymatgen.io.ase import AseAtomsAdaptor
+            return AseAtomsAdaptor.get_structure(struct_or_atoms).as_dict()
+
+        result_queue.put({
+            "trajectory_path": traj_path,
+            "log_path": log_path,
+            "final_structure": get_structure_dict(final_structure),
+            "final_energy": final_energy
+        })
+        
+    except Exception as e:
+        # In case of error, put error dict
+        result_queue.put({"error": str(e)})
 
 
 @mcp.tool()
@@ -127,12 +238,74 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
         return wrapper.static_calculation(structure_data)
 
 @mcp.tool()
+def predict_atomic_features(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+    """
+    Predict atomic latent features (descriptors) for a structure.
+    Automatically saves features to the current research directory.
+    
+    Args:
+        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+    
+    Returns:
+        Dict: {
+            'atomic_features': [[...], ...], 
+            'feature_dim': int, 
+            'num_atoms': int,
+            'saved_path': str  # Path to saved JSON file
+        }
+    """
+    global wrapper
+    import contextlib
+    import json
+    from pathlib import Path
+    from src.utils.research_utils import get_current_research_dir
+    
+    if wrapper is None or not wrapper.is_loaded:
+        return {"error": "Model not loaded. Please call load_model first."}
+    
+    # Get features
+    with contextlib.redirect_stdout(sys.stderr):
+        result = wrapper.predict_atomic_features(structure_data)
+    
+    if "error" in result:
+        return result
+    
+    # Save to research directory
+    try:
+        research_dir = get_current_research_dir()
+        
+        # Generate filename based on structure path or use generic name
+        if isinstance(structure_data, str):
+            struct_path = Path(structure_data)
+            feature_filename = f"{struct_path.stem}_features.json"
+        else:
+            feature_filename = "atomic_features.json"
+        
+        output_path = research_dir / feature_filename
+        
+        # Save features
+        with open(output_path, 'w') as f:
+            json.dump(result, f)
+        
+        # Add saved path to result
+        result["saved_path"] = str(output_path)
+        
+        return result
+        
+    except Exception as e:
+        # If saving fails, still return the features but with error info
+        result["save_error"] = f"Failed to save features: {str(e)}"
+        return result
+
+@mcp.tool()
 def relax_structure(
     structure_data: Union[Dict[str, Any], str],
     fmax: float = 0.01,
     steps: int = 500,
     optimizer: str = "FIRE",
-    output_dir: Optional[str] = None
+    relax_cell: bool = True,
+    output_dir: Optional[str] = None,
+    fixed_atoms: Optional[List[int]] = None
 ) -> Dict[str, Any]:
     """
     Relax a structure using the loaded MACE model.
@@ -143,27 +316,26 @@ def relax_structure(
         steps: Maximum number of optimization steps.
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
         output_dir: Directory to save results.
+        fixed_atoms: List of indices of atoms to keep fixed during relaxation.
         
     Returns:
         Dictionary with relaxation results (energy, final_structure, trajectory_path).
     """
     global wrapper
-    import contextlib
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
     
-    if not output_dir:
-        output_dir = str(get_current_research_dir() / "mace" / "relaxation")
-    
+    import contextlib
     with contextlib.redirect_stdout(sys.stderr):
-        result = wrapper.relax_structure(
+        return wrapper.relax_structure(
             structure_data=structure_data,
             fmax=fmax,
             steps=steps,
             optimizer=optimizer,
-            output_dir=output_dir
+            relax_cell=relax_cell,
+            output_dir=output_dir,
+            fixed_atoms=fixed_atoms
         )
-    return recursive_tolist(result)
 
 @mcp.tool()
 def run_md(
@@ -173,43 +345,95 @@ def run_md(
     timestep: float = 1.0,
     ensemble: str = "nvt",
     log_interval: int = 10,
+    pressure: float = 0.0,
+    pressure_mask: Optional[List[int]] = None,
     output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
     
     Args:
-        structure_data: Structure in partial dictionary format.
+        structure_data: Structure data.
         temperature: Temperature in Kelvin.
         steps: Number of steps.
         timestep: Timestep in fs.
         ensemble: Ensemble "nve", "nvt" (Nose-Hoover), or "npt" (NPT).
                   Also supports variants like "nvt_langevin", "nvt_andersen", "npt_berendsen", "npt_mtk".
         log_interval: Interval for logging to trajectory and logfile.
+        pressure: Target pressure in bar (for NPT).
+        pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).
         output_dir: Directory to save results.
         
     Returns:
-        Dictionary with MD results (trajectory_path, final_structure).
+        Dictionary with MD results.
     """
-    global wrapper
     import contextlib
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
-    
+
+    # Setup Directory
     if not output_dir:
         output_dir = str(get_current_research_dir() / "mace" / "md")
+    os.makedirs(output_dir, exist_ok=True)
+
+    # Prepare configuration for worker
+    md_config = {
+        "project_root": project_root,
+        "structure_data": structure_data,
+        "temperature": temperature,
+        "steps": steps,
+        "timestep": timestep,
+        "ensemble": ensemble,
+        "log_interval": log_interval,
+        "pressure": pressure,
+        "pressure_mask": pressure_mask,
+        "output_dir": output_dir,
+        "model_name": wrapper.model_name,
+        "device": wrapper.device, # Pass current config
+        "head": wrapper.head
+    }
+
+    # Use Spawn Context for safety (especially with PyTorch/CUDA)
+    ctx = multiprocessing.get_context("spawn")
+    queue = ctx.Queue()
+    
+    p = ctx.Process(target=_md_worker_process, args=(md_config, queue))
+    
+    try:
+        p.start()
         
-    with contextlib.redirect_stdout(sys.stderr):
-        result = wrapper.run_md(
-            structure_data=structure_data,
-            temperature=temperature,
-            steps=steps,
-            timestep=timestep,
-            ensemble=ensemble,
-            log_interval=log_interval,
-            output_dir=output_dir
-        )
-    return recursive_tolist(result)
+        # Write PID to file for external monitoring/killing
+        pid_file = os.path.join(output_dir, "MD.pid")
+        with open(pid_file, "w") as f:
+            f.write(str(p.pid))
+            
+        # Wait for completion
+        p.join()
+        
+        # Check exit code
+        if p.exitcode != 0:
+            # Process was killed or crashed
+            # If killed by monitor, this is expected behavior
+            return {
+                "status": "terminated", 
+                "exitcode": p.exitcode,
+                "note": "Process stopped (likely by monitor or error)."
+            }
+        
+        # Retrieve result
+        if not queue.empty():
+            result = queue.get()
+            if "error" in result:
+                return result
+            # Assuming success
+            return result
+        else:
+            return {"error": "Worker process finished but returned no result."}
+            
+    except Exception as e:
+        if p.is_alive():
+            p.terminate()
+        return {"error": f"Failed to run MD process: {str(e)}"}
 
 @mcp.tool()
 def calculate_phonon(
@@ -233,21 +457,47 @@ def calculate_phonon(
         Dictionary with phonon results.
     """
     global wrapper
+    import contextlib
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
     
-    if not output_dir:
-        output_dir = str(get_current_research_dir() / "mace" / "phonon")
+    try:
+        from matcalc import PhononCalc
+        import os
         
-    result = wrapper.calculate_phonon(
-        structure_data=structure_data,
-        supercell_matrix=supercell_matrix,
-        t_min=t_min,
-        t_max=t_max,
-        t_step=t_step,
-        output_dir=output_dir
-    )
-    return recursive_tolist(result)
+        with contextlib.redirect_stdout(sys.stderr):
+            atoms = wrapper.check_structure_data(structure_data)
+            if isinstance(atoms, dict) and "error" in atoms:
+                return atoms
+                
+            if not output_dir:
+                output_dir = str(get_current_research_dir() / "mace" / "phonon")
+
+            os.makedirs(output_dir, exist_ok=True)
+            
+            calc = wrapper.create_calculator()
+            
+            phonon_calc = PhononCalc(
+                calculator=calc,
+                supercell_matrix=supercell_matrix or [[2, 0, 0], [0, 2, 0], [0, 0, 2]],
+                t_step=t_step,
+                t_max=t_max,
+                t_min=t_min,
+                write_phonon=os.path.join(output_dir, "phonon.yaml"),
+                write_band_structure=os.path.join(output_dir, "band_structure.yaml"),
+                write_total_dos=os.path.join(output_dir, "total_dos.dat")
+            )
+            
+            result = phonon_calc.calc(atoms)
+        
+        return {
+            "thermal_properties": result.get("thermal_properties", {}),
+            "output_dir": output_dir
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        return {"error": f"Phonon calculation failed: {str(e)}"}
 
 @mcp.tool()
 def calculate_qha(
@@ -271,21 +521,49 @@ def calculate_qha(
         Dictionary with QHA results.
     """
     global wrapper
+    import contextlib
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
     
-    if not output_dir:
-        output_dir = str(get_current_research_dir() / "mace" / "qha")
+    try:
+        from matcalc import QHACalc
+        import os
         
-    result = wrapper.calculate_qha(
-        structure_data=structure_data,
-        t_min=t_min,
-        t_max=t_max,
-        t_step=t_step,
-        eos=eos,
-        output_dir=output_dir
-    )
-    return recursive_tolist(result)
+        with contextlib.redirect_stdout(sys.stderr):
+            atoms = wrapper.check_structure_data(structure_data)
+            if isinstance(atoms, dict) and "error" in atoms:
+                return atoms
+                
+            if not output_dir:
+                output_dir = str(get_current_research_dir() / "mace" / "qha")
+
+            os.makedirs(output_dir, exist_ok=True)
+            
+            calc = wrapper.create_calculator()
+            
+            qha_calc = QHACalc(
+                calculator=calc,
+                t_step=t_step,
+                t_max=t_max,
+                t_min=t_min,
+                eos=eos,
+                write_gibbs_temperature=os.path.join(output_dir, "gibbs_temperature.dat"),
+                write_thermal_expansion=os.path.join(output_dir, "thermal_expansion.dat")
+            )
+            
+            result = qha_calc.calc(atoms)
+        
+        return {
+            "temperatures": recursive_tolist(result.get("temperatures", [])),
+            "volumes": recursive_tolist(result.get("volumes", [])),
+            "gibbs_free_energies": recursive_tolist(result.get("gibbs_free_energies", [])),
+            "thermal_expansion_coefficients": recursive_tolist(result.get("thermal_expansion_coefficients", [])),
+            "output_dir": output_dir
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        return {"error": f"QHA calculation failed: {str(e)}"}
 
 @mcp.tool()
 def calculate_neb(
@@ -311,21 +589,58 @@ def calculate_neb(
         Dictionary with barrier and reaction coordinates.
     """
     global wrapper
+    import contextlib
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
     
-    if not output_dir:
-        output_dir = str(get_current_research_dir() / "mace" / "neb")
+    try:
+        from matcalc import NEBCalc
+        from pymatgen.io.ase import AseAtomsAdaptor
+        import os
         
-    result = wrapper.calculate_neb(
-        start_structure=start_structure,
-        end_structure=end_structure,
-        n_images=n_images,
-        fmax=fmax,
-        climb=climb,
-        output_dir=output_dir
-    )
-    return recursive_tolist(result)
+        with contextlib.redirect_stdout(sys.stderr):
+            start_atoms = wrapper.check_structure_data(start_structure)
+            end_atoms = wrapper.check_structure_data(end_structure)
+            
+            if (isinstance(start_atoms, dict) and "error" in start_atoms) or \
+               (isinstance(end_atoms, dict) and "error" in end_atoms):
+               return {"error": "Invalid start or end structure."}
+               
+            start_pmg = AseAtomsAdaptor.get_structure(start_atoms)
+            end_pmg = AseAtomsAdaptor.get_structure(end_atoms)
+            
+            if not output_dir:
+                output_dir = str(get_current_research_dir() / "mace" / "neb")
+
+            os.makedirs(output_dir, exist_ok=True)
+            
+            calc = wrapper.create_calculator()
+            
+            neb_calc = NEBCalc(
+                calculator=calc,
+                traj_folder=output_dir,
+                fmax=fmax,
+                climb=climb
+            )
+            
+            result = neb_calc.calc_images(
+                start_struct=start_pmg,
+                end_struct=end_pmg,
+                n_images=n_images
+            )
+            
+            mep = result.get("mep")
+            mep_dict = mep.as_dict() if mep else {}
+        
+        return {
+            "barrier": result.get("barrier"),
+            "max_force": result.get("force"),
+            "mep": mep_dict
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        return {"error": f"NEB failed: {str(e)}"}
 
 @mcp.tool()
 def sample_off_equilibrium(
@@ -400,7 +715,8 @@ def sample_off_equilibrium(
              filename = f"structure_{i:03d}.cif"
              filepath = os.path.join(output_dir, filename)
              try:
-                 s.write(filepath)
+                 from src.utils.structure_utils import save_structure
+                 save_structure(s, filepath)
                  saved_files.append(filepath)
              except Exception as e:
                  logger.error(f"Error saving structure {i}: {e}")

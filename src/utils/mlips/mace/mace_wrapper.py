@@ -226,6 +226,35 @@ class MACEWrapper(MLIPModel):
             # Use MACE-MP calculator for materials models (including MPA, MATPES, OMAT)
             from mace.calculators import mace_mp
             return mace_mp(model=model_id, device=self.device)
+
+    def predict_atomic_features(self, structure_data: Any) -> Dict[str, Any]:
+        """
+        Predict atomic latent features (descriptors) for a structure using MACE.
+        """
+        if not self.is_loaded:
+            return {"error": "Model not loaded. Please call load() first."}
+            
+        atoms = self.check_structure_data(structure_data)
+        if isinstance(atoms, dict) and "error" in atoms:
+            return atoms
+            
+        try:
+            calc = self.create_calculator()
+            # MACE get_descriptors returns (num_atoms, num_features)
+            # invariants_only=True returns the invariant part of the descriptors
+            descriptors = calc.get_descriptors(atoms, invariants_only=True)
+            
+            return {
+                "atomic_features": descriptors.tolist(),
+                "feature_dim": descriptors.shape[1],
+                "num_atoms": descriptors.shape[0]
+            }
+        except Exception as e:
+            import traceback
+            import sys
+            print(f"Failed to predict atomic features: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
+            return {"error": f"Failed to predict atomic features: {str(e)}"}
     
     def save_checkpoint(self, checkpoint_path: str) -> None:
         """

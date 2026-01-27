@@ -11,6 +11,8 @@ import torch
 import torch.serialization
 from ase import Atoms
 from ase.calculators.calculator import Calculator
+import matplotlib
+matplotlib.use('Agg')  # Must be set before importing pyplot
 import matplotlib.pyplot as plt
 
 # MATGL_BACKEND is now set at the entry point (matgl_server.py)
@@ -533,6 +535,98 @@ class MatGLWrapper(MLIPModel):
                 import traceback
                 logger.error(f"Property prediction failed: {e}\n{traceback.format_exc()}")
                 return {"error": f"Property prediction failed: {str(e)}"}
+
+    def predict_atomic_features(self, structure_data: Any) -> Dict[str, Any]:
+        """
+        Predict atomic latent features (descriptors) for a structure using MatGL.
+        """
+        if not self.is_loaded:
+            return {"error": "Model not loaded. Please call load() first."}
+            
+        atoms = self.check_structure_data(structure_data)
+        if isinstance(atoms, dict) and "error" in atoms:
+            return atoms
+            
+        try:
+            from pymatgen.io.ase import AseAtomsAdaptor
+            import torch
+            import dgl
+            from matgl.ext.pymatgen import get_element_list, Structure2Graph
+            
+            struct = AseAtomsAdaptor.get_structure(atoms)
+            
+            # Determine which inner model we have (PES wrappers hide the actual model)
+            potential = self.model
+            if hasattr(potential, "model"):
+                inner_model = potential.model
+            else:
+                inner_model = potential
+
+            # Create graph
+            elements = inner_model.element_types if hasattr(inner_model, "element_types") else get_element_list([struct])
+            cutoff = getattr(inner_model, "cutoff", 5.0)
+            converter = Structure2Graph(element_types=elements, cutoff=cutoff)
+            graph_data = converter.get_graph(struct)
+            if len(graph_data) == 3:
+                 graph, state_attr, l_g = graph_data
+            else:
+                 graph, state_attr = graph_data
+                 l_g = None
+            
+            # Move to device and add batch dim
+            g_batch = dgl.batch([graph]).to(self.device)
+            if l_g is not None and hasattr(l_g, "is_block"):
+                l_g_batch = dgl.batch([l_g]).to(self.device)
+            else:
+                l_g_batch = None
+                
+            state_attr = torch.tensor(state_attr, dtype=torch.float32, device=self.device).unsqueeze(0) if state_attr is not None else None
+
+            # Ensure ndata has 'pos' and edata has 'pbc_offshift' for CHGNet/M3GNet
+            if "pos" not in g_batch.ndata:
+                 g_batch.ndata["pos"] = torch.tensor(struct.cart_coords, dtype=torch.float32, device=self.device)
+            
+            # Handle PBC for distance calculations (DGL backend specific)
+            if os.environ.get("MATGL_BACKEND") == "DGL":
+                lattice = torch.tensor(struct.lattice.matrix, dtype=torch.float32, device=self.device).unsqueeze(0)
+                g_batch.edata["lattice"] = torch.repeat_interleave(lattice, g_batch.batch_num_edges(), dim=0)
+                g_batch.edata["pbc_offshift"] = (g_batch.edata["pbc_offset"].unsqueeze(dim=-1) * g_batch.edata["lattice"]).sum(dim=1)
+            
+            # Run model with return_all_layer_output=True to get latent features
+            with torch.no_grad():
+                model_output = inner_model(g=g_batch, state_attr=state_attr, l_g=l_g_batch, return_all_layer_output=True)
+            
+            if not isinstance(model_output, dict):
+                 return {"error": f"Model of type {type(inner_model)} did not return a dict when return_all_layer_output=True."}
+
+            # Extract site features
+            # CHGNet usually uses 'node_feat' or 'atom_feat' at top level
+            features = model_output.get("node_feat") or model_output.get("atom_feat")
+            
+            # M3GNet hides them in nested 'gc_X' layer outputs
+            if features is None:
+                for k in reversed(list(model_output.keys())):
+                    if k.startswith("gc_") and isinstance(model_output[k], dict):
+                        features = model_output[k].get("node_feat") or model_output[k].get("atom_feat")
+                        if features is not None:
+                            logger.info(f"Extracted MatGL features from layer: {k}")
+                            break
+            
+            if features is None:
+                 return {"error": f"Could not find node features in model output. Available keys: {list(model_output.keys())}"}
+            
+            if hasattr(features, "detach"):
+                features = features.detach().cpu().numpy()
+            
+            return {
+                "atomic_features": features.tolist(),
+                "feature_dim": features.shape[1],
+                "num_atoms": features.shape[0]
+            }
+        except Exception as e:
+            import traceback
+            logger.error(f"Failed to predict atomic features (MatGL): {e}\n{traceback.format_exc()}")
+            return {"error": f"Failed to predict atomic features: {str(e)}"}
 
     def fine_tune(
         self,

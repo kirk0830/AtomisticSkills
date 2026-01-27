@@ -117,6 +117,66 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
     with contextlib.redirect_stdout(sys.stderr):
         return wrapper.static_calculation(structure_data)
 
+@mcp.tool()
+def predict_atomic_features(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+    """
+    Predict atomic latent features (descriptors) for a structure.
+    Automatically saves features to the current research directory.
+    
+    Args:
+        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+    
+    Returns:
+        Dict: {
+            'atomic_features': [[...], ...], 
+            'feature_dim': int, 
+            'num_atoms': int,
+            'saved_path': str  # Path to saved JSON file
+        }
+    """
+    global wrapper
+    import contextlib
+    import json
+    from pathlib import Path
+    from src.utils.research_utils import get_current_research_dir
+    
+    if wrapper is None or not wrapper.is_loaded:
+        return {"error": "Model not loaded. Please call load_model first."}
+    
+    # Get features
+    with contextlib.redirect_stdout(sys.stderr):
+        result = wrapper.predict_atomic_features(structure_data)
+    
+    if "error" in result:
+        return result
+    
+    # Save to research directory
+    try:
+        research_dir = get_current_research_dir()
+        
+        # Generate filename based on structure path or use generic name
+        if isinstance(structure_data, str):
+            struct_path = Path(structure_data)
+            feature_filename = f"{struct_path.stem}_features.json"
+        else:
+            feature_filename = "atomic_features.json"
+        
+        output_path = research_dir / feature_filename
+        
+        # Save features
+        with open(output_path, 'w') as f:
+            json.dump(result, f)
+        
+        # Add saved path to result
+        result["saved_path"] = str(output_path)
+        
+        return result
+        
+    except Exception as e:
+        # If saving fails, still return the features but with error info
+        result["save_error"] = f"Failed to save features: {str(e)}"
+        return result
+
 # Local variable to cache bandgap predictor separate from global PES wrapper
 _bandgap_wrapper: Optional[Any] = None
 
@@ -362,9 +422,9 @@ def sample_order_disorder(
             )
         
         # Save results
-        from ase.io import write
+        from src.utils.structure_utils import save_structure
         out_file = os.path.join(output_dir, "ordered_structures.xyz")
-        write(out_file, structures)
+        save_structure(structures, out_file)
         
         return {
             "status": "success",
@@ -443,11 +503,8 @@ def relax_structure(
         final_struct = result["final_structure"]
         cif_path = os.path.join(output_dir, "relaxed_structure.cif")
         
-        # Handle ASE Atoms vs Pymatgen Structure
-        if hasattr(final_struct, "write"): # ASE
-            final_struct.write(cif_path)
-        elif hasattr(final_struct, "to"): # Pymatgen
-            final_struct.to(filename=cif_path)
+        from src.utils.structure_utils import save_structure
+        save_structure(final_struct, cif_path)
             
         # Save energy and results to JSON
         json_path = os.path.join(output_dir, "relaxation_results.json")
@@ -516,7 +573,15 @@ def run_md(
 
         os.makedirs(output_dir, exist_ok=True)
         
-        formula = atoms.get_chemical_formula()
+        if hasattr(atoms, "get_chemical_formula"):
+            formula = atoms.get_chemical_formula()
+        else:
+            from pymatgen.core import Structure
+            if isinstance(atoms, Structure):
+                formula = atoms.composition.reduced_formula
+            else:
+                formula = "unknown"
+                
         filename_base = f"{formula}_{temperature}K_{ensemble}"
         traj_path = os.path.join(output_dir, f"{filename_base}.traj")
         log_path = os.path.join(output_dir, f"{filename_base}.log")
