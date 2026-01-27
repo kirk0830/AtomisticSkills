@@ -209,11 +209,8 @@ def relax_structure(
         final_struct = result["final_structure"]
         cif_path = os.path.join(output_dir, "relaxed_structure.cif")
         
-        # Handle ASE Atoms vs Pymatgen Structure
-        if hasattr(final_struct, "write"): # ASE
-            final_struct.write(cif_path)
-        elif hasattr(final_struct, "to"): # Pymatgen
-            final_struct.to(filename=cif_path)
+        from src.utils.structure_utils import save_structure
+        save_structure(final_struct, cif_path)
             
         # Save energy and results to JSON
         json_path = os.path.join(output_dir, "relaxation_results.json")
@@ -282,7 +279,15 @@ def run_md(
             
         os.makedirs(output_dir, exist_ok=True)
         
-        formula = atoms.get_chemical_formula()
+        if hasattr(atoms, "get_chemical_formula"):
+            formula = atoms.get_chemical_formula()
+        else:
+            from pymatgen.core import Structure
+            if isinstance(atoms, Structure):
+                formula = atoms.composition.reduced_formula
+            else:
+                formula = "unknown"
+                
         filename_base = f"{formula}_{temperature}K_{ensemble}"
         traj_path = os.path.join(output_dir, f"{filename_base}.traj")
         log_path = os.path.join(output_dir, f"{filename_base}.log")
@@ -601,7 +606,8 @@ def mock_dft(
                 }
                 
                 # For compatibility with parser, save CONTCAR
-                write(str(result_dir / "CONTCAR"), atoms)
+                from src.utils.structure_utils import save_structure
+                save_structure(atoms, str(result_dir / "CONTCAR"))
                 
                 # Save result JSON
                 with open(result_dir / "result.json", "w") as f:

@@ -56,7 +56,8 @@ from src.utils.structure_utils import (
     load_structure_from_file, 
     get_structure_by_formula, 
     get_structure_by_chemsys, 
-    get_structure_by_id
+    get_structure_by_id,
+    save_structure
 )
 from src.utils.api_keys import get_mp_key
 from src.utils.research_utils import create_new_research_dir
@@ -196,10 +197,7 @@ def _save_atoms(atoms: Any, name_hint: str, save_to_file: Optional[str] = None) 
         save_path = Path(f"{safe_name}_structure.cif")
         
     # Save structure
-    from pymatgen.io.ase import AseAtomsAdaptor
-    adaptor = AseAtomsAdaptor()
-    structure = adaptor.get_structure(atoms)
-    structure.to(filename=str(save_path), fmt="cif")
+    save_structure(atoms, save_path)
     
     return f"Structure for {name_hint} saved to {save_path.absolute()}"
 
