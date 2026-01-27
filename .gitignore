@@ -59,3 +59,7 @@ db_credentials.yaml
 # OS files
 .DS_Store
 Thumbs.db
+
+# Temporary log files
+stdout.txt
+stderr.txt
