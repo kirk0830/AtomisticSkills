@@ -7,9 +7,9 @@ from typing import Dict, Any, Optional, List, Tuple
 import logging
 import json
 from pathlib import Path
-import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg')  # Must be set before importing pyplot
+import matplotlib.pyplot as plt
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -133,8 +133,22 @@ class MLIPModel(ABC):
             RuntimeError: If loading fails.
         """
         pass
-    
-    
+    @abstractmethod
+    def predict_atomic_features(self, structure_data: Any) -> Dict[str, Any]:
+        """
+        Predict atomic latent features (descriptors) for a structure.
+        
+        Args:
+            structure_data: Structure data compatible with check_structure_data.
+            
+        Returns:
+            Dictionary containing 'atomic_features' (list of lists/arrays).
+        
+        Raises:
+            RuntimeError: If prediction fails.
+        """
+        pass
+
     def get_model_info(self) -> Dict[str, Any]:
         """
         Get information about the current model.
@@ -189,9 +203,10 @@ class MLIPModel(ABC):
         # Check for file path string
         if isinstance(structure_data, str):
             from ..structure_utils import load_structure_from_file
-            atoms = load_structure_from_file(structure_data)
-            if atoms is not None:
-                return atoms
+            struct = load_structure_from_file(structure_data)
+            if struct is not None:
+                from pymatgen.io.ase import AseAtomsAdaptor
+                return AseAtomsAdaptor.get_atoms(struct)
             else:
                 return {"error": f"Failed to load structure from file: {structure_data}"}
         
@@ -228,7 +243,133 @@ class MLIPModel(ABC):
                     pbc=structure_data.get('pbc', True)
                 )
         
-        return {"error": "Invalid structure format. Must be file path, pymatgen Structure, ASE Atoms, or dict with 'symbols' and 'positions'."}
+            return {"error": "Invalid structure format. Must be file path, pymatgen Structure, ASE Atoms, or dict with 'symbols' and 'positions'."}
+
+    def relax_structure(
+        self,
+        structure_data: Any,
+        fmax: float = 0.01,
+        steps: int = 500,
+        optimizer: str = "FIRE",
+        relax_cell: bool = True,
+        output_dir: Optional[str] = None,
+        fixed_atoms: Optional[List[int]] = None
+    ) -> Dict[str, Any]:
+        """
+        Relax a structure using the loaded model and ASE optimizer.
+        
+        Args:
+            structure_data: Structure data compatible with check_structure_data.
+            fmax: Force convergence criterion (eV/Ang).
+            steps: Maximum number of optimization steps.
+            optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
+            relax_cell: Whether to relax the unit cell (True) or just atomic positions (False).
+            output_dir: Directory to save results.
+            fixed_atoms: List of indices of atoms to keep fixed during relaxation.
+            
+        Returns:
+            Dictionary with relaxation results (energy, final_structure, trajectory_path).
+        """
+        if not self.is_loaded:
+            return {"error": "Model not loaded. Please call load_model first."}
+            
+        try:
+            from ase.constraints import FixAtoms
+            from ase.filters import FrechetCellFilter
+            from pymatgen.io.ase import AseAtomsAdaptor
+            import os
+            import json
+            import sys
+            import contextlib
+            from ..structure_utils import save_structure
+            from ..research_utils import get_current_research_dir
+            import ase.optimize
+            from ase import Atoms
+
+            # Check structure data
+            atoms = self.check_structure_data(structure_data)
+            if isinstance(atoms, dict) and "error" in atoms:
+                return atoms
+
+            # Ensure we have a standard ASE Atoms object (fix MSONAtoms issue)
+            if atoms.__class__.__name__ == "MSONAtoms" or not hasattr(atoms, "set_constraint"):
+                atoms = Atoms(atoms)
+                
+            if fixed_atoms:
+                atoms.set_constraint(FixAtoms(indices=fixed_atoms))
+
+            if not output_dir:
+                try:
+                    output_dir = str(get_current_research_dir() / "relaxation")
+                except Exception:
+                    output_dir = "relaxation"
+            
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Define log path
+            filename_base = "relax"
+            traj_file = os.path.join(output_dir, f"{filename_base}.traj")
+            log_file = os.path.join(output_dir, f"{filename_base}.log")
+            
+            # Create and attach calculator
+            calc = self.create_calculator()
+            atoms.calc = calc
+            
+            # Use ASE optimizer directly for better control over logging
+            if not hasattr(ase.optimize, optimizer):
+                raise ValueError(f"Optimizer {optimizer} not found in ase.optimize")
+            
+            # Setup cell filter if relaxing cell
+            if relax_cell:
+                # We use FrechetCellFilter as MatCalc does
+                # Note: The optimizer will operate on this 'filtered' object
+                opt_atoms = FrechetCellFilter(atoms)
+            else:
+                opt_atoms = atoms
+
+            OptClass = getattr(ase.optimize, optimizer)
+            opt = OptClass(opt_atoms, logfile=log_file, trajectory=traj_file)
+            opt.run(fmax=fmax, steps=steps)
+            
+            # Clear constraints before returning/saving if needed
+            final_struct = atoms
+            if hasattr(final_struct, "set_constraint"):
+                final_struct.set_constraint([])
+                
+            cif_path = os.path.join(output_dir, "relaxed_structure.cif")
+            save_structure(final_struct, cif_path)
+
+            # Save energy and results to JSON
+            json_path = os.path.join(output_dir, "relaxation_results.json")
+            
+            # Get energy safely
+            try:
+                energy_val = float(final_struct.get_potential_energy())
+            except Exception:
+                energy_val = None
+                
+            results_data = {
+                "energy": energy_val,
+                "trajectory_path": traj_file,
+                "log_path": log_file,
+                "cif_path": cif_path
+            }
+            
+            with open(json_path, 'w') as f:
+                json.dump(results_data, f, indent=2)
+
+            return {
+                "energy": energy_val,
+                "trajectory_path": traj_file,
+                "log_path": log_file,
+                "cif_path": cif_path,
+                "json_path": json_path,
+                "final_structure": final_struct.as_dict() if hasattr(final_struct, "as_dict") else AseAtomsAdaptor.get_structure(final_struct).as_dict()
+            }
+        except Exception as e:
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+            return {"error": f"Relaxation failed: {str(e)}"}
         
     def static_calculation(self, structure_data: Any) -> Dict[str, Any]:
         """
