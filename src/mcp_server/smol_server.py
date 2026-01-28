@@ -1,5 +1,16 @@
-import sys
 import os
+import sys
+
+# Add project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server
+
+# Setup stdout redirection for MCP
+mcp_pipe_binary = setup_mcp_stdout()
+
 import io
 import logging
 import contextlib
@@ -13,27 +24,8 @@ from typing import Dict, Any, Optional, List, Union
 os.environ["PYTHONWARNINGS"] = "ignore"
 warnings.filterwarnings("ignore")
 
-# --- ROBUST STDOUT ISOLATION ---
-try:
-    mcp_stdout_fd = os.dup(1)
-    devnull_fd = os.open(os.devnull, os.O_WRONLY)
-    os.dup2(devnull_fd, 1)
-    sys.stdout = io.TextIOWrapper(
-        os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
-        encoding='utf-8', 
-        line_buffering=True
-    )
-except Exception:
-    pass
-# -------------------------------
-
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger("Smol-Server")
-
-# Add project root to sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
 
 # Initialize FastMCP server
 mcp = FastMCP("Smol")
@@ -42,6 +34,7 @@ from src.utils.research_utils import get_current_research_dir
 
 # Global wrapper instance
 wrapper = SmolWrapper()
+
 
 @mcp.tool()
 def train_cluster_expansion(
@@ -76,46 +69,45 @@ def train_cluster_expansion(
         Dictionary with fitting results (RMSE, coefficient count).
     """
     global wrapper
-    with contextlib.redirect_stdout(sys.stderr):
-        try:
-            # Determine save path
-            if not ce_file:
-                ce_dir = get_current_research_dir() / "smol"
-                os.makedirs(ce_dir, exist_ok=True)
-                ce_file = str(ce_dir / "cluster_expansion.json")
-            
-            # 1. Create subspace
-            subspace_msg = wrapper.create_subspace(
-                primordial_structure=primordial_structure,
-                cutoffs=cutoffs,
-                max_cluster_size=max_cluster_size,
-                basis_set=basis_set
-            )
-            
-            # 2. Add training data
-            data_msg = wrapper.add_training_data(training_data)
-            
-            # 3. Fit expansion
-            kwargs = {}
-            if fit_method in ["lasso", "ridge"]:
-                kwargs["alpha"] = alpha
-            
-            fit_res = wrapper.fit_expansion(method=fit_method, **kwargs)
-            
-            # 4. Save CE
-            save_msg = wrapper.save_ce(ce_file)
-            
-            # Add messages to result
-            if "status" in fit_res:
-                fit_res["subspace_status"] = subspace_msg
-                fit_res["data_status"] = data_msg
-                fit_res["save_status"] = save_msg
-                fit_res["ce_file"] = ce_file
-            
-            return fit_res
-            
-        except Exception as e:
-            return {"error": f"Training failed: {str(e)}"}
+    try:
+        # Determine save path
+        if not ce_file:
+            ce_dir = get_current_research_dir() / "smol"
+            os.makedirs(ce_dir, exist_ok=True)
+            ce_file = str(ce_dir / "cluster_expansion.json")
+        
+        # 1. Create subspace
+        subspace_msg = wrapper.create_subspace(
+            primordial_structure=primordial_structure,
+            cutoffs=cutoffs,
+            max_cluster_size=max_cluster_size,
+            basis_set=basis_set
+        )
+        
+        # 2. Add training data
+        data_msg = wrapper.add_training_data(training_data)
+        
+        # 3. Fit expansion
+        kwargs = {}
+        if fit_method in ["lasso", "ridge"]:
+            kwargs["alpha"] = alpha
+        
+        fit_res = wrapper.fit_expansion(method=fit_method, **kwargs)
+        
+        # 4. Save CE
+        save_msg = wrapper.save_ce(ce_file)
+        
+        # Add messages to result
+        if "status" in fit_res:
+            fit_res["subspace_status"] = subspace_msg
+            fit_res["data_status"] = data_msg
+            fit_res["save_status"] = save_msg
+            fit_res["ce_file"] = ce_file
+        
+        return fit_res
+        
+    except Exception as e:
+        return {"error": f"Training failed: {str(e)}"}
 
 @mcp.tool()
 def run_monte_carlo(
@@ -141,28 +133,27 @@ def run_monte_carlo(
         Simulation results including final energy and structure.
     """
     global wrapper
-    with contextlib.redirect_stdout(sys.stderr):
-        try:
-            # 1. Load CE if needed
-            if ce_file:
-                load_msg = wrapper.load_ce(ce_file)
-                logger.info(load_msg)
-            elif wrapper.expansion is None:
-                # Try default path
-                default_ce = get_current_research_dir() / "smol" / "cluster_expansion.json"
-                if default_ce.exists():
-                    wrapper.load_ce(str(default_ce))
-                else:
-                    return {"error": "No ClusterExpansion loaded or found at default path. Please train one first."}
-            
-            return wrapper.run_mc(
-                supercell_matrix=supercell_matrix,
-                temperature=temperature,
-                steps=steps,
-                ensemble_type=ensemble_type
-            )
-        except Exception as e:
-            return {"error": f"Monte Carlo failed: {str(e)}"}
+    try:
+        # 1. Load CE if needed
+        if ce_file:
+            load_msg = wrapper.load_ce(ce_file)
+            logger.info(load_msg)
+        elif wrapper.expansion is None:
+            # Try default path
+            default_ce = get_current_research_dir() / "smol" / "cluster_expansion.json"
+            if default_ce.exists():
+                wrapper.load_ce(str(default_ce))
+            else:
+                return {"error": "No ClusterExpansion loaded or found at default path. Please train one first."}
+        
+        return wrapper.run_mc(
+            supercell_matrix=supercell_matrix,
+            temperature=temperature,
+            steps=steps,
+            ensemble_type=ensemble_type
+        )
+    except Exception as e:
+        return {"error": f"Monte Carlo failed: {str(e)}"}
 
 if __name__ == "__main__":
-    mcp.run()
+    run_fastmcp_server(mcp, mcp_pipe_binary)

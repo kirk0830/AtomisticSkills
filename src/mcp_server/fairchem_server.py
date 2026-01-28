@@ -1,31 +1,15 @@
-import sys
 import os
-import io
-
-# --- ROBUST STDOUT ISOLATION ---
-# 1. Save the REAL stdout (the one used for MCP communication)
-try:
-    # Duplicate original stdout (FD 1) to a private handle
-    mcp_stdout_fd = os.dup(1)
-    
-    # 2. Redirect system-level FD 1 to /dev/null
-    devnull_fd = os.open(os.devnull, os.O_WRONLY)
-    os.dup2(devnull_fd, 1)
-
-    # 3. Patch Python's sys.stdout to use the saved handle
-    sys.stdout = io.TextIOWrapper(
-        os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
-        encoding='utf-8', 
-        line_buffering=True
-    )
-except Exception:
-    pass
-# -------------------------------
+import sys
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+
+from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server
+
+# Setup stdout redirection for MCP
+mcp_pipe_binary = setup_mcp_stdout()
 
 import logging
 import json
@@ -44,6 +28,7 @@ mcp = FastMCP("FAIRCHEM")
 
 # Global variables to hold state
 wrapper: Optional[Any] = None
+
 
 @mcp.tool()
 def load_model(
@@ -620,4 +605,4 @@ def mock_dft(
 
 
 if __name__ == "__main__":
-    mcp.run()
+    run_fastmcp_server(mcp, mcp_pipe_binary)

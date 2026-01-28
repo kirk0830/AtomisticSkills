@@ -1,41 +1,22 @@
-import sys
 import os
-import io
-import logging
-
-# --- ROBUST STDOUT ISOLATION ---
-# 1. Save the REAL stdout (the one used for MCP communication)
-try:
-    # Duplicate original stdout (FD 1) to a private handle
-    mcp_stdout_fd = os.dup(1)
-    
-    # 2. Redirect system-level FD 1 to /dev/null
-    # This silences library calls that write directly to stdout
-    devnull_fd = os.open(os.devnull, os.O_WRONLY)
-    os.dup2(devnull_fd, 1)
-
-    # 3. Patch Python's sys.stdout to use the saved handle
-    # stdio_server uses sys.stdout.buffer to write JSON-RPC messages.
-    # We wrap the saved FD in a binary buffer and a TextIOWrapper.
-    sys.stdout = io.TextIOWrapper(
-        os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
-        encoding='utf-8', 
-        line_buffering=True
-    )
-except Exception:
-    pass
-# -------------------------------
-
-import warnings
-import json
-from mcp.server.fastmcp import FastMCP
-from typing import Dict, Any, Optional, List
-from pathlib import Path
+import sys
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+
+from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server
+
+# Setup stdout redirection for MCP
+mcp_pipe_binary = setup_mcp_stdout()
+
+import logging
+import warnings
+import json
+from mcp.server.fastmcp import FastMCP
+from typing import Dict, Any, Optional, List
+from pathlib import Path
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
@@ -44,11 +25,6 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 # Silence common blabbermouth libraries
 logging.getLogger("mp-api").setLevel(logging.ERROR)
 logging.getLogger("pymatgen").setLevel(logging.ERROR)
-
-import json
-from mcp.server.fastmcp import FastMCP
-from typing import Dict, Any, Optional, List
-from pathlib import Path
 
 from src.utils.dft.vasp_writer import write_vasp_input_files
 from src.utils.dft.vasp_parser import VASPParser
@@ -357,6 +333,6 @@ def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> D
     return results
 
 if __name__ == "__main__":
-    mcp.run()
+    run_fastmcp_server(mcp, mcp_pipe_binary)
 
 
