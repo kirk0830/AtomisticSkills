@@ -14,8 +14,6 @@
     "mace": {
       "command": "/home/bdeng/miniforge3/envs/mace-agent/bin/python",
       "args": [
-        "-W",
-        "ignore",
         "-m",
         "src.mcp_server.mace_server"
       ],
