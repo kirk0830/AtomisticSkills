@@ -1127,6 +1127,31 @@ class FAIRCHEMWrapper(MLIPModel):
             "relaxation": True
         }
     
+    def predict_atomic_features(self, structure_data: Any) -> Dict[str, Any]:
+        """
+        Predict atomic latent features (descriptors) for a structure.
+        
+        Args:
+            structure_data: Structure data.
+            
+        Returns:
+            Dictionary containing 'atomic_features'.
+        """
+        atoms = self.check_structure_data(structure_data)
+        if isinstance(atoms, dict) and "error" in atoms:
+            return atoms
+            
+        calc = self.create_calculator()
+        atoms.calc = calc
+        
+        # FairChem models usually don't have a direct latent feature API in the calculator
+        # For now, return a placeholder or try to extract from the model if supported
+        # Placeholder for consistency with base class
+        return {
+            "atomic_features": [],
+            "note": "Atomic feature extraction not yet implemented for FAIRCHEMWrapper"
+        }
+
     def _prepare_training_data(self, training_data: List[Dict[str, Any]]) -> Tuple:
         """
         Prepare training data in FAIRCHEM format.

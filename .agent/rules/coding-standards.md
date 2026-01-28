@@ -80,7 +80,5 @@ trigger: always_on
 - Long-running calculations should support progress display
 - Memory usage needs monitoring and optimization
 
-### Concurrent Processing
-- Support multi-process parallel computing
-- Use asyncio for asynchronous operations
-- Avoid blocking the main thread
+### Debugging
+- Pause immediately after you see the "improper format stop reason" error, and analyze the trigger of this error.

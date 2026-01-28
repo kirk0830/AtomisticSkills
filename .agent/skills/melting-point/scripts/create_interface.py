@@ -17,7 +17,7 @@ def create_interface(solid_path, liquid_path, axis, output_path):
     
     print(f"Stacking structures along axis {axis}...")
     # axis 0=x, 1=y, 2=z
-    combined = stack(solid, liquid, axis=axis, distance=2.0) # 2.0A gap to avoid initial overlap
+    combined = stack(solid, liquid, axis=axis, distance=2.0, maxstrain=2.0) # Allow up to 200% strain for melting
     
     # Alternatively, use pbc and cell info for a more rigid stack
     # But stack() is generally good for simple solid-liquid interfaces.

@@ -7,7 +7,7 @@ def recursive_tolist(obj):
     Handles numpy arrays, Path objects, and objects with as_dict() method.
     """
     if isinstance(obj, np.ndarray):
-        return obj.tolist()
+        return recursive_tolist(obj.tolist())
     elif isinstance(obj, (Path,)):
         return str(obj)
     elif isinstance(obj, dict):
@@ -15,8 +15,29 @@ def recursive_tolist(obj):
     elif isinstance(obj, (list, tuple)):
         return [recursive_tolist(x) for x in obj]
     elif hasattr(obj, "item"):  # numpy scalars
-        return obj.item()
+        val = obj.item()
+        if isinstance(val, float):
+             if np.isnan(val): return None
+             if np.isinf(val): return None
+        return val
+    elif isinstance(obj, float):
+        if np.isnan(obj): return None
+        if np.isinf(obj): return None
+        return obj
     elif hasattr(obj, "as_dict"): # pymatgen or others
         return recursive_tolist(obj.as_dict())
+    elif hasattr(obj, "get_atomic_numbers"): # ASE Atoms
+        from pymatgen.io.ase import AseAtomsAdaptor
+        return recursive_tolist(AseAtomsAdaptor.get_structure(obj).as_dict())
+    elif hasattr(obj, "potential_energies") and hasattr(obj, "total_energies"): # TrajectoryObserver
+        return {
+            "potential_energies": recursive_tolist(obj.potential_energies),
+            "kinetic_energies": recursive_tolist(obj.kinetic_energies),
+            "total_energies": recursive_tolist(obj.total_energies),
+            "forces": recursive_tolist(obj.forces),
+            "stresses": recursive_tolist(obj.stresses),
+            "atom_positions": recursive_tolist(obj.atom_positions),
+            "cells": recursive_tolist(obj.cells),
+        }
     else:
         return obj

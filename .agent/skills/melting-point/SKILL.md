@@ -18,6 +18,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 2.  **Phase Preparation**: 
     - **Solid**: Create a supercell using `create_supercell.py`.
     ```bash
+    # Env: mlip-agent
     python scripts/create_supercell.py [input_structure.cif] [solid_supercell.cif] --min_length 20.0
     ```
     - **Liquid**: Melt a block using 1D-NPT (with mask) to ensure matching dimensions.
@@ -34,37 +35,84 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
     ```
 3.  **Interface Creation**: Use `create_interface.py` to concatenate the two phases.
     ```bash
+    # Env: mlip-agent
     python scripts/create_interface.py solid.cif liquid.cif --axis 0 --output interface.cif
     ```
 4.  **Relaxation**: Perform an ionic relaxation using the `relax_structure` MCP tool with `relax_cell=True`. This allows the unit cell to adjust (shrink/expand) to match the density, and remove the interface energy created by stacking the two cells.
     ```bash
     mcp_mace_relax_structure(structure_data="interface.cif", relax_cell=True)
     ```
-5.  **Production**: Run an NVE MD simulation starting near the expected $T_m$ (e.g., 933K for Al) using the MCP tool.
+5.  **Phase Verification**: Before running production MD, verify solid-liquid coexistence in all structures.
+    
+    First, extract reference atomic features:
     ```bash
-    mcp_mace_run_md(structure_data="relaxed_structure.cif", temperature=933, ensemble="nve", steps=50000, output_dir="production_md")
+    # Env: mace-agent (or matgl-agent)
+    # Extract from pure solid - use explicit output path
+    mcp_mace_predict_atomic_features(
+        structure_data="solid_supercell.cif",
+        output_path="<research_dir>/solid_features.json"
+    )
+    
+    # Extract from pure liquid - use explicit output path
+    mcp_mace_predict_atomic_features(
+        structure_data="liquid_supercell.cif",
+        output_path="<research_dir>/liquid_features.json"
+    )
     ```
-6.  **Monitoring**: **Concurrent with Step 5**, run the monitor script in a separate terminal to check for convergence and automatically terminate the simulation.
+    
+    Then verify phases:
     ```bash
-    python scripts/monitor_melting.py production_md/production_nve.log --window 1.0 --stability_duration 5.0
+    # Env: mlip-agent
+    # Solid should be ~100% solid
+    python scripts/check_phase.py solid_supercell.cif \
+        --solid_features <research_dir>/solid_features.json \
+        --liquid_features <research_dir>/liquid_features.json
+    
+    # Liquid should be ~100% liquid
+    python scripts/check_phase.py liquid_supercell.cif \
+        --solid_features <research_dir>/solid_features.json \
+        --liquid_features <research_dir>/liquid_features.json
+    
+    # Interface should show ~50% solid/liquid coexistence
+    python scripts/check_phase.py interface_relax/relaxed_structure.cif \
+        --solid_features <research_dir>/solid_features.json \
+        --liquid_features <research_dir>/liquid_features.json
     ```
-6.  **Monitoring**: **Concurrent with Step 5**, run the monitor script in a separate terminal to check for convergence and automatically terminate the simulation.
-    ```bash
-    python scripts/monitor_melting.py production_md/production_nve.log --window 1.0 --stability_duration 5.0
-    ```
-    - `mcp_mace_run_md` spawns a dedicated worker process for the simulation.
-    - It writes the worker's PID to `production_md/MD.pid`.
-    - The monitor script reads this PID and kills the specific worker process when stability is reached.
-    - This ensures the main MCP server remains active.
+    
+    **Expected:**
+    - Solid: ≥95% solid
+    - Liquid: ≥95% liquid  
+    - Interface: 40-60% solid (coexistence maintained)
+    
+    **If interface lost coexistence:** Adjust melting temperature or relaxation parameters.
 
-7.  **Phase Validation**: Verify that the solid and liquid phases still coexist at the end of the simulation.
+6.  **Production**: Run an NVE MD simulation starting near the expected $T_m$ (e.g., 933K for Al) with the `monitor=True` parameter. This automatically launches the stability monitor in the background.
+    ```bash
+    mcp_mace_run_md(
+        structure_data="relaxed_structure.cif", 
+        temperature=933, 
+        ensemble="nve", 
+        steps=100000, 
+        monitor=True, 
+        monitor_type="melting",
+        output_dir="production_md"
+    )
+    ```
+7.  **Auto-Termination**: The integrated monitor will:
+    - Check for temperature and potential energy stability.
+    - Automatically stop the MD simulation when the melting point is reached.
+    - Log termination status in the research log.
+    - `mcp_mace_run_md` will return once the simulation stops (either by finishing all steps or by monitor termination).
+
+8.  **Phase Validation**: Verify that the solid and liquid phases still coexist at the end of the simulation.
     ```bash
     # Note: If MD was killed, use the last frame from trajectory or the restart file if available.
+    # Env: mlip-agent
     python scripts/check_phase.py production_md/final_structure.cif
     ```
     - **Fully Solidified**: The NVE starting temperature was too low.
     - **Fully Melted**: The NVE starting temperature was too high.
-7.  **Analysis**: If coexistence is verified, calculate $T_m$ by averaging the temperature over the last 5 ps of the simulation.
+9.  **Analysis**: If coexistence is verified, calculate $T_m$ by averaging the temperature over the last 5 ps of the simulation.
 
 
 
@@ -72,6 +120,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 
 Creating a solid-liquid interface for Aluminum:
 ```bash
+# Env: mlip-agent
 python scripts/create_interface.py Al_solid.cif Al_liquid.cif --axis 0 --output Al_interface.cif
 ```
 

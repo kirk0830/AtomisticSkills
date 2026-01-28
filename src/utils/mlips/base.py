@@ -3,16 +3,30 @@ Base MLIP model interface for MLIP MCP Wrappers
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List, Tuple, Union
 import logging
 import json
+import os
+import sys
+import time
 from pathlib import Path
 import matplotlib
 matplotlib.use('Agg')  # Must be set before importing pyplot
 import matplotlib.pyplot as plt
 import numpy as np
 
+# MD related imports will be done inside methods to avoid hard dependencies if not used
+# But we can add some common ones here
+try:
+    from ase import Atoms, units
+except ImportError:
+    pass
+
 logger = logging.getLogger(__name__)
+
+class MDStopIteration(Exception):
+    """Exception raised to stop MD simulation from a callback."""
+    pass
 
 
 class MLIPModel(ABC):
@@ -415,6 +429,151 @@ class MLIPModel(ABC):
             return result
         except Exception as e:
             return {"error": f"Prediction failed: {str(e)}"}
+
+    def run_md(
+        self,
+        structure_data: Any,
+        temperature: float = 300.0,
+        steps: int = 1000,
+        timestep: float = 1.0,
+        ensemble: str = "nvt",
+        log_interval: int = 10,
+        pressure: float = 0.0,
+        pressure_mask: Optional[List[int]] = None,
+        output_dir: Optional[str] = None,
+        monitor: bool = False,
+        monitor_type: str = "melting"
+    ) -> Dict[str, Any]:
+        """
+        Run molecular dynamics simulation using MatCalc.
+        
+        Args:
+            structure_data: Structure data compatible with check_structure_data.
+            temperature: Temperature in Kelvin.
+            steps: Number of steps.
+            timestep: Timestep in fs.
+            ensemble: Ensemble "nve", "nvt", "npt", etc.
+            log_interval: Interval for logging.
+            pressure: Target pressure in bar (converted to eV/A^3 for MatCalc if needed).
+            pressure_mask: Mask for anisotropic NPT.
+            output_dir: Directory to save results.
+            monitor: Whether to monitor stability and stop early.
+            monitor_type: Type of monitoring ("melting").
+            
+        Returns:
+            Dictionary with MD results.
+        """
+        if not self.is_loaded:
+            return {"error": "Model not loaded. Please call load_model first."}
+
+        try:
+            from matcalc import MDCalc
+            from ase import units
+            from pymatgen.io.ase import AseAtomsAdaptor
+            from src.utils.research_utils import get_current_research_dir
+            from src.utils.serialization_utils import recursive_tolist
+
+            # Check structure data
+            atoms = self.check_structure_data(structure_data)
+            if isinstance(atoms, dict) and "error" in atoms:
+                return atoms
+
+            if not output_dir:
+                try:
+                    output_dir = str(get_current_research_dir() / self.__class__.__name__.lower().replace("wrapper", "") / "md")
+                except Exception:
+                    output_dir = "md_results"
+            
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Formulate filenames
+            if hasattr(atoms, "get_chemical_formula"):
+                formula = atoms.get_chemical_formula()
+            else:
+                formula = "unknown"
+            
+            filename_base = f"{formula}_{temperature}K_{ensemble}"
+            traj_path = os.path.join(output_dir, f"{filename_base}.traj")
+            log_path = os.path.join(output_dir, f"{filename_base}.log")
+            
+            # Setup Stability Monitoring callbacks
+            additional_callbacks = []
+            stop_reason = None
+
+            if monitor and monitor_type == "melting":
+                # Stability state
+                history = {"temps": [], "epots": [], "steps": []}
+                window_ps = 1.0
+                
+                # Window size in log entries
+                window_entries = max(2, int(window_ps * 1000 / timestep / log_interval))
+                
+                def stability_callback():
+                    nonlocal stop_reason
+                    curr_temp = atoms.get_temperature()
+                    curr_epot = atoms.get_potential_energy() / len(atoms)
+                    
+                    history["temps"].append(curr_temp)
+                    history["epots"].append(curr_epot)
+                    history["steps"].append(len(history["steps"]))
+                    
+                    if len(history["temps"]) >= window_entries:
+                        # Calculate current local StdDev
+                        recent_temps = history["temps"][-window_entries:]
+                        std_t = np.std(recent_temps)
+                        
+                        # Logic from monitor_melting.py: if temp std < 50
+                        if std_t < 50.0:
+                            stop_reason = f"Stability reached: std(T)={std_t:.2f} < 50 over {window_ps}ps"
+                            raise MDStopIteration(stop_reason)
+
+                additional_callbacks.append((stability_callback, log_interval))
+
+            # Prepare Calculator
+            calc = self.create_calculator()
+            
+            # Initialize MDCalc
+            md_runner = MDCalc(
+                calculator=calc,
+                ensemble=ensemble.lower(),
+                temperature=temperature,
+                timestep=timestep,
+                steps=steps,
+                trajfile=traj_path,
+                logfile=log_path,
+                loginterval=log_interval,
+                relax_structure=False,
+                mask=pressure_mask,
+                pressure=pressure * units.bar if pressure is not None else 0.0,
+                additional_callbacks=additional_callbacks if additional_callbacks else None
+            )
+            
+            # Run MD - Catch the StopIteration
+            try:
+                result = md_runner.calc(atoms)
+            except MDStopIteration as e:
+                logger.info(f"MD stopped by monitor: {e}")
+                # We return a result manually since MDCalc.calc was interrupted
+                return {
+                    "status": "stabilized",
+                    "stop_reason": str(e),
+                    "final_structure": AseAtomsAdaptor.get_structure(atoms).as_dict(),
+                    "trajectory_path": traj_path,
+                    "log_path": log_path,
+                    "energy": float(atoms.get_potential_energy()),
+                    "final_energy": float(atoms.get_potential_energy()),
+                    "final_temperature": float(atoms.get_temperature())
+                }
+
+            # Return full result
+            result["trajectory_path"] = traj_path
+            result["log_path"] = log_path
+            return recursive_tolist(result)
+
+        except Exception as e:
+            import traceback
+            logger.error(f"MD failed: {str(e)}\n{traceback.format_exc()}")
+            return {"error": f"MD failed: {str(e)}"}
             
 
 

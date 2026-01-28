@@ -37,12 +37,19 @@ except Exception:
     pass
 # -------------------------------
 
+# Add project root to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 import contextlib
 import warnings
 import json
 from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from typing import Dict, Any, Optional, List, Union
+from src.utils.serialization_utils import recursive_tolist
+from src.utils.research_utils import get_current_research_dir
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
@@ -51,14 +58,8 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger("MatGL-Server")
 
-# Add project root to sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-if project_root not in sys.path:
-    sys.path.insert(0, project_root)
-
 # Initialize FastMCP server
 mcp = FastMCP("MatGL")
-from src.utils.research_utils import get_current_research_dir
 
 # Global variables to hold state
 wrapper: Optional[Any] = None
@@ -118,13 +119,15 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
         return wrapper.static_calculation(structure_data)
 
 @mcp.tool()
-def predict_atomic_features(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+def predict_atomic_features(structure_data: Union[Dict[str, Any], str], output_path: Optional[str] = None) -> Dict[str, Any]:
     """
     Predict atomic latent features (descriptors) for a structure.
     Automatically saves features to the current research directory.
     
     Args:
         structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+        output_path: Optional custom path for saving features. If not provided, auto-generates
+                     based on structure filename (e.g., 'solid.cif' -> 'solid_features.json').
     
     Returns:
         Dict: {
@@ -152,23 +155,27 @@ def predict_atomic_features(structure_data: Union[Dict[str, Any], str]) -> Dict[
     
     # Save to research directory
     try:
-        research_dir = get_current_research_dir()
-        
-        # Generate filename based on structure path or use generic name
-        if isinstance(structure_data, str):
-            struct_path = Path(structure_data)
-            feature_filename = f"{struct_path.stem}_features.json"
+        # Use custom path if provided, otherwise auto-generate
+        if output_path:
+            save_path = Path(output_path)
         else:
-            feature_filename = "atomic_features.json"
-        
-        output_path = research_dir / feature_filename
+            research_dir = get_current_research_dir()
+            
+            # Generate filename based on structure path or use generic name
+            if isinstance(structure_data, str):
+                struct_path = Path(structure_data)
+                feature_filename = f"{struct_path.stem}_features.json"
+            else:
+                feature_filename = "atomic_features.json"
+            
+            save_path = research_dir / feature_filename
         
         # Save features
-        with open(output_path, 'w') as f:
-            json.dump(result, f)
+        with open(save_path, 'w') as f:
+            json.dump(recursive_tolist(result), f)
         
         # Add saved path to result
-        result["saved_path"] = str(output_path)
+        result["saved_path"] = str(save_path)
         
         return result
         
@@ -529,6 +536,8 @@ def relax_structure(
         traceback.print_exc(file=sys.stderr)
         return {"error": f"Relaxation failed: {str(e)}"}
 
+
+
 @mcp.tool()
 def run_md(
     structure_data: Union[Dict[str, Any], str],
@@ -537,7 +546,9 @@ def run_md(
     timestep: float = 1.0,
     ensemble: str = "nvt",
     log_interval: int = 100,
-    output_dir: Optional[str] = None
+    output_dir: Optional[str] = None,
+    monitor: bool = False,
+    monitor_type: str = "melting"
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -559,65 +570,32 @@ def run_md(
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
         
-    try:
-        from matcalc import MDCalc
-        from pymatgen.io.ase import AseAtomsAdaptor
-        import os
-        
-        atoms = wrapper.check_structure_data(structure_data)
-        if isinstance(atoms, dict) and "error" in atoms:
-            return atoms
-            
-        if not output_dir:
-            output_dir = str(get_current_research_dir() / "matgl" / "md")
+    # Setup Directory
+    if not output_dir:
+        output_dir = str(get_current_research_dir() / "matgl" / "md")
+    os.makedirs(output_dir, exist_ok=True)
 
-        os.makedirs(output_dir, exist_ok=True)
-        
-        if hasattr(atoms, "get_chemical_formula"):
-            formula = atoms.get_chemical_formula()
-        else:
-            from pymatgen.core import Structure
-            if isinstance(atoms, Structure):
-                formula = atoms.composition.reduced_formula
-            else:
-                formula = "unknown"
-                
-        filename_base = f"{formula}_{temperature}K_{ensemble}"
-        traj_path = os.path.join(output_dir, f"{filename_base}.traj")
-        log_path = os.path.join(output_dir, f"{filename_base}.log")
-        
-        calc = wrapper.create_calculator()
-        
-        md_runner = MDCalc(
-            calculator=calc,
-            ensemble=ensemble.lower(),
+    # Prepare configuration for worker
+    try:
+        # Run MD via wrapper's unified run_md (supports monitoring callbacks)
+        result = wrapper.run_md(
+            structure_data=structure_data,
             temperature=temperature,
-            timestep=timestep,
             steps=steps,
-            trajfile=traj_path,
-            logfile=log_path,
-            loginterval=log_interval,
-            relax_structure=False
+            timestep=timestep,
+            ensemble=ensemble,
+            log_interval=log_interval,
+            output_dir=output_dir,
+            monitor=monitor,
+            monitor_type=monitor_type
         )
         
-        with contextlib.redirect_stdout(sys.stderr):
-            result = md_runner.calc(atoms)
-        
-        def get_structure_dict(struct_or_atoms):
-            if hasattr(struct_or_atoms, "as_dict"):
-                return struct_or_atoms.as_dict()
-            return AseAtomsAdaptor.get_structure(struct_or_atoms).as_dict()
-        
-        return {
-            "trajectory_path": traj_path,
-            "log_path": log_path,
-            "final_structure": get_structure_dict(result["final_structure"]),
-            "final_energy": result.get("energy")
-        }
+        return recursive_tolist(result)
+            
     except Exception as e:
         import traceback
         traceback.print_exc(file=sys.stderr)
-        return {"error": f"MD simulation failed: {str(e)}"}
+        return {"error": f"MD execution failed: {str(e)}", "traceback": traceback.format_exc()}
 
 @mcp.tool()
 def calculate_neb(

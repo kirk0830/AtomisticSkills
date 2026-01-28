@@ -1,7 +1,6 @@
 import sys
 import os
 import io
-import logging
 
 # --- ROBUST STDOUT ISOLATION ---
 # 1. Save the REAL stdout (the one used for MCP communication)
@@ -10,13 +9,10 @@ try:
     mcp_stdout_fd = os.dup(1)
     
     # 2. Redirect system-level FD 1 to /dev/null
-    # This silences library calls that write directly to stdout (the source of the 'G' error)
     devnull_fd = os.open(os.devnull, os.O_WRONLY)
     os.dup2(devnull_fd, 1)
 
     # 3. Patch Python's sys.stdout to use the saved handle
-    # stdio_server uses sys.stdout.buffer to write JSON-RPC messages.
-    # We wrap the saved FD in a binary buffer and a TextIOWrapper.
     sys.stdout = io.TextIOWrapper(
         os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
         encoding='utf-8', 
@@ -26,23 +22,25 @@ except Exception:
     pass
 # -------------------------------
 
-import json
-from pathlib import Path
-from mcp.server.fastmcp import FastMCP
-from typing import Dict, Any, Optional, List, Union
-
-# Configure logging to go to the real stderr
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
+import logging
+import json
+from pathlib import Path
+from mcp.server.fastmcp import FastMCP
+from typing import Dict, Any, Optional, List, Union
+from src.utils.serialization_utils import recursive_tolist
+from src.utils.research_utils import get_current_research_dir
+
+# Configure logging to go to the real stderr
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # Initialize FastMCP server
 mcp = FastMCP("FAIRCHEM")
-from src.utils.research_utils import get_current_research_dir
 
 # Global variables to hold state
 wrapper: Optional[Any] = None
@@ -243,7 +241,9 @@ def run_md(
     timestep: float = 1.0,
     ensemble: str = "nvt",
     log_interval: int = 100,
-    output_dir: Optional[str] = None
+    output_dir: Optional[str] = None,
+    monitor: bool = False,
+    monitor_type: str = "melting"
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -257,6 +257,8 @@ def run_md(
                   Also supports variants like "nvt_langevin", "nvt_andersen", "npt_berendsen", "npt_mtk".
         log_interval: Interval for logging to trajectory and logfile.
         output_dir: Directory to save results.
+        monitor: Whether to enable automatic MD monitoring.
+        monitor_type: Type of monitor ("melting").
         
     Returns:
         Dictionary with MD results (trajectory_path, final_structure).
@@ -265,64 +267,31 @@ def run_md(
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
         
+    # Setup Directory
+    if not output_dir:
+        output_dir = str(get_current_research_dir() / "fairchem" / "md")
+    os.makedirs(output_dir, exist_ok=True)
+
     try:
-        from matcalc import MDCalc
-        from pymatgen.io.ase import AseAtomsAdaptor
-        import os
-        
-        atoms = wrapper.check_structure_data(structure_data)
-        if isinstance(atoms, dict) and "error" in atoms:
-            return atoms
-            
-        if not output_dir:
-            output_dir = str(get_current_research_dir() / "fairchem" / "md")
-            
-        os.makedirs(output_dir, exist_ok=True)
-        
-        if hasattr(atoms, "get_chemical_formula"):
-            formula = atoms.get_chemical_formula()
-        else:
-            from pymatgen.core import Structure
-            if isinstance(atoms, Structure):
-                formula = atoms.composition.reduced_formula
-            else:
-                formula = "unknown"
-                
-        filename_base = f"{formula}_{temperature}K_{ensemble}"
-        traj_path = os.path.join(output_dir, f"{filename_base}.traj")
-        log_path = os.path.join(output_dir, f"{filename_base}.log")
-        
-        calc = wrapper.create_calculator()
-        
-        md_runner = MDCalc(
-            calculator=calc,
-            ensemble=ensemble.lower(),
+        # Run MD via wrapper's unified run_md (supports monitoring callbacks)
+        result = wrapper.run_md(
+            structure_data=structure_data,
             temperature=temperature,
-            timestep=timestep,
             steps=steps,
-            trajfile=traj_path,
-            logfile=log_path,
-            loginterval=log_interval,
-            relax_structure=False
+            timestep=timestep,
+            ensemble=ensemble,
+            log_interval=log_interval,
+            output_dir=output_dir,
+            monitor=monitor,
+            monitor_type=monitor_type
         )
         
-        result = md_runner.calc(atoms)
-        
-        def get_structure_dict(struct_or_atoms):
-            if hasattr(struct_or_atoms, "as_dict"):
-                return struct_or_atoms.as_dict()
-            return AseAtomsAdaptor.get_structure(struct_or_atoms).as_dict()
-        
-        return {
-            "trajectory_path": traj_path,
-            "log_path": log_path,
-            "final_structure": get_structure_dict(result["final_structure"]),
-            "final_energy": result.get("energy")
-        }
+        return recursive_tolist(result)
+            
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        return {"error": f"MD simulation failed: {str(e)}"}
+        traceback.print_exc(file=sys.stderr)
+        return {"error": f"MD execution failed: {str(e)}", "traceback": traceback.format_exc()}
 
 @mcp.tool()
 def calculate_neb(

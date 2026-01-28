@@ -32,7 +32,7 @@ description: Concise one-sentence summary of the skill's purpose.
 The body should be organized using the following headers:
 
 - **Goal**: What this skill specifically achieves.
-- **Instructions**: Step-by-step logic for the agent to follow. Use links to scripts in the `scripts/` directory.
+- **Instructions**: Step-by-step logic for the agent to follow. Use links to scripts in the `scripts/` directory. You must specify which conda-env is required for each script.
 - **Examples**: Short snippets or scenarios showing how to use the skill.
 - **Constraints**: Limitations or safety rules (e.g., "Only run on supercells with >50 atoms").
 
