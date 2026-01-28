@@ -240,10 +240,13 @@ def run_md(
     steps: int = 1000,
     timestep: float = 1.0,
     ensemble: str = "nvt",
-    log_interval: int = 100,
+    log_interval: int = 10,
+    pressure: float = 0.0,
+    pressure_mask: Optional[List[int]] = None,
     output_dir: Optional[str] = None,
     monitor: bool = False,
-    monitor_type: str = "melting"
+    monitor_type: Optional[Union[str, List[str]]] = None,
+    monitor_params: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -256,9 +259,12 @@ def run_md(
         ensemble: Ensemble "nve", "nvt" (Nose-Hoover), or "npt" (NPT).
                   Also supports variants like "nvt_langevin", "nvt_andersen", "npt_berendsen", "npt_mtk".
         log_interval: Interval for logging to trajectory and logfile.
+        pressure: Target pressure in bar (for NPT).
+        pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).
         output_dir: Directory to save results.
         monitor: Whether to enable automatic MD monitoring.
-        monitor_type: Type of monitor ("melting").
+        monitor_type: Type of monitor ("melting", "explosion", "overshoot", "volume") or list of types.
+        monitor_params: Optional dictionary of parameters for the monitors (e.g., {"upper_limit_ratio": 4.0}).
         
     Returns:
         Dictionary with MD results (trajectory_path, final_structure).
@@ -281,9 +287,12 @@ def run_md(
             timestep=timestep,
             ensemble=ensemble,
             log_interval=log_interval,
+            pressure=pressure,
+            pressure_mask=pressure_mask,
             output_dir=output_dir,
             monitor=monitor,
-            monitor_type=monitor_type
+            monitor_type=monitor_type,
+            monitor_params=monitor_params
         )
         
         return recursive_tolist(result)

@@ -15,14 +15,15 @@ try:
     os.dup2(log_f.fileno(), 1)
     os.dup2(log_f.fileno(), 2)
 
-    # 4. Patch Python sys.stdout to the original pipe handle
-    sys.stdout = io.TextIOWrapper(
+    # 4. Create the REAL MCP transport handle
+    mcp_stdout = io.TextIOWrapper(
         os.fdopen(mcp_stdout_fd, 'wb', buffering=0), 
         encoding='utf-8', 
         line_buffering=True
     )
     
-    # 5. Patch Python sys.stderr and others to the log file
+    # 5. Redirect Python-level sys.stdout and sys.stderr to the log file
+    sys.stdout = log_f
     sys.stderr = log_f
 except Exception:
     pass 
@@ -95,27 +96,36 @@ def load_model(model_name: str = "MACE-OMAT-0-small", device: str = "auto", task
     CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
     global wrapper
+    global sampler
     import contextlib
     
     # Isolate execution from stdout/stderr to prevent MCP protocol violation
     # We redirect stdout to sys.stderr (which logs to file) so we don't lose the output,
     # but we keep the actual stdout (MCP pipe) clean.
     # Note: sys.stderr is already redirected to a log file in the header of this script.
-    try:
-        # We use sys.stderr as the target for stdout. 
-        # Since sys.stderr is a file object (log_file), this merges stdout into the log.
-        with contextlib.redirect_stdout(sys.stderr):
+    with contextlib.redirect_stdout(sys.stderr):
+        try:
             from src.utils.mlips.mace.mace_wrapper import MACEWrapper
             wrapper = MACEWrapper(model_name=model_name, device=device, head=task_name)
+            # Load the model - this might take a while and produce output
             wrapper.load(model_path=model_name if os.path.exists(model_name) else None)
-            msg = f"Successfully loaded MACE model: {model_name}"
-    except Exception as e:
-        import traceback
-        # Log full traceback to the log file (sys.stderr)
-        traceback.print_exc(file=sys.stderr)
-        msg = f"Error loading model: {str(e)}"
-    
-    return msg
+            
+            # If task_name is provided, set the head
+            if task_name:
+                # Set head if the wrapper supports it
+                if hasattr(wrapper, "set_head"):
+                    wrapper.set_head(task_name)
+                else:
+                    logger.warning(f"Model wrapper does not support setting head to {task_name}")
+            
+            # Initialize sampler
+            from src.utils.data_augmenter.sampler import StructureSampler
+            sampler = StructureSampler(wrapper)
+            
+            return f"Successfully loaded MACE model: {model_name}"
+        except Exception as e:
+            logger.error(f"Failed to load model {model_name}: {e}")
+            return f"Error loading model: {str(e)}"
 
 @mcp.tool()
 def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
@@ -299,7 +309,8 @@ def run_md(
     pressure_mask: Optional[List[int]] = None,
     output_dir: Optional[str] = None,
     monitor: bool = False,
-    monitor_type: str = "melting"
+    monitor_type: Optional[Union[str, List[str]]] = None,
+    monitor_params: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -316,7 +327,10 @@ def run_md(
         pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).
         output_dir: Directory to save results.
         monitor: Whether to enable automatic MD monitoring.
-        monitor_type: Type of monitor ("melting").
+        monitor_type: Type of monitor ("melting", "explosion", "overshoot", "volume") 
+                     or a list of types.
+        monitor_params: Optional dictionary of parameters for the monitors 
+                        (e.g., {"upper_limit_ratio": 4.0}).
         
     Returns:
         Dictionary with MD results.
@@ -329,31 +343,36 @@ def run_md(
         output_dir = str(get_current_research_dir() / "mace" / "md")
     os.makedirs(output_dir, exist_ok=True)
 
-    try:
-        # Run MD via wrapper's unified run_md (supports monitoring callbacks)
-        result = wrapper.run_md(
-            structure_data=structure_data,
-            temperature=temperature,
-            steps=steps,
-            timestep=timestep,
-            ensemble=ensemble,
-            log_interval=log_interval,
-            pressure=pressure,
-            pressure_mask=pressure_mask,
-            output_dir=output_dir,
-            monitor=monitor,
-            monitor_type=monitor_type
-        )
-        
-        if "error" in result:
-            return result
+    import contextlib
+    import traceback
+    import sys # Added for sys.stderr
+    
+    with contextlib.redirect_stdout(sys.stderr):
+        try:
+            # Run MD via wrapper's unified run_md (supports monitoring callbacks)
+            result = wrapper.run_md(
+                structure_data=structure_data,
+                temperature=temperature,
+                steps=steps,
+                timestep=timestep,
+                ensemble=ensemble,
+                log_interval=log_interval,
+                pressure=pressure,
+                pressure_mask=pressure_mask,
+                output_dir=output_dir,
+                monitor=monitor,
+                monitor_type=monitor_type,
+                monitor_params=monitor_params
+            )
             
-        return recursive_tolist(result)
-            
-    except Exception as e:
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        return {"error": f"MD execution failed: {str(e)}", "traceback": traceback.format_exc()}
+            if "error" in result:
+                return result
+                
+            return recursive_tolist(result)
+                
+        except Exception as e:
+            traceback.print_exc(file=sys.stderr) # Reverted to original traceback.print_exc
+            return {"error": f"MD execution failed: {str(e)}", "traceback": traceback.format_exc()}
 
 @mcp.tool()
 def calculate_phonon(
@@ -599,7 +618,7 @@ def sample_off_equilibrium(
     
     if sampler is None:
          from src.utils.mlips.mace.mace_wrapper import MaceCrystalFeatureCalculator
-         from src.utils.sampler import StructureSampler
+         from src.utils.data_augmenter.sampler import StructureSampler
          
          # Initialize calculator and sampler
          base_calc = wrapper.get_calculator()
@@ -727,15 +746,23 @@ def get_info() -> Dict[str, Any]:
         Dictionary with model status, name, device, and head.
     """
     global wrapper
-    if wrapper is None or not wrapper.is_loaded:
-        return {"status": "No model loaded"}
-    
-    return {
-        "status": "Model loaded",
-        "model_name": wrapper.model_name,
-        "device": wrapper.device,
-        "head": wrapper.head
-    }
+    import contextlib
+    with contextlib.redirect_stdout(sys.stderr):
+        if wrapper is None:
+            return {"status": "no model loaded"}
+        
+        return {
+            "status": "loaded",
+            "model_name": wrapper.model_name,
+            "device": str(wrapper.device),
+            "head": wrapper.head,
+            "is_mh": getattr(wrapper, "is_mh", False)
+        }
 
 if __name__ == "__main__":
+    # The server needs sys.stdout to be the real pipe for communication.
+    # We patch it here just for the run() call.
+    # Tools called by FastMCP will inherit this sys.stdout unless redirected again.
+    import sys
+    sys.stdout = mcp_stdout
     mcp.run()

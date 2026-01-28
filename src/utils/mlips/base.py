@@ -24,9 +24,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-class MDStopIteration(Exception):
-    """Exception raised to stop MD simulation from a callback."""
-    pass
+from .md_utils import MDStopIteration, get_md_callback
 
 
 class MLIPModel(ABC):
@@ -442,7 +440,8 @@ class MLIPModel(ABC):
         pressure_mask: Optional[List[int]] = None,
         output_dir: Optional[str] = None,
         monitor: bool = False,
-        monitor_type: str = "melting"
+        monitor_type: Optional[Union[str, List[str]]] = None,
+        monitor_params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Run molecular dynamics simulation using MatCalc.
@@ -458,7 +457,8 @@ class MLIPModel(ABC):
             pressure_mask: Mask for anisotropic NPT.
             output_dir: Directory to save results.
             monitor: Whether to monitor stability and stop early.
-            monitor_type: Type of monitoring ("melting").
+            monitor_type: Type of monitoring ("melting", "explosion", "overshoot", "volume") or list of types.
+            monitor_params: Optional dictionary of parameters for the monitors (e.g., upper_limit_ratio).
             
         Returns:
             Dictionary with MD results.
@@ -488,7 +488,7 @@ class MLIPModel(ABC):
             
             # Formulate filenames
             if hasattr(atoms, "get_chemical_formula"):
-                formula = atoms.get_chemical_formula()
+                formula = atoms.get_CHEMICAL_FORMULA() if hasattr(atoms, "get_CHEMICAL_FORMULA") else atoms.get_chemical_formula()
             else:
                 formula = "unknown"
             
@@ -498,36 +498,22 @@ class MLIPModel(ABC):
             
             # Setup Stability Monitoring callbacks
             additional_callbacks = []
-            stop_reason = None
-
-            if monitor and monitor_type == "melting":
-                # Stability state
-                history = {"temps": [], "epots": [], "steps": []}
-                window_ps = 1.0
+            
+            if monitor and monitor_type:
+                # Support single string or list of monitor types
+                monitors = [monitor_type] if isinstance(monitor_type, str) else monitor_type
                 
-                # Window size in log entries
-                window_entries = max(2, int(window_ps * 1000 / timestep / log_interval))
-                
-                def stability_callback():
-                    nonlocal stop_reason
-                    curr_temp = atoms.get_temperature()
-                    curr_epot = atoms.get_potential_energy() / len(atoms)
-                    
-                    history["temps"].append(curr_temp)
-                    history["epots"].append(curr_epot)
-                    history["steps"].append(len(history["steps"]))
-                    
-                    if len(history["temps"]) >= window_entries:
-                        # Calculate current local StdDev
-                        recent_temps = history["temps"][-window_entries:]
-                        std_t = np.std(recent_temps)
-                        
-                        # Logic from monitor_melting.py: if temp std < 50
-                        if std_t < 50.0:
-                            stop_reason = f"Stability reached: std(T)={std_t:.2f} < 50 over {window_ps}ps"
-                            raise MDStopIteration(stop_reason)
-
-                additional_callbacks.append((stability_callback, log_interval))
+                for m_type in monitors:
+                    callback_info = get_md_callback(
+                        m_type, 
+                        atoms, 
+                        timestep_fs=timestep, 
+                        log_interval=log_interval,
+                        temperature=temperature,
+                        **(monitor_params or {})
+                    )
+                    if callback_info:
+                        additional_callbacks.append(callback_info)
 
             # Prepare Calculator
             calc = self.create_calculator()
@@ -555,7 +541,7 @@ class MLIPModel(ABC):
                 logger.info(f"MD stopped by monitor: {e}")
                 # We return a result manually since MDCalc.calc was interrupted
                 return {
-                    "status": "stabilized",
+                    "status": "stopped",
                     "stop_reason": str(e),
                     "final_structure": AseAtomsAdaptor.get_structure(atoms).as_dict(),
                     "trajectory_path": traj_path,

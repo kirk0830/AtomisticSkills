@@ -11,17 +11,21 @@ To perform stable and accurate molecular dynamics simulations using MLIPs, ensur
 ## Instructions
 
 ### 1. Monitoring Stability
-Always monitor simulation stability in real-time.
-- Start the [monitor_md.py](scripts/monitor_md.py) script in the background *before* starting the MD simulation.
-    ```bash
-    # Run in background with target temperature (e.g., 800K)
-    python scripts/monitor_md.py <log_file> --target_temp 800 --interval 60 &
+MD stability monitoring is integrated directly into the `run_md` tool via ASE callbacks. This ensures zero-latency response to instabilities and simplifies the simulation workflow.
+
+- **Enable Monitoring**: Set `monitor=True` and specify `monitor_type` (single string or list).
+    - `explosion`: Safety check. Stops if T > 10,000K or NaN. Recommended for all unstable simulations.
+    - `equilibration`: Convergence check. Stops once temperature and potential energy stabilize (e.g., for production runs).
+    - `overshoot`: Thermostat check. Stops if T deviates significantly from target (T-target > 200K).
+    - `volume`: NPT stability check. Stops if volume expands by 2x or contracts to 0.2x of initial.
+
+- **Example Usage**:
+    ```python
+    # MACE example with multiple monitors
+    mace.run_md(structure, monitor=True, monitor_type=["explosion", "equilibration"])
     ```
-- **Detection**: The script monitors starting temperature ($T_{start}$) and current temperature ($T_{curr}$):
-    - **Fluctuation**: Detects excessive fluctuations in the last 4 readings.
-    - **Drift**: Alerts if $T_{curr}$ overshoots or undershoots $T_{target}$ by $>100K$ based on the heating/cooling direction.
-    - **Explosion**: Detects NaNs or $T > 10,000K$.
-- **Action**: If any `CRITICAL` alert is printed, the agent **MUST** terminate the MD process immediately.
+
+- **Action**: When a monitor triggers, the simulation stops immediately with a `status: "stopped"` and a clear `stop_reason` in the result dictionary.
 
 ### 2. Parameter Initialization
 - **Time Step**: Default to 1.0 fs or 0.5 fs for high temperatures ($> 1000K$) or light elements (H, Li).
