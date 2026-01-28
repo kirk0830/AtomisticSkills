@@ -13,7 +13,7 @@ The framework integrates state-of-the-art Machine Learning Interatomic Potential
 
 ## Hierarchical Research Framework
 
-The core innovation of **AtomisticSkills** is the **hierarchical decomposition of scientific tasks** into three distinct levels: **Workflows**, **Skills**, and **Tools**. This architecture enables AI agents to tackle complex materials research problems by breaking them down into manageable, composable components.
+The core idea of **AtomisticSkills** is the **hierarchical decomposition of scientific tasks** into three distinct levels: **Workflows**, **Skills**, and **Tools**. This architecture enables AI agents to tackle complex materials research problems by breaking them down into manageable, composable components.
 
 
 ### 🎯 Workflows (High-Level Scientific Tasks)
