@@ -1,5 +1,5 @@
 ---
-description: Hierarchical high-throughput screening for alkaline-stable materials using MLIP and DFT
+description: High-throughput screening for alkaline-stable Li-Ion Conductors
 ---
 
 # Hierarchical Screening for Alkaline-Stable Li-Ion Conductors
