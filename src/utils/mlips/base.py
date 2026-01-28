@@ -518,19 +518,26 @@ class MLIPModel(ABC):
             # Prepare Calculator
             calc = self.create_calculator()
             
-            # Initialize MDCalc
-            md_runner = MDCalc(
+            # Convert pressure from bar to eV/A^3 for MatCalc
+            pressure_ev_ang3 = pressure * units.bar if pressure is not None else 0.0
+
+            from src.utils.mlips.md_runner import CustomMDCalc
+
+            # Initialize MDCalc with the calculator and parameters
+            # Note: We use CustomMDCalc to ensure additional_callbacks are supported and passed correctly.
+            md_runner = CustomMDCalc(
                 calculator=calc,
-                ensemble=ensemble.lower(),
+                ensemble=ensemble.lower(), # Keep .lower() for consistency with matcalc
                 temperature=temperature,
                 timestep=timestep,
                 steps=steps,
                 trajfile=traj_path,
                 logfile=log_path,
                 loginterval=log_interval,
-                relax_structure=False,
-                mask=pressure_mask,
-                pressure=pressure * units.bar if pressure is not None else 0.0,
+                pressure=pressure_ev_ang3,
+                mask=pressure_mask, # Re-added mask
+                set_zero_rotation=True, # Good practice for MD
+                set_com_stationary=True,
                 additional_callbacks=additional_callbacks if additional_callbacks else None
             )
             
