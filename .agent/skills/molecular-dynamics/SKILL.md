@@ -28,7 +28,9 @@ MD stability monitoring is integrated directly into the `run_md` tool via ASE ca
 - **Action**: When a monitor triggers, the simulation stops immediately with a `status: "stopped"` and a clear `stop_reason` in the result dictionary.
 
 ### 2. Parameter Initialization
-- **Time Step**: Default to 1.0 fs or 0.5 fs for high temperatures ($> 1000K$) or light elements (H, Li).
+- **Time Step**: 
+    - **2.0 fs**: Recommended for most systems without light elements (Hydrogen).
+    - **0.5 - 1.0 fs**: Use for systems containing Hydrogen, or at very high temperatures (> 2000K) to maintain stability.
 - **Thermostat**: Use a coupling constant (`taut`) around $100 \times \text{timestep}$.
 - **Temperature Ramp**: Start at a low temperature (50K) and ramp to the target to avoid "shock" waves from initial overlaps.
 

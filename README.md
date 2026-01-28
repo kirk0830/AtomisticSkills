@@ -26,9 +26,6 @@ Workflows represent **complete research objectives** that may span multiple comp
 - Explore novel solid-state conductors that are compatible with LiFePO₄ cathodes
 - Design thermally stable perovskites for high-temperature applications
 
-**Current Workflows:**
-- [Fine-tune MLIP for alloy properties](file:///home/bdeng/projects/AtomisticSkills/.agent/workflows/fine-tune-alloy-properties.md)
-
 ---
 
 ### 🔧 Skills (Mid-Level Research Tasks)
