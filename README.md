@@ -13,7 +13,7 @@ Simulation MCP is a comprehensive framework designed to integrate Machine Learni
 One of the key innovations of Simulation MCP is the **hierarchical decomposition of scientific tasks** into three distinct levels: **Workflows**, **Skills**, and **Tools**. This architecture enables AI agents to tackle complex materials research problems by breaking them down into manageable, composable components.
 
 ### 🎯 Workflows (High-Level Scientific Tasks)
-[**Browse Workflows →**](file:///home/bdeng/projects/simulation_mcp/.agent/workflows)
+[**Browse Workflows →**](file:///home/bdeng/projects/AtomisticSkills/.agent/workflows)
 
 Workflows represent **complete research objectives** that may span multiple computational tasks and require strategic decision-making. They are defined as step-by-step procedures in `.agent/workflows/` and guide the agent through complex, multi-stage research campaigns.
 
@@ -23,12 +23,12 @@ Workflows represent **complete research objectives** that may span multiple comp
 - Design thermally stable perovskites for high-temperature applications
 
 **Current Workflows:**
-- [Fine-tune MLIP for alloy properties](file:///home/bdeng/projects/simulation_mcp/.agent/workflows/fine-tune-alloy-properties.md)
+- [Fine-tune MLIP for alloy properties](file:///home/bdeng/projects/AtomisticSkills/.agent/workflows/fine-tune-alloy-properties.md)
 
 ---
 
 ### 🔧 Skills (Mid-Level Research Tasks)
-[**Browse Skills →**](file:///home/bdeng/projects/simulation_mcp/.agent/skills)
+[**Browse Skills →**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills)
 
 Skills are **modular capabilities** that calculate or investigate specific material properties or answer focused research questions. Each skill encapsulates domain expertise, combining multiple tools and scripts to solve a well-defined problem. Skills are self-documented with instructions, helper scripts, and examples.
 
@@ -39,15 +39,15 @@ Skills are **modular capabilities** that calculate or investigate specific mater
 - How to compute ionic diffusion coefficients from MD trajectories
 
 **Current Skills:**
-- [**MLIP Training**](file:///home/bdeng/projects/simulation_mcp/.agent/skills/mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
-- [**Melting Point**](file:///home/bdeng/projects/simulation_mcp/.agent/skills/melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
-- [**Diffusion Analysis**](file:///home/bdeng/projects/simulation_mcp/.agent/skills/diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
-- [**Molecular Dynamics**](file:///home/bdeng/projects/simulation_mcp/.agent/skills/molecular-dynamics/SKILL.md): Best practices for stable MLIP MD simulations
+- [**MLIP Training**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
+- [**Melting Point**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
+- [**Diffusion Analysis**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
+- [**Molecular Dynamics**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/molecular-dynamics/SKILL.md): Best practices for stable MLIP MD simulations
 
 ---
 
 ### ⚙️ Tools (Low-Level Research Primitives)
-[**View MCP Tools**](file:///home/bdeng/projects/simulation_mcp/src/mcp_server)
+[**View MCP Tools**](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server)
 
 Tools are the **fundamental building blocks** that Skills and Workflows compose together. They are less flexible but highly optimized and battle-tested. Tools are exposed in two forms:
 
@@ -142,8 +142,8 @@ The project uses separate conda environments to manage conflicting MLIP dependen
 ### Installation
 ```bash
 # Clone the repository
-git clone git@github.com:bowen-bd/simulation_mcp.git
-cd simulation_mcp
+git clone git@github.com:bowen-bd/AtomisticSkills.git
+cd AtomisticSkills
 
 # Setup environments (assuming .yml files are in conda-envs/)
 conda env create -f conda-envs/mlip-agent.yml
@@ -179,7 +179,7 @@ To use these tools within Antigravity, you need to merge the server configuratio
 4. Restart Antigravity to load the new tools.
 
 > [!TIP]
-> Ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/home/bdeng/projects/simulation_mcp`).
+> Ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/home/bdeng/projects/AtomisticSkills`).
 
 ---
 
@@ -227,12 +227,12 @@ Each MCP server is a standalone Python module that exposes tools via the FastMCP
 
 | Server | Environment | Primary Functionality |
 |--------|-------------|----------------------|
-| [mace_server.py](file:///home/bdeng/projects/simulation_mcp/src/mcp_server/mace_server.py) | `mace-agent` | MACE model loading, prediction, relaxation, MD, fine-tuning |
-| [matgl_server.py](file:///home/bdeng/projects/simulation_mcp/src/mcp_server/matgl_server.py) | `matgl-agent` | CHGNet/M3GNet/TensorNet operations, bandgap prediction |
-| [fairchem_server.py](file:///home/bdeng/projects/simulation_mcp/src/mcp_server/fairchem_server.py) | `fairchem-agent` | UMA/ESEN models, mock DFT capability |
-| [materials_server.py](file:///home/bdeng/projects/simulation_mcp/src/mcp_server/materials_server.py) | `mlip-agent` | Materials Project queries, VASP I/O, research directory management |
-| [atomate2_server.py](file:///home/bdeng/projects/simulation_mcp/src/mcp_server/atomate2_server.py) | `atomate2-agent` | Query remote DFT databases, job status monitoring |
-| [smol_server.py](file:///home/bdeng/projects/simulation_mcp/src/mcp_server/smol_server.py) | `smol-agent` | Cluster expansion training and Monte Carlo simulations |
+| [mace_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/mace_server.py) | `mace-agent` | MACE model loading, prediction, relaxation, MD, fine-tuning |
+| [matgl_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/matgl_server.py) | `matgl-agent` | CHGNet/M3GNet/TensorNet operations, bandgap prediction |
+| [fairchem_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/fairchem_server.py) | `fairchem-agent` | UMA/ESEN models, mock DFT capability |
+| [materials_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/materials_server.py) | `mlip-agent` | Materials Project queries, VASP I/O, research directory management |
+| [atomate2_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/atomate2_server.py) | `atomate2-agent` | Query remote DFT databases, job status monitoring |
+| [smol_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/smol_server.py) | `smol-agent` | Cluster expansion training and Monte Carlo simulations |
 
 **Key Pattern**: Each server imports a corresponding wrapper class (e.g., `MACEWrapper`, `MatGLWrapper`) that encapsulates the MLIP-specific logic.
 
@@ -257,7 +257,7 @@ result = wrapper.predict(structure_data)
 - `fine_tune_model(training_data_path, epochs, lr)`: Model fine-tuning
 
 > [!IMPORTANT]
-> All wrappers use **eV/Å³ for stress** internally, following ASE conventions. See [stress-units.md](file:///home/bdeng/projects/simulation_mcp/.agent/rules/stress-units.md) for details.
+> All wrappers use **eV/Å³ for stress** internally, following ASE conventions. See [stress-units.md](file:///home/bdeng/projects/AtomisticSkills/.agent/rules/stress-units.md) for details.
 
 #### 3. Utilities (`src/utils/`)
 
@@ -280,10 +280,10 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 ```
 
 **Available Skills**:
-- **[mlip-training](file:///home/bdeng/projects/simulation_mcp/.agent/skills/mlip-training/SKILL.md)**: Benchmark and fine-tune MLIPs using data augmentation
-- **[melting-point](file:///home/bdeng/projects/simulation_mcp/.agent/skills/melting-point/SKILL.md)**: Calculate melting temperature using solid-liquid coexistence
-- **[diffusion-analysis](file:///home/bdeng/projects/simulation_mcp/.agent/skills/diffusion-analysis/SKILL.md)**: Compute diffusion coefficients from MD trajectories
-- **[molecular-dynamics](file:///home/bdeng/projects/simulation_mcp/.agent/skills/molecular-dynamics/SKILL.md)**: Best practices for running stable MLIP MD simulations
+- **[mlip-training](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/mlip-training/SKILL.md)**: Benchmark and fine-tune MLIPs using data augmentation
+- **[melting-point](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/melting-point/SKILL.md)**: Calculate melting temperature using solid-liquid coexistence
+- **[diffusion-analysis](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/diffusion-analysis/SKILL.md)**: Compute diffusion coefficients from MD trajectories
+- **[molecular-dynamics](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/molecular-dynamics/SKILL.md)**: Best practices for running stable MLIP MD simulations
 
 **How Skills Work**:
 1. The agent reads `SKILL.md` to understand the task
@@ -292,7 +292,7 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 4. Uses resources and examples as templates
 
 > [!TIP]
-> To create a new skill, follow the guidelines in [skill-standards.md](file:///home/bdeng/projects/simulation_mcp/.agent/rules/skill-standards.md).
+> To create a new skill, follow the guidelines in [skill-standards.md](file:///home/bdeng/projects/AtomisticSkills/.agent/rules/skill-standards.md).
 
 ---
 
@@ -328,7 +328,7 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
    ```bash
    # Stop the server in Antigravity
    # Then restart it manually for debugging:
-   export PYTHONPATH=/home/bdeng/projects/simulation_mcp
+   export PYTHONPATH=/home/bdeng/projects/AtomisticSkills
    conda activate <appropriate-env>
    python -m src.mcp_server.<server_name>
    ```
@@ -336,7 +336,7 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 #### Implementing a New Skill
 
 1. Create the skill directory: `.agent/skills/<skill-name>/`
-2. Write `SKILL.md` following the [standards](file:///home/bdeng/projects/simulation_mcp/.agent/rules/skill-standards.md)
+2. Write `SKILL.md` following the [standards](file:///home/bdeng/projects/AtomisticSkills/.agent/rules/skill-standards.md)
 3. Add helper scripts to `scripts/` (specify required conda environment)
 4. Provide examples and resources as needed
 5. Test the skill end-to-end with Antigravity
@@ -405,11 +405,11 @@ Every research task should:
 
 #### Import Errors in Scripts
 - Ensure correct conda environment is activated
-- Check that `PYTHONPATH` includes project root: `export PYTHONPATH=/home/bdeng/projects/simulation_mcp`
+- Check that `PYTHONPATH` includes project root: `export PYTHONPATH=/home/bdeng/projects/AtomisticSkills`
 - Use absolute imports: `from src.utils.mlips.mace_wrapper import MACEWrapper`
 
 #### Fine-Tuning Fails
-- Verify stress units are in eV/Å³ (see [stress-units.md](file:///home/bdeng/projects/simulation_mcp/.agent/rules/stress-units.md))
+- Verify stress units are in eV/Å³ (see [stress-units.md](file:///home/bdeng/projects/AtomisticSkills/.agent/rules/stress-units.md))
 - Check training data format matches expected structure
 - For small datasets (<500 structures), use `freeze_backbone=True`
 
@@ -422,7 +422,7 @@ Every research task should:
 
 ## Project Structure
 ```
-simulation_mcp/
+AtomisticSkills/
 ├── src/
 │   ├── mcp_server/          # MCP server implementations
 │   │   ├── mace_server.py

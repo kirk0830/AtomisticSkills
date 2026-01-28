@@ -7,7 +7,7 @@
         "src.mcp_server.matgl_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp",
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills",
         "MATGL_BACKEND": "DGL"
       }
     },
@@ -18,7 +18,7 @@
         "src.mcp_server.mace_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "fairchem": {
@@ -28,7 +28,7 @@
         "src.mcp_server.fairchem_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "materials_tools": {
@@ -38,7 +38,7 @@
         "src.mcp_server.materials_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "atomate2": {
@@ -48,7 +48,7 @@
         "src.mcp_server.atomate2_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "smol": {
@@ -58,7 +58,7 @@
         "src.mcp_server.smol_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/simulation_mcp"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     }
   }
