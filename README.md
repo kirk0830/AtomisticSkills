@@ -1,7 +1,10 @@
-# Simulation MCP: Machine Learning Interatomic Potential Agent
+# AtomisticSkills
 
 ## Overview
-Simulation MCP is a comprehensive framework designed to integrate Machine Learning Interatomic Potentials (MLIPs) with automated simulation workflows. It leverages the Model Context Protocol (MCP) to expose powerful atomistic simulation tools, property calculations, and fine-tuning capabilities to coding AI copilots like Antigravity.
+**AtomisticSkills** is a composable framework for AI-driven atomistic materials research. Built on the **hierarchical decomposition** of complex scientific tasks into **Workflows** → **Skills** → **Tools**, it enables coding AI agents to autonomously conduct multi-stage materials simulations by combining modular, reusable capabilities.
+
+The framework integrates state-of-the-art Machine Learning Interatomic Potentials (MLIPs) with DFT calculations, data augmentation, and property calculations through the Model Context Protocol (MCP), making advanced materials research accessible to AI copilots like Antigravity.
+
 
 
 
@@ -10,7 +13,8 @@ Simulation MCP is a comprehensive framework designed to integrate Machine Learni
 
 ## Hierarchical Research Framework
 
-One of the key innovations of Simulation MCP is the **hierarchical decomposition of scientific tasks** into three distinct levels: **Workflows**, **Skills**, and **Tools**. This architecture enables AI agents to tackle complex materials research problems by breaking them down into manageable, composable components.
+The core innovation of **AtomisticSkills** is the **hierarchical decomposition of scientific tasks** into three distinct levels: **Workflows**, **Skills**, and **Tools**. This architecture enables AI agents to tackle complex materials research problems by breaking them down into manageable, composable components.
+
 
 ### 🎯 Workflows (High-Level Scientific Tasks)
 [**Browse Workflows →**](file:///home/bdeng/projects/AtomisticSkills/.agent/workflows)
@@ -197,7 +201,8 @@ This project is optimized for use with coding AI copilots like **Antigravity**. 
 
 ### Architecture Overview
 
-Simulation MCP follows a **modular, multi-environment architecture** designed to isolate dependencies and expose functionality through the Model Context Protocol (MCP):
+**AtomisticSkills** follows a **modular, multi-environment architecture** designed to isolate dependencies and expose functionality through the Model Context Protocol (MCP):
+
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -455,7 +460,8 @@ AtomisticSkills/
 ---
 
 ## Contributing
-Simulation MCP is developed as a tool for automated atomistic research. Contributions to new potentials, sampling methods, or simulation workflows are welcome.
+**AtomisticSkills** is developed as an open framework for automated atomistic research. Contributions to new potentials, sampling methods, simulation workflows, or skills are welcome.
+
 
 ### Guidelines
 - Follow the coding standards in `.agent/rules/coding-standards.md`
