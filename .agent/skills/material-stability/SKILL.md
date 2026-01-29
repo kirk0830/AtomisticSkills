@@ -1,6 +1,6 @@
 ---
-name: stability-calculation
-description: Calculate the thermodynamic stability of a material at 0K.
+name: material-stability
+description: Calculate the thermodynamic stability and energy above the convex hull (E_hull) of a material at 0K.
 ---
 
 # Stability Calculation
@@ -22,7 +22,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 2.  **Query Materials Project Hull**: Retrieve all structures on the convex hull in the target material's chemical space.
     ```bash
     # Env: mlip-agent
-    python .agent/skills/stability-calculation/scripts/query_mp_hull.py \
+    python .agent/skills/material-stability/scripts/query_mp_hull.py \
         --formula "Li-Fe-P-O" \
         --target "LiFePO4" \
         --thermo_type "GGA_GGA+U" \
@@ -59,7 +59,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 4.  **Construct Convex Hull**: Build a pymatgen phase diagram using the relaxed energies.
     ```bash
     # Env: mlip-agent
-    python .agent/skills/stability-calculation/scripts/compute_ehull.py \
+    python .agent/skills/material-stability/scripts/compute_ehull.py \
         --hull_manifest hull_entries.json \
         --relaxed_dir relaxed/ \
         --target_material LiFePO4 \
@@ -86,7 +86,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 ```bash
 # Step 1: Query Materials Project hull in Li-Fe-P-O space
 # Env: mlip-agent
-python .agent/skills/stability-calculation/scripts/query_mp_hull.py \
+python .agent/skills/material-stability/scripts/query_mp_hull.py \
     --formula "Li-Fe-P-O" \
     --target "LiFePO4" \
     --output hull_structures/
@@ -102,7 +102,7 @@ mcp_matgl_relax_structure(
 
 # Step 3: Compute E_hull
 # Env: mlip-agent
-python .agent/skills/stability-calculation/scripts/compute_ehull.py \
+python .agent/skills/material-stability/scripts/compute_ehull.py \
     --hull_manifest hull_entries.json \
     --relaxed_dir relaxed/ \
     --target_material LiFePO4 \
@@ -113,7 +113,7 @@ python .agent/skills/stability-calculation/scripts/compute_ehull.py \
 ```bash
 # Query Li-Co-O chemical space
 # Env: mlip-agent
-python .agent/skills/stability-calculation/scripts/query_mp_hull.py \
+python .agent/skills/material-stability/scripts/query_mp_hull.py \
     --formula "Li-Co-O" \
     --target "LiCoO2" \
     --output hull_structures_LiCoO2/
