@@ -44,6 +44,7 @@ Skills are **modular capabilities** that calculate or investigate specific mater
 - [**Melting Point**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
 - [**Diffusion Analysis**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
 - [**Molecular Dynamics**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/molecular-dynamics/SKILL.md): Best practices for stable MLIP MD simulations
+- [**Material Stability**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/material-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
 
 ---
 
