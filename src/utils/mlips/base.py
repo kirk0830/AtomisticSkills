@@ -382,7 +382,7 @@ class MLIPModel(ABC):
 
             # Get energy safely
             try:
-                energy_val = float(final_struct.get_potential_energy())
+                energy_val = float(atoms.get_potential_energy())
             except Exception:
                 energy_val = None
             
@@ -564,7 +564,7 @@ class MLIPModel(ABC):
                 stress = atoms.get_stress()
                 # ASE units: stress is in eV/A^3
                 # We standardize to eV/A^3 across the project for simulation compatibility
-                result["stress"] = stress.tolist()
+                result["stress"] = [float(x) for x in stress.tolist()] if hasattr(stress, "tolist") else [float(x) for x in stress]
             except Exception:
                 pass
                 

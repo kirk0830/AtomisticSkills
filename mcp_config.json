@@ -31,7 +31,7 @@
         "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
-    "materials_tools": {
+    "base": {
       "command": "/home/bdeng/miniforge3/envs/base-agent/bin/python",
       "args": [
         "-m",

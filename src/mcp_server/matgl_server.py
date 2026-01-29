@@ -93,7 +93,7 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
     
-    return wrapper.static_calculation(structure_data)
+    return recursive_tolist(wrapper.static_calculation(structure_data))
 
 @mcp.tool()
 def predict_atomic_features(structure_data: Union[Dict[str, Any], str], output_path: Optional[str] = None) -> Dict[str, Any]:
@@ -419,13 +419,13 @@ def get_info() -> Dict[str, Any]:
         return {"status": "no_model_loaded"}
     return wrapper.get_model_info()
 
-
 @mcp.tool()
 def relax_structure(
     structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
     fmax: float = 0.01,
     steps: int = 500,
     optimizer: str = "FIRE",
+    relax_cell: bool = True,
     output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -440,6 +440,7 @@ def relax_structure(
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
+        relax_cell: Whether to relax the unit cell.
         output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
         
     Returns:
@@ -451,14 +452,14 @@ def relax_structure(
         return {"error": "Model not loaded. Please call load_model first."}
     
     # Simply delegate to base wrapper's unified relax_structure method
-    return wrapper.relax_structure(
+    return recursive_tolist(wrapper.relax_structure(
         structure_data=structure_data,
         fmax=fmax,
         steps=steps,
         optimizer=optimizer,
-        relax_cell=True,  # MatGL always relaxes cell
+        relax_cell=relax_cell,
         output_dir=output_dir
-    )
+    ))
 
 
 
