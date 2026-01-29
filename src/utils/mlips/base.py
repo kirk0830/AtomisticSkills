@@ -257,9 +257,11 @@ class MLIPModel(ABC):
         
             return {"error": "Invalid structure format. Must be file path, pymatgen Structure, ASE Atoms, or dict with 'symbols' and 'positions'."}
 
+            return {"error": f"Relaxation failed: {str(e)}"}
+    
     def relax_structure(
         self,
-        structure_data: Any,
+        structure_data: Union[Any, str, List[Union[Dict[str, Any], str]]],
         fmax: float = 0.01,
         steps: int = 500,
         optimizer: str = "FIRE",
@@ -268,23 +270,52 @@ class MLIPModel(ABC):
         fixed_atoms: Optional[List[int]] = None
     ) -> Dict[str, Any]:
         """
-        Relax a structure using the loaded model and ASE optimizer.
+        Relax one or multiple structures using the loaded model.
+        
+        Automatically detects batch mode from input and handles accordingly.
         
         Args:
-            structure_data: Structure data compatible with check_structure_data.
+            structure_data: Can be:
+                - Single structure (dict, ASE Atoms, pymatgen Structure, or file path)
+                - Directory path containing CIF/POSCAR files (batch mode)
+                - List of file paths (batch mode)
+                - List of structure dicts (batch mode)
             fmax: Force convergence criterion (eV/Ang).
             steps: Maximum number of optimization steps.
             optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
             relax_cell: Whether to relax the unit cell (True) or just atomic positions (False).
-            output_dir: Directory to save results.
-            fixed_atoms: List of indices of atoms to keep fixed during relaxation.
+            output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
+            fixed_atoms: List of indices of atoms to keep fixed during relaxation (single mode only).
             
         Returns:
-            Dictionary with relaxation results (energy, final_structure, trajectory_path).
+            For single structure: Dict with energy, trajectory_path, cif_path, json_path
+            For batch mode: Dict with mode="batch", total_structures, successful, failed, results list
         """
         if not self.is_loaded:
             return {"error": "Model not loaded. Please call load_model first."}
-            
+        
+        # Auto-detect batch mode
+        from pathlib import Path
+        is_batch = isinstance(structure_data, list) or (isinstance(structure_data, str) and Path(structure_data).is_dir())
+        
+        if is_batch:
+            # BATCH MODE
+            return self._batch_relax(structure_data, fmax, steps, optimizer, relax_cell, output_dir)
+        else:
+            # SINGLE STRUCTURE MODE
+            return self._single_relax(structure_data, fmax, steps, optimizer, relax_cell, output_dir, fixed_atoms)
+    
+    def _single_relax(
+        self,
+        structure_data: Any,
+        fmax: float,
+        steps: int,
+        optimizer: str,
+        relax_cell: bool,
+        output_dir: Optional[str],
+        fixed_atoms: Optional[List[int]]
+    ) -> Dict[str, Any]:
+        """Internal method for single structure relaxation."""
         try:
             from ase.constraints import FixAtoms
             from ase.filters import FrechetCellFilter
@@ -312,13 +343,13 @@ class MLIPModel(ABC):
 
             if not output_dir:
                 try:
-                    output_dir = str(get_current_research_dir() / "relaxation")
+                    output_dir = str(get_current_research_dir() / self.__class__.__name__.lower().replace("wrapper", "") / "relaxation")
                 except Exception:
                     output_dir = "relaxation"
             
             os.makedirs(output_dir, exist_ok=True)
             
-            # Define log path
+            # Define paths
             filename_base = "relax"
             traj_file = os.path.join(output_dir, f"{filename_base}.traj")
             log_file = os.path.join(output_dir, f"{filename_base}.log")
@@ -327,14 +358,12 @@ class MLIPModel(ABC):
             calc = self.create_calculator()
             atoms.calc = calc
             
-            # Use ASE optimizer directly for better control over logging
+            # Use ASE optimizer
             if not hasattr(ase.optimize, optimizer):
                 raise ValueError(f"Optimizer {optimizer} not found in ase.optimize")
             
             # Setup cell filter if relaxing cell
             if relax_cell:
-                # We use FrechetCellFilter as MatCalc does
-                # Note: The optimizer will operate on this 'filtered' object
                 opt_atoms = FrechetCellFilter(atoms)
             else:
                 opt_atoms = atoms
@@ -343,7 +372,7 @@ class MLIPModel(ABC):
             opt = OptClass(opt_atoms, logfile=log_file, trajectory=traj_file)
             opt.run(fmax=fmax, steps=steps)
             
-            # Clear constraints before returning/saving if needed
+            # Clear constraints before returning/saving
             final_struct = atoms
             if hasattr(final_struct, "set_constraint"):
                 final_struct.set_constraint([])
@@ -351,38 +380,153 @@ class MLIPModel(ABC):
             cif_path = os.path.join(output_dir, "relaxed_structure.cif")
             save_structure(final_struct, cif_path)
 
-            # Save energy and results to JSON
-            json_path = os.path.join(output_dir, "relaxation_results.json")
-            
             # Get energy safely
             try:
                 energy_val = float(final_struct.get_potential_energy())
             except Exception:
                 energy_val = None
-                
-            results_data = {
-                "energy": energy_val,
-                "trajectory_path": traj_file,
-                "log_path": log_file,
-                "cif_path": cif_path
-            }
             
-            with open(json_path, 'w') as f:
-                json.dump(results_data, f, indent=2)
+            # Save energy to text file for compute_ehull.py
+            if energy_val is not None:
+                energy_file = os.path.join(output_dir, "relaxed_energy.txt")
+                with open(energy_file, 'w') as f:
+                    f.write(str(energy_val))
 
             return {
                 "energy": energy_val,
                 "trajectory_path": traj_file,
                 "log_path": log_file,
                 "cif_path": cif_path,
-                "json_path": json_path,
                 "final_structure": final_struct.as_dict() if hasattr(final_struct, "as_dict") else AseAtomsAdaptor.get_structure(final_struct).as_dict()
             }
         except Exception as e:
             import traceback
             traceback.print_exc(file=sys.stderr)
             return {"error": f"Relaxation failed: {str(e)}"}
+    
+    def _batch_relax(
+        self,
+        structure_data: Union[str, List[Union[Dict[str, Any], str]]],
+        fmax: float,
+        steps: int,
+        optimizer: str,
+        relax_cell: bool,
+        output_dir: Optional[str]
+    ) -> Dict[str, Any]:
+        """Internal method for batch relaxation."""
+        try:
+            from pathlib import Path
+            import os
+            from ..research_utils import get_current_research_dir
+            
+            # Determine if this is directory mode or list mode
+            structure_list = []
+            structure_names = []
+            
+            if isinstance(structure_data, str) and Path(structure_data).is_dir():
+                # Directory mode: find all structure files
+                dir_path = Path(structure_data)
+                
+                # Find all CIF, POSCAR, CONTCAR files
+                patterns = ["*.cif", "*.CIF", "*POSCAR*", "*CONTCAR*", "*.vasp"]
+                for pattern in patterns:
+                    for filepath in dir_path.glob(pattern):
+                        structure_list.append(str(filepath))
+                        structure_names.append(filepath.stem)
+                
+                if not structure_list:
+                    return {"error": f"No structure files found in directory: {structure_data}"}
+                    
+            elif isinstance(structure_data, list):
+                # List mode
+                for i, struct in enumerate(structure_data):
+                    structure_list.append(struct)
+                    # Generate names from file paths if available
+                    if isinstance(struct, str):
+                        structure_names.append(Path(struct).stem)
+                    else:
+                        structure_names.append(f"structure_{i}")
+            else:
+                return {"error": "structure_data must be a directory path or a list of structures/paths"}
+            
+            # Set up output directory
+            if not output_dir:
+                try:
+                    output_dir = str(get_current_research_dir() / self.__class__.__name__.lower().replace("wrapper", "") / "batch_relaxation")
+                except Exception:
+                    output_dir = "batch_relaxation"
+            
+            os.makedirs(output_dir, exist_ok=True)
+            
+            # Process each structure
+            results = []
+            logger.info(f"Batch relaxing {len(structure_list)} structures...")
+            
+            for idx, (struct_data, struct_name) in enumerate(zip(structure_list, structure_names)):
+                try:
+                    # Set up subdirectory for this structure
+                    struct_output = os.path.join(output_dir, struct_name)
+                    os.makedirs(struct_output, exist_ok=True)
+                    
+                    # Call single structure relax method (recursive, but will NOT trigger batch mode)
+                    relax_result = self._single_relax(
+                        structure_data=struct_data,
+                        fmax=fmax,
+                        steps=steps,
+                        optimizer=optimizer,
+                        relax_cell=relax_cell,
+                        output_dir=struct_output,
+                        fixed_atoms=None
+                    )
+                    
+                    if "error" in relax_result:
+                        results.append({
+                            "structure_name": struct_name,
+                            "status": "failed",
+                            "error": relax_result["error"]
+                        })
+                        logger.warning(f"Failed to relax {struct_name}: {relax_result['error']}")
+                    else:
+                        results.append({
+                            "structure_name": struct_name,
+                            "status": "success",
+                            "energy": relax_result.get("energy"),
+                            "output_dir": struct_output,
+                            **{k: v for k, v in relax_result.items() if k not in ["energy", "final_structure"]}
+                        })
+                        logger.info(f"Successfully relaxed {struct_name} ({idx+1}/{len(structure_list)})")
+                        
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc(file=sys.stderr)
+                    results.append({
+                        "structure_name": struct_name,
+                        "status": "failed",
+                        "error": str(e)
+                    })
+                    logger.error(f"Error relaxing {struct_name}: {e}")
+            
+            # Summary
+            n_success = sum(1 for r in results if r["status"] == "success")
+            n_failed = len(results) - n_success
+            
+            logger.info(f"Batch relaxation complete: {n_success} successful, {n_failed} failed")
+            
+            return {
+                "mode": "batch",
+                "total_structures": len(results),
+                "successful": n_success,
+                "failed": n_failed,
+                "output_dir": output_dir,
+                "results": results
+            }
+                
+        except Exception as e:
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+            return {"error": f"Batch relaxation failed: {str(e)}"}
         
+
     def static_calculation(self, structure_data: Any) -> Dict[str, Any]:
         """
         Run static calculation (predict energy, forces, stress) for a structure.

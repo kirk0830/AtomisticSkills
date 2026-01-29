@@ -185,7 +185,7 @@ def predict_atomic_features(structure_data: Union[Dict[str, Any], str], output_p
 
 @mcp.tool()
 def relax_structure(
-    structure_data: Union[Dict[str, Any], str],
+    structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
     fmax: float = 0.01,
     steps: int = 500,
     optimizer: str = "FIRE",
@@ -194,33 +194,31 @@ def relax_structure(
     fixed_atoms: Optional[List[int]] = None
 ) -> Dict[str, Any]:
     """
-    Relax a structure using the loaded MACE model.
+    Relax one or multiple structures using the loaded MACE model.
     
     Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+        structure_data: Can be:
+            - Single structure (dict, ASE Atoms, pymatgen Structure, or file path)
+            - Directory path containing CIF/POSCAR files (batch mode)
+            - List of file paths (batch mode)
+            - List of structure dicts (batch mode)
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
-        output_dir: Directory to save results.
+        relax_cell: Whether to relax the unit cell.
+        output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
         fixed_atoms: List of indices of atoms to keep fixed during relaxation.
         
     Returns:
-        Dictionary with relaxation results (energy, final_structure, trajectory_path).
+        For single: Dict with energy, trajectory_path, cif_path, json_path
+        For batch: Dict with mode="batch", total_structures, successful, failed, results list
     """
     global wrapper
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
     
-    import contextlib
-    import json
-    import os
-    from src.utils.research_utils import get_current_research_dir
-
-    if not output_dir:
-        output_dir = str(get_current_research_dir() / "mace" / "relaxation")
-    os.makedirs(output_dir, exist_ok=True)
-
-    result = wrapper.relax_structure(
+    # Simply delegate to base wrapper's unified relax_structure method
+    return recursive_tolist(wrapper.relax_structure(
         structure_data=structure_data,
         fmax=fmax,
         steps=steps,
@@ -228,40 +226,7 @@ def relax_structure(
         relax_cell=relax_cell,
         output_dir=output_dir,
         fixed_atoms=fixed_atoms
-    )
-
-    # Sanitize output
-    if "final_structure" in result:
-        # Save to file
-        final_struct_path = os.path.join(output_dir, "relaxed_structure.json")
-        
-        # Convert to dict if needed
-        struct_data = result["final_structure"]
-        # Handle various structure objects safely
-        try:
-            if hasattr(struct_data, "as_dict"):
-                struct_dict = struct_data.as_dict()
-            else:
-                from pymatgen.io.ase import AseAtomsAdaptor
-                # Check if it's already a dict
-                if isinstance(struct_data, dict):
-                    struct_dict = struct_data
-                else:
-                    struct_dict = AseAtomsAdaptor.get_structure(struct_data).as_dict()
-            
-            with open(final_struct_path, "w") as f:
-                json.dump(struct_dict, f)
-                
-            result["final_structure_path"] = final_struct_path
-            del result["final_structure"]
-        except Exception as e:
-            result["save_error"] = str(e)
-            # Keep original structure if save failed, or remove it?
-            # Better to remove it to prevent crash, user has error message
-            if "final_structure" in result:
-                 del result["final_structure"]
-
-    return recursive_tolist(result)
+    ))
 
 @mcp.tool()
 def run_md(

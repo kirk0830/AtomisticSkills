@@ -422,86 +422,45 @@ def get_info() -> Dict[str, Any]:
 
 @mcp.tool()
 def relax_structure(
-    structure_data: Union[Dict[str, Any], str],
+    structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
     fmax: float = 0.01,
     steps: int = 500,
     optimizer: str = "FIRE",
     output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Relax a structure using the loaded MatGL model and MatCalc.
+    Relax one or multiple structures using the loaded MatGL model.
     
     Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+        structure_data: Can be:
+            - Single structure (dict, ASE Atoms, pymatgen Structure, or file path)
+            - Directory path containing CIF/POSCAR files (batch mode)
+            - List of file paths (batch mode)
+            - List of structure dicts (batch mode)
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
-        output_dir: Directory to save results.
+        output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
         
     Returns:
-        Dictionary with relaxation results (energy, final_structure, trajectory_path).
+        For single: Dict with energy, trajectory_path, cif_path, json_path
+        For batch: Dict with mode="batch", total_structures, successful, failed, results list
     """
     global wrapper
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
-        
-    try:
-        from matcalc import RelaxCalc
-        from pymatgen.io.ase import AseAtomsAdaptor
-        import os
-        
-        atoms = wrapper.check_structure_data(structure_data)
-        if isinstance(atoms, dict) and "error" in atoms:
-            return atoms
-            
-        if not output_dir:
-            output_dir = str(get_current_research_dir() / "matgl" / "relaxation")
-            
-        os.makedirs(output_dir, exist_ok=True)
-        traj_file = f"{output_dir}/relax.traj"
-        
-        calc = wrapper.create_calculator()
-        
-        relaxer = RelaxCalc(
-            calculator=calc,
-            optimizer=optimizer,
-            fmax=fmax,
-            max_steps=steps,
-            traj_file=traj_file,
-            interval=1
-        )
-        
-        result = relaxer.calc(atoms)
-        
-        # Save relaxed structure to CIF
-        final_struct = result["final_structure"]
-        cif_path = os.path.join(output_dir, "relaxed_structure.cif")
-        
-        from src.utils.structure_utils import save_structure
-        save_structure(final_struct, cif_path)
-            
-        # Save energy and results to JSON
-        json_path = os.path.join(output_dir, "relaxation_results.json")
-        energy_val = float(result.get("energy")) if result.get("energy") is not None else None
-        results_data = {
-            "energy": energy_val,
-            "trajectory_path": traj_file,
-            "cif_path": cif_path
-        }
-        
-        with open(json_path, 'w') as f:
-            json.dump(results_data, f, indent=2)
+    
+    # Simply delegate to base wrapper's unified relax_structure method
+    return wrapper.relax_structure(
+        structure_data=structure_data,
+        fmax=fmax,
+        steps=steps,
+        optimizer=optimizer,
+        relax_cell=True,  # MatGL always relaxes cell
+        output_dir=output_dir
+    )
 
-        return {
-            "energy": energy_val,
-            "trajectory_path": traj_file,
-            "cif_path": cif_path,
-            "json_path": json_path
-        }
-    except Exception as e:
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        return {"error": f"Relaxation failed: {str(e)}"}
+
 
 
 
