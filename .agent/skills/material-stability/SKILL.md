@@ -43,7 +43,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
         structure_data="hull_structures/",  # Pass directory containing all CIF files
         relax_cell=True,
         model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES",
-        fmax=0.05,
+        fmax=0.02,
         steps=500,
         output_dir="relaxed/"
     )
