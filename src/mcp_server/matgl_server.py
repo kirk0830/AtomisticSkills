@@ -595,11 +595,12 @@ def calculate_neb(
         mep = result.get("mep")
         mep_dict = mep.as_dict() if mep else {}
         
-        return {
+        return recursive_tolist({
             "barrier": result.get("barrier"),
             "max_force": result.get("force"),
-            "mep": mep_dict
-        }
+            "mep": mep_dict,
+            "output_dir": output_dir
+        })
     except Exception as e:
         import traceback
         traceback.print_exc(file=sys.stderr)
@@ -633,6 +634,7 @@ def calculate_phonon(
     try:
         from matcalc import PhononCalc
         import os
+        import numpy as np
         
         atoms = wrapper.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
@@ -660,10 +662,14 @@ def calculate_phonon(
         
         thermal_props = result.get("thermal_properties", {})
         
-        return {
-            "thermal_properties": thermal_props,
-            "output_dir": output_dir
-        }
+        return recursive_tolist({
+            "thermal_properties_summary": {
+                "temp_300K": {k: v[30] if len(v) > 30 else v[-1] for k, v in thermal_props.items() if isinstance(v, (list, np.ndarray))} 
+                if thermal_props else "N/A"
+            },
+            "output_dir": output_dir,
+            "saved_files": ["phonon.yaml", "band_structure.yaml", "total_dos.dat"]
+        })
         
     except Exception as e:
         import traceback
@@ -698,6 +704,7 @@ def calculate_qha(
     try:
         from matcalc import QHACalc
         import os
+        import numpy as np
         
         atoms = wrapper.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
@@ -722,14 +729,15 @@ def calculate_qha(
         
         result = qha_calc.calc(atoms)
         
-        output = {
-            "temperatures": result.get("temperatures", []).tolist() if hasattr(result.get("temperatures"), "tolist") else result.get("temperatures"),
-            "volumes": result.get("volumes"),
-            "gibbs_free_energies": result.get("gibbs_free_energies").tolist() if hasattr(result.get("gibbs_free_energies"), "tolist") else result.get("gibbs_free_energies"),
-            "thermal_expansion_coefficients": result.get("thermal_expansion_coefficients").tolist() if hasattr(result.get("thermal_expansion_coefficients"), "tolist") else result.get("thermal_expansion_coefficients"),
-            "output_dir": output_dir
-        }
-        return output
+        return recursive_tolist({
+            "summary": {
+                "temp_range": [t_min, t_max],
+                "num_points": len(result.get("temperatures", [])),
+                "eos": eos
+            },
+            "output_dir": output_dir,
+            "saved_files": ["gibbs_temperature.dat", "thermal_expansion.dat"]
+        })
         
     except Exception as e:
         import traceback
