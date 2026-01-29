@@ -91,7 +91,7 @@ Provide concrete, runnable examples that demonstrate typical usage:
 
 Creating a solid-liquid interface for Aluminum:
 ```bash
-# Env: mlip-agent
+# Env: base-agent
 python .agent/skills/melting-point/scripts/create_interface.py Al_solid.cif Al_liquid.cif --axis 0 --output Al_interface.cif
 ```
 ```
@@ -159,7 +159,7 @@ Refer to `mcp-environments.md` for the standard environment mapping:
 - `matgl-agent`: MatGL calculations, training, and utilities.
 - `mace-agent`: MACE calculations and training.
 - `fairchem-agent`: FairChem/OCP/UMA calculations.
-- `mlip-agent`: General materials tools, Materials Project API, and parsing.
+- `base-agent`: General materials tools, Materials Project API, and parsing.
 - `atomate2-agent`: Atomate2/Jobflow workflows and DB querying.
 
 ### 3. Documentation Consistency

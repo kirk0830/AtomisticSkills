@@ -21,7 +21,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 2.  **Query Materials Project Hull**: Retrieve all structures on the convex hull in the target material's chemical space.
     ```bash
-    # Env: mlip-agent
+    # Env: base-agent
     python .agent/skills/material-stability/scripts/query_mp_hull.py \
         --formula "Li-Fe-P-O" \
         --target "LiFePO4" \
@@ -58,7 +58,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 4.  **Construct Convex Hull**: Build a pymatgen phase diagram using the relaxed energies.
     ```bash
-    # Env: mlip-agent
+    # Env: base-agent
     python .agent/skills/material-stability/scripts/compute_ehull.py \
         --hull_manifest hull_entries.json \
         --relaxed_dir relaxed/ \
@@ -85,7 +85,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 ### Example 1: Stability Analysis for LiFePO4
 ```bash
 # Step 1: Query Materials Project hull in Li-Fe-P-O space
-# Env: mlip-agent
+# Env: base-agent
 python .agent/skills/material-stability/scripts/query_mp_hull.py \
     --formula "Li-Fe-P-O" \
     --target "LiFePO4" \

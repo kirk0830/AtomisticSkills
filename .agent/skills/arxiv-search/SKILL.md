@@ -14,7 +14,7 @@ To search for and retrieve metadata (title, authors, summary, DOI, etc.) of rese
 Search for papers containing specific keywords across all fields (title, abstract, authors, etc.).
 
 ```bash
-# Env: mlip-agent
+# Env: base-agent
 python .agent/skills/arxiv-search/scripts/arxiv_search.py "machine learning interatomic potential" --max_results 5 --output mlip_papers.json
 ```
 
@@ -22,7 +22,7 @@ python .agent/skills/arxiv-search/scripts/arxiv_search.py "machine learning inte
 Combine multiple criteria to narrow down search results.
 
 ```bash
-# Env: mlip-agent
+# Env: base-agent
 python .agent/skills/arxiv-search/scripts/arxiv_search.py --authors "Ceder" --categories mtrl-sci --max_results 10 --output ceder_papers.json
 ```
 
@@ -38,7 +38,7 @@ python .agent/skills/arxiv-search/scripts/arxiv_search.py --authors "Ceder" --ca
 Restrict the search to only the paper titles.
 
 ```bash
-# Env: mlip-agent
+# Env: base-agent
 python .agent/skills/arxiv-search/scripts/arxiv_search.py --title "perovskite stability" --max_results 5
 ```
 
@@ -46,18 +46,18 @@ python .agent/skills/arxiv-search/scripts/arxiv_search.py --title "perovskite st
 
 ### Retrieval of Recent MACE Related Papers
 ```bash
-# Env: mlip-agent
+# Env: base-agent
 python .agent/skills/arxiv-search/scripts/arxiv_search.py "MACE force field" --max_results 3 --output mace_results.json
 ```
 
 ### Searching for Specific Authors in Materials Science
 ```bash
-# Env: mlip-agent
+# Env: base-agent
 python .agent/skills/arxiv-search/scripts/arxiv_search.py --authors "Boris Kozinsky" --categories mtrl-sci --max_results 5
 ```
 
 ## Constraints
 - **Rate Limiting**: The ArXiv API requires a minimum of 3 seconds between requests. This script includes a small delay, but frequent calls should be avoided.
-- **Environment**: Requires `mlip-agent` conda environment.
+- **Environment**: Requires `base-agent` conda environment.
 - **Dependencies**: Uses `feedparser` and `urllib`.
 - **Metadata**: Results include ID, URL, Title, Authors, Summary, Publication Date, and DOI (if available).

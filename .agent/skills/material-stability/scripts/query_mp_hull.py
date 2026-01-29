@@ -5,7 +5,7 @@ Usage:
     python query_mp_hull.py --formula "Li-Fe-P-O" --target "LiFePO4" --output hull_structures/
 
 Requirements:
-    - Conda environment: mlip-agent
+    - Conda environment: base-agent
     - Required packages: mp-api, pymatgen, ase
     - MP_API_KEY environment variable must be set
 """

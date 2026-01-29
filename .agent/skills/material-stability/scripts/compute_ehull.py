@@ -5,7 +5,7 @@ Usage:
     python compute_ehull.py --hull_manifest hull_entries.json --relaxed_dir relaxed/ --target_material LiFePO4
 
 Requirements:
-    - Conda environment: mlip-agent
+    - Conda environment: base-agent
     - Required packages: pymatgen, ase, matplotlib
 """
 

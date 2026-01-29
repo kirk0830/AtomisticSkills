@@ -18,7 +18,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 2.  **Phase Preparation**: 
     - **Solid**: Create a supercell using `create_supercell.py`.
     ```bash
-    # Env: mlip-agent
+    # Env: base-agent
     python .agent/skills/melting-point/scripts/create_supercell.py [input_structure.cif] [solid_supercell.cif] --min_length 20.0
     ```
     - **Liquid**: Melt a block using 1D-NPT (with mask) to ensure matching dimensions.
@@ -36,7 +36,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
     ```
 3.  **Interface Creation**: Use `create_interface.py` to concatenate the two phases.
     ```bash
-    # Env: mlip-agent
+    # Env: base-agent
     python .agent/skills/melting-point/scripts/create_interface.py solid.cif liquid.cif --axis 0 --output interface.cif
     ```
 4.  **Relaxation**: Perform an ionic relaxation using the `relax_structure` MCP tool with `relax_cell=True`. This allows the unit cell to adjust (shrink/expand) to match the density, and remove the interface energy created by stacking the two cells.
@@ -63,7 +63,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
     
     Then verify phases:
     ```bash
-    # Env: mlip-agent
+    # Env: base-agent
     # Solid should be ~100% solid
     python .agent/skills/melting-point/scripts/check_phase.py solid_supercell.cif \
         --solid_features <research_dir>/solid_features.json \
@@ -109,7 +109,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 8.  **Phase Validation**: Verify that the solid and liquid phases still coexist at the end of the simulation.
     ```bash
     # Note: If MD was killed, use the last frame from trajectory or the restart file if available.
-    # Env: mlip-agent
+    # Env: base-agent
     python .agent/skills/melting-point/scripts/check_phase.py production_md/final_structure.cif
     ```
     - **Fully Solidified**: The NVE starting temperature was too low.
@@ -122,7 +122,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 
 Creating a solid-liquid interface for Aluminum:
 ```bash
-# Env: mlip-agent
+# Env: base-agent
 python .agent/skills/melting-point/scripts/create_interface.py Al_solid.cif Al_liquid.cif --axis 0 --output Al_interface.cif
 ```
 

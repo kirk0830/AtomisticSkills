@@ -7,7 +7,7 @@ Usage:
     python arxiv_search.py "machine learning" --max_results 5 --output results.json
 
 Requirements:
-    - Conda environment: mlip-agent
+    - Conda environment: base-agent
     - Required packages: feedparser, requests
 """
 

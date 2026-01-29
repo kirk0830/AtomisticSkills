@@ -134,7 +134,7 @@ The project uses separate conda environments to manage conflicting MLIP dependen
 
 | Environment | Purpose | Python Path |
 |------------|---------|-------------|
-| `mlip-agent` | Materials tools, general utilities | `/home/bdeng/miniforge3/envs/mlip-agent/bin/python` |
+| `base-agent` | Materials tools, general utilities | `/home/bdeng/miniforge3/envs/base-agent/bin/python` |
 | `matgl-agent` | MatGL (CHGNet, M3GNet, TensorNet) | `/home/bdeng/miniforge3/envs/matgl-agent/bin/python` |
 | `mace-agent` | MACE models | `/home/bdeng/miniforge3/envs/mace-agent/bin/python` |
 | `fairchem-agent` | FairChem (UMA, ESEN) | `/home/bdeng/miniforge3/envs/fairchem-agent/bin/python` |
@@ -148,7 +148,7 @@ git clone git@github.com:bowen-bd/AtomisticSkills.git
 cd AtomisticSkills
 
 # Setup environments (assuming .yml files are in conda-envs/)
-conda env create -f conda-envs/mlip-agent.yml
+conda env create -f conda-envs/base-agent.yml
 conda env create -f conda-envs/matgl-agent.yml
 conda env create -f conda-envs/mace-agent.yml
 conda env create -f conda-envs/fairchem-agent.yml
@@ -217,7 +217,7 @@ This project is optimized for use with coding AI copilots like **Antigravity**. 
      └────┬────┘         └────┬────┘   └───┬───┘   └─────┬─────┘
           │                   │            │             │
      ┌────▼────────┐    ┌─────▼──────┐ ┌──▼─────┐  ┌────▼──────┐
-     │mace-agent   │    │matgl-agent │ │fairchem│  │mlip-agent │
+     │mace-agent   │    │matgl-agent │ │fairchem│  │base-agent │
      │environment  │    │environment │ │-agent  │  │environment│
      └─────────────┘    └────────────┘ └────────┘  └───────────┘
 ```
@@ -233,7 +233,7 @@ Each MCP server is a standalone Python module that exposes tools via the FastMCP
 | [mace_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/mace_server.py) | `mace-agent` | MACE model loading, prediction, relaxation, MD, fine-tuning |
 | [matgl_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/matgl_server.py) | `matgl-agent` | CHGNet/M3GNet/TensorNet operations, bandgap prediction |
 | [fairchem_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/fairchem_server.py) | `fairchem-agent` | UMA/ESEN models, mock DFT capability |
-| [materials_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/materials_server.py) | `mlip-agent` | Materials Project queries, VASP I/O, research directory management |
+| [materials_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/materials_server.py) | `base-agent` | Materials Project queries, VASP I/O, research directory management |
 | [atomate2_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/atomate2_server.py) | `atomate2-agent` | Query remote DFT databases, job status monitoring |
 | [smol_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/smol_server.py) | `smol-agent` | Cluster expansion training and Monte Carlo simulations |
 
@@ -360,7 +360,7 @@ pytest tests/
 Test organization:
 ```
 tests/
-├── base/           # General utilities (mlip-agent)
+├── base/           # General utilities (base-agent)
 ├── mace/           # MACE-specific tests (mace-agent)
 ├── matgl/          # MatGL-specific tests (matgl-agent)
 ├── fairchem/       # FairChem-specific tests (fairchem-agent)

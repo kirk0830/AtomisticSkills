@@ -1,4 +1,4 @@
-name: mlip-agent
+name: base-agent
 channels:
   - conda-forge
 dependencies:
@@ -400,4 +400,4 @@ dependencies:
       - xxhash==3.6.0
       - yarl==1.22.0
       - zstandard==0.25.0
-prefix: /home/bdeng/miniforge3/envs/mlip-agent
+prefix: /home/bdeng/miniforge3/envs/base-agent

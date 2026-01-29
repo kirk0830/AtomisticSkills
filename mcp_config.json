@@ -32,7 +32,7 @@
       }
     },
     "materials_tools": {
-      "command": "/home/bdeng/miniforge3/envs/mlip-agent/bin/python",
+      "command": "/home/bdeng/miniforge3/envs/base-agent/bin/python",
       "args": [
         "-m",
         "src.mcp_server.materials_server"
