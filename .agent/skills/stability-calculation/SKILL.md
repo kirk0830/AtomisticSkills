@@ -96,7 +96,7 @@ mcp_matgl_relax_structure(
     structure_data="hull_structures/",  # Directory with all CIF files
     relax_cell=True,
     model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES",
-    fmax=0.01,
+    fmax=0.02,
     output_dir="relaxed/"
 )
 
@@ -122,8 +122,8 @@ python .agent/skills/stability-calculation/scripts/query_mp_hull.py \
 ## Constraints
 
 - **Energy Consistency**: All structures (target + hull phases) MUST be relaxed with the **same MLIP model and settings**. Mixing different MLIPs will produce incorrect E_hull values.
-- **Level of Theory**: Use r2SCAN-trained foundation potentials (`TensorNet-MatPES-r2SCAN` or `MACE-MH-1 matpes_r2scan`) for best accuracy and consistency with Materials Project.
-- **Convergence Criterion**: Use `fmax ≤ 0.01 eV/Å` for all relaxations. Inconsistent convergence criteria will introduce systematic errors.
+- **Level of Theory**: Use r2SCAN-trained foundation potentials (e.g., `MACE-MH-1 matpes_r2scan`) for better accuracy and consistency with Materials Project.
+- **Convergence Criterion**: Use `fmax ≤ 0.02 eV/Å` for all relaxations. Inconsistent convergence criteria will introduce systematic errors.
 - **Chemical Space**: The query must include ALL elements in the target material. For example, for LiFePO4, query "Li-Fe-P-O" not just "Li-Fe-P".
 - **Hull Completeness**: Ensure all competing phases are included. Missing hull phases will lead to underestimated E_hull (false negatives for instability).
 - **Stability Thresholds**: 
@@ -131,4 +131,5 @@ python .agent/skills/stability-calculation/scripts/query_mp_hull.py \
   - $0 < E_{hull} \leq 50$ meV/atom: **Metastable**
   - $E_{hull} > 50$ meV/atom: **Unstable**
 - **Phase Diagram Construction**: For full phase diagram visualization and competing phase analysis, see the separate phase-diagram skill (to be developed).
+- **Energy Input**: Use **TOTAL POTENTIAL ENERGY** for all entries in `pymatgen.analysis.phase_diagram.PhaseDiagram` automatically calculates formation energies by identifying elemental ground states from the provided entries. Do not pass formation energies directly.
 - **DFT Validation**: For publication-quality results, validate E_hull with DFT calculations, especially for materials close to the stability threshold.

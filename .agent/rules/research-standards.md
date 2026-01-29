@@ -12,7 +12,7 @@ You job is to utilize the MCP tools to perform simulation workflows and analysis
 
 
 3.  **Define Research Directory**:
-    - For every research task, establish a dedicated directory for storing results (structures, logs, trajectories).
+    - For every research task, always establish a dedicated directory for storing results (structures, logs, trajectories).
     - Use the MCP tool create_research_dir to create this directory
     - you need to pass a <short_description> to the tool, which is a few word sumarizing this research plan (e.g. `LiFePO4_stability`).
     - This research dir named ./research/<date>_<short_description> will be used to save all MCP tool results in the current research.
