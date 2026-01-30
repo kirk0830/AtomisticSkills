@@ -25,7 +25,7 @@ def query_hull_structures(
     target_formula: str,
     output_dir: Path,
     api_key: str,
-    thermo_type: str = "GGA_GGA+U"
+    thermo_type: str = "R2SCAN"
 ) -> Dict:
     """
     Query Materials Project for all structures on the convex hull.
@@ -35,7 +35,7 @@ def query_hull_structures(
         target_formula: Target material formula (e.g., "LiFePO4")
         output_dir: Directory to save structures
         api_key: Materials Project API key
-        thermo_type: Level of theory ("GGA_GGA+U" or "R2SCAN")
+        thermo_type: Level of theory ("GGA_GGA+U" or "R2SCAN", default: "R2SCAN")
         
     Returns:
         Dictionary containing hull entries metadata
@@ -155,9 +155,9 @@ def main():
     )
     parser.add_argument(
         "--thermo_type",
-        default="GGA_GGA+U",
+        default="R2SCAN",
         choices=["GGA_GGA+U", "R2SCAN"],
-        help="Level of theory (default: GGA_GGA+U)"
+        help="Level of theory (default: R2SCAN)"
     )
     
     args = parser.parse_args()

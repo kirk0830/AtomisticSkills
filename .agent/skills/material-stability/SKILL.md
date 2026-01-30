@@ -25,7 +25,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
     python .agent/skills/material-stability/scripts/query_mp_hull.py \
         --formula "Li-Fe-P-O" \
         --target "LiFePO4" \
-        --thermo_type "GGA_GGA+U" \
+        --thermo_type "R2SCAN" \
         --output hull_structures/
     ```
     
@@ -116,6 +116,7 @@ python .agent/skills/material-stability/scripts/compute_ehull.py \
 python .agent/skills/material-stability/scripts/query_mp_hull.py \
     --formula "Li-Co-O" \
     --target "LiCoO2" \
+    --thermo_type "R2SCAN" \
     --output hull_structures_LiCoO2/
 ```
 
