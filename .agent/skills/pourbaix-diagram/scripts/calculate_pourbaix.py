@@ -62,40 +62,122 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     
-    # 1. Load water correction and elemental potentials
-    with open(args.water_correction) as f:
-        corr = json.load(f)
+    # 1. Determine Chemical Potentials
+    # Check if we can use pre-computed elemental energies
+    # Standard path to elemental-energies skill resources
+    skill_dir = Path(__file__).resolve().parent.parent.parent
+    ee_resources = skill_dir / "elemental-energies/resources"
     
-    mu_H = corr['mu_H_ref']
-    mu_O = corr['mu_O']
+    # Try to load elemental energies JSON for this MLIP
+    # Handle different naming conventions or just try exact match first
+    # The user should pass the exact checkpoing name used in elemental-energies (e.g. MACE-OMAT-0-small)
+    ee_json_path = ee_resources / f"{args.mlip_name}_energies.json"
+    ee_data = {}
+    if ee_json_path.exists():
+        print(f"Loading pre-computed energies from {ee_json_path}")
+        with open(ee_json_path) as f:
+            ee_data = json.load(f)
+    else:
+        print(f"Warning: No pre-computed energies found for {args.mlip_name}. Will rely on local relaxations.")
+
+    def get_mu_element(element_symbol: str) -> float:
+        """Get chemical potential (eV/atom) for an element."""
+        # 1. Try Elemental Energies Library
+        if element_symbol in ee_data:
+            return ee_data[element_symbol]
+
+        
+        # 2. Try Local Relaxation (relaxed_solids)
+        # Look for {Element}_* or just {Element}
+        # Special case: H might be H2, O might be O2
+        candidates = []
+        possible_names = [element_symbol, f"{element_symbol}2"] # e.g. H, H2
+        
+        for p in possible_names:
+             candidates.extend(list(args.relaxed_solids.glob(f"{p}_*")))
+             candidates.extend(list(args.relaxed_solids.glob(f"{p}")))
+             
+        # Filter to actual elements
+        valid_candidates = []
+        for cand in candidates:
+             if not cand.is_dir(): continue
+             try:
+                from pymatgen.core import Structure
+                s = Structure.from_file(str(cand / "relaxed_structure.cif"))
+                # Verify composition
+                if s.composition.is_element and s.composition.elements[0].symbol == element_symbol:
+                     with open(cand / "relaxed_energy.txt") as f:
+                        e = float(f.read().strip())
+                     valid_candidates.append(e / len(s))
+             except Exception:
+                 continue
+                 
+        if valid_candidates:
+            return min(valid_candidates) # Return most stable
+            
+        raise ValueError(f"Could not find chemical potential for {element_symbol}. "
+                         "Please ensure it is in elemental-energies OR relaxed locally.")
+
+    print("Determining reference chemical potentials...")
+    try:
+        mu_H = get_mu_element("H")
+        mu_metal = get_mu_element(args.target)
+    except ValueError as e:
+        print(f"Error: {e}")
+        return 1
+
+    # 3. Calculate mu_O from H2O
+    # We always need H2O from local relaxation because it's not an element
+    h2o_candidates = list(args.relaxed_solids.glob("H2O*"))
+    if not h2o_candidates:
+        print("Error: Could not find H2O in relaxed_solids. H2O is required for water correction.")
+        return 1
     
-    # Find most stable elemental metal reference
-    mu_metal = float('inf')
-    metal_candidates = list(args.relaxed_solids.glob(f"{args.target}_mp-*"))
-    for cand in metal_candidates:
-        # Check if it's actually an element
-        # (Simple check: name shouldn't contain O or H or other capitals after symbol)
-        # Better: Load composition
+    # Use the most stable H2O found
+    e_h2o_min = float('inf')
+    n_h2o_atoms = 3 # Expecting H2O molecule or unit
+    # Check actual structure to be safe
+    best_h2o_path = None
+    
+    for cand in h2o_candidates:
         try:
-            with open(cand / "relaxed_energy.txt") as f:
+             # Read energy
+             with open(cand / "relaxed_energy.txt") as f:
                 e = float(f.read().strip())
-            from pymatgen.core import Structure
-            s = Structure.from_file(str(cand / "relaxed_structure.cif"))
-            if s.composition.is_element:
-                e_per_atom = e / len(s)
-                if e_per_atom < mu_metal:
-                    mu_metal = e_per_atom
+             # Read structure to get composition
+             from pymatgen.core import Structure
+             s = Structure.from_file(str(cand / "relaxed_structure.cif"))
+             comp = s.composition
+             
+             # Check if it's H2O (H:2, O:1 ratio)
+             if abs(comp.get_atomic_fraction("H") - 0.666) < 0.05:
+                 # Normalize to per H2O formula unit
+                 # Count number of O atoms
+                 n_O_in_cell = comp["O"]
+                 e_per_formula = e / n_O_in_cell
+                 if e_per_formula < e_h2o_min:
+                     e_h2o_min = e_per_formula
+                     best_h2o_path = cand
         except Exception:
             continue
             
-    if mu_metal == float('inf'):
-        print(f"Error: Could not find any elemental metal reference for {args.target}")
+    if e_h2o_min == float('inf'):
+        print("Error: Found H2O directories but could not validate energies/composition.")
         return 1
+
+    print(f"Using H2O from: {best_h2o_path}")
+    
+    # Calculate mu_O
+    # G_f_exp(H2O) = -2.4583 eV
+    # G_f_calc = E(H2O) - 2*mu_H - mu_O
+    # => mu_O = E(H2O) - 2*mu_H - G_f_exp
+    DGF_H2O_EXP = -2.4583
+    mu_O = e_h2o_min - 2 * mu_H - DGF_H2O_EXP
     
     print(f"Standard Referencing:")
     print(f"  mu_{args.target}: {mu_metal:.4f} eV/atom")
     print(f"  mu_H:  {mu_H:.4f} eV/atom")
-    print(f"  mu_O:  {mu_O:.4f} eV/atom")
+    print(f"  mu_O:  {mu_O:.4f} eV/atom (derived from H2O)")
     print()
 
     # 2. Load and shift Solids

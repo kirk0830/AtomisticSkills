@@ -27,4 +27,4 @@ As of **2026-01-30**, the library is fully expanded and contains **89 elements**
 ## Constraints
 - **Materials Project**: Structures must be queried from Materials Project to ensure they represent the true ground-state phases.
 - **Naming**: Library files must follow the `<checkpoint_name>_energies.json` format.
-- **Units**: Energies are stored as total potential energies in eV as returned by the MLIP.
+- **Units**: Energies are stored as **eV/atom** (total potential energy of the relaxed structure divided by the number of atoms).
