@@ -34,12 +34,16 @@ We use a robust cycle that fixes the hydrogen reference to the Standard Hydrogen
 
 2. **Derive $\mu_O$ from Water Equilibrium**:
    $$ \mu_O = G_{H2O}^{MLIP} - 2\mu_H^{ref} - \Delta G_f^{exp}(H_2O) $$
-   where $\Delta G_f^{exp}(H_2O) = -2.46$ eV.
+   where $\Delta G_f^{exp}(H_2O) = -2.4583$ eV.
 
 This ensures:
 - Hydrogen potential matches the standard SHE scale.
-- Water formation energy is exactly -2.46 eV.
+- Water formation energy is exactly -2.4583 eV.
 - Oxygen potential absorbs any remaining MLIP/DFT errors (including O₂ errors).
+
+
+**Is `calculate_water_correction.py` still needed?**  
+**Yes**. This script is essential for calibrating the elemental chemical potentials ($\mu_H, \mu_O$) to the experimental water scale. Without it, the solid and ion energy scales would not be thermodynamically consistent.
 
 ## Instructions
 
@@ -96,7 +100,7 @@ mcp_fairchem_relax_structure(
 > 
 > Some MLIPs (e.g., UMA) may produce unphysical O₂ energies due to training data biases. For example, UMA-m-1p1 yields O₂ energy of +96 eV instead of the expected negative value, because its ORCA training data uses a different energy reference.
 > 
-> **No Action Required**: The `calculate_pourbaix_persson.py` script automatically handles this by deriving the oxygen reference from H₂O and H₂ energies plus experimental water formation energy (ΔGf(H₂O) = -2.46 eV), rather than directly using O₂. This ensures thermodynamic consistency regardless of MLIP O₂ accuracy.
+> **No Action Required**: The `calculate_pourbaix.py` script automatically handles this by deriving the oxygen reference from H₂O and H₂ energies plus experimental water formation energy (ΔGf(H₂O) = -2.4583 eV), rather than directly using O₂. This ensures thermodynamic consistency regardless of MLIP O₂ accuracy.
 > 
 > See [`examples/Mn_pourbaix.md`](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/pourbaix-diagram/examples/Mn_pourbaix.md) for a detailed example of this issue and its resolution.
 
@@ -121,7 +125,7 @@ python .agent/skills/pourbaix-diagram/scripts/calculate_water_correction.py \
 This generates `water_correction.json` with μ_H^ref and μ_O values.
 
 **Expected output**:
-- ΔGf(H₂O)_MLIP ≈ -2.3 to -2.7 eV (should be close to -2.46 eV experimental)
+- ΔGf(H₂O)_MLIP ≈ -2.3 to -2.7 eV (should be close to -2.4583 eV experimental)
 - Correction error < 0.5 eV indicates reasonable MLIP accuracy
 
 ### 5. Relax Solid Phases
@@ -148,7 +152,7 @@ Construct the diagram with water-corrected energies:
 
 ```bash
 # Env: base-agent
-python .agent/skills/pourbaix-diagram/scripts/calculate_pourbaix_persson.py \
+python .agent/skills/pourbaix-diagram/scripts/calculate_pourbaix.py \
     --relaxed_solids ./relaxed_solids/ \
     --water_correction ./water_correction.json \
     --target "ZnO" \
@@ -215,7 +219,7 @@ mcp_fairchem_relax_structure(
 )
 
 # Step 6: Calculate Pourbaix
-python .agent/skills/pourbaix-diagram/scripts/calculate_pourbaix_persson.py \
+python .agent/skills/pourbaix-diagram/scripts/calculate_pourbaix.py \
     --relaxed_solids ./ZnO_relaxed_solids/ \
     --water_correction ./ZnO_correction.json \
     --target "ZnO" \
@@ -270,7 +274,7 @@ Following Persson et al. (2012)¹, the grand Pourbaix potential is:
 The water correction aligns MLIP solid energies (computational scale) with MP aqueous ion free energies (experimental scale) by enforcing:
 
 ```
-ΔGf(H₂O)_corrected = -2.46 eV (experimental)
+ΔGf(H₂O)_corrected = -2.4583 eV (experimental)
 ```
 
 This allows thermodynamically consistent mixing of:
@@ -285,4 +289,6 @@ This allows thermodynamically consistent mixing of:
 
 3. **Pymatgen Pourbaix module**: https://pymatgen.org/pymatgen.analysis.pourbaix_diagram.html
 
-4. **Related skill**: [material-stability](../material-stability/SKILL.md) for convex hull calculations
+4. **Related skills**: 
+   - [material-stability](../material-stability/SKILL.md) for convex hull calculations
+   - [elemental-energies](../elemental-energies/SKILL.md) for retrieving pre-calculated elemental reference energies required for formation energy calculations.

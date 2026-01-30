@@ -141,6 +141,7 @@ def relax_structure(
     fmax: float = 0.01,
     steps: int = 500,
     optimizer: str = "FIRE",
+    relax_cell: bool = True,
     output_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
@@ -155,6 +156,7 @@ def relax_structure(
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
+        relax_cell: Whether to relax the unit cell (default: True).
         output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
         
     Returns:
@@ -171,7 +173,7 @@ def relax_structure(
         fmax=fmax,
         steps=steps,
         optimizer=optimizer,
-        relax_cell=True,  # FairChem always relaxes cell
+        relax_cell=relax_cell,  # Use passed argument
         output_dir=output_dir
     ))
 

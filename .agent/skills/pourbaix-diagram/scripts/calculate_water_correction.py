@@ -31,7 +31,7 @@ K_B = 8.617333262e-5  # eV/K (Boltzmann constant)
 T_STANDARD = 298.15   # K (standard temperature)
 
 # Experimental thermodynamic values at 298K
-DGFH2O_EXP = -2.46    # eV (Gibbs free energy of H2O formation, experimental)
+DGFH2O_EXP = -2.4583  # eV (Gibbs free energy of H2O formation, experimental)
 S_H2O_EXP = 7.24e-4   # eV/(H2O·K) (entropy of H2O at standard state)
 
 
