@@ -15,6 +15,12 @@ To calculate thermodynamically consistent Pourbaix (pH-voltage) diagrams for ass
 - Aqueous battery electrodes
 - Electrochemical stability screening
 
+## Features
+
+- **Automated Referenced**: Fetches elemental energies from `elemental-energies` skill to fill missing terminal entries (e.g., if you relaxed `LiCoO2` but forgot `Li` metal, it will be auto-loaded).
+- **H2O Reference**: Checks `resources/h2o_energies.json` values matching the MLIP checkpoint. If found, uses this pre-calculated energy. If not found, falls back to look for `H2O` relaxation in the `--relaxed_solids` directory.
+- **MP2020 Compatibility**: Automatically detects if compatibility corrections are needed via `gga-ggau-mixed-mlips.yaml`.
+
 ## Background
 
 ### Pourbaix Diagrams
@@ -26,117 +32,100 @@ A Pourbaix diagram shows the thermodynamically stable phases as a function of pH
 **The Challenge**: Mixing computational (MLIP/DFT) solid energies with experimental aqueous ion data creates energy scale mismatch.
 
 **The Solution** (Persson et al. 2012)¹: **Water correction** that aligns MLIP water formation energy with experimental Gibbs free energy.
-We use a robust cycle that fixes the hydrogen reference to the Standard Hydrogen Electrode (SHE) scale:
+We use a robust cycle that fixes the hydrogen reference to the Standard Hydrogen Electrode (SHE) scale.
 
-1. **Calculate $\mu_H$ from H₂ gas**:
-   $$ \mu_H^{ref} \approx \frac{1}{2} (E_{H2}^{MLIP} + ZPE + \Delta H - TS)_{H2} $$
-   Includes entropy ($S^\circ \approx 1.35$ meV/K) and enthalpy corrections.
+### 3. Automated Referencing
 
-2. **Derive $\mu_O$ from Water Equilibrium**:
-   $$ \mu_O = G_{H2O}^{MLIP} - 2\mu_H^{ref} - \Delta G_f^{exp}(H_2O) $$
-   where $\Delta G_f^{exp}(H_2O) = -2.4583$ eV.
+The script `calculate_pourbaix.py` automatically:
+1. Fetches per-atom elemental energies from the `elemental-energies` skill.
+2. Applies thermodynamic corrections for H₂ gas ($S^\circ$, $\Delta H$) to deriving $\mu_H$.
+3. Uses a locally relaxed H₂O structure to derive $\mu_O$, ensuring correct water formation energy.
+   *   **H2O Reference**: Checks `resources/h2o_energies.json` values matching the MLIP checkpoint. If found, uses this pre-calculated energy. If not found, falls back to look for `H2O` relaxation in the `--relaxed_solids` directory.
 
-This ensures:
-- Hydrogen potential matches the standard SHE scale.
-- Water formation energy is exactly -2.4583 eV.
-- Oxygen potential absorbs any remaining MLIP/DFT errors (including O₂ errors).
+**Is `calculate_water_correction.py` still needed?**
+**No**. The correction logic is now internal to `calculate_pourbaix.py` to simplify the workflow.
+
+## Resources
+
+- `resources/h2o_energies.json`: A dictionary mapping MLIP checkpoint names (e.g., `MACE-MP-medium`, `uma-s-1_omat`) to the relaxed energy of H2O per atom. This avoids the need for manual H2O relaxation when using supported MLIPs.
 
 
-**Is `calculate_water_correction.py` still needed?**  
-**Yes**. This script is essential for calibrating the elemental chemical potentials ($\mu_H, \mu_O$) to the experimental water scale. Without it, the solid and ion energy scales would not be thermodynamically consistent.
+## Methods: MLIP vs. Pure Materials Project
 
-## Instructions
+There are two ways to generate Pourbaix diagrams using this skill. **Prioritize Method 1 (Pure MP)** if the target chemical system's energies are likely present and accurate in the Materials Project database. Use Method 2 (MLIP) when investigating novel materials, specific polymorphs not in MP, or when high-fidelity MLIP energies are preferred.
 
-### 1. Get Structures from Materials Project
+### Method 1: Pure Materials Project (Recommended for existing materials)
+
+Use `calculate_pourbaix_mp.py` to fetch entries directly from Materials Project. This requires no local relaxation and uses MP's internal DFT energies.
+
+```bash
+# Env: base-agent
+python .agent/skills/pourbaix-diagram/scripts/calculate_pourbaix_mp.py \
+    --comp_dict "Li=1,Fe=1" \
+    --output ./output_dir
+```
+
+### Method 2: MLIP-Calculated Workflow (For novel/specific structures)
+
+Use this workflow to calculate stability using specific MLIP models. This involves fetching structures, relaxing them, and then generating the diagram.
+
+#### 1. Get Structures from Materials Project
 
 Query all relevant solid phases and reference molecules:
 
 ```bash
 # Env: base-agent
 python .agent/skills/pourbaix-diagram/scripts/get_pourbaix_structures.py \
-    --target_formula "Zn" \
+    --chemsys "Zn" \
     --output_dir ./structures/
 ```
 
 This retrieves:
 - All solid phases in the chemical system (e.g., Zn, ZnO, ZnO2, etc.)
-- Reference molecules: H₂O, H₂, O₂ (for water correction)
+- Reference molecule: H₂O (Required for water correction)
 
-### 2. Select Foundation Potential
+#### 2. Select Foundation Potential
 
 Choose an appropriate MLIP based on your system (see `.agent/rules/foundation-potentials.md`).
 
-**Recommended for Pourbaix diagrams**:
-- **FairChem UMA**: `uma-s-1p1`.
-- **MACE**: `MACE-MH-1` with `matpes` or `omol` head.
-- **MatGL**: `CHGNet-MatPES-r2SCAN`.
+> [!IMPORTANT]
+> **Recommended for Pourbaix diagrams: MatPES-r2SCAN**
+> To ensure energy scale compatibility with Materials Project aqueous ions (which are often based on r2SCAN or compatible corrections), prioritize using **r2SCAN-trained MLIPs**.
+> - **MatGL**: `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES`
+> - **MACE**: `MACE-MH-1` with `matpes_r2scan` head.
 
-**Rationale**: UMA `s`/`m` models provide excellent accuracy for both isolated molecules (H₂O, H₂, O₂) and solid phases. MatPES R2SCAN is also excellent for oxides.
 
-### 3. Relax Reference Molecules (H₂O, H₂, O₂)
+#### 3. Relax Reference H₂O
 
-The script `get_pourbaix_structures.py` automatically copies standard reference molecule structures into the `references/` subdirectory of your output.
-
-Relax these molecules to calculate water correction:
+The script `get_pourbaix_structures.py` automatically copies H₂O into the `references/` subdirectory.
+Relax it using the same MLIP model to allow internal calibration:
 
 ```python
 # Example with FairChem UMA-small (recommended)
 mcp_fairchem_load_model(model_name="uma-s-1p1")
 
-# Batch relax references
+# Relax H2O reference
 mcp_fairchem_relax_structure(
-    structure_data="./pourbaix_inputs/references/",  # Directory containing H2.cif, O2.cif, H2O.cif
+    structure_data="./structures/references/H2O.cif",
     fmax=0.02,        
     steps=500,
     relax_cell=True,
-    output_dir="./relaxed_molecules/"
+    output_dir="./relaxed_solids/" # SAVE TO SAME DIR AS SOLIDS
 )
 ```
 
 **Critical**: Use `fmax ≤ 0.02 eV/Å` for reliable energies.
+**Note**: H₂ and O₂ references are NOT required to be relaxed locally because the script uses pre-computed elemental energies for gas phase corrections. Only H₂O is needed for determining the specific water formation energy offset.
 
-> [!WARNING]
-> **O₂ Energy Issues with Some MLIPs**
-> 
-> Some MLIPs (e.g., UMA) may produce unphysical O₂ energies due to training data biases. For example, UMA-m-1p1 yields O₂ energy of +96 eV instead of the expected negative value, because its ORCA training data uses a different energy reference.
-> 
-> **No Action Required**: The `calculate_pourbaix.py` script automatically handles this by deriving the oxygen reference from H₂O and H₂ energies plus experimental water formation energy (ΔGf(H₂O) = -2.4583 eV), rather than directly using O₂. This ensures thermodynamic consistency regardless of MLIP O₂ accuracy.
-> 
-> See [`examples/Mn_pourbaix.md`](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/pourbaix-diagram/examples/Mn_pourbaix.md) for a detailed example of this issue and its resolution.
+#### 4. Relax Solid Phases
 
-### 4. Calculate Water Correction
-
-Extract energies and calculate correction parameters:
-
-```bash
-# Get energies from MCP relaxation results
-E_H2O=$(python -c "import json; print(json.load(open('./relaxed_molecules/H2O/result.json'))['energy'])")
-E_H2=$(python -c "import json; print(json.load(open('./relaxed_molecules/H2/result.json'))['energy'])")
-E_O2=$(python -c "import json; print(json.load(open('./relaxed_molecules/O2/result.json'))['energy'])")
-
-# Calculate water correction (Env: base-agent)
-python .agent/skills/pourbaix-diagram/scripts/calculate_water_correction.py \
-    --h2o_energy $E_H2O \
-    --h2_energy $E_H2 \
-    --o2_energy $E_O2 \
-    --output ./water_correction.json
-```
-
-This generates `water_correction.json` with μ_H^ref and μ_O values.
-
-**Expected output**:
-- ΔGf(H₂O)_MLIP ≈ -2.3 to -2.7 eV (should be close to -2.4583 eV experimental)
-- Correction error < 0.5 eV indicates reasonable MLIP accuracy
-
-### 5. Relax Solid Phases
-
-Relax all solid phases using the **same MLIP**:
+Relax all solid phases (and included H2O) using the **same MLIP**:
 
 ```python
 # Batch relax all solids with same MLIP
 # (Model already loaded from step 3)
-mcp_mace_relax_structure(
-    structure_data="./structures/solids/",  # Directory with all CIF files
+mcp_fairchem_relax_structure(
+    structure_data="./structures/structures/",  # Directory with all CIF files
     relax_cell=True,
     fmax=0.02,
     steps=500,
@@ -146,31 +135,35 @@ mcp_mace_relax_structure(
 
 **Critical**: Use the **same MLIP model** for molecules and solids!
 
-### 6. Calculate Pourbaix Diagram
+#### 5. Calculate Pourbaix Diagram
 
-Construct the diagram with water-corrected energies:
+Construct the diagram using automated referencing (fetching elemental energies and deriving corrections internally):
 
 ```bash
 # Env: base-agent
 python .agent/skills/pourbaix-diagram/scripts/calculate_pourbaix.py \
     --relaxed_solids ./relaxed_solids/ \
-    --water_correction ./water_correction.json \
-    --target "ZnO" \
-    --output ./pourbaix_results/
+    --target "Zn" \
+    --mlip_name "uma-s-1p1" \
+    --output ./pourbaix_results/ \
+    --apply_solid_compat
 ```
 
 **Parameters**:
-- `--relaxed_solids`: Directory with MLIP-relaxed solid structures
-- `--water_correction`: Water correction JSON from step 4
-- `--target`: Target material formula
-- `--ion_concentration`: Ion concentration in M (default: 1e-6)
+- `--relaxed_solids`: Directory with MLIP-relaxed solid structures (MUST include the relaxed H2O)
+- `--target`: Target metal element (or use `--comp_dict` for multi-element)
+- `--comp_dict`: (Optional) Composition dictionary for K-nary systems (e.g. "Li=1,Fe=1")
+- `--mlip_name`: Name for the plot title (and for looking up elemental energies)
 - `--output`: Output directory
+- `--apply_solid_compat`: (Optional) Apply Materials Project 2020 compatibility corrections. **Use only if your MLIP is trained on MP data (e.g. MACE-MP, CHGNet)**. Do NOT use for UMA or generic potentials unless verified.
+- `--ion_concentration`: Ion concentration in M (default: 1e-6)
 
-**Note**: Requires `MP_API_KEY` environment variable for aqueous ion data.
 
-### 7. Interpret Results
+**Critical**: Use the **same MLIP** for all structures in a single workflow!
 
-The script generates:
+### 6. Interpret Results
+
+The scripts generate:
 - `pourbaix_diagram.png`: Visual representation
 - `stable_entries.json`: List of all stable phases in the diagram
 - Stability domains for each phase across pH/V space
@@ -179,78 +172,6 @@ The script generates:
 - **Solid domain**: Material is thermodynamically stable as a solid
 - **Ion domain**: Material dissolves into aqueous ions
 - **Passivation**: Material covered by protective oxide layer
-
-## Complete Example: ZnO Stability
-
-```bash
-# Step 1: Get structures (filters lowest energy polymorphs, copies references)
-python .agent/skills/pourbaix-diagram/scripts/get_pourbaix_structures.py \
-    --target_formula "ZnO" \
-    --output_dir ./ZnO_project/
-
-# Step 2: Load MLIP (UMA-small recommended)
-mcp_fairchem_load_model(model_name="uma-s-1p1")
-
-# Step 3: Relax references (Batch mode)
-mcp_fairchem_relax_structure(
-    structure_data="./ZnO_project/references/",
-    fmax=0.02,
-    steps=500,
-    relax_cell=True,
-    output_dir="./ZnO_relaxed_refs/"
-)
-
-# Step 4: Calculate water correction
-# (Extract energies from results...)
-E_H2O=$(python -c "import json; print(json.load(open('./ZnO_relaxed_refs/H2O.cif/result.json'))['energy'])")
-# ... extract H2, O2 similarly ...
-
-python .agent/skills/pourbaix-diagram/scripts/calculate_water_correction.py \
-    --h2o_energy $E_H2O --h2_energy $E_H2 --o2_energy $E_O2 \
-    --output ./ZnO_correction.json
-
-# Step 5: Relax solids
-mcp_fairchem_relax_structure(
-    structure_data="./ZnO_project/structures/",
-    fmax=0.02,
-    steps=500,
-    relax_cell=True,
-    output_dir="./ZnO_relaxed_solids/"
-)
-
-# Step 6: Calculate Pourbaix
-python .agent/skills/pourbaix-diagram/scripts/calculate_pourbaix.py \
-    --relaxed_solids ./ZnO_relaxed_solids/ \
-    --water_correction ./ZnO_correction.json \
-    --target "ZnO" \
-    --output ./ZnO_pourbaix/
-```
-
-**Expected result**: Multiple stability domains (Zn metal, ZnO, Zn²⁺, ZnO₂²⁻, etc.)
-
-## MLIP-Agnostic Workflow
-
-This skill works with **any MLIP** (MACE, MatGL, FairChem):
-
-**MACE Example**:
-```python
-mcp_mace_load_model(model_name="MACE-OMAT-0-small")
-mcp_mace_relax_structure(...)
-```
-
-**MatGL Example**:
-```python
-mcp_matgl_load_model(model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES")
-mcp_matgl_relax_structure(...)
-```
-
-**FairChem Example**:
-```python
-mcp_fairchem_load_model(model_name="uma-s-1p1")
-mcp_fairchem_relax_structure(...)
-```
-
-**Critical**: Use the **same MLIP** for all structures in a single workflow!
 
 ## Constraints
 
