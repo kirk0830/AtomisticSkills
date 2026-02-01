@@ -12,6 +12,21 @@ To apply [Materials Project 2020 Compatibility](https://pymatgen.org/pymatgen.en
 > **Do NOT apply this to r2SCAN models.** 
 > Only use this for models trained on GGA/GGA+U mixed data.
 
+## Scientific Context
+
+### Why is this needed?
+The Materials Project (MP) database mixes calculations from two levels of theory: **GGA (PBE)** and **GGA+U**. Transition metals (e.g., Mn, Fe, Co, Ni) are calculated with a Hubbard U correction *only* when present in oxides or fluorides; otherwise, they use standard PBE. To construct a unified convex hull, MP applies the **MP2020 Compatibility** scheme (energy shifts) to align these distinct potential energy surfaces.
+
+MLIPs trained on MP data (e.g., MACE-MP-0) typically learn these mixed energies. To accurately predict stability against the MP hull, one must apply the same MP2020 corrections to the MLIP outputs.
+
+### Potential Issues
+Recent research indicates that this selective application of U introduces discontinuities in the Potential Energy Surface (PES) that are difficult for MLIPs to model physically.
+*   **Artifacts**: Models may exhibit spurious repulsion or underbinding between U-corrected metals and ligands, as they interpolate between incompatible GGA and GGA+U regimes.
+
+### References
+1.  **MP2020 Framework**: Wang, A., Kingsbury, R., McDermott, M. et al. *A framework for quantifying uncertainty in DFT energy corrections.* Sci Rep 11, 15496 (2021). [DOI](https://doi.org/10.1038/s41598-021-94550-5)
+2.  **Impact on MLIPs**: *Better without U: Impact of Selective Hubbard U Correction on Foundational MLIPs.* arXiv:2601.21056 (2026). [link](https://arxiv.org/abs/2601.21056)
+
 ## Compatible Models
 This correction is **REQUIRED** for:
 - **MACE-MH-1** `omat_pbe` head (default)
