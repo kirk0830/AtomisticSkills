@@ -26,10 +26,22 @@ This correction is **NOT** for:
 - **CHGNet** (e.g. `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES`)
 - **MACE-MATPES-r2SCAN-0**
 - **TensorNet-MatPES-r2SCAN-v2025.1-PES**
+- **SevenNet** (if trained on r2SCAN)
+
+> [!NOTE]
+> The full list of compatible models can be found in `resources/gga-ggau-mixed-mlips.yaml`.
 
 ## Instructions
 
-### 1. Apply Correction to a Structure
+### 1. Check Compatibility
+Use the `check_compatibility.py` script to programmatically determine if a model/head requires correction.
+
+```bash
+python .agent/skills/mp2020-compatibility/scripts/check_compatibility.py --name "MACE-MH-1" --head "omat_pbe"
+# Exit code 0 if required, 1 if not.
+```
+
+### 2. Apply Correction to a Structure
 Use the `apply_correction.py` script to calculate the corrected energy for a single structure.
 
 To run on a directory of structure files (batch mode):

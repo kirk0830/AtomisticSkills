@@ -1,4 +1,4 @@
-compatible_checkpoints:
+checkpoints_requiring_mp2020_compatibility:
   - name: MACE-MH-1
     head: omat_pbe
   - name: MACE-MH-0
