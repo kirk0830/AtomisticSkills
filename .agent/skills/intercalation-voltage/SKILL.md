@@ -29,7 +29,7 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
     - Get the bulk metal structure from `resources/` (e.g., `Li_metal.cif`)
 
 2.  **Select Foundation Potential**:
-    Choose an appropriate MLIP based on the system (see [foundation-potentials.md](../../rules/foundation-potentials.md)). For cathode materials, `MACE-MH-1` with `matpes_r2scan` head or `CHGNet-MatPES-r2SCAN` are recommended.
+    Choose an appropriate MLIP based on the system (see [foundation-potentials.md](../../skills/foundation-potentials/SKILL.md)). For cathode materials, `MACE-MH-1` with `matpes_r2scan` head or `CHGNet-MatPES-r2SCAN` are recommended.
 
 3.  **Relax Structures Using MCP Tools**:
     

@@ -86,7 +86,7 @@ This retrieves:
 
 #### 2. Select Foundation Potential
 
-Choose an appropriate MLIP based on your system (see `.agent/rules/foundation-potentials.md`).
+Choose an appropriate MLIP based on your system (see `.agent/skills/foundation-potentials/SKILL.md`).
 
 > [!IMPORTANT]
 > **Recommended for Pourbaix diagrams: MatPES-r2SCAN**

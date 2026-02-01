@@ -13,7 +13,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 1.  **Select Level of Theory**: Choose the target accuracy level for stability calculations.
     - **Recommended**: r2SCAN-level foundation potentials for high accuracy
     - **Options**: `TensorNet-MatPES-r2SCAN-v2025.1-PES` (MatGL) or `MACE-MH-1` with `matpes_r2scan` head
-    - See [foundation-potentials](../../rules/foundation-potentials.md) for detailed guidance
+    - See [foundation-potentials](../../skills/foundation-potentials/SKILL.md) for detailed guidance
     
     **Note**: r2SCAN shows high accuracy for predicting thermodynamic stability (MAE 80 meV/atom for formation energies vs PBE's 175 meV/atom)[^1]. Using r2SCAN-trained potentials ensures consistency with Materials Project's r2SCAN entries.
     

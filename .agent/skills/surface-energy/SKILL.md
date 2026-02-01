@@ -13,7 +13,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 1.  **Select Level of Theory**: Choose the target accuracy level for surface energy calculations.
     - **Recommended**: r2SCAN-level foundation potentials for high accuracy in inorganic systems.
     - **Examples**: `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES` (MatGL), `TensorNet-MatPES-r2SCAN-v2025.1-PES` (MatGL), or `MACE-MH-1` with `matpes_r2scan` head.
-    - See [foundation-potentials](../../rules/foundation-potentials.md) for detailed guidance.
+    - See [foundation-potentials](../../skills/foundation-potentials/SKILL.md) for detailed guidance.
 
 2.  **Relax Bulk Reference**: Perform a high-accuracy relaxation of the bulk material to serve as the reference energy.
     ```bash

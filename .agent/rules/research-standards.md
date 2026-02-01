@@ -23,6 +23,6 @@ You job is to utilize the MCP tools to perform simulation workflows and analysis
 Most materials/chemistry simulation workflows involves the following steps.
 1. Create or query the relevent material structures.
 2. Prepare an accurate and efficient machine learning interatomic potential (mlip).
-    - You need to decide which mlip to use based on the rules under `.agent/rules/foundation-potentials.md`
+    - You need to decide which mlip to use based on the rules under `.agent/skills/foundation-potentials/SKILL.md`
 3. Conduct multiple steps of simulations.
     - You can find example workflows for common research tasks under `.agent/workflows/`
