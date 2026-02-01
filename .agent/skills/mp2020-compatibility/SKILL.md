@@ -20,7 +20,7 @@ The Materials Project (MP) database mixes calculations from two levels of theory
 MLIPs trained on MP data (e.g., MACE-MP-0) typically learn these mixed energies. To accurately predict stability against the MP hull, one must apply the same MP2020 corrections to the MLIP outputs.
 
 ### Potential Issues
-Recent research indicates that this selective application of U introduces discontinuities in the Potential Energy Surface (PES) that are difficult for MLIPs to model physically.
+Selective application of U introduces discontinuities in the Potential Energy Surface (PES) that are difficult for MLIPs to model physically.
 *   **Artifacts**: Models may exhibit spurious repulsion or underbinding between U-corrected metals and ligands, as they interpolate between incompatible GGA and GGA+U regimes.
 
 ### References
@@ -41,7 +41,6 @@ This correction is **NOT** for:
 - **CHGNet** (e.g. `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES`)
 - **MACE-MATPES-r2SCAN-0**
 - **TensorNet-MatPES-r2SCAN-v2025.1-PES**
-- **SevenNet** (if trained on r2SCAN)
 
 > [!NOTE]
 > The full list of compatible models can be found in `resources/gga-ggau-mixed-mlips.yaml`.
