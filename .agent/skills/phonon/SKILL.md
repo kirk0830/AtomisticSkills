@@ -18,7 +18,7 @@ Phonon calculations are highly sensitive to the quality of the potential energy 
 
 > [!IMPORTANT]
 > - **Use OMAT or MatPES trained models**: These models (e.g., `MACE-OMAT-0-small`, `TensorNet-MatPES-r2SCAN`) are specifically optimized for forces and vibrational stability.
-> - **Avoid MPtrj-trained models**: Models trained primarily on the `MPtrj` dataset (e.g., `CHGNet-MPtrj`) may exhibit "ghost" imaginary frequencies or poor force accuracy for phonon calculations.
+> - **Avoid MPtrj-trained models**: Models trained primarily on the `MPtrj` dataset (e.g., `CHGNet-MPtrj`) suffer from the "softening" problem, where the calculated phonon frequencies are significantly lower than DFT values.
 
 Refer to the [foundation-potentials skill](../foundation-potentials/SKILL.md) for more details.
 

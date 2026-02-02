@@ -1,9 +1,9 @@
 ---
-name: qha
+name: qha-thermal-expansion
 description: Calculate Quasi-Harmonic Approximation (QHA) thermal properties using MLIPs.
 ---
 
-# Quasi-Harmonic Approximation (QHA) Skill
+# QHA Thermal Expansion Skill
 
 This skill provides tools for calculating thermal expansion and temperature-dependent Gibbs energy using Machine Learning Interatomic Potentials (MLIPs).
 
