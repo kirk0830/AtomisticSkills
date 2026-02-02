@@ -257,6 +257,91 @@ class VolumeMonitor:
             logger.error(msg)
             raise MDStopIteration(msg)
 
+class QuenchingControl:
+    """
+    Callback to perform linear temperature quenching/ramping during MD.
+    """
+    def __init__(self, start_temp: float, end_temp: float, total_steps: int):
+        self.start_temp = start_temp
+        self.end_temp = end_temp
+        self.total_steps = total_steps
+
+    def __call__(self, *args, **kwargs):
+        dyn = kwargs.get("dyn")
+        if dyn is None:
+            # Try to find Dynamics object in args
+            for arg in args:
+                if hasattr(arg, "get_number_of_steps"):
+                    dyn = arg
+                    break
+        
+        if dyn is None:
+            return
+
+        step = dyn.get_number_of_steps()
+        fraction = min(1.0, step / self.total_steps)
+        temp_k = self.start_temp + fraction * (self.end_temp - self.start_temp)
+        
+        from ase import units
+        # Set temperature for various ASE thermostats
+        # 1. Standard set_temperature (Langevin, NPT, etc.)
+        # This updates the target temperature attribute used in the integration step.
+        if hasattr(dyn, "set_temperature"):
+            try:
+                dyn.set_temperature(temperature_K=temp_k)
+            except TypeError:
+                # Some old versions or different signatures might use 'temperature'
+                dyn.set_temperature(temp_k * units.kB)
+        
+        # 2. Bussi Thermostat (CSVR)
+        # The Bussi thermostat lacks a set_temperature method in ASE.
+        # We must manually update 'target_kinetic_energy', which determines the rescaling target.
+        # target_KE = 0.5 * N_dof * k_B * T
+        if hasattr(dyn, "target_kinetic_energy") and hasattr(dyn, "ndof"):
+             dyn.target_kinetic_energy = 0.5 * temp_k * units.kB * dyn.ndof
+        
+        # 3. Langevin Thermostat (Backup)
+        # Langevin noise (sigma) depends on T: sigma = sqrt(2 * T * friction / dt).
+        # While set_temperature() usually handles this, we double check here to ensure noise balance is correct.
+        if hasattr(dyn, "sigma") and hasattr(dyn, "temp") and hasattr(dyn, "friction") and hasattr(dyn, "dt"):
+             import numpy as np
+             dyn.sigma = np.sqrt(2 * dyn.friction * dyn.temp / dyn.dt)
+        
+        # 4. Nose-Hoover / MTK / NPT (Legacy/Manual Update)
+        # These complex integrators often lack a cleaner set_temperature API in older ASE versions.
+        # We must manually scale the thermostat reservoir energy (kT) and chain masses (Q/W/R).
+        # This ensures the thermostat oscillates around the NEW temperature, not the old one.
+        if not hasattr(dyn, "set_temperature"):
+            # Thermostat kT and masses
+            thermo = getattr(dyn, "_thermostat", None)
+            if thermo and hasattr(thermo, "_kT"):
+                thermo._kT = temp_k * units.kB
+                if hasattr(thermo, "_Q") and hasattr(thermo, "_tdamp") and hasattr(thermo, "_num_atoms_global"):
+                    # Q[0] scales with N_atoms, others scale with 1. Both scale with T.
+                    thermo._Q[0] = 3 * thermo._num_atoms_global * thermo._kT * thermo._tdamp**2
+                    thermo._Q[1:] = thermo._kT * thermo._tdamp**2
+            
+            # Barostat kT and masses (for NPT)
+            baro = getattr(dyn, "_barostat", None)
+            if baro and hasattr(baro, "_kT"):
+                baro._kT = temp_k * units.kB
+                if hasattr(baro, "_W") and hasattr(baro, "_pdamp") and hasattr(baro, "_num_atoms_global"):
+                    baro._W = (baro._num_atoms_global + 1) * baro._kT * baro._pdamp**2
+                if hasattr(baro, "_R") and hasattr(baro, "_pdamp"):
+                    cell_dof = 9
+                    baro._R[0] = cell_dof * baro._kT * baro._pdamp**2
+                    baro._R[1:] = baro._kT * baro._pdamp**2
+            
+            # Top-level attributes
+            if hasattr(dyn, "_temperature_K"):
+                dyn._temperature_K = temp_k
+            if hasattr(dyn, "_kT"):
+                dyn._kT = temp_k * units.kB
+            if hasattr(dyn, "temp"):
+                dyn.temp = temp_k * units.kB
+            if hasattr(dyn, "temperature_K"):
+                dyn.temperature_K = temp_k
+
 def get_md_callback(
     monitor_type: str, 
     atoms=None, 
@@ -286,5 +371,10 @@ def get_md_callback(
         lower = kwargs.get("lower_limit_ratio", 0.2)
         upper = kwargs.get("upper_limit_ratio", 2.0)
         return VolumeMonitor(atoms, lower, upper), log_interval
+    elif monitor_type == "quenching":
+        start_temp = kwargs.get("temperature", 3000.0)
+        end_temp = kwargs.get("temperature_end", 300.0)
+        steps = kwargs.get("steps", 20000)
+        return QuenchingControl(start_temp, end_temp, steps), 1 # Apply every step
     
     return None

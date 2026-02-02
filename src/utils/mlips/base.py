@@ -397,7 +397,7 @@ class MLIPModel(ABC):
                 "trajectory_path": traj_file,
                 "log_path": log_file,
                 "cif_path": cif_path,
-                "final_structure": final_struct.as_dict() if hasattr(final_struct, "as_dict") else AseAtomsAdaptor.get_structure(final_struct).as_dict()
+                "output_dir": output_dir
             }
         except Exception as e:
             import traceback
@@ -691,10 +691,19 @@ class MLIPModel(ABC):
             except MDStopIteration as e:
                 logger.info(f"MD stopped by monitor: {e}")
                 # We return a result manually since MDCalc.calc was interrupted
+                # Save final structure
+                final_struct = AseAtomsAdaptor.get_structure(atoms)
+                final_struct_path = os.path.join(output_dir, f"{filename_base}_final.cif")
+                try:
+                    final_struct.to(filename=final_struct_path)
+                except Exception as save_err:
+                    logger.warning(f"Failed to save final structure in stopped run: {save_err}")
+                    final_struct_path = None
+
                 return {
                     "status": "stopped",
                     "stop_reason": str(e),
-                    "final_structure": AseAtomsAdaptor.get_structure(atoms).as_dict(),
+                    "final_structure_path": final_struct_path,
                     "trajectory_path": traj_path,
                     "log_path": log_path,
                     "energy": float(atoms.get_potential_energy()),
@@ -702,10 +711,34 @@ class MLIPModel(ABC):
                     "final_temperature": float(atoms.get_temperature())
                 }
 
-            # Return full result
-            result["trajectory_path"] = traj_path
-            result["log_path"] = log_path
-            return recursive_tolist(result)
+            # Clean up result for return (remove heavy objects)
+            safe_result = {
+                "trajectory_path": traj_path,
+                "log_path": log_path,
+                "potential_energy": result.get("potential_energy"),
+                "kinetic_energy": result.get("kinetic_energy"),
+                "total_energy": result.get("total_energy"),
+                "status": "success"
+            }
+            
+            # Save final structure if present
+            if "final_structure" in result:
+                final_struct = result["final_structure"]
+                final_struct_path = os.path.join(output_dir, f"{filename_base}_final.cif")
+                
+                try:
+                    # Pymatgen Structure
+                    if hasattr(final_struct, "to"):
+                        final_struct.to(filename=final_struct_path)
+                    # ASE Atoms
+                    elif hasattr(final_struct, "write"):
+                        final_struct.write(final_struct_path)
+                        
+                    safe_result["final_structure_path"] = final_struct_path
+                except Exception as e:
+                    logger.warning(f"Failed to save final structure: {e}")
+            
+            return recursive_tolist(safe_result)
 
         except Exception as e:
             import traceback

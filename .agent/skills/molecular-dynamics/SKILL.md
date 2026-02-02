@@ -18,11 +18,35 @@ MD stability monitoring is integrated directly into the `run_md` tool via ASE ca
     - `equilibration`: Convergence check. Stops once temperature and potential energy stabilize (e.g., for production runs).
     - `overshoot`: Thermostat check. Stops if T deviates significantly from target (T-target > 200K).
     - `volume`: NPT stability check. Stops if volume expands by 2x or contracts to 0.2x of initial.
+    - `quenching`: Linear temperature ramp. Updates the thermostat target every step to move from `temperature` to `temperature_end` over a specified number of `steps`.
+        - **Best Practice**: Use `dyn.set_temperature(temperature_K=T)` inside the ramping callback. This is critical for thermostats like `Langevin` to update internal noise/coupling coefficients.
+        - **Advanced Thermostats**: For `NoseHooverChainNVT` and `MTKNPT`, where `set_temperature` might be missing, manual updates to internal attributes (`_kT`, `_Q`, `_W`) are required to keep the damping frequency consistent.
 
 - **Example Usage**:
     ```python
     # MACE example with multiple monitors
     mace.run_md(structure, monitor=True, monitor_type=["explosion", "equilibration"])
+    ```
+
+- **Quenching Template (MCP Tool Call)**:
+    ```json
+    {
+      "tool": "mcp_mace_run_md",
+      "arguments": {
+        "structure_data": "initial_structure.cif",
+        "temperature": 3000.0,
+        "steps": 5000,
+        "timestep": 2.0,
+        "ensemble": "nvt_langevin",
+        "monitor": true,
+        "monitor_type": "quenching",
+        "monitor_params": {
+          "temperature_end": 300.0,
+          "steps": 5000
+        },
+        "output_dir": "research/quenching_output"
+      }
+    }
     ```
 
 - **Action**: When a monitor triggers, the simulation stops immediately with a `status: "stopped"` and a clear `stop_reason` in the result dictionary.
