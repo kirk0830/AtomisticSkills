@@ -8,6 +8,9 @@ description: Calculate the thermodynamic stability and energy above the convex h
 ## Goal
 To determine the thermodynamic stability of a material at 0K by computing the energy above the convex hull ($E_{hull}$) using pymatgen phase diagram analysis with structures from Materials Project.
 
+> [!TIP]
+> **Finite Temperature Stability**: While this skill focuses on 0K stability (potential energy), you can construct a finite-temperature phase diagram by replacing potential energies with **Free Energies** ($G = U + F_{\text{vib}}$) calculated from the [qha](../../skills/qha/SKILL.md) skill.
+
 ## Instructions
 
 1.  **Select Level of Theory**: Choose the target accuracy level for stability calculations.
