@@ -32,7 +32,7 @@ This correction is **REQUIRED** for:
 - **MACE-MH-1** `omat_pbe` head (default)
 - **MACE-MH-0** `omat_pbe` head
 - **MACE-OMAT-0-small**, **MACE-OMAT-0-medium**
-- **MACE-MP-0-small**, **MACE-MP-0-medium**, **MACE-MP-0-large** (Legacy)
+- **MACE-MP-small**, **MACE-MP-medium**, **MACE-MP-large**
 - **M3GNet-MP-2021.2.8-PES**
 - **M3GNet-MP-2021.2.8-DIRECT-PES**
 - **uma-s-1**, **uma-s-1p1**, **uma-m-1p1** (with `omat` head)
