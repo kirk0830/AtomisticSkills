@@ -68,11 +68,8 @@ If a simulation explodes:
 
 ## Examples
 
-Monitoring a running simulation's log:
-```bash
-python .agent/skills/molecular-dynamics/scripts/monitor_md.py md_run.log
-```
+Monitoring stability is handled automatically by the ASE callbacks. When a monitor is triggered, the stop reason is logged to `stdout` and saved in the result dictionary.
 
 ## Constraints
-- **Termination**: If `monitor_md.py` or manual inspection shows an explosion, terminate the task and adjust parameters. Do not proceed with unstable trajectories.
+- **Termination**: If a monitor triggers an explosion, terminate the task and adjust parameters. Do not proceed with unstable trajectories.
 - **Reporting**: Always report simulation parameters (ensemble, T, timestep, duration) in the research report.
