@@ -12,7 +12,16 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 
 1.  **MD Preparation**: Run NVT MD simulations at multiple temperatures (typically 4-6 points between 600K and 1200K). 
     - Use the `run_md` tool from a relevant potential skill (e.g., [mace](../mace/SKILL.md) or [matgl](../matgl/SKILL.md)).
-    - Ensure supercells are sufficiently large (> 10 Å in all dimensions) and simulation duration is > 20 ps after equilibration.
+    - Ensure supercells are sufficiently large (> 10 Å in all dimensions).
+    - **Optimization**: Use the `diffusion` monitor to automatically stop simulations once the transport properties have converged.
+        ```python
+        mace.run_md(
+            structure, 
+            monitor=True, 
+            monitor_type="diffusion",
+            monitor_params={"specie": "Li", "threshold": 0.05, "check_interval_ps": 5.0}
+        )
+        ```
 
 2.  **Individual Diffusivity Analysis**: For each temperature directory, run the analysis script to extract the diffusivity and Mean Square Displacement (MSD).
     ```bash

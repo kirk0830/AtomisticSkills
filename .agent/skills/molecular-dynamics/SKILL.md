@@ -18,6 +18,8 @@ MD stability monitoring is integrated directly into the `run_md` tool via ASE ca
     - `equilibration`: Convergence check. Stops once temperature and potential energy stabilize (e.g., for production runs).
     - `overshoot`: Thermostat check. Stops if T deviates significantly from target (T-target > 200K).
     - `volume`: NPT stability check. Stops if volume expands by 2x or contracts to 0.2x of initial.
+    - `diffusion`: Convergence check for transport properties. Stops once the relative error of diffusivity for a specific `specie` (default Li) falls below a `threshold` (default 0.1).
+        - **Parameters**: `specie`, `threshold`, `check_interval_ps` (default 5.0), `ignore_ps` (initial equilibration to skip, default 2.0).
     - `quenching`: Linear temperature ramp. Updates the thermostat target every step to move from `temperature` to `temperature_end` over a specified number of `steps`.
         - **Best Practice**: Use `dyn.set_temperature(temperature_K=T)` inside the ramping callback. This is critical for thermostats like `Langevin` to update internal noise/coupling coefficients.
         - **Advanced Thermostats**: For `NoseHooverChainNVT` and `MTKNPT`, where `set_temperature` might be missing, manual updates to internal attributes (`_kT`, `_Q`, `_W`) are required to keep the damping frequency consistent.

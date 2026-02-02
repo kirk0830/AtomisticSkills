@@ -257,6 +257,124 @@ class VolumeMonitor:
             logger.error(msg)
             raise MDStopIteration(msg)
 
+class DiffusionMonitor:
+    """
+    Monitor for ionic diffusivity convergence.
+    Stops the simulation if the relative error of diffusivity (std_dev/D)
+    falls below a specified threshold.
+    """
+    def __init__(
+        self, 
+        atoms=None, 
+        specie: str = "Li", 
+        threshold: float = 0.1, 
+        check_interval_ps: float = 5.0,
+        ignore_ps: float = 2.0,
+        **kwargs
+    ):
+        self.atoms = atoms
+        self.specie = specie
+        self.threshold = threshold
+        self.check_interval_ps = check_interval_ps
+        self.ignore_ps = ignore_ps
+        
+        self.timestep_fs = kwargs.get("timestep_fs")
+        self.log_interval = kwargs.get("log_interval")
+        
+        self.structures = []
+        self.check_interval_steps = None
+        self.ignore_entries = None
+        
+    def _resolve_params(self, atoms, dyn=None):
+        if self.atoms is None:
+            self.atoms = atoms
+            
+        if dyn is not None:
+            if self.timestep_fs is None:
+                from ase import units
+                if hasattr(dyn, "dt"):
+                    self.timestep_fs = dyn.dt / units.fs
+                elif hasattr(dyn, "get_time_step"):
+                    self.timestep_fs = dyn.get_time_step() / units.fs
+                    
+        ts = self.timestep_fs if self.timestep_fs is not None else 1.0
+        li = self.log_interval if self.log_interval is not None else 10
+        
+        if self.check_interval_steps is None:
+            # How many callback calls per check
+            self.check_interval_steps = max(1, int(self.check_interval_ps * 1000 / ts / li))
+        if self.ignore_entries is None:
+            self.ignore_entries = max(0, int(self.ignore_ps * 1000 / ts / li))
+
+    def __call__(self, *args, **kwargs):
+        dyn = kwargs.get("dyn")
+        atoms = self.atoms
+        for arg in args:
+            if hasattr(arg, "get_temperature"):
+                if hasattr(arg, "atoms"):
+                    dyn = arg
+                    atoms = arg.atoms
+                else:
+                    atoms = arg
+                break
+        
+        if atoms is None and dyn is not None and hasattr(dyn, "atoms"):
+            atoms = dyn.atoms
+            
+        if atoms is None:
+            return
+
+        self._resolve_params(atoms, dyn)
+        
+        # Collect current structure
+        from pymatgen.io.ase import AseAtomsAdaptor
+        adaptor = AseAtomsAdaptor()
+        # Copy atoms to avoid issues if dyn modifies it in place
+        self.structures.append(adaptor.get_structure(atoms.copy()))
+        
+        # Check convergence periodically
+        n_total = len(self.structures)
+        if n_total > self.ignore_entries + 2:
+            # We check only every 'check_interval_steps' after equilibration
+            if (n_total - self.ignore_entries) % self.check_interval_steps == 0:
+                from pymatgen.analysis.diffusion.analyzer import DiffusionAnalyzer
+                
+                analysis_structs = self.structures[self.ignore_entries:]
+                temp = atoms.get_temperature()
+                if temp < 1.0: # Fallback for T=0 or T not set
+                     temp = 300.0
+                
+                ts = self.timestep_fs if self.timestep_fs is not None else 1.0
+                li = self.log_interval if self.log_interval is not None else 10
+                
+                try:
+                    analyzer = DiffusionAnalyzer.from_structures(
+                        structures=analysis_structs,
+                        specie=self.specie,
+                        temperature=temp,
+                        time_step=ts * li,
+                        step_skip=1,
+                        smoothed=False
+                    )
+                    
+                    D = analyzer.diffusivity
+                    D_std = analyzer.diffusivity_std_dev
+                    
+                    if D > 0:
+                        rel_err = D_std / D
+                        logger.info(f"Diffusion Monitor [{self.specie}]: D={D:.2e}, rel_err={rel_err:.3f} (target < {self.threshold})")
+                        
+                        if rel_err < self.threshold:
+                            msg = f"Diffusion converged for {self.specie}: rel_err={rel_err:.4f} < {self.threshold}"
+                            logger.info(msg)
+                            raise MDStopIteration(msg)
+                except MDStopIteration:
+                    # Propagate the stop signal
+                    raise
+                except Exception as e:
+                    # Might fail if not enough diffusion or specie not found
+                    logger.warning(f"Diffusion Monitor calculation failed: {e}")
+
 class QuenchingControl:
     """
     Callback to perform linear temperature quenching/ramping during MD.
@@ -376,5 +494,19 @@ def get_md_callback(
         end_temp = kwargs.get("temperature_end", 300.0)
         steps = kwargs.get("steps", 20000)
         return QuenchingControl(start_temp, end_temp, steps), 1 # Apply every step
+    elif monitor_type == "diffusion":
+        specie = kwargs.get("specie", "Li")
+        threshold = kwargs.get("threshold", 0.1)
+        check_interval = kwargs.get("check_interval_ps", 5.0)
+        ignore_ps = kwargs.get("ignore_ps", 2.0)
+        return DiffusionMonitor(
+            atoms=atoms,
+            specie=specie,
+            threshold=threshold,
+            check_interval_ps=check_interval,
+            ignore_ps=ignore_ps,
+            timestep_fs=timestep_fs,
+            log_interval=log_interval
+        ), log_interval
     
     return None
