@@ -272,6 +272,23 @@ class DiffusionMonitor:
         ignore_ps: float = 2.0,
         **kwargs
     ):
+        """
+        Initialize the Diffusion Monitor.
+
+        Args:
+            atoms (ase.Atoms, optional): ASE Atoms object to monitor.
+            specie (str): The atomic species to analyze for diffusion (e.g., "Li"). 
+                Defaults to "Li".
+            threshold (float): Convergence threshold for the relative error of 
+                diffusivity (diffusivity_std_dev / diffusivity). Simulation stops 
+                if error < threshold. Defaults to 0.1 (10% error).
+            check_interval_ps (float): Simulation time interval between successive 
+                diffusivity evaluations in picoseconds. Defaults to 5.0 ps.
+            ignore_ps (float): Initial simulation time to ignore for equilibration 
+                before starting convergence checks. Defaults to 2.0 ps.
+            **kwargs: Additional parameters like 'timestep_fs' and 'log_interval' 
+                if they cannot be auto-detected from the dynamics object.
+        """
         self.atoms = atoms
         self.specie = specie
         self.threshold = threshold
