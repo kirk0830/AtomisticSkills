@@ -269,7 +269,7 @@ class DiffusionMonitor:
         specie: str = "Li", 
         threshold: float = 0.1, 
         check_interval_ps: float = 5.0,
-        ignore_ps: float = 2.0,
+        ignore_ps: float = 5.0,
         **kwargs
     ):
         """
@@ -285,7 +285,7 @@ class DiffusionMonitor:
             check_interval_ps (float): Simulation time interval between successive 
                 diffusivity evaluations in picoseconds. Defaults to 5.0 ps.
             ignore_ps (float): Initial simulation time to ignore for equilibration 
-                before starting convergence checks. Defaults to 2.0 ps.
+                before starting convergence checks. Defaults to 5.0 ps.
             **kwargs: Additional parameters like 'timestep_fs' and 'log_interval' 
                 if they cannot be auto-detected from the dynamics object.
         """
@@ -515,7 +515,7 @@ def get_md_callback(
         specie = kwargs.get("specie", "Li")
         threshold = kwargs.get("threshold", 0.1)
         check_interval = kwargs.get("check_interval_ps", 5.0)
-        ignore_ps = kwargs.get("ignore_ps", 2.0)
+        ignore_ps = kwargs.get("ignore_ps", 5.0)
         return DiffusionMonitor(
             atoms=atoms,
             specie=specie,
