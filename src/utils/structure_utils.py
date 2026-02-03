@@ -163,3 +163,86 @@ def load_structures(inputs: Union[str, Path, dict, List, Any]) -> List[Any]:
             
     return structures
 
+def expand_structure(structure: Any, target_atoms: int = 50, max_atoms: Optional[int] = None) -> Any:
+    """
+    Expand a structure to reach a target number of atoms with a close-to-cubic supercell.
+    
+    Args:
+        structure: Structure to expand (ASE Atoms or pymatgen Structure)
+        target_atoms: Target total number of atoms (default: 50)
+        max_atoms: Optional maximum number of atoms limit.
+        
+    Returns:
+        Expanded structure in the same format as input.
+    """
+    from ase import Atoms
+    import numpy as np
+    from pymatgen.io.ase import AseAtomsAdaptor
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # Convert to ASE Atoms for uniform handling of expansion logic
+    is_pmg = False
+    if hasattr(structure, "as_dict") and hasattr(structure, "lattice"):
+        is_pmg = True
+        atoms = AseAtomsAdaptor.get_atoms(structure)
+    else:
+        atoms = structure
+        
+    current_atoms = len(atoms)
+    
+    # Safety Check
+    if max_atoms and current_atoms > max_atoms:
+        logger.warning(f"Structure already has {current_atoms} atoms, exceeding limit {max_atoms}. No expansion.")
+        return structure
+        
+    if current_atoms >= target_atoms * 0.9:
+        logger.info(f"Structure already has {current_atoms} atoms, sufficient size. No expansion.")
+        return structure
+
+    # Calculate expansion factor needed
+    expansion_factor = (target_atoms / current_atoms) ** (1.0 / 3.0)
+    
+    best_expansion = None
+    best_score = float('inf')
+    
+    # Search space: try expansion matrices from 1x1x1 to 6x6x6
+    max_search = int(expansion_factor * 2) + 1
+    max_search = min(max_search, 8)
+    
+    for nx in range(1, max_search + 1):
+        for ny in range(1, max_search + 1):
+            for nz in range(1, max_search + 1):
+                num_atoms = current_atoms * nx * ny * nz
+                
+                # Check bounds
+                if num_atoms < target_atoms * 0.5:
+                    continue
+                if max_atoms and num_atoms > max_atoms:
+                    continue
+                
+                # Score: 0.5 * distance from target + 0.5 * non-cubicness
+                target_dist = abs(num_atoms - target_atoms) / target_atoms
+                # Cubicness = 0 if nx=ny=nz, max 1
+                max_exp = max(nx, ny, nz)
+                cubicness = (max_exp - min(nx, ny, nz)) / max_exp if max_exp > 0 else 0
+                
+                score = 0.5 * target_dist + 0.5 * cubicness
+                
+                if score < best_score:
+                    best_score = score
+                    best_expansion = (nx, ny, nz)
+    
+    if best_expansion is None:
+        # Fallback
+        nx = ny = nz = max(1, int(round(expansion_factor)))
+        best_expansion = (nx, ny, nz)
+    
+    logger.info(f"Expanding structure from {current_atoms} to {current_atoms * best_expansion[0] * best_expansion[1] * best_expansion[2]} atoms using {best_expansion}")
+    
+    expanded_atoms = atoms.repeat(best_expansion)
+    
+    if is_pmg:
+        return AseAtomsAdaptor.get_structure(expanded_atoms)
+    return expanded_atoms

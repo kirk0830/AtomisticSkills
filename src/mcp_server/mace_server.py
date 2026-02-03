@@ -37,7 +37,6 @@ mcp = FastMCP("MACE")
 
 # Global variables to hold state
 wrapper: Optional[Any] = None
-sampler: Optional[Any] = None
 
 
 @mcp.tool()
@@ -66,7 +65,6 @@ def load_model(model_name: str = "MACE-OMAT-0-small", device: str = "auto", task
     CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
     global wrapper
-    global sampler
     import contextlib
     
     # Isolate execution from stdout/stderr to prevent MCP protocol violation
@@ -86,10 +84,6 @@ def load_model(model_name: str = "MACE-OMAT-0-small", device: str = "auto", task
                 wrapper.set_head(task_name)
             else:
                 logger.warning(f"Model wrapper does not support setting head to {task_name}")
-        
-        # Initialize sampler
-        from src.utils.data_augmenter.sampler import StructureSampler
-        sampler = StructureSampler(wrapper)
         
         return f"Successfully loaded MACE model: {model_name}"
     except Exception as e:
@@ -241,7 +235,7 @@ def run_md(
     output_dir: Optional[str] = None,
     monitor: bool = False,
     monitor_type: Optional[Union[str, List[str]]] = None,
-    monitor_params: Optional[Dict[str, Any]] = None
+    monitor_params: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -305,99 +299,6 @@ def run_md(
         return {"error": f"MD execution failed: {str(e)}", "traceback": traceback.format_exc()}
 
 
-
-
-@mcp.tool()
-def sample_off_equilibrium(
-    structure_data: Union[Dict[str, Any], str],
-    total_steps: int = 1000,
-    temperature: float = 300.0,
-    output_dir: Optional[str] = None,
-    target_atoms: int = 75,
-    num_samples: int = 20,
-    time_step: Optional[float] = None
-) -> Dict[str, Any]:
-    """
-    Sample structures for off-equilibrium calculations (MD, diffusion).
-    
-    Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
-        total_steps: Number of MD steps.
-        temperature: Temperature in Kelvin.
-        output_dir: Directory to save sampled structures.
-        target_atoms: Target number of atoms for supercell (50-100).
-        num_samples: Number of structures to sample (default: 20).
-        time_step: Time step in fs (default: None, auto-detected based on elements).
-        
-    Returns:
-        Dictionary with sampling results and output path.
-    """
-    global wrapper, sampler
-    if wrapper is None or not wrapper.is_loaded:
-        return {"error": "Model not loaded. Please call load_model first."}
-    
-    if sampler is None:
-         from src.utils.mlips.mace.mace_wrapper import MaceCrystalFeatureCalculator
-         from src.utils.data_augmenter.sampler import StructureSampler
-         
-         # Initialize calculator and sampler
-         base_calc = wrapper.get_calculator()
-         calc = MaceCrystalFeatureCalculator(mace_calculator=base_calc)
-         sampler = StructureSampler(calculator=calc)
-         
-    try:
-        from pymatgen.io.ase import AseAtomsAdaptor
-        import os
-        
-        # Helper to get ASE Atoms
-        atoms = wrapper.check_structure_data(structure_data)
-        if isinstance(atoms, dict) and "error" in atoms:
-            return atoms
-            
-        # Run sampling
-        if not output_dir:
-             output_dir = str(get_current_research_dir() / "mace" / "sampled_structures")
-
-        import contextlib
-        structures, metadata = sampler.sample_off_equilibrium(
-            atoms=atoms,
-            total_steps=total_steps,
-            output_dir=output_dir,
-            target_atoms=target_atoms,
-            temperature=temperature,
-            num_samples=num_samples,
-            time_step=time_step
-        )
-        
-        # Serialize structures to dicts and save to files
-        serialized_structures = []
-        os.makedirs(output_dir, exist_ok=True)
-        
-        saved_files = []
-        for i, s in enumerate(structures):
-             # Save to file
-             filename = f"structure_{i:03d}.cif"
-             filepath = os.path.join(output_dir, filename)
-             try:
-                 from src.utils.structure_utils import save_structure
-                 save_structure(s, filepath)
-                 saved_files.append(filepath)
-             except Exception as e:
-                 logger.error(f"Error saving structure {i}: {e}")
-                 
-             serialized_structures.append(AseAtomsAdaptor.get_structure(s).as_dict())
-             
-        return {
-            "sampled_structures_count": len(structures),
-            "output_dir": output_dir,
-            "saved_files": saved_files,
-            "metadata": metadata,
-        }
-        
-    except Exception as e:
-        import traceback
-        logger.error(f"Sampling failed: {traceback.format_exc()}")
-        return {"error": f"Sampling failed: {str(e)}"}
 
 @mcp.tool()
 def fine_tune_model(
