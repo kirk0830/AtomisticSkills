@@ -79,3 +79,7 @@ Consider the chemical elements present in the system:
 ### 4. Default
 For general materials where no specific constraints apply:
 - Use **MACE-MH-1** with `omat_pbe` head.
+
+## Performance Benchmark
+
+For detailed inference speed and memory usage of various MLIPs, refer to the dedicated **[mlip-speed](../mlip-speed/SKILL.md)** skill. This skill provides automatic benchmarks to help you choose the most efficient model for your simulation scale.
