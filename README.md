@@ -158,16 +158,55 @@ conda env create -f conda-envs/smol-agent.yml
 
 ---
 
-## Configuration
+## Configuration & API Keys
 
-### User Configuration File
-The agent can be configured using a `~/.mlip_agent.yaml` configuration file. This file allows you to define environment variables that will be automatically injected into the agent's environment.
+### 1. Global Configuration
+The agent is configured via environment variables or a YAML configuration file.
+Recommended: Create `~/.atomistic_skills.yaml` in your home directory.
 
-**Example `~/.mlip_agent.yaml`:**
+**Example `~/.atomistic_skills.yaml`:**
 ```yaml
-ATOMATE2_REMOTE_PROJECT: remote_perlmutter
-MP_API_KEY: your_api_key_here
+# Materials Project API Key (Required for materials_tools)
+MP_API_KEY: "your_mp_api_key_here"
+
+# Atomate2 Remote Project (Required for remote job monitoring)
+ATOMATE2_REMOTE_PROJECT: "remote_perlmutter"
 ```
+
+### 2. Environment Variables
+Alternatively, set variables in your shell (takes precedence over YAML):
+```bash
+export MP_API_KEY="your_key"
+export ATOMATE2_REMOTE_PROJECT="remote_perlmutter"
+```
+
+---
+
+## Server-Specific Setup
+
+This project runs as a collection of MCP servers. Some require specific setup:
+
+### 1. [materials_tools](src/mcp_server/materials_server.py)
+*   **Purpose**: Querying structure databases (Materials Project) and VASP I/O.
+*   **Requirements**: `MP_API_KEY` must be set.
+
+### 2. [atomate2](src/mcp_server/atomate2_server.py)
+*   **Purpose**: Managing remote VASP calculations and workflows.
+*   **Requirements**:
+    *   `ATOMATE2_REMOTE_PROJECT` env var (e.g., `remote_perlmutter`).
+    *   SSH Setup for NERSC (sshproxy).
+    *   **Detailed Setup Guide**:
+        *   [Remote Worker Setup (NERSC)](docs/atomate2_remote_worker_setup.md)
+        *   [Remote Submission Guide](docs/remote_submission_setup.md)
+
+### 3. MLIP Agents (Mace, MatGL, FairChem)
+*   **Purpose**: Running ML potentials.
+*   **Requirements**: [MLIP Environment Rules](.agent/rules/mcp-environments.md).
+    *   These agents run in isolated conda environments.
+    *   [MACE Setup](conda-envs/mace-agent/README.md)
+    *   [MatGL Setup](conda-envs/matgl-agent/README.md)
+    *   [FairChem Setup](conda-envs/fairchem-agent/README.md)
+    *   [Smol Setup](conda-envs/smol-agent/README.md)
 
 ### MCP Server Configuration
 The project is configured to run as a set of MCP servers. The base configuration is provided in [mcp_config.json](mcp_config.json).
