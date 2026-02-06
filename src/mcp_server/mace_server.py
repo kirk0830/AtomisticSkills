@@ -180,7 +180,7 @@ def predict_atomic_features(structure_data: Union[Dict[str, Any], str], output_p
 @mcp.tool()
 def relax_structure(
     structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
-    fmax: float = 0.01,
+    fmax: float = 0.02,
     steps: int = 500,
     optimizer: str = "FIRE",
     relax_cell: bool = True,

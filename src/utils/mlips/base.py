@@ -585,8 +585,7 @@ class MLIPModel(ABC):
         output_dir: Optional[str] = None,
         monitor: bool = False,
         monitor_type: Optional[Union[str, List[str]]] = None,
-        monitor_params: Optional[Dict[str, Any]] = None,
-        target_atoms: Optional[int] = None
+        monitor_params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Run molecular dynamics simulation using MatCalc.
@@ -604,7 +603,6 @@ class MLIPModel(ABC):
             monitor: Whether to monitor stability and stop early.
             monitor_type: Type of monitoring ("melting", "explosion", "overshoot", "volume") or list of types.
             monitor_params: Optional dictionary of parameters for the monitors (e.g., upper_limit_ratio).
-            target_atoms: Optional target number of atoms for supercell expansion before MD.
             
         Returns:
             Dictionary with MD results.
@@ -623,13 +621,6 @@ class MLIPModel(ABC):
             atoms = self.check_structure_data(structure_data)
             if isinstance(atoms, dict) and "error" in atoms:
                 return atoms
-            # Optional Supercell Expansion
-            if target_atoms:
-                from ..structure_utils import expand_structure
-                # For basic run_md, we just expand. User might want to relax before/after if they need stability.
-                # But here we provide a convenient hook.
-                logger.info(f"Applying supercell expansion to reach ~{target_atoms} atoms before MD.")
-                atoms = expand_structure(atoms, target_atoms=target_atoms, max_atoms=120)
 
             if not output_dir:
                 try:
