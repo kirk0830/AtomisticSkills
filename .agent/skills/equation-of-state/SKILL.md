@@ -67,3 +67,7 @@ See `examples/` for detailed usage scenarios, including Silicon EOS calculation.
 - **Structure Relaxation**: It is highly recommended to start with a pre-relaxed structure and use `--relax_structure` to relax atomic positions at each strain point.
 - **Strain Range**: The default ±10% strain is suitable for most materials. For very soft or very hard materials, adjust `--max_abs_strain` accordingly.
 - **Fitting Model**: MatCalc uses the Birch-Murnaghan equation of state by default.
+
+
+Author: Bowen Deng
+Contact: github username <bowen-bd>

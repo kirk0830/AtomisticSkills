@@ -178,3 +178,7 @@ For production calculations, **always use DFT** (this skill) and choose the appr
 - **Standard screening**: PBE (omat/mp presets)
 - **Improved gaps**: r2SCAN (matpes-r2scan preset)
 - **Accurate gaps**: HSE06 or GW (requires custom INCAR settings)
+
+
+Author: Bowen Deng
+Contact: github username <bowen-bd>

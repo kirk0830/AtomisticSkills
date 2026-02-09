@@ -199,3 +199,7 @@ The `adsorption_results.json` file contains:
 - [surface-energy](../surface-energy/SKILL.md): Calculate surface energies and Wulff shapes
 - [molecular-dynamics](../molecular-dynamics/SKILL.md): MD simulations with MLIPs
 - [foundation-potentials](../foundation-potentials/SKILL.md): Guide for MLIP selection
+
+
+Author: Bowen Deng
+Contact: github username <bowen-bd>
