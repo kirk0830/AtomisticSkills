@@ -13,72 +13,91 @@ The framework integrates state-of-the-art Machine Learning Interatomic Potential
 
 ## Hierarchical Research Framework
 
-The core idea of **AtomisticSkills** is the **hierarchical decomposition of scientific tasks** into three distinct levels: **Workflows**, **Skills**, and **Tools**. This architecture enables AI agents to tackle complex materials research problems by breaking them down into manageable, composable components.
-
-
-### 🎯 Workflows (High-Level Scientific Tasks)
-[**Browse Workflows →**](file:///home/bdeng/projects/AtomisticSkills/.agent/workflows)
-
-Workflows represent **complete research objectives** that may span multiple computational tasks and require strategic decision-making. They are defined as step-by-step procedures in `.agent/workflows/` and guide the agent through complex, multi-stage research campaigns.
-
-**Examples:**
-- Search for a novel MOF sorption material in the Li-N-O chemical space
-- Explore novel solid-state conductors that are compatible with LiFePO₄ cathodes
-- Design thermally stable perovskites for high-temperature applications
-
----
-
-### 🔧 Skills (Mid-Level Research Tasks)
-[**Browse Skills →**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills)
-
-Skills are **modular capabilities** that calculate or investigate specific material properties or answer focused research questions. Each skill encapsulates domain expertise, combining multiple tools and scripts to solve a well-defined problem. Skills are self-documented with instructions, helper scripts, and examples.
-
-**Examples:**
-- How to calculate the 0K thermodynamic stability of a material
-- How to fine-tune a machine learning interatomic potential
-- How to calculate the melting temperature of a material
-- How to compute ionic diffusion coefficients from MD trajectories
-
-**Current Skills:**
-- [**MLIP Training**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
-- [**Melting Point**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
-- [**Diffusion Analysis**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
-- [**Molecular Dynamics**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/molecular-dynamics/SKILL.md): Best practices for stable MLIP MD simulations
-- [**Material Stability**](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/material-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
+**AtomisticSkills** decomposes complex scientific tasks into three abstraction levels: **Tools** → **Skills** → **Workflows**. This hierarchy enables AI agents to tackle materials research problems by composing modular capabilities.
 
 ---
 
 ### ⚙️ Tools (Low-Level Research Primitives)
-[**View MCP Tools**](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server)
+[**View MCP Tools**](src/mcp_server)
 
-Tools are the **fundamental building blocks** that Skills and Workflows compose together. They are less flexible but highly optimized and battle-tested. Tools are exposed in two forms:
+Tools are **strictly structured, fundamental operations** exposed as Python functions through MCP servers. They have **fixed input/output types** and must match function call signatures exactly—similar to standard library APIs.
 
-1. **MCP Tools**: Reusable, general-purpose functions exposed via MCP servers that the agent can call directly:
-   - Ionic relaxation (structure optimization)
+**Key Characteristics:**
+- **Strict Type Checking**: Input and output types must match Python function signatures precisely
+- **Battle-Tested**: Optimized, reliable implementations for core operations
+- **Direct Callable**: The agent invokes tools directly via MCP protocol
+
+**Tool Categories:**
+
+1. **MCP Tools** (General-purpose primitives):
+   - Structure relaxation (geometry optimization)
    - Molecular dynamics (NVT, NPT, NVE ensembles)
    - Monte Carlo simulation (cluster expansion)
    - MLIP fine-tuning and prediction
    - DFT input preparation and output parsing
 
-2. **Skill-Specific Scripts**: Specialized tools restricted to certain Skills, provided as runnable scripts in `.agent/skills/<skill-name>/scripts/`:
+2. **Skill-Specific Scripts** (Specialized helpers):
    - Phase identification for melting point calculations
    - Parity plot generation for MLIP benchmarking
    - Diffusion coefficient fitting from MSD data
 
-**Example Tool Composition:**
+---
+
+### 🔧 Skills (Mid-Level Research Tutorials)
+[**Browse Skills →**](.agent/skills)
+
+Skills are **flexible tutorials** that combine multiple tool calls to solve focused research problems. Unlike tools, skills have **no fixed input/output type constraints**—the agent handles all data conversion and orchestration between steps.
+
+**Key Characteristics:**
+- **Flexible Composition**: Tutorials showing "how to combine tools" for specific tasks
+- **Agent-Managed**: The agent handles data format conversions between tool calls
+- **Self-Documented**: Each skill includes instructions (`SKILL.md`), helper scripts, and examples
+
+**Examples:**
+- Calculate 0K thermodynamic stability of a material
+- Fine-tune a machine learning interatomic potential
+- Compute ionic diffusion coefficients from MD trajectories
+- Calculate melting temperature via solid-liquid coexistence
+
+**Featured Skills:**
+- [**MLIP Training**](.agent/skills/mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
+- [**Melting Point**](.agent/skills/melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
+- [**Diffusion Analysis**](.agent/skills/diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
+- [**Material Stability**](.agent/skills/material-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
+
+---
+
+### 🎯 Workflows (High-Level Research Objectives)
+[**Browse Workflows →**](.agent/workflows)
+
+Workflows represent **complete, high-level research goals** that may span multiple skills and require strategic planning. They provide a non-detailed research roadmap for the agent to follow. Workflows are not necessarily constrained to the currently available tools and skills. They can be a summary of a research paper, or a research idea generated during a informal chat.
+
+**Key Characteristics:**
+- **High-Level Roadmaps**: Multi-stage research campaigns requiring decision-making
+- **Flexible Detail Level**: Workflows can be **detailed** (specifying every skill and tool step) or **vague** (providing only the goal, requiring the agent to independently determine the complete skill composition and execution strategy)
+- **Flexible Scope**: May exceed current tool/skill coverage; serve as targets for the agent to work toward
+
+**Examples:**
+- Search for novel MOF sorption materials in the Li-N-O chemical space
+- Explore solid-state conductors compatible with LiFePO₄ cathodes
+- Design thermally stable perovskites for high-temperature applications
+
+---
+
+### Example Composition Hierarchy
 ```
 Workflow: "Find stable Li-ion conductors"
+  ├── Skill: "Fine-tune MLIP for accuracy"
+  │     ├── Tool: Sample off-equilibrium structures (MCP)
+  │     ├── Tool: Label with DFT (MCP)
+  │     └── Tool: Fine-tune model (MCP)
   ├── Skill: "Calculate 0K stability"
   │     ├── Tool: Load structure from Materials Project (MCP)
   │     ├── Tool: Relax structure with MLIP (MCP)
   │     └── Tool: Calculate formation energy (MCP)
-  ├── Skill: "Compute ionic diffusion"
-  │     ├── Tool: Run MD simulation (MCP)
-  │     └── Tool: Analyze MSD and fit diffusivity (Skill Script)
-  └── Skill: "Fine-tune MLIP for accuracy"
-        ├── Tool: Sample off-equilibrium structures (MCP)
-        ├── Tool: Label with DFT or UMA (MCP)
-        └── Tool: Fine-tune model (MCP)
+  └── Skill: "Compute ionic diffusion"
+        ├── Tool: Run MD simulation (MCP)
+        └── Tool: Analyze MSD and fit diffusivity (Skill Script)
 ```
 
 ---
@@ -134,12 +153,12 @@ The project uses separate conda environments to manage conflicting MLIP dependen
 
 | Environment | Purpose | Python Path |
 |------------|---------|-------------|
-| `base-agent` | Materials tools, general utilities | `/home/bdeng/miniforge3/envs/base-agent/bin/python` |
-| `matgl-agent` | MatGL (CHGNet, M3GNet, TensorNet) | `/home/bdeng/miniforge3/envs/matgl-agent/bin/python` |
-| `mace-agent` | MACE models | `/home/bdeng/miniforge3/envs/mace-agent/bin/python` |
-| `fairchem-agent` | FairChem (UMA, ESEN) | `/home/bdeng/miniforge3/envs/fairchem-agent/bin/python` |
-| `atomate2-agent` | Atomate2 and Jobflow-remote | `/home/bdeng/miniforge3/envs/atomate2-agent/bin/python` |
-| `smol-agent` | Cluster expansion (SMOL) | `/home/bdeng/miniforge3/envs/smol-agent/bin/python` |
+| `base-agent` | Materials tools, general utilities | `<conda_base>/envs/base-agent/bin/python` |
+| `matgl-agent` | MatGL (CHGNet, M3GNet, TensorNet) | `<conda_base>/envs/matgl-agent/bin/python` |
+| `mace-agent` | MACE models | `<conda_base>/envs/mace-agent/bin/python` |
+| `fairchem-agent` | FairChem (UMA, ESEN) | `<conda_base>/envs/fairchem-agent/bin/python` |
+| `atomate2-agent` | Atomate2 and Jobflow-remote | `<conda_base>/envs/atomate2-agent/bin/python` |
+| `smol-agent` | Cluster expansion (SMOL) | `<conda_base>/envs/smol-agent/bin/python` |
 
 ### Installation
 ```bash
@@ -147,27 +166,67 @@ The project uses separate conda environments to manage conflicting MLIP dependen
 git clone git@github.com:bowen-bd/AtomisticSkills.git
 cd AtomisticSkills
 
-# Setup environments (assuming .yml files are in conda-envs/)
-conda env create -f conda-envs/base-agent.yml
-conda env create -f conda-envs/matgl-agent.yml
-conda env create -f conda-envs/mace-agent.yml
-conda env create -f conda-envs/fairchem-agent.yml
-conda env create -f conda-envs/atomate2-agent.yml
-conda env create -f conda-envs/smol-agent.yml
+# Setup environments
+# Run the install scripts for each agent you need
+bash conda-envs/base-agent/install.sh
+bash conda-envs/matgl-agent/install.sh
+bash conda-envs/mace-agent/install.sh
+bash conda-envs/fairchem-agent/install.sh
+bash conda-envs/atomate2-agent/install.sh
+bash conda-envs/smol-agent/install.sh
 ```
 
 ---
 
-## Configuration
+## Configuration & API Keys
 
-### User Configuration File
-The agent can be configured using a `~/.mlip_agent.yaml` configuration file. This file allows you to define environment variables that will be automatically injected into the agent's environment.
+### 1. Global Configuration
+The agent is configured via environment variables or a YAML configuration file.
+Recommended: Create `~/.atomistic_skills.yaml` in your home directory.
 
-**Example `~/.mlip_agent.yaml`:**
+**Example `~/.atomistic_skills.yaml`:**
 ```yaml
-ATOMATE2_REMOTE_PROJECT: remote_perlmutter
-MP_API_KEY: your_api_key_here
+# Materials Project API Key (Required for base-server)
+MP_API_KEY: "your_mp_api_key_here"
+
+# Atomate2 Remote Project (Required for remote job monitoring)
+ATOMATE2_REMOTE_PROJECT: "remote_perlmutter"
 ```
+
+### 2. Environment Variables
+Alternatively, set variables in your shell (takes precedence over YAML):
+```bash
+export MP_API_KEY="your_key"
+export ATOMATE2_REMOTE_PROJECT="remote_perlmutter"
+```
+
+---
+
+## Server-Specific Setup
+
+This project runs as a collection of MCP servers. Some require specific setup:
+
+### 1. [base-server](src/mcp_server/materials_server.py)
+*   **Purpose**: Querying structure databases (Materials Project) and VASP I/O.
+*   **Requirements**: `MP_API_KEY` must be set.
+
+### 2. [atomate2](src/mcp_server/atomate2_server.py)
+*   **Purpose**: Managing remote VASP calculations and workflows.
+*   **Requirements**:
+    *   `ATOMATE2_REMOTE_PROJECT` env var (e.g., `remote_perlmutter`).
+    *   SSH Setup for NERSC (sshproxy).
+    *   **Detailed Setup Guide**:
+        *   [Remote Worker Setup (NERSC)](docs/atomate2_remote_worker_setup.md)
+        *   [Remote Submission Guide](docs/remote_submission_setup.md)
+
+### 3. MLIP Agents (Mace, MatGL, FairChem)
+*   **Purpose**: Running ML potentials.
+*   **Requirements**: [MLIP Environment Rules](.agent/rules/mcp-environments.md).
+    *   These agents run in isolated conda environments.
+    *   [MACE Setup](conda-envs/mace-agent/README.md)
+    *   [MatGL Setup](conda-envs/matgl-agent/README.md)
+    *   [FairChem Setup](conda-envs/fairchem-agent/README.md)
+    *   [Smol Setup](conda-envs/smol-agent/README.md)
 
 ### MCP Server Configuration
 The project is configured to run as a set of MCP servers. The base configuration is provided in [mcp_config.json](mcp_config.json).
@@ -181,7 +240,7 @@ To use these tools within Antigravity, you need to merge the server configuratio
 4. Restart Antigravity to load the new tools.
 
 > [!TIP]
-> Ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/home/bdeng/projects/AtomisticSkills`).
+> Ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/path/to/AtomisticSkills`).
 
 ---
 
@@ -230,12 +289,12 @@ Each MCP server is a standalone Python module that exposes tools via the FastMCP
 
 | Server | Environment | Primary Functionality |
 |--------|-------------|----------------------|
-| [mace_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/mace_server.py) | `mace-agent` | MACE model loading, prediction, relaxation, MD, fine-tuning |
-| [matgl_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/matgl_server.py) | `matgl-agent` | CHGNet/M3GNet/TensorNet operations, bandgap prediction |
-| [fairchem_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/fairchem_server.py) | `fairchem-agent` | UMA/ESEN models, mock DFT capability |
-| [materials_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/materials_server.py) | `base-agent` | Materials Project queries, VASP I/O, research directory management |
-| [atomate2_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/atomate2_server.py) | `atomate2-agent` | Query remote DFT databases, job status monitoring |
-| [smol_server.py](file:///home/bdeng/projects/AtomisticSkills/src/mcp_server/smol_server.py) | `smol-agent` | Cluster expansion training and Monte Carlo simulations |
+| [mace_server.py](src/mcp_server/mace_server.py) | `mace-agent` | MACE model loading, prediction, relaxation, MD, fine-tuning |
+| [matgl_server.py](src/mcp_server/matgl_server.py) | `matgl-agent` | CHGNet/M3GNet/TensorNet operations, bandgap prediction |
+| [fairchem_server.py](src/mcp_server/fairchem_server.py) | `fairchem-agent` | UMA/ESEN models, mock DFT capability |
+| [materials_server.py](src/mcp_server/materials_server.py) | `base-agent` | Materials Project queries, VASP I/O, research directory management |
+| [atomate2_server.py](src/mcp_server/atomate2_server.py) | `atomate2-agent` | Query remote DFT databases, job status monitoring |
+| [smol_server.py](src/mcp_server/smol_server.py) | `smol-agent` | Cluster expansion training and Monte Carlo simulations |
 
 **Key Pattern**: Each server imports a corresponding wrapper class (e.g., `MACEWrapper`, `MatGLWrapper`) that encapsulates the MLIP-specific logic.
 
@@ -260,7 +319,7 @@ result = wrapper.predict(structure_data)
 - `fine_tune_model(training_data_path, epochs, lr)`: Model fine-tuning
 
 > [!IMPORTANT]
-> All wrappers use **eV/Å³ for stress** internally, following ASE conventions. See [stress-units.md](file:///home/bdeng/projects/AtomisticSkills/.agent/rules/stress-units.md) for details.
+> All wrappers use **eV/Å³ for stress** internally, following ASE conventions. See [stress-units.md](.agent/rules/stress-units.md) for details.
 
 #### 3. Utilities (`src/utils/`)
 
@@ -283,10 +342,10 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 ```
 
 **Available Skills**:
-- **[mlip-training](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/mlip-training/SKILL.md)**: Benchmark and fine-tune MLIPs using data augmentation
-- **[melting-point](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/melting-point/SKILL.md)**: Calculate melting temperature using solid-liquid coexistence
-- **[diffusion-analysis](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/diffusion-analysis/SKILL.md)**: Compute diffusion coefficients from MD trajectories
-- **[molecular-dynamics](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/molecular-dynamics/SKILL.md)**: Best practices for running stable MLIP MD simulations
+- **[mlip-training](.agent/skills/mlip-training/SKILL.md)**: Benchmark and fine-tune MLIPs using data augmentation
+- **[melting-point](.agent/skills/melting-point/SKILL.md)**: Calculate melting temperature using solid-liquid coexistence
+- **[diffusion-analysis](.agent/skills/diffusion-analysis/SKILL.md)**: Compute diffusion coefficients from MD trajectories
+- **[molecular-dynamics](.agent/skills/molecular-dynamics/SKILL.md)**: Best practices for running stable MLIP MD simulations
 
 **How Skills Work**:
 1. The agent reads `SKILL.md` to understand the task
@@ -295,7 +354,7 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 4. Uses resources and examples as templates
 
 > [!TIP]
-> To create a new skill, follow the guidelines in [skill-standards.md](file:///home/bdeng/projects/AtomisticSkills/.agent/rules/skill-standards.md).
+> To create a new skill, follow the guidelines in [skill-standards.md](.agent/rules/skill-standards.md).
 
 ---
 
@@ -331,7 +390,7 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
    ```bash
    # Stop the server in Antigravity
    # Then restart it manually for debugging:
-   export PYTHONPATH=/home/bdeng/projects/AtomisticSkills
+   export PYTHONPATH=/path/to/AtomisticSkills
    conda activate <appropriate-env>
    python -m src.mcp_server.<server_name>
    ```
@@ -339,7 +398,7 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 #### Implementing a New Skill
 
 1. Create the skill directory: `.agent/skills/<skill-name>/`
-2. Write `SKILL.md` following the [standards](file:///home/bdeng/projects/AtomisticSkills/.agent/rules/skill-standards.md)
+2. Write `SKILL.md` following the [standards](.agent/rules/skill-standards.md)
 3. Add helper scripts to `scripts/` (specify required conda environment)
 4. Provide examples and resources as needed
 5. Test the skill end-to-end with Antigravity
@@ -408,11 +467,11 @@ Every research task should:
 
 #### Import Errors in Scripts
 - Ensure correct conda environment is activated
-- Check that `PYTHONPATH` includes project root: `export PYTHONPATH=/home/bdeng/projects/AtomisticSkills`
+- Check that `PYTHONPATH` includes project root: `export PYTHONPATH=/path/to/AtomisticSkills`
 - Use absolute imports: `from src.utils.mlips.mace_wrapper import MACEWrapper`
 
 #### Fine-Tuning Fails
-- Verify stress units are in eV/Å³ (see [stress-units.md](file:///home/bdeng/projects/AtomisticSkills/.agent/rules/stress-units.md))
+- Verify stress units are in eV/Å³ (see [stress-units.md](.agent/rules/stress-units.md))
 - Check training data format matches expected structure
 - For small datasets (<500 structures), use `freeze_backbone=True`
 
