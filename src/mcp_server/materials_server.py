@@ -334,10 +334,10 @@ def prepare_vasp_inputs(
 
 @mcp.tool()
 def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> Dict[str, Any]:
-    """Parse VASP outputs (vasprun.xml, OUTCAR) or UMA mock DFT results.
+    """Parse VASP outputs (vasprun.xml, OUTCAR).
     
     Args:
-        output_dir: Directory with VASP outputs or UMA result.json.
+        output_dir: Directory with VASP outputs.
         save_to_file: Optional JSON save path.
         
     Returns:
@@ -345,50 +345,36 @@ def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> D
     """
     parser = VASPParser(output_dir)
     
-    # Detect result type (single or multiple)
-    # For simplicity, we expose the single parser logic via parsing all and returning list
-    # or checking if it's a single calculation
+    # Check if this is a single calculation directory
+    has_vasprun = (parser.output_dir / "vasprun.xml").exists()
     
-    # Check if it has direct result files
-    has_direct_result = (
-        (parser.output_dir / "vasprun.xml").exists() or 
-        (parser.output_dir / "result.json").exists()
-    )
+    if has_vasprun:
+        # Parse single VASP calculation
+        result = parser.parse_vasprun()
+        outcar_result = parser.parse_outcar()
+        result.update(outcar_result)
+        
+        # Serialize for JSON
+        results = parser._prepare_for_json(result)
+        
+        if save_to_file:
+            with open(save_to_file, 'w') as f:
+                json.dump(results, f, indent=2)
+                
+        return results
     
-    if has_direct_result:
-        # Try UMA format first
-        if parser.uma_result_path.exists():
-            return parser.parse_uma_result()
-        # Try VASP format
-        elif parser.vasprun_path.exists():
-            result = parser.parse_vasprun()
-            outcar_result = parser.parse_outcar()
-            result.update(outcar_result)
-            
-            # Serialize for JSON
-            results = parser._prepare_for_json(result)
-            
-            if save_to_file:
-                with open(save_to_file, 'w') as f:
-                    json.dump(results, f, indent=2)
-                    
-            return results
-    
-    # If not direct, try parsing all subdirectories
+    # Otherwise, parse all subdirectories
     all_results = parser.parse_all()
     if not all_results:
-        return {"error": f"No valid VASP or UMA results found in {output_dir}"}
+        return {"error": f"No valid VASP results found in {output_dir}"}
         
-    # Return summary or full list? Returning full list might be large.
-    # Let's return serialized list.
+    # Return serialized list
     results = {"results": parser._prepare_for_json(all_results)}
     
     if save_to_file:
         with open(save_to_file, 'w') as f:
             json.dump(results, f, indent=2)
             
-    return results
-
     return results
 
 if __name__ == "__main__":
