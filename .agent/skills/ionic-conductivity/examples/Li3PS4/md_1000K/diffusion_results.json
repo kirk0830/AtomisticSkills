@@ -1,8 +1,0 @@
-{
-    "temperature": 1000.0,
-    "species": "Li",
-    "diffusivity": 0.0001278368646685553,
-    "diffusivity_std_dev": 7.828099312807107e-06,
-    "unit": "cm^2/s",
-    "ignore_ps": 5.0
-}
