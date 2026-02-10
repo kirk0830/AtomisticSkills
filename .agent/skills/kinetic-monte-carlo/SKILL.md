@@ -329,3 +329,8 @@ See `examples/literature_validation/README.md` for full details.
 - Fichthorn & Lin, *J. Chem. Phys*. **2013**: "A local superbasin kinetic Monte Carlo method"
 - Xu & Henkelman, *J. Chem. Phys.* **2008**: "Adaptive kinetic Monte Carlo for first-principles accelerated dynamics"
 - Deng et al., "kMCpy: A python package to simulate transport properties in solids with kinetic Monte Carlo", *Comp. Mater. Sci.* **2023**. [doi.org/10.1016/j.commatsci.2023.112394](https://doi.org/10.1016/j.commatsci.2023.112394)
+
+---
+
+Author: Matthew Cox
+Contact: github username <mcox3406>
