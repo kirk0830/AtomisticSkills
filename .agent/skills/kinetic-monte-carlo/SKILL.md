@@ -16,10 +16,20 @@ This skill focuses on best-practice, physics-grounded KMC:
 - and robust postprocessing (event stats, MSD -> diffusivity, Arrhenius).
 
 This skill is designed to compose with:
-- [neb-barrier](../neb-barrier/SKILL.md) (barriers for hops/reactions),
-- [phonon](../phonon/SKILL.md) (attempt frequencies / hTST prefactors when feasible),
-- [diffusion-analysis](../diffusion-analysis/SKILL.md) (MSD fitting and Arrhenius workflows),
-- [ionic-conductivity](../ionic-conductivity/SKILL.md) (D -> sigma).
+- [neb-barrier](../neb-barrier/SKILL.md) — compute migration barriers via NEB with MLIPs.
+- [phonon](../phonon/SKILL.md) — compute vibrational frequencies for hTST prefactors (Vineyard formula).
+- [diffusion-analysis](../diffusion-analysis/SKILL.md) — MSD fitting, Arrhenius analysis, and D → σ via Nernst-Einstein.
+
+### MCP Server Integration
+Barrier computations and phonon calculations require MLIP models (MACE, MatGL, FairChem).
+These run through the corresponding MCP servers or directly via wrapper scripts:
+- **MACE**: `src/mcp_server/mace_server.py` — provides `relax_structure`, `predict_structure` tools.
+  Used by `neb-barrier` and `phonon` scripts via `src/utils/mlips/mace/mace_wrapper.py`.
+- **MatGL**: `src/mcp_server/matgl_server.py` — same interface, CHGNet/M3GNet/TensorNet models.
+- **FairChem**: `src/mcp_server/fairchem_server.py` — UMA/ESEN models.
+
+KMC scripts themselves do **not** call MLIPs — they consume barrier/prefactor values
+computed upstream by the NEB and phonon skills.
 
 ---
 
@@ -208,7 +218,7 @@ python .agent/skills/kinetic-monte-carlo/scripts/analyze_kmc_msd.py \
 - **`build_lattice_from_structure.py`**: Builds a lattice site network from a crystal structure for vacancy/sublattice diffusion KMC. Uses ASE neighbor list with periodic image shifts.
 - **`run_lattice_kmc.py`**: Rejection-free lattice KMC engine for carrier hops on a fixed site network. Implements local rate updates + Fenwick tree for O(log N) event sampling.
 - **`validate_detailed_balance.py`**: Checks microreversibility for rate models and verifies neighbor graph is bidirectional with opposite shifts.
-- **`analyze_kmc_msd.py`**: Computes tracer diffusivity (D_tracer), collective/charge diffusivity (D_J), and Haven ratio from KMC traces using the single-point Einstein relation D = MSD/(2dt). D_J is the physically relevant quantity for ionic conductivity via the Nernst-Einstein relation. Composable with `ionic-conductivity` workflows.
+- **`analyze_kmc_msd.py`**: Computes tracer diffusivity (D_tracer), collective/charge diffusivity (D_J), and Haven ratio from KMC traces using the single-point Einstein relation D = MSD/(2dt). D_J is the physically relevant quantity for ionic conductivity via the Nernst-Einstein relation. Composable with `diffusion-analysis` workflows (D → σ via Nernst-Einstein).
 
 ---
 
@@ -261,21 +271,37 @@ python .agent/skills/kinetic-monte-carlo/scripts/analyze_kmc_msd.py \
     --out kmc_run_T800K/D_fit.json
 ```
 
-### Example B: Multi-Temperature Arrhenius from KMC
-Run KMC at multiple temperatures, then use `ionic-conductivity` to convert D -> sigma:
+### Example B: First-Principles H Diffusion (NEB → Phonon → hTST → KMC)
+End-to-end predictive workflow for H in BCC W using MLIP-computed parameters:
 ```bash
-# Env: base-agent
-for T in 600 700 800 900 1000; do
-    # update temperature in config, run KMC, analyze MSD...
-    python .agent/skills/ionic-conductivity/scripts/compute_ionic_conductivity.py \
-        --structure relaxed.cif \
-        --temperature $T \
-        --diffusivities "Li=${D_VALUE}" \
-        --diffusion_units "cm2/s" \
-        --charges "Li=1" \
-        --out kmc_run_T${T}K/conductivity.json
-done
+# 1) Build + relax NEB endpoints (Env: mace-agent, GPU)
+python examples/literature_validation/prepare_h_migration.py \
+    --model_type mace --model_name MACE-OMAT-0-small
+
+# 2) NEB barrier (Env: mace-agent, GPU)
+python .agent/skills/neb-barrier/scripts/calculate_barrier.py \
+    --start_structure start_relaxed.cif --end_structure end_relaxed.cif \
+    --model_type mace --model_name MACE-OMAT-0-small \
+    --n_images 5 --fmax 0.02 --output_dir neb_results
+
+# 3) Phonon at equilibrium + saddle point (Env: mace-agent, GPU)
+python .agent/skills/phonon/scripts/calculate_phonon.py \
+    --structure start_relaxed.cif --model_type mace --model_name MACE-OMAT-0-small \
+    --supercell_matrix "[[2,0,0],[0,2,0],[0,0,2]]" --output_dir phonon_eq
+python .agent/skills/phonon/scripts/calculate_phonon.py \
+    --structure saddle_point.cif --model_type mace --model_name MACE-OMAT-0-small \
+    --supercell_matrix "[[2,0,0],[0,2,0],[0,0,2]]" --output_dir phonon_ts
+
+# 4) Vineyard hTST prefactor (Env: base-agent, CPU)
+python examples/literature_validation/compute_htst_prefactor.py \
+    --phonon_eq phonon_eq/phonon.yaml --phonon_ts phonon_ts/phonon.yaml \
+    --neb_results neb_results/neb_results.json --output htst_results.json
+
+# 5) KMC with MLIP-derived parameters (Env: base-agent, CPU)
+python examples/literature_validation/validate_h_in_bcc_w.py \
+    --from_mlip htst_results.json --out_dir mlip_validation
 ```
+See `examples/literature_validation/README.md` for full details.
 
 ---
 
