@@ -175,51 +175,136 @@ def visualize_structure(
     height: int = 800,
     scale: float = 2.0,
 ) -> str:
-    """Visualize structure as high-quality image (2x2 multi-view grid).
+    """Visualize structure(s) as high-quality image(s).
     
     Args:
-        structure_path: Path to structure file (CIF, POSCAR, XYZ, etc.).
-        output_path: Save path (auto: research_dir or cwd). Formats: png, jpg, svg, pdf.
+        structure_path: Can be:
+            - Path to a single structure file (CIF, POSCAR, XYZ, etc.)
+            - Path to a directory containing multiple structures (generates one image per structure)
+            - Path to a trajectory file (visualizes the last frame)
+        output_path: Save path for single file, or directory for batch mode (auto: research_dir or cwd). 
+                     Formats: png, jpg, svg, pdf.
         width: Image width in pixels (default: 1200).
         height: Image height in pixels (default: 800).
         scale: Resolution scale factor (default: 2.0).
         
     Returns:
-        Path to saved image.
+        Summary of saved image(s).
     """
     try:
         import os
         from pathlib import Path
         import plotly.io as pio
+        from ase.io import read
+        from ase import Atoms
+        from pymatgen.io.ase import AseAtomsAdaptor
 
-        # Load structure using utility function
-        structure = load_structure_from_file(structure_path)
-        if structure is None:
-            return f"Error: Could not load structure from {structure_path}"
-        
-        # Convert ASE Atoms to pymatgen Structure if needed
-        try:
-            from ase import Atoms
-            if isinstance(structure, Atoms):
-                from pymatgen.io.ase import AseAtomsAdaptor
-                structure = AseAtomsAdaptor.get_structure(structure)
-        except Exception:
-            pass  # Already pymatgen Structure
-            
-        # Get structure name for default filename
-        if isinstance(structure_path, str):
-            struct_name = Path(structure_path).stem
-        else:
-            struct_name = structure.composition.reduced_formula
-            
-        # Determine output path with research dir support
+        input_path = Path(structure_path)
         current_research_dir = os.environ.get("CURRENT_RESEARCH_DIR")
         
+        # Check if input is a directory
+        if input_path.is_dir():
+            # Batch mode: find all structure files
+            structure_files = []
+            for ext in ["cif", "CIF", "poscar", "POSCAR", "vasp", "xyz", "json"]:
+                structure_files.extend(input_path.rglob(f"*.{ext}"))
+            
+            # Also check for POSCAR files without extension
+            for poscar in input_path.rglob("POSCAR"):
+                if poscar not in structure_files:
+                    structure_files.append(poscar)
+            
+            structure_files = sorted(structure_files)
+            
+            if not structure_files:
+                return f"Error: No structure files found in directory {structure_path}"
+            
+            # Determine output directory
+            if output_path:
+                out_dir = Path(output_path)
+            elif current_research_dir:
+                out_dir = Path(current_research_dir) / "structure_visualizations"
+            else:
+                out_dir = Path.cwd() / "structure_visualizations"
+            
+            out_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Process each structure
+            saved_images = []
+            for struct_file in structure_files:
+                try:
+                    structure = load_structure_from_file(str(struct_file))
+                    if structure is None:
+                        continue
+                    
+                    # Convert to pymatgen if needed
+                    if isinstance(structure, Atoms):
+                        structure = AseAtomsAdaptor.get_structure(structure)
+                    
+                    # Generate output filename
+                    struct_name = struct_file.stem
+                    if struct_name == "POSCAR":
+                        struct_name = struct_file.parent.name
+                    
+                    img_path = out_dir / f"{struct_name}_structure.png"
+                    
+                    # Import visualization function
+                    try:
+                        from src.utils.structure_viz import structure_3d_custom
+                    except ImportError:
+                        from utils.structure_viz import structure_3d_custom
+                    
+                    # Generate and save figure
+                    fig = structure_3d_custom(structure, scale=scale)
+                    pio.write_image(fig, img_path, width=width, height=height, scale=scale)
+                    saved_images.append(str(img_path))
+                    
+                except Exception as e:
+                    print(f"Warning: Failed to visualize {struct_file}: {e}")
+                    continue
+            
+            if not saved_images:
+                return f"Error: Failed to visualize any structures in {structure_path}"
+            
+            return f"Successfully visualized {len(saved_images)} structures. Images saved to {out_dir}. Files: {[Path(p).name for p in saved_images[:5]]}{'...' if len(saved_images) > 5 else ''}"
+        
+        # Check if input is a trajectory file
+        trajectory_extensions = [".traj", ".extxyz"]
+        is_trajectory = any(str(input_path).endswith(ext) for ext in trajectory_extensions)
+        
+        if is_trajectory:
+            # Load trajectory and get the last frame
+            atoms_list = read(str(input_path), index=":")
+            if not atoms_list:
+                return f"Error: Trajectory file {structure_path} is empty"
+            
+            # Get last frame
+            structure = atoms_list[-1]
+            
+            # Convert to pymatgen
+            if isinstance(structure, Atoms):
+                structure = AseAtomsAdaptor.get_structure(structure)
+            
+            struct_name = f"{input_path.stem}_last_frame"
+        else:
+            # Single structure file
+            structure = load_structure_from_file(structure_path)
+            if structure is None:
+                return f"Error: Could not load structure from {structure_path}"
+            
+            # Convert ASE Atoms to pymatgen Structure if needed
+            if isinstance(structure, Atoms):
+                structure = AseAtomsAdaptor.get_structure(structure)
+                
+            # Get structure name for default filename
+            struct_name = input_path.stem
+        
+        # Determine output path with research dir support
         if output_path:
             out_p = Path(output_path)
             # If output_path is relative and research dir is set, save there
             if not out_p.is_absolute() and len(out_p.parts) == 1 and current_research_dir:
-                 output_path = Path(current_research_dir) / out_p
+                output_path = Path(current_research_dir) / out_p
             else:
                 output_path = out_p
         else:
@@ -231,7 +316,7 @@ def visualize_structure(
                 
         # Ensure parent directory exists
         if not output_path.parent.exists():
-             output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Use custom implementation for better style control (Vesta colors, 3D lighting)
         try:
