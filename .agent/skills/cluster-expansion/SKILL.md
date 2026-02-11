@@ -126,6 +126,19 @@ python .agent/skills/cluster-expansion/scripts/extract_mc_structures.py \
 > [!IMPORTANT]
 > **Loop Back**: After extracting these new candidate structures, go back to **Step 3** to relax and label them. Then, add these new results to your training set and repeat **Step 4** to refine your Cluster Expansion.
 
+## Energy Format for Training Data
+
+> [!IMPORTANT]
+> **Use Total Energy (Extensive Property)**  
+> Training structures should include the **total energy** for the entire supercell (not per-atom energy).
+> Smol automatically normalizes energies by the primitive cell size during training via `get_property_vector('energy', normalize=True)`.
+
+**Example**: For a 32-atom supercell with total DFT energy of -160.0 eV:
+- ✅ Correct: `{"structure": {...}, "energy": -160.0}`
+- ❌ Incorrect: `{"structure": {...}, "energy": -5.0}` (per-atom)
+
+**Formation Energy**: If you want to train on formation energies instead of total energies, calculate the formation energy for each structure first, then provide it as the total (extensive) energy value. Smol will still normalize by primitive cell size.
+
 ## Constraints & Tips
 
 -   **Primordial Format**: Use `.cif` for primordial structures. Ensure partial occupancies are correctly defined.

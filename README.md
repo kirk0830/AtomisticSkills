@@ -3,7 +3,7 @@
 ## Overview
 **AtomisticSkills** is a composable framework for AI-driven atomistic materials research. Built on the **hierarchical decomposition** of complex scientific tasks into **Workflows** → **Skills** → **Tools**, it enables coding AI agents to autonomously conduct multi-stage materials simulations by combining modular, reusable capabilities.
 
-The framework integrates state-of-the-art Machine Learning Interatomic Potentials (MLIPs) with DFT calculations, data augmentation, and property calculations through the Model Context Protocol (MCP), making advanced materials research accessible to AI copilots like Antigravity.
+The framework integrates state-of-the-art Machine Learning Interatomic Potentials (MLIPs) with DFT calculations, data augmentation, and property calculations through the Model Context Protocol (MCP), making advanced materials research accessible to AI copilots like Google Antigravity, Cursor, and Claude Code.
 
 
 
@@ -13,7 +13,7 @@ The framework integrates state-of-the-art Machine Learning Interatomic Potential
 
 ## Hierarchical Research Framework
 
-**AtomisticSkills** decomposes complex scientific tasks into three abstraction levels: **Tools** → **Skills** → **Workflows**. This hierarchy enables AI agents to tackle materials research problems by composing modular capabilities.
+**AtomisticSkills** constructs complex scientific tasks from three abstraction levels: **Tools** → **Skills** → **Workflows**. This hierarchy enables AI agents to tackle materials research problems by composing modular capabilities.
 
 ---
 
@@ -70,12 +70,11 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 ### 🎯 Workflows (High-Level Research Objectives)
 [**Browse Workflows →**](.agent/workflows)
 
-Workflows represent **complete, high-level research goals** that may span multiple skills and require strategic planning. They provide a non-detailed research roadmap for the agent to follow. Workflows are not necessarily constrained to the currently available tools and skills. They can be a summary of a research paper, or a research idea generated during a informal chat.
+Workflows represent **complete, high-level research goals** that may span multiple skills and require strategic planning. They provide a research roadmap for the agent to follow. Workflows are not necessarily constrained to the currently available tools and skills. They can be a summary of a research paper, or a research idea generated during a informal chat.
 
 **Key Characteristics:**
 - **High-Level Roadmaps**: Multi-stage research campaigns requiring decision-making
-- **Flexible Detail Level**: Workflows can be **detailed** (specifying every skill and tool step) or **vague** (providing only the goal, requiring the agent to independently determine the complete skill composition and execution strategy)
-- **Flexible Scope**: May exceed current tool/skill coverage; serve as targets for the agent to work toward
+- **Flexible Scope**: Workflows can be **detailed** (specifying every skill and tool step) or **vague** (providing only the goal, requiring the agent to independently determine the complete skill composition and execution strategy)
 
 **Examples:**
 - Search for novel MOF sorption materials in the Li-N-O chemical space

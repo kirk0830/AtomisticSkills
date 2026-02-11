@@ -30,15 +30,6 @@ conda run -n smol-agent python ../../scripts/run_gcmc_sweep.py \
 - μ = 3.0 eV → 50% Ag (equimolar)
 - μ = 4.0 eV → 90% Ag
 
-### Temperature-μ Phase Diagram
-
-![Phase Diagram](phase_diagram.png)
-
-The contour plot shows three distinct regions:
-- **μ < 2 eV**: Pure Cu phase (blue)
-- **2 < μ < 4.5 eV**: Solid solution (gradient)
-- **μ > 4.5 eV**: Pure Ag phase (red)
-
 ## Analysis and Visualization
 
 To analyze results and generate all plots:
@@ -53,7 +44,6 @@ conda run -n smol-agent python ../../scripts/analyze_gcmc_results.py \
 This generates:
 - `mu_vs_composition.png` - Composition vs μ curves
 - `energy_vs_mu.png` - Energy vs μ curves
-- `phase_diagram.png` - T-x scatter plot
 - `contour_phase_diagram.png` - T-μ contour plot
 
 ## Understanding Chemical Potentials
