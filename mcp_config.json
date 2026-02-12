@@ -60,6 +60,16 @@
       "env": {
         "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
+    },
+    "drugdisc": {
+      "command": "/home/bdeng/miniforge3/envs/drugdisc-agent/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.drugdisc_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+      }
     }
   }
 }
