@@ -31,8 +31,7 @@ from src.utils.dft.vasp_parser import VASPParser
 from src.utils.structure_utils import (
     load_structure_from_file, 
     get_structure_by_formula, 
-    get_structure_by_chemsys, 
-    get_structure_by_id,
+    get_structure_by_chemsys,
     save_structure
 )
 from src.utils.api_keys import get_mp_key
@@ -98,15 +97,15 @@ def search_materials_project_by_chemsys(
     api_key: Optional[str] = None,
     save_to_file: Optional[str] = None
 ) -> str:
-    """Search Materials Project by chemical system. Returns most stable structure.
+    """Search Materials Project by chemical system. Returns all stable structures on convex hull.
     
     Args:
         chemsys: Chemical system (e.g., "Li-O", "Si-Fe-O").
         api_key: Optional MP API key (defaults to environment).
-        save_to_file: Optional save path.
+        save_to_file: Optional directory path to save structures. If not provided, creates a directory named {chemsys}_structures.
         
     Returns:
-        Path to saved CIF file.
+        Summary of saved structures with paths.
     """
     mp_key = api_key or get_mp_key()
     if not mp_key:
@@ -115,42 +114,42 @@ def search_materials_project_by_chemsys(
     from mp_api.client import MPRester
 
     with MPRester(mp_key) as mprester:
-        atoms = get_structure_by_chemsys(chemsys, mprester)
+        atoms_list = get_structure_by_chemsys(chemsys, mprester)
             
-    if atoms is None:
-        return f"Error: No structure found for chemical system {chemsys} in Materials Project."
-        
-    return _save_atoms(atoms, chemsys, save_to_file)
-
-@mcp.tool()
-def search_materials_project_by_id(
-    material_id: str,
-    api_key: Optional[str] = None,
-    save_to_file: Optional[str] = None
-) -> str:
-    """Search Materials Project by Material ID.
+    if not atoms_list:
+        return f"Error: No structures found on convex hull for chemical system {chemsys} in Materials Project."
     
-    Args:
-        material_id: Material ID (e.g., "mp-149").
-        api_key: Optional MP API key (defaults to environment).
-        save_to_file: Optional save path.
+    # Determine save directory
+    if save_to_file:
+        save_dir = Path(save_to_file)
+    else:
+        safe_name = chemsys.replace("-", "").replace(" ", "")
+        save_dir = Path(f"{safe_name}_structures")
+    
+    # Create directory
+    save_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Save all structures
+    saved_paths = []
+    for atoms in atoms_list:
+        mp_id = atoms.info.get('material_id', 'unknown')
+        formula = atoms.info.get('formula', 'unknown')
+        e_hull = atoms.info.get('energy_above_hull', 0.0)
         
-    Returns:
-        Path to saved CIF file.
-    """
-    mp_key = api_key or get_mp_key()
-    if not mp_key:
-        return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
+        # Create filename: {mp-id}_{formula}.cif
+        filename = f"{mp_id}_{formula}.cif"
+        filepath = save_dir / filename
         
-    from mp_api.client import MPRester
-
-    with MPRester(mp_key) as mprester:
-        atoms = get_structure_by_id(material_id, mprester)
-            
-    if atoms is None:
-        return f"Error: No structure found for ID {material_id} in Materials Project."
-        
-    return _save_atoms(atoms, material_id, save_to_file)
+        save_structure(atoms, filepath)
+        saved_paths.append(f"{mp_id} ({formula}, E_hull={e_hull:.6f} eV/atom)")
+    
+    summary = f"Found {len(atoms_list)} structures on convex hull for {chemsys}\n"
+    summary += f"Saved to directory: {save_dir.absolute()}\n\n"
+    summary += "Structures:\n"
+    for path_info in saved_paths:
+        summary += f"  - {path_info}\n"
+    
+    return summary
 
 def _save_atoms(atoms: Any, name_hint: str, save_to_file: Optional[str] = None) -> str:
     """Helper to save ASE atoms to file."""

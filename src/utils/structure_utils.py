@@ -65,18 +65,43 @@ def get_structure_by_formula(formula: str, mprester: Any) -> Any:
     from pymatgen.io.ase import AseAtomsAdaptor
     return AseAtomsAdaptor.get_atoms(stable_doc.structure)
 
-def get_structure_by_chemsys(chemsys: str, mprester: Any) -> Any:
+def get_structure_by_chemsys(chemsys: str, mprester: Any) -> List[Any]:
     """
-    Search for the most stable structure by chemical system in Materials Project.
-    Returns ASE Atoms object.
+    Search for all stable structures on the convex hull by chemical system in Materials Project.
+    Returns list of ASE Atoms objects for structures with energy_above_hull = 0.
+    
+    Args:
+        chemsys: Chemical system (e.g., "Li-O")
+        mprester: MPRester instance
+        
+    Returns:
+        List of ASE Atoms objects for all structures on the hull (E_hull < 1e-6 eV/atom)
     """
-    docs = mprester.summary.search(chemsys=chemsys, fields=["structure", "energy_above_hull"])
+    docs = mprester.summary.search(
+        chemsys=chemsys, 
+        fields=["structure", "energy_above_hull", "material_id", "formula_pretty"]
+    )
     if not docs:
-        return None
-    # Sort by stability
-    stable_doc = min(docs, key=lambda x: x.energy_above_hull)
+        return []
+    
+    # Filter for structures on the hull (E_hull = 0, using tiny tolerance for floating point)
+    hull_docs = [doc for doc in docs if doc.energy_above_hull < 1e-6]
+    
+    if not hull_docs:
+        return []
+    
+    # Convert all hull structures to ASE Atoms
     from pymatgen.io.ase import AseAtomsAdaptor
-    return AseAtomsAdaptor.get_atoms(stable_doc.structure)
+    atoms_list = []
+    for doc in hull_docs:
+        atoms = AseAtomsAdaptor.get_atoms(doc.structure)
+        # Store metadata as info dict
+        atoms.info['material_id'] = doc.material_id
+        atoms.info['formula'] = doc.formula_pretty
+        atoms.info['energy_above_hull'] = doc.energy_above_hull
+        atoms_list.append(atoms)
+    
+    return atoms_list
 
 def get_structure_by_id(material_id: str, mprester: Any) -> Any:
     """
