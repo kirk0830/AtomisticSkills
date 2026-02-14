@@ -33,12 +33,18 @@ The `SKILL.md` file must follow this standardized structure:
 ---
 name: skill-name-in-kebab-case
 description: Concise one-sentence summary of the skill's purpose and outcome.
+category: category-name
 ---
 ```
 
 **Guidelines:**
 - `name`: Use lowercase letters, numbers, and hyphens only (kebab-case)
 - `description`: Should be clear enough for the agent to decide if this skill is relevant to a user query
+- `category`: Must be one of the following:
+  - `materials`: Materials science simulation and analysis skills (prefix: `mat-`)
+  - `machine-learning`: MLIP training, model selection, and ML workflows (prefix: `ml-`)
+  - `drug-discovery`: Drug design, docking, and molecular property prediction (prefix: `drug-`)
+  - `general`: General-purpose research utilities (prefix: `general-`)
 
 ### 2. Title and Goal Section
 Begin with a level-1 header matching the skill name, followed by a `## Goal` section:
@@ -156,11 +162,14 @@ Every script execution in `SKILL.md` **MUST** include a `# Env: <conda-environme
 
 ### 2. Environment Mapping
 Refer to `mcp-environments.md` for the standard environment mapping:
+- `base-agent`: General materials tools, Materials Project API, and parsing.
 - `matgl-agent`: MatGL calculations, training, and utilities.
 - `mace-agent`: MACE calculations and training.
 - `fairchem-agent`: FairChem/OCP/UMA calculations.
-- `base-agent`: General materials tools, Materials Project API, and parsing.
 - `atomate2-agent`: Atomate2/Jobflow workflows and DB querying.
+- `smol-agent`: Cluster expansion and Monte Carlo simulations.
+- `mattergen-agent`: MatterGen structure generation.
+- `drugdisc-agent`: Drug discovery, docking, and molecular tools.
 
 ### 3. Documentation Consistency
 The required environment must be consistent across:
@@ -211,13 +220,16 @@ The required environment must be consistent across:
 ## Skill Naming Conventions
 
 - Use **kebab-case** for skill directory names (lowercase with hyphens)
-- Choose **descriptive, action-oriented names** that clearly indicate the skill's purpose:
-  - Good: `melting-point`, `diffusion-analysis`, `mlip-training`
-  - Avoid: `mp`, `calc_diff`, `train`
-- Prefer **gerund forms** (verb + -ing) for process-oriented skills:
-  - `training-mlip`, `analyzing-diffusion`, `calculating-properties`
-- Use **noun forms** for result-oriented skills:
-  - `melting-point`, `phase-diagram`, `band-structure`
+- **Every skill name must start with a category prefix** matching its `category` field:
+  - `mat-` for `materials` skills (e.g., `mat-melting-point`, `mat-diffusion-analysis`, `mat-phonon`)
+  - `ml-` for `machine-learning` skills (e.g., `ml-foundation-potentials`, `ml-mlip-training`, `ml-cluster-expansion`)
+  - `drug-` for `drug-discovery` skills (e.g., `drug-docking-vina`, `drug-admet-prediction`)
+  - `general-` for `general` skills (e.g., `general-arxiv-search`)
+- The part after the prefix should be **descriptive and concise**:
+  - Good: `mat-melting-point`, `ml-mlip-speed`, `drug-protein-prep`
+  - Avoid: `mat-mp`, `ml-train`, `drug-d`
+- Use **noun forms** for result-oriented skills: `mat-phase-diagram`, `mat-surface-energy`
+- Use **action/process names** for workflow skills: `mat-diffusion-analysis`, `ml-mlip-training`
 
 ## Example Skill Structure
 
