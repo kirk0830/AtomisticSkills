@@ -34,7 +34,7 @@ from src.utils.structure_utils import (
     get_structure_by_chemsys,
     save_structure
 )
-from src.utils.api_keys import get_mp_key
+
 from src.utils.research_utils import create_new_research_dir
 
 # Configure logging
@@ -77,7 +77,7 @@ def search_materials_project_by_formula(
     Returns:
         Path to saved CIF file.
     """
-    mp_key = api_key or get_mp_key()
+    mp_key = api_key or os.getenv("MP_API_KEY")
     if not mp_key:
         return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
         
