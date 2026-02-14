@@ -104,38 +104,7 @@ All structures are queried from Materials Project and represent the most stable 
 
 ## Example
 
-Calculating voltage for LiFePO4 cathode:
-
-```bash
-# 0. Create de-intercalated structure
-# Env: base-agent
-python .agent/skills/mat-intercalation-voltage/scripts/remove_atoms.py \
-    LiFePO4.cif --remove Li --output FePO4.cif
-
-# 1. Load model
-mcp_mace_load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
-
-# 2. Relax structures
-mcp_mace_relax_structure(structure_data="LiFePO4.cif", output_dir="lfp_voltage/full_relax")
-mcp_mace_relax_structure(structure_data="FePO4.cif", output_dir="lfp_voltage/empty_relax")
-mcp_mace_relax_structure(
-    structure_data=".agent/skills/mat-intercalation-voltage/resources/Li_metal.cif",
-    output_dir="lfp_voltage/metal_relax"
-)
-
-# 3. Extract energies from result.json files and calculate
-# Env: base-agent
-python .agent/skills/mat-intercalation-voltage/scripts/calculate_voltage.py \
-    --e_full -234.567 \
-    --e_empty -198.234 \
-    --e_metal -7.891 \
-    --n_metal 16 \
-    --n_ions 4 \
-    --metal Li \
-    --output lfp_voltage/voltage_results.json
-```
-
-Expected result: ~3.4-3.5 V for LiFePO4
+See [examples/LiFePO4/](examples/LiFePO4/) for a complete worked example (MACE-MH-1 r2SCAN, 3.26 V vs 3.4 V experimental).
 
 ## Constraints
 - **Host Consistency**: The number of host atoms must be identical in both full and empty structures

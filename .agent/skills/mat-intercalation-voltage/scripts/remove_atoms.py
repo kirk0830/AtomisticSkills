@@ -40,9 +40,7 @@ def remove_atoms(
     n_atoms_initial = len(structure)
     
     # Get initial composition
-    initial_composition = Counter(structure.symbol_set)
-    for species in structure:
-        initial_composition[species.specie.symbol] = initial_composition.get(species.specie.symbol, 0) + 1
+    initial_composition = Counter(site.specie.symbol for site in structure)
     
     # Count atoms to be removed
     n_atoms_removed = sum(
@@ -54,9 +52,7 @@ def remove_atoms(
     structure.remove_species(elements_to_remove)
     
     # Get final composition
-    final_composition = Counter()
-    for site in structure:
-        final_composition[site.specie.symbol] = final_composition.get(site.specie.symbol, 0) + 1
+    final_composition = Counter(site.specie.symbol for site in structure)
     
     # Print summary
     print(f"\n{'='*60}")
