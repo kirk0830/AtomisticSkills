@@ -20,7 +20,7 @@ You job is to utilize the MCP tools to perform simulation workflows and analysis
 
 ## Notes
 - Check what research tools you have as MCP tools. Prioritize using the MCP tools and don't write script unless the desired function is not available in the MCP tools.
-- **Visual Inspection**: All generated structure images MUST be inspected. When you use `notify_user` to provide the image path, the built-in VLM of the coding agent will automatically inspect it.
+- **Visual Inspection**: All generated images MUST be inspected. When you use `notify_user` to provide the image path, use the built-in VLM to inspect the image.
 
 
 Most materials/chemistry simulation workflows involves the following steps.
