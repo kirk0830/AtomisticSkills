@@ -24,7 +24,9 @@ Refer to the [foundation-potentials skill](../foundation-potentials/SKILL.md) fo
 
 ## 3. Calculation Workflow
 
-To calculate phonon properties, use the `calculate_phonon.py` script.
+### Option A: Calculate with MLIPs
+
+To calculate phonon properties using machine learning potentials, use the `calculate_phonon.py` script.
 
 ```bash
 conda activate mace-agent
@@ -34,6 +36,48 @@ python .agent/skills/phonon/scripts/calculate_phonon.py \
     --model_name MACE-MP-small \
     --supercell_matrix '[[2,0,0],[0,2,0],[0,0,2]]' \
     --output_dir research/my_folder/phonon
+```
+
+### Option B: Retrieve DFT Reference Data from Materials Project
+
+For validation and benchmarking, retrieve pre-computed DFT phonon data:
+
+```bash
+# Env: base-agent
+python .agent/skills/phonon/scripts/get_mp_phonon.py \
+    --material_id mp-149 \
+    --phonon_method dfpt \
+    --output si_phonon_mp.json \
+    --plot
+```
+
+**Available phonon methods**: `dfpt`, `phonopy`, `pheasy`
+
+**When to use MP retrieval vs. MLIP calculations**:
+- **Retrieve from MP**: Get DFT reference data for validation, benchmark MLIP accuracy
+- **Calculate with MLIPs**: New materials, compare different MLIPs, high-throughput screening
+
+### Validation Workflow: Compare MLIP vs DFT
+
+```bash
+# 1. Calculate with MLIP
+python .agent/skills/phonon/scripts/calculate_phonon.py \
+    --structure Si.cif \
+    --model_type mace \
+    --model_name MACE-OMAT-0-small \
+    --output_dir si_mace_phonon
+
+# 2. Get DFT reference from MP
+python .agent/skills/phonon/scripts/get_mp_phonon.py \
+    --material_id mp-149 \
+    --phonon_method dfpt \
+    --output si_mp_phonon.json \
+    --plot
+
+# 3. Compare phonon frequencies (manual inspection of plots)
+#    - Check if MLIP frequencies match DFT
+#    - Look for imaginary modes (structural instability)
+#    - Validate thermal properties
 ```
 
 ## 4. Output Files

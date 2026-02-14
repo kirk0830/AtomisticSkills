@@ -47,6 +47,28 @@ The workflow automatically:
 1. Runs a static SCF calculation to obtain the charge density
 2. Runs a non-SCF calculation to compute band structure eigenvalues
 
+### Alternative: Retrieve Pre-Computed Data from Materials Project
+
+Instead of running DFT calculations, you can retrieve existing electronic structure data from Materials Project:
+
+```bash
+# Env: base-agent
+python .agent/skills/electronic-structure/scripts/get_mp_electronic_structure.py \
+    --material_id mp-149 \
+    --output si_mp_bands.json \
+    --plot
+```
+
+**This retrieves**:
+- Pre-computed band structure along high-symmetry paths
+- Density of states (DOS)
+- Band gap (energy, direct/indirect)
+- Fermi energy
+
+**When to use MP retrieval vs. calculations**:
+- **Retrieve from MP**: Quick screening, validation, known materials
+- **Run calculations**: New materials, custom structures, specific DFT settings
+
 ### 3. Post-Process and Visualize Results
 
 After the calculation completes, parse the results and generate a band structure plot:
