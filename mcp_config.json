@@ -70,6 +70,16 @@
       "env": {
         "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
+    },
+    "adit": {
+      "command": "/home/bdeng/miniforge3/envs/adit-agent/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.adit_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills:/home/bdeng/projects/AtomisticSkills/.agent/tmp/adit"
+      }
     }
   }
 }
