@@ -44,6 +44,25 @@ def load_model(
     - UMA (Universal): 'uma-s-1p1', 'uma-m-1p1', 'uma-s-1'
     - ESEN (Organic/Molecular): 'esen-md-direct-all-omol', 'esen-sm-conserving-all-omol', 'esen-sm-direct-all-omol'
     - ESEN (Catalysis/OC25): 'esen-sm-conserving-all-oc25', 'esen-md-direct-all-oc25'
+    - Fine-tuned checkpoint: provide the full path to an inference_ckpt.pt file
+    
+    Args:
+        model_name: Name of the model to load (default: "uma-s-1p1").
+                   Can also be a file path to a fine-tuned inference checkpoint
+                   (e.g., "/path/to/inference_ckpt.pt" from fairchem CLI fine-tuning).
+        device: Device to use ("auto", "cpu", "cuda").
+        task_name: Optional task name for UMA multi-task models.
+                  'omat' (default for bulk/periodic): Inorganic materials (PBE-level, OMat24 dataset).
+                  'omol': Molecules and polymers (PBE-level).
+                  'oc20': Heterogeneous catalysis / surface reactions (PBE-level).
+                  'odac': Metal-Organic Frameworks / CO2 capture (PBE-level).
+                  'omc': Molecular crystals (PBE-level).
+        inference_settings: Inference settings preset (default: "default").
+    
+    Returns:
+        Confirmation message.
+    
+    CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
     global wrapper
     try:

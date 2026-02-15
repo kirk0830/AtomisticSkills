@@ -855,17 +855,11 @@ class MLIPModel(ABC):
         if len(energy_mae_train) > 0 or len(energy_mae_val) > 0:
             if len(energy_mae_train) > 0:
                 epochs_train = range(1, len(energy_mae_train) + 1)
-                # Energy MAE is already in meV/atom from MACE, but may be in eV/atom from others
-                train_vals = np.array(energy_mae_train)
-                if train_vals.max() < 10.0:  # Likely in eV/atom
-                    train_vals = train_vals * 1000  # Convert to meV/atom
-                ax4.plot(epochs_train, train_vals, 'b-', label='Train', linewidth=2, marker='o')
+                # All wrappers standardize energy MAE to meV/atom before saving
+                ax4.plot(epochs_train, np.array(energy_mae_train), 'b-', label='Train', linewidth=2, marker='o')
             if len(energy_mae_val) > 0:
                 epochs_val = range(1, len(energy_mae_val) + 1)
-                val_vals = np.array(energy_mae_val)
-                if val_vals.max() < 10.0:  # Likely in eV/atom
-                    val_vals = val_vals * 1000  # Convert to meV/atom
-                ax4.plot(epochs_val, val_vals, 'r-', label='Validation', linewidth=2, marker='s')
+                ax4.plot(epochs_val, np.array(energy_mae_val), 'r-', label='Validation', linewidth=2, marker='s')
             ax4.set_xlabel('Epoch')
             ax4.set_ylabel('Energy MAE (meV/atom)')
             ax4.set_title('Energy MAE')
@@ -882,17 +876,11 @@ class MLIPModel(ABC):
         if len(force_mae_train) > 0 or len(force_mae_val) > 0:
             if len(force_mae_train) > 0:
                 epochs_train = range(1, len(force_mae_train) + 1)
-                # Force MAE is already in meV/Å from MACE, but may be in eV/Å from others
-                train_vals = np.array(force_mae_train)
-                if train_vals.max() < 1.0:  # Likely in eV/Å
-                    train_vals = train_vals * 1000  # Convert to meV/Å
-                ax5.plot(epochs_train, train_vals, 'b-', label='Train', linewidth=2, marker='o')
+                # All wrappers standardize force MAE to meV/Å before saving
+                ax5.plot(epochs_train, np.array(force_mae_train), 'b-', label='Train', linewidth=2, marker='o')
             if len(force_mae_val) > 0:
                 epochs_val = range(1, len(force_mae_val) + 1)
-                val_vals = np.array(force_mae_val)
-                if val_vals.max() < 1.0:  # Likely in eV/Å
-                    val_vals = val_vals * 1000  # Convert to meV/Å
-                ax5.plot(epochs_val, val_vals, 'r-', label='Validation', linewidth=2, marker='s')
+                ax5.plot(epochs_val, np.array(force_mae_val), 'r-', label='Validation', linewidth=2, marker='s')
             ax5.set_xlabel('Epoch')
             ax5.set_ylabel('Force MAE (meV/Å)')
             ax5.set_title('Force MAE')
@@ -914,7 +902,7 @@ class MLIPModel(ABC):
                 epochs_val = range(1, len(stress_mae_val) + 1)
                 ax6.plot(epochs_val, np.array(stress_mae_val), 'r-', label='Validation', linewidth=2, marker='s')
             ax6.set_xlabel('Epoch')
-            ax6.set_ylabel('Stress MAE (eV/Å³)')
+            ax6.set_ylabel('Stress MAE (meV/Å³)')
             ax6.set_title('Stress MAE')
             ax6.legend()
             ax6.grid(True, alpha=0.3)

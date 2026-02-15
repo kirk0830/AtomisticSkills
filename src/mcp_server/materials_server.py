@@ -107,7 +107,7 @@ def search_materials_project_by_chemsys(
     Returns:
         Summary of saved structures with paths.
     """
-    mp_key = api_key or get_mp_key()
+    mp_key = api_key or os.getenv("MP_API_KEY")
     if not mp_key:
         return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
         

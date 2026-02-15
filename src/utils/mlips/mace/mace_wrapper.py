@@ -469,14 +469,18 @@ class MACEWrapper(MLIPModel):
         # Build MACE training command
         multiheads_finetuning = training_config.get("multiheads_finetuning", False) if training_config else False
         
+        # Cap batch_size to dataset size to prevent empty batches
+        effective_batch_size = min(default_config["batch_size"], len(train_structures))
+        logger.info(f"Effective batch size: {effective_batch_size} (dataset: {len(train_structures)} structures)")
+        
         cmd = [
             sys.executable, "-m", "mace.cli.run_train",
             "--name", f"{self.model_name.lower()}_fine_tuned",
             "--train_file", str(train_xyz_path),
             "--max_num_epochs", str(default_config["max_epochs"]),
             "--lr", str(default_config["learning_rate"]),
-            "--batch_size", str(default_config["batch_size"]),
-            "--valid_batch_size", str(default_config["batch_size"]),
+            "--batch_size", str(effective_batch_size),
+            "--valid_batch_size", str(effective_batch_size),
             "--energy_key", "REF_energy",
             "--forces_key", "REF_forces",
             "--device", device,
@@ -488,6 +492,14 @@ class MACEWrapper(MLIPModel):
             "--plot_frequency", "1",
             "--multiheads_finetuning", str(multiheads_finetuning)
         ]
+        
+        # For small datasets without explicit validation, use training data as validation
+        # MACE asserts 0.0 < valid_fraction < 1.0, so we can't set it to 0
+        if not val_xyz_path and len(train_structures) < 10:
+            import shutil
+            val_xyz_path = output_path / "valid.xyz"
+            shutil.copy2(train_xyz_path, val_xyz_path)
+            logger.info(f"Small dataset without validation: copied train.xyz as valid.xyz ({len(train_structures)} structures)")
         
         if not multiheads_finetuning:
              logger.info("Disabling MACE multi-head replay (direct fine-tuning mode)")

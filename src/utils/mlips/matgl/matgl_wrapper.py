@@ -180,14 +180,19 @@ if MATGL_AVAILABLE and TRAINER_AVAILABLE:
             loss = get_metric(['train_Total_Loss', 'train_loss'], ['loss'])
             if loss is not None: self.training_history['loss_train'].append(loss)
             
+            # MatGL reports Energy_MAE in eV/atom, Force_MAE in eV/Å, Stress_MAE in GPa.
+            # Convert to standardized units: meV/atom, meV/Å, meV/Å³.
             e_mae = get_metric(['train_Energy_MAE', 'train_energy_mae'], ['energy_mae'])
-            if e_mae is not None: self.training_history['energy_mae_train'].append(e_mae)
+            if e_mae is not None: self.training_history['energy_mae_train'].append(e_mae * 1000)  # eV/atom → meV/atom
             
             f_mae = get_metric(['train_Force_MAE', 'train_force_mae'], ['force_mae'])
-            if f_mae is not None: self.training_history['force_mae_train'].append(f_mae)
+            if f_mae is not None: self.training_history['force_mae_train'].append(f_mae * 1000)  # eV/Å → meV/Å
             
             s_mae = get_metric(['train_Stress_MAE', 'train_stress_mae'], ['stress_mae'])
-            if s_mae is not None: self.training_history['stress_mae_train'].append(s_mae)
+            if s_mae is not None:
+                import ase.units
+                s_mae_ev_per_ang3 = s_mae * ase.units.GPa  # GPa → eV/Å³
+                self.training_history['stress_mae_train'].append(s_mae_ev_per_ang3 * 1000)  # eV/Å³ → meV/Å³
 
         def on_validation_epoch_end(self, trainer, pl_module):
             if trainer.sanity_checking: return
@@ -203,14 +208,19 @@ if MATGL_AVAILABLE and TRAINER_AVAILABLE:
             loss = get_metric(['val_Total_Loss', 'val_loss', 'loss'])
             if loss is not None: self.training_history['loss_val'].append(loss)
             
+            # MatGL reports Energy_MAE in eV/atom, Force_MAE in eV/Å, Stress_MAE in GPa.
+            # Convert to standardized units: meV/atom, meV/Å, meV/Å³.
             e_mae = get_metric(['val_Energy_MAE', 'val_energy_mae', 'energy_mae'])
-            if e_mae is not None: self.training_history['energy_mae_val'].append(e_mae)
+            if e_mae is not None: self.training_history['energy_mae_val'].append(e_mae * 1000)  # eV/atom → meV/atom
             
             f_mae = get_metric(['val_Force_MAE', 'val_force_mae', 'force_mae'])
-            if f_mae is not None: self.training_history['force_mae_val'].append(f_mae)
+            if f_mae is not None: self.training_history['force_mae_val'].append(f_mae * 1000)  # eV/Å → meV/Å
             
             s_mae = get_metric(['val_Stress_MAE', 'val_stress_mae', 'stress_mae'])
-            if s_mae is not None: self.training_history['stress_mae_val'].append(s_mae)
+            if s_mae is not None:
+                import ase.units
+                s_mae_ev_per_ang3 = s_mae * ase.units.GPa  # GPa → eV/Å³
+                self.training_history['stress_mae_val'].append(s_mae_ev_per_ang3 * 1000)  # eV/Å³ → meV/Å³
 
         def collect_label_distributions(self, training_data: List[Dict[str, Any]]):
              # Placeholder for distribution collection (implemented in base or locally)
@@ -894,8 +904,21 @@ class MatGLWrapper(MLIPModel):
                 # MatGL's Potential module internally converts stress to GPa 
                 # (see matgl.apps._pes_dgl.py). Thus, labels should be in GPa.
                 # Project standard labels are in eV/A^3, so we convert to GPa for training.
-                stresses.append(np.array(s) / ase.units.GPa)
+                s_gpa = np.array(s) / ase.units.GPa
+                # MatGL Potential.forward() outputs stress as [batch, 3, 3] tensors.
+                # Convert Voigt (xx, yy, zz, yz, xz, xy) to 3x3 symmetric matrix.
+                if s_gpa.shape == (6,):
+                    s_3x3 = np.array([
+                        [s_gpa[0], s_gpa[5], s_gpa[4]],
+                        [s_gpa[5], s_gpa[1], s_gpa[3]],
+                        [s_gpa[4], s_gpa[3], s_gpa[2]],
+                    ])
+                elif s_gpa.shape == (3, 3):
+                    s_3x3 = s_gpa
+                else:
+                    s_3x3 = np.zeros((3, 3))
+                stresses.append(s_3x3)
             else:
-                stresses.append(np.zeros(6))
+                stresses.append(np.zeros((3, 3)))
                 
         return atoms_list, np.array(energies), forces, stresses
