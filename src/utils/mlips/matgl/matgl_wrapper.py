@@ -776,12 +776,24 @@ class MatGLWrapper(MLIPModel):
             else:
                 logging.info(f"MatGL backbone frozen. Unfrozen {unfrozen_count} parameters in readout layers.")
 
+        # Determine stress_weight: use config value if given, else auto-detect from data
+        has_stress = np.any(train_stresses)
+        stress_weight = config.get("stress_weight", 1.0 if has_stress else 0.0)
+        energy_weight = config.get("energy_weight", 1.0)
+        force_weight = config.get("force_weight", 1.0)
+        decay_steps = config.get("decay_steps", 1000)
+        decay_alpha = config.get("decay_alpha", 0.01)
+
         lit_model = PotentialLightningModule(
             model=self.model.model,
             element_refs=prop_offset,
             lr=config['learning_rate'],
             include_line_graph=True,
-            stress_weight=1.0 if np.any(train_stresses) else 0.0,
+            energy_weight=energy_weight,
+            force_weight=force_weight,
+            stress_weight=stress_weight,
+            decay_steps=decay_steps,
+            decay_alpha=decay_alpha,
         )
         
         # 3. Trainer

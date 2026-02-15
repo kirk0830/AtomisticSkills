@@ -6,8 +6,8 @@ MatGL fine-tuning uses PyTorch Lightning with M3GNet or CHGNet models. Parameter
 
 | Key | Type | Default | Description |
 |:----|:-----|:--------|:------------|
-| `epochs` | int | 10 | Number of training epochs (auto-mapped to `max_epochs` internally). |
-| `learning_rate` | float | 1e-3 | Learning rate. |
+| `epochs` | int | 10 | Number of training epochs. |
+| `learning_rate` | float | 1e-3 | Learning rate for Adam optimizer. |
 | `batch_size` | int | 4 | Training batch size. |
 
 ## Model Freezing
@@ -16,10 +16,35 @@ MatGL fine-tuning uses PyTorch Lightning with M3GNet or CHGNet models. Parameter
 |:----|:-----|:--------|:------------|
 | `freeze_backbone` | bool | True | Freeze all layers except the final readout. |
 
-## LR Scheduler
+## Cosine Annealing LR Scheduler
 
-> [!NOTE]
-> MatGL currently uses the default PyTorch Lightning LR schedule. No custom scheduler parameters are exposed.
+MatGL uses `CosineAnnealingLR` by default. The learning rate decays from `lr` to `lr × decay_alpha` over `decay_steps` steps, then restarts.
+
+| Key | Type | Default | Description |
+|:----|:-----|:--------|:------------|
+| `decay_steps` | int | 1000 | Period (T_max) of the cosine annealing cycle in steps. |
+| `decay_alpha` | float | 0.01 | Minimum LR as fraction of initial LR. Final LR = `lr × decay_alpha`. |
+
+**Schedule visualization:**
+```
+LR
+ ^
+ |‾‾‾\      /‾‾‾\
+ |    \    /     \
+ |     \  /       \___
+ |      \/
+ +------------------------> steps
+   T_max   T_max
+   (decay_steps)
+```
+
+## Loss Weights
+
+| Key | Type | Default | Description |
+|:----|:-----|:--------|:------------|
+| `energy_weight` | float | 1.0 | Weight for energy loss. |
+| `force_weight` | float | 1.0 | Weight for forces loss. |
+| `stress_weight` | float | auto | Weight for stress loss. Auto-detected: 1.0 if stress data present, 0.0 otherwise. |
 
 ## Example
 
@@ -32,6 +57,9 @@ result = fine_tune_model(
     training_config={
         "freeze_backbone": True,
         "batch_size": 32,
+        "decay_steps": 500,
+        "decay_alpha": 0.001,
+        "force_weight": 10.0,
     }
 )
 ```

@@ -35,12 +35,12 @@ Each MLIP has its own supported `training_config` parameters. See the per-MLIP g
 
 | Feature | FairChem | MACE | MatGL |
 |:--------|:---------|:-----|:------|
-| Freeze backbone | `freeze_backbone: True` | `freeze_backbone: True` | `freeze_backbone: True` |
-| LR scheduler | Cosine w/ warmup (fixed) | ReduceLROnPlateau | Cosine decay |
-| Early stopping | ❌ Not supported | Via `scheduler_patience` | ❌ Not built-in |
-| Grad clipping | `clip_grad_norm: 100` | N/A | N/A |
+| Freeze backbone | `freeze_backbone` | `freeze_backbone` | `freeze_backbone` |
+| LR scheduler | Cosine w/ warmup (fixed) | ReduceLROnPlateau (configurable) | CosineAnnealingLR (`decay_steps`, `decay_alpha`) |
+| Early stopping | ❌ Not supported | `patience: 2048` (default off) | ❌ Not built-in |
+| Grad clipping | `clip_grad_norm: 100` | `clip_grad: 10.0` | N/A |
 | EMA | `ema_decay: 0.999` | `ema_decay: 0.99` | N/A |
-| Loss weights | Automatic via regression task | `energy/forces/stress_weight` | N/A |
+| Loss weights | Automatic via regression task | `energy/forces/stress_weight` | `energy/force/stress_weight` |
 
 ## Examples
 
@@ -48,7 +48,8 @@ Each MLIP has its own supported `training_config` parameters. See the per-MLIP g
 
 ## Constraints
 - **Data Size**: For small datasets (<500 structures), `freeze_backbone=True` is strongly recommended.
-- **Units**: Ensure stress labels are in eV/ų as per project standards.
+- **Units**: Ensure stress labels are in eV/Å³ as per project standards.
+
 
 Author: Bowen Deng
 Contact: github username <bowen-bd>
