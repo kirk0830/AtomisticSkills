@@ -1,8 +1,10 @@
 {
     "mace": {
-        "learning_rate": 0.01,
         "epochs": 100,
+        "learning_rate": 0.01,
         "batch_size": 10,
+        "freeze_backbone": true,
+        "multiheads_finetuning": false,
         "scheduler": "ReduceLROnPlateau",
         "lr_factor": 0.8,
         "scheduler_patience": 50,
@@ -13,14 +15,12 @@
         "energy_weight": 1.0,
         "forces_weight": 100.0,
         "stress_weight": 1.0,
-        "multiheads_finetuning": false,
-        "freeze_backbone": true,
         "compute_stress": false,
         "compute_forces": true
     },
     "fairchem": {
-        "learning_rate": 1e-4,
         "epochs": 100,
+        "learning_rate": 1e-4,
         "batch_size": 2,
         "freeze_backbone": true,
         "weight_decay": 1e-3,
@@ -33,11 +33,9 @@
         "checkpoint_every_n_steps": 1000
     },
     "matgl": {
-        "learning_rate": 1e-3,
         "epochs": 100,
-        "batch_size": 32,
-        "freeze_backbone": true,
-        "decay_steps": 1000,
-        "decay_alpha": 0.01
+        "learning_rate": 1e-3,
+        "batch_size": 4,
+        "freeze_backbone": true
     }
 }

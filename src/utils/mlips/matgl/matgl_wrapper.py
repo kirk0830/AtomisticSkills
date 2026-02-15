@@ -659,7 +659,11 @@ class MatGLWrapper(MLIPModel):
             "batch_size": 4,
             "val_split": 0.1,
         }
-        if training_config: config.update(training_config)
+        if training_config:
+            # Unified key aliases: epochs → max_epochs
+            if "epochs" in training_config and "max_epochs" not in training_config:
+                training_config["max_epochs"] = training_config.pop("epochs")
+            config.update(training_config)
         
         # Check for model/checkpoint override
         if training_config:

@@ -6,7 +6,7 @@ MACE fine-tuning uses the `mace_run_train` CLI. Key parameters are passed via th
 
 | Key | Type | Default | Description |
 |:----|:-----|:--------|:------------|
-| `epochs` / `max_epochs` | int | 10 | Number of training epochs. |
+| `epochs` | int | 100 | Number of training epochs (auto-mapped to `max_epochs` internally). |
 | `learning_rate` / `lr` | float | 0.01 | Peak learning rate. |
 | `batch_size` | int | 10 | Training batch size. |
 

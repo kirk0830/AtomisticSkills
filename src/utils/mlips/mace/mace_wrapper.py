@@ -369,6 +369,9 @@ class MACEWrapper(MLIPModel):
         }
         
         if training_config:
+            # Unified key aliases: epochs → max_epochs
+            if "epochs" in training_config and "max_epochs" not in training_config:
+                training_config["max_epochs"] = training_config.pop("epochs")
             default_config.update(training_config)
         
         logger.info("Using MACE training pipeline for fine-tuning")

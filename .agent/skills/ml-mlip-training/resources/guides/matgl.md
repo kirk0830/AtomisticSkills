@@ -6,8 +6,8 @@ MatGL fine-tuning uses PyTorch Lightning with M3GNet or CHGNet models. Parameter
 
 | Key | Type | Default | Description |
 |:----|:-----|:--------|:------------|
-| `epochs` | int | 10 | Number of training epochs. |
-| `learning_rate` / `lr` | float | 1e-3 | Learning rate. |
+| `epochs` | int | 10 | Number of training epochs (auto-mapped to `max_epochs` internally). |
+| `learning_rate` | float | 1e-3 | Learning rate. |
 | `batch_size` | int | 4 | Training batch size. |
 
 ## Model Freezing
@@ -18,10 +18,8 @@ MatGL fine-tuning uses PyTorch Lightning with M3GNet or CHGNet models. Parameter
 
 ## LR Scheduler
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `decay_steps` | int | 1000 | Steps between LR decay. |
-| `decay_alpha` | float | 0.01 | Final LR = `decay_alpha × lr`. |
+> [!NOTE]
+> MatGL currently uses the default PyTorch Lightning LR schedule. No custom scheduler parameters are exposed.
 
 ## Example
 
@@ -34,8 +32,6 @@ result = fine_tune_model(
     training_config={
         "freeze_backbone": True,
         "batch_size": 32,
-        "decay_steps": 1000,
-        "decay_alpha": 0.01,
     }
 )
 ```
