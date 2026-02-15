@@ -4,59 +4,62 @@ MACE fine-tuning uses the `mace_run_train` CLI. All parameters not explicitly ha
 
 ## Basic Parameters
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `epochs` | int | 100 | Number of training epochs. |
-| `learning_rate` | float | 0.01 | Peak learning rate (passed as `--lr`). |
-| `batch_size` | int | 10 | Training batch size (capped to dataset size). |
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `epochs` | int | 100 | ≥1 | Number of training epochs. |
+| `learning_rate` | float | 0.01 | >0 | Peak learning rate (passed as `--lr`). |
+| `batch_size` | int | 10 | ≥1 (auto-capped to dataset size) | Training batch size. |
 
 ## Model Freezing
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `freeze_backbone` | bool | True | Freeze backbone (interaction blocks); only readout heads are trained. |
-| `multiheads_finetuning` | bool | False | Enable multi-head fine-tuning (adds new head while keeping existing ones). |
+| Key | Type | Default | Choices | Description |
+|:----|:-----|:--------|:--------|:------------|
+| `freeze_backbone` | bool | True | `True`, `False` | Freeze backbone (interaction blocks); only readout heads are trained. |
+| `multiheads_finetuning` | bool | False | `True`, `False` | Enable multi-head fine-tuning (adds new head while keeping existing ones). |
 
 ## Optimizer & Regularization
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `weight_decay` | float | 5e-7 | L2 weight decay. |
-| `amsgrad` | bool | True | Use AMSGrad variant of Adam. |
-| `clip_grad` | float | 10.0 | Maximum gradient norm for clipping. |
-| `ema` | bool | False | Enable exponential moving average of model weights. |
-| `ema_decay` | float | 0.99 | EMA decay rate. |
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `optimizer` | str | `"adam"` | `"adam"`, `"adamw"`, `"schedulefree"` | Optimizer type. |
+| `weight_decay` | float | 5e-7 | ≥0 | L2 weight decay. |
+| `amsgrad` | bool | True | `True`, `False` | Use AMSGrad variant of Adam. |
+| `clip_grad` | float | 10.0 | >0 or None | Maximum gradient norm for clipping. Set to None to disable. |
+| `ema` | bool | False | `True`, `False` | Enable exponential moving average of model weights. |
+| `ema_decay` | float | 0.99 | 0–1 | EMA decay rate. Higher = more smoothing. |
 
 ## LR Scheduler
 
-MACE uses **ReduceLROnPlateau** by default: the learning rate is reduced by `lr_factor` when loss plateaus for `scheduler_patience` epochs.
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `scheduler` | str | `"ReduceLROnPlateau"` | `"ReduceLROnPlateau"`, `"ExponentialLR"` | LR scheduler type. |
+| `lr_factor` | float | 0.8 | 0–1 | Factor by which LR is reduced on plateau (for ReduceLROnPlateau). |
+| `scheduler_patience` | int | 50 | ≥1 | Epochs without improvement before reducing LR (for ReduceLROnPlateau). |
+| `lr_scheduler_gamma` | float | 0.9993 | 0–1 | Per-epoch multiplicative decay factor (for ExponentialLR). |
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `scheduler` | str | `"ReduceLROnPlateau"` | LR scheduler type. Also supports `"ExponentialLR"`. |
-| `lr_factor` | float | 0.8 | Factor by which LR is reduced on plateau. |
-| `scheduler_patience` | int | 50 | Epochs with no improvement before reducing LR. |
-| `lr_scheduler_gamma` | float | 0.9993 | Decay factor for ExponentialLR scheduler. |
+**ReduceLROnPlateau** (default): Monitors validation loss. When loss stops improving for `scheduler_patience` epochs, LR is multiplied by `lr_factor`.
+
+**ExponentialLR**: LR decays every epoch by `lr_scheduler_gamma`. At epoch *n*: `LR = learning_rate × lr_scheduler_gamma^n`.
 
 ## Early Stopping
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `patience` | int | 2048 | Stop training after this many epochs without improvement. |
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `patience` | int | 2048 | ≥1 | Stop training after this many epochs without improvement. |
 
 > [!NOTE]
-> By default `patience=2048`, which effectively disables early stopping. Set it lower (e.g., 100–200) if you want to stop early.
+> Default `patience=2048` effectively disables early stopping. Set lower (e.g., 100–200) if you want to stop early.
 
-## Loss Weights
+## Loss Function
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `energy_weight` | float | 1.0 | Weight for energy loss. |
-| `forces_weight` | float | 100.0 | Weight for forces loss. |
-| `stress_weight` | float | 1.0 | Weight for stress loss (only when stress data is present). |
-| `loss` | str | `"weighted"` | Loss function. `"universal"` is auto-set when stress data is detected. |
-| `compute_forces` | bool | True | Include forces in training. |
-| `compute_stress` | bool | False | Include stress in training (auto-enabled when stress data is present). |
+| Key | Type | Default | Choices | Description |
+|:----|:-----|:--------|:--------|:------------|
+| `loss` | str | `"weighted"` | `"weighted"`, `"universal"`, `"ef"`, `"forces_only"`, `"stress"`, `"virials"`, `"huber"`, `"dipole"`, `"dipole_polar"`, `"energy_forces_dipole"`, `"l1l2energyforces"` | Loss function type. `"universal"` is auto-set when stress data is detected. |
+| `energy_weight` | float | 1.0 | ≥0 | Weight for energy loss. |
+| `forces_weight` | float | 100.0 | ≥0 | Weight for forces loss. |
+| `stress_weight` | float | 1.0 | ≥0 | Weight for stress loss (only when stress data is present). |
+| `compute_forces` | bool | True | `True`, `False` | Include forces in training. |
+| `compute_stress` | bool | False | `True`, `False` | Include stress in training (auto-enabled when stress data present). |
 
 > [!IMPORTANT]
 > All keys not in the reserved list (`epochs`, `learning_rate`, `batch_size`, `validation_split`, `early_stopping_patience`, `save_best_model`, `use_foundation_model`, `stress_weight`) are passed through verbatim to the MACE CLI. This means any valid `mace_run_train` argument works.
@@ -71,11 +74,13 @@ result = fine_tune_model(
     output_dir="/path/to/output",
     training_config={
         "freeze_backbone": True,
+        "optimizer": "adamw",
         "forces_weight": 100.0,
         "stress_weight": 1.0,
         "compute_stress": True,
         "ema": True,
         "ema_decay": 0.99,
+        "scheduler": "ReduceLROnPlateau",
         "scheduler_patience": 50,
         "patience": 200,
         "clip_grad": 10.0,

@@ -4,58 +4,68 @@ MatGL fine-tuning uses PyTorch Lightning with M3GNet or CHGNet models. Parameter
 
 ## Basic Parameters
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `epochs` | int | 10 | Number of training epochs. |
-| `learning_rate` | float | 1e-3 | Learning rate for Adam optimizer. |
-| `batch_size` | int | 4 | Training batch size. |
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `epochs` | int | 10 | ≥1 | Number of training epochs. |
+| `learning_rate` | float | 1e-3 | >0 | Learning rate for Adam optimizer. |
+| `batch_size` | int | 4 | ≥1 | Training batch size. |
 
 ## Model Freezing
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `freeze_backbone` | bool | True | Freeze all layers except the final readout. |
+| Key | Type | Default | Choices | Description |
+|:----|:-----|:--------|:--------|:------------|
+| `freeze_backbone` | bool | True | `True`, `False` | Freeze all layers except the final readout. |
 
 ## LR Scheduler
 
-MatGL supports two LR scheduler options via the `scheduler` key:
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `scheduler` | str | `"CosineAnnealingLR"` | `"CosineAnnealingLR"`, `"ReduceLROnPlateau"` | Scheduler type. |
 
 ### CosineAnnealingLR (default)
 
-The default scheduler. LR oscillates between `lr` and `lr × decay_alpha` with period `decay_steps`.
+LR oscillates between `lr` and `lr × decay_alpha` with period `decay_steps`.
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `scheduler` | str | `"CosineAnnealingLR"` | Scheduler type. |
-| `decay_steps` | int | 1000 | Period (T_max) of the cosine annealing cycle in steps. |
-| `decay_alpha` | float | 0.01 | Minimum LR as fraction of initial LR. Final LR = `lr × decay_alpha`. |
+| Key | Type | Default | Range | Description |
+|:----|:-----|:--------|:------|:------------|
+| `decay_steps` | int | 1000 | ≥1 | Period (T_max) of the cosine annealing cycle in steps. |
+| `decay_alpha` | float | 0.01 | 0–1 | Minimum LR as fraction of initial LR. Final LR = `lr × decay_alpha`. |
 
 ### ReduceLROnPlateau
 
-Reduces LR when validation loss stops improving.
+Reduces LR when validation loss stops improving. Set `scheduler: "ReduceLROnPlateau"` to enable.
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `scheduler` | str | — | Set to `"ReduceLROnPlateau"` to enable. |
-| `lr_factor` | float | 0.5 | Factor by which LR is reduced on plateau. |
-| `scheduler_patience` | int | 10 | Epochs with no improvement before reducing LR. |
+| Key | Type | Default | Range | Description |
+|:----|:-----|:--------|:------|:------------|
+| `lr_factor` | float | 0.5 | 0–1 | Factor by which LR is reduced on plateau. |
+| `scheduler_patience` | int | 10 | ≥1 | Epochs without improvement before reducing LR. |
 
 ## Early Stopping
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `patience` | int | None | Stop after this many epochs with no improvement in `val_Total_Loss`. Not enabled by default. |
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `patience` | int | None (disabled) | ≥1 or None | Stop after this many epochs without improvement in `val_Total_Loss`. |
 
 > [!NOTE]
-> Early stopping monitors `val_Total_Loss`. Set `patience` to e.g. 20–50 for typical fine-tuning runs. If not set, training runs for the full `epochs` count.
+> Early stopping monitors `val_Total_Loss`. Set `patience` to e.g. 20–50 for typical runs. If None, training runs for the full `epochs`.
+
+## Loss Function
+
+| Key | Type | Default | Choices | Description |
+|:----|:-----|:--------|:--------|:------------|
+| `loss` | str | `"mse_loss"` | `"mse_loss"`, `"huber_loss"`, `"smooth_l1_loss"`, `"l1_loss"` | PyTorch loss function for energy/force/stress terms. |
+| `loss_params` | dict | `{}` | Any valid kwargs for the chosen loss | Extra params passed to the loss (e.g., `{"delta": 1.0}` for Huber). |
+
+> [!NOTE]
+> `loss` and `loss_params` are not currently wired through our wrapper (they require being passed directly to `PotentialLightningModule`). The parameter tables above document the upstream API for completeness — wiring can be added if needed.
 
 ## Loss Weights
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `energy_weight` | float | 1.0 | Weight for energy loss. |
-| `force_weight` | float | 1.0 | Weight for forces loss. |
-| `stress_weight` | float | auto | Weight for stress loss. Auto-detected: 1.0 if stress data present, 0.0 otherwise. |
+| Key | Type | Default | Range | Description |
+|:----|:-----|:--------|:------|:------------|
+| `energy_weight` | float | 1.0 | ≥0 | Weight for energy loss. |
+| `force_weight` | float | 1.0 | ≥0 | Weight for forces loss. |
+| `stress_weight` | float | auto | ≥0 | Weight for stress loss. Auto: 1.0 if stress data present, 0.0 otherwise. |
 
 ## Example
 

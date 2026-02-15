@@ -4,41 +4,44 @@ FairChem fine-tuning wraps the official `fairchem` CLI with a Hydra-based YAML c
 
 ## Basic Parameters
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `epochs` | int | 10 | Number of training epochs. |
-| `learning_rate` | float | 4e-4 | Peak learning rate for AdamW optimizer. |
-| `batch_size` | int | 2 | Training batch size per GPU. |
-| `task_name` | str | `"omat"` | Task name (dataset key in multi-task config). |
-| `base_model` | str | loaded model | Base UMA checkpoint name (e.g., `"uma-s-1p1"`). |
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `epochs` | int | 10 | ≥1 | Number of training epochs. |
+| `learning_rate` | float | 4e-4 | >0 | Peak learning rate for AdamW optimizer. |
+| `batch_size` | int | 2 | ≥1 | Training batch size per GPU. |
+| `task_name` | str | `"omat"` | Any valid UMA task key | Task name (dataset key in multi-task config). |
+| `base_model` | str | loaded model | `"uma-s-1p1"`, `"uma-s-1"`, etc. | Base UMA checkpoint name. |
 
 ## Model Freezing
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `freeze_backbone` | bool | False | Freeze all backbone parameters; only output heads are trained. Strongly recommended for small datasets (<500 structures). |
+| Key | Type | Default | Choices | Description |
+|:----|:-----|:--------|:--------|:------------|
+| `freeze_backbone` | bool | False | `True`, `False` | Freeze all backbone parameters; only output heads are trained. Strongly recommended for small datasets (<500 structures). |
 
-When `freeze_backbone=True`, a helper module is generated that wraps `initialize_finetuning_model` and sets `requires_grad=False` on all `model.backbone` parameters. Only the output head layers (energy, force, stress predictions) are updated during training.
+When `freeze_backbone=True`, a helper module wraps `initialize_finetuning_model` and sets `requires_grad=False` on all `model.backbone` parameters. Only the output head layers are updated.
 
 **Verified**: All 143 backbone parameters remain identical to the base model after training. See [examples/uma-sio-frozen](../examples/uma-sio-frozen/).
 
 ## Optimizer & Regularization
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `weight_decay` | float | 1e-3 | L2 weight decay for AdamW. |
-| `clip_grad_norm` | float | 100 | Maximum gradient norm for clipping. Lower values (e.g., 10) can stabilize training on noisy data. |
-| `ema_decay` | float | 0.999 | Exponential moving average decay rate. The EMA model is used for evaluation and checkpoint saving. |
+| Key | Type | Default | Choices / Range | Description |
+|:----|:-----|:--------|:----------------|:------------|
+| `weight_decay` | float | 1e-3 | ≥0 | L2 weight decay for AdamW. |
+| `clip_grad_norm` | float | 100 | >0 | Maximum gradient norm for clipping. Lower values (e.g., 10) can stabilize noisy data. |
+| `ema_decay` | float | 0.999 | 0–1 | Exponential moving average decay rate. EMA model is used for evaluation and checkpoints. |
+
+> [!NOTE]
+> FairChem always uses **AdamW** as the optimizer. This is not configurable.
 
 ## Cosine LR Scheduler
 
-FairChem uses a **cosine annealing LR scheduler with linear warmup**. There is no option to switch to other schedulers via the CLI.
+FairChem uses a **cosine annealing LR scheduler with linear warmup**. This is the only available scheduler — it cannot be swapped for another type.
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `warmup_factor` | float | 0.2 | Initial LR during warmup = `warmup_factor × learning_rate`. |
-| `warmup_epochs` | float | 0.01 | Fraction of total epochs used for linear warmup. E.g., 0.01 = 1% of training. |
-| `lr_min_factor` | float | 0.01 | Minimum LR at end of cosine decay = `lr_min_factor × learning_rate`. |
+| Key | Type | Default | Range | Description |
+|:----|:-----|:--------|:------|:------------|
+| `warmup_factor` | float | 0.2 | 0–1 | Initial LR during warmup = `warmup_factor × learning_rate`. |
+| `warmup_epochs` | float | 0.01 | 0–1 | Fraction of total epochs used for linear warmup. E.g., 0.01 = 1%. |
+| `lr_min_factor` | float | 0.01 | 0–1 | Minimum LR at end of cosine decay = `lr_min_factor × learning_rate`. |
 
 **Schedule visualization:**
 ```
@@ -47,21 +50,21 @@ LR
  |  /‾‾‾‾‾‾‾‾‾\
  | /            \
  |/              \___________
- +--------------------------->  steps
+ +---------------------------> steps
    warmup   cosine decay  min_lr
 ```
 
 ## Checkpointing & Evaluation
 
-| Key | Type | Default | Description |
-|:----|:-----|:--------|:------------|
-| `evaluate_every_n_steps` | int | 100 | Run validation every N training steps. |
-| `checkpoint_every_n_steps` | int | 1000 | Save model checkpoint every N training steps. Up to 5 checkpoints are kept. |
+| Key | Type | Default | Range | Description |
+|:----|:-----|:--------|:------|:------------|
+| `evaluate_every_n_steps` | int | 100 | ≥1 | Run validation every N training steps. |
+| `checkpoint_every_n_steps` | int | 1000 | ≥1 | Save model checkpoint every N steps. Up to 5 checkpoints are kept. |
 
 ## Early Stopping
 
 > [!IMPORTANT]
-> FairChem does **not** have built-in early stopping. Monitor validation loss manually and use a sufficient number of epochs with the cosine scheduler.
+> FairChem does **not** support early stopping. Training runs as a CLI subprocess with no callback mechanism. Workaround: monitor validation loss in training logs and set `epochs` accordingly based on prior experience.
 
 ## Example
 
@@ -75,6 +78,7 @@ result = fine_tune_model(
         "freeze_backbone": True,
         "weight_decay": 1e-3,
         "clip_grad_norm": 10.0,
+        "warmup_factor": 0.2,
         "warmup_epochs": 0.05,
         "lr_min_factor": 0.001,
         "evaluate_every_n_steps": 50,
