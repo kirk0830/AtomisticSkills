@@ -36,8 +36,8 @@ Each MLIP has its own supported `training_config` parameters. See the per-MLIP g
 | Feature | FairChem | MACE | MatGL |
 |:--------|:---------|:-----|:------|
 | Freeze backbone | `freeze_backbone` | `freeze_backbone` | `freeze_backbone` |
-| LR scheduler | Cosine w/ warmup (fixed) | ReduceLROnPlateau (configurable) | CosineAnnealingLR (`decay_steps`, `decay_alpha`) |
-| Early stopping | ❌ Not supported | `patience: 2048` (default off) | ❌ Not built-in |
+| LR scheduler | Cosine w/ warmup (fixed) | ReduceLROnPlateau (configurable) | CosineAnnealingLR or ReduceLROnPlateau |
+| Early stopping | ❌ Not supported | `patience: 2048` (default off) | `patience` (disabled by default) |
 | Grad clipping | `clip_grad_norm: 100` | `clip_grad: 10.0` | N/A |
 | EMA | `ema_decay: 0.999` | `ema_decay: 0.99` | N/A |
 | Loss weights | Automatic via regression task | `energy/forces/stress_weight` | `energy/force/stress_weight` |

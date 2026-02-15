@@ -39,8 +39,12 @@
         "learning_rate": 1e-3,
         "batch_size": 4,
         "freeze_backbone": true,
+        "scheduler": "CosineAnnealingLR",
         "decay_steps": 1000,
         "decay_alpha": 0.01,
+        "lr_factor": 0.5,
+        "scheduler_patience": 10,
+        "patience": null,
         "energy_weight": 1.0,
         "force_weight": 1.0,
         "stress_weight": 1.0

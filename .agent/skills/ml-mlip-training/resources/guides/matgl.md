@@ -16,27 +16,38 @@ MatGL fine-tuning uses PyTorch Lightning with M3GNet or CHGNet models. Parameter
 |:----|:-----|:--------|:------------|
 | `freeze_backbone` | bool | True | Freeze all layers except the final readout. |
 
-## Cosine Annealing LR Scheduler
+## LR Scheduler
 
-MatGL uses `CosineAnnealingLR` by default. The learning rate decays from `lr` to `lr × decay_alpha` over `decay_steps` steps, then restarts.
+MatGL supports two LR scheduler options via the `scheduler` key:
+
+### CosineAnnealingLR (default)
+
+The default scheduler. LR oscillates between `lr` and `lr × decay_alpha` with period `decay_steps`.
 
 | Key | Type | Default | Description |
 |:----|:-----|:--------|:------------|
+| `scheduler` | str | `"CosineAnnealingLR"` | Scheduler type. |
 | `decay_steps` | int | 1000 | Period (T_max) of the cosine annealing cycle in steps. |
 | `decay_alpha` | float | 0.01 | Minimum LR as fraction of initial LR. Final LR = `lr × decay_alpha`. |
 
-**Schedule visualization:**
-```
-LR
- ^
- |‾‾‾\      /‾‾‾\
- |    \    /     \
- |     \  /       \___
- |      \/
- +------------------------> steps
-   T_max   T_max
-   (decay_steps)
-```
+### ReduceLROnPlateau
+
+Reduces LR when validation loss stops improving.
+
+| Key | Type | Default | Description |
+|:----|:-----|:--------|:------------|
+| `scheduler` | str | — | Set to `"ReduceLROnPlateau"` to enable. |
+| `lr_factor` | float | 0.5 | Factor by which LR is reduced on plateau. |
+| `scheduler_patience` | int | 10 | Epochs with no improvement before reducing LR. |
+
+## Early Stopping
+
+| Key | Type | Default | Description |
+|:----|:-----|:--------|:------------|
+| `patience` | int | None | Stop after this many epochs with no improvement in `val_Total_Loss`. Not enabled by default. |
+
+> [!NOTE]
+> Early stopping monitors `val_Total_Loss`. Set `patience` to e.g. 20–50 for typical fine-tuning runs. If not set, training runs for the full `epochs` count.
 
 ## Loss Weights
 
@@ -51,14 +62,16 @@ LR
 ```python
 result = fine_tune_model(
     training_data_path="/path/to/training_data.json",
-    epochs=100,
+    epochs=200,
     learning_rate=1e-3,
     output_dir="/path/to/output",
     training_config={
         "freeze_backbone": True,
         "batch_size": 32,
-        "decay_steps": 500,
-        "decay_alpha": 0.001,
+        "scheduler": "ReduceLROnPlateau",
+        "lr_factor": 0.5,
+        "scheduler_patience": 10,
+        "patience": 30,
         "force_weight": 10.0,
     }
 )

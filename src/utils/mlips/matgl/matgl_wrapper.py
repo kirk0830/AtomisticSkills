@@ -784,6 +784,19 @@ class MatGLWrapper(MLIPModel):
         decay_steps = config.get("decay_steps", 1000)
         decay_alpha = config.get("decay_alpha", 0.01)
 
+        # Build LR scheduler if user requests ReduceLROnPlateau instead of default Cosine
+        scheduler_type = config.get("scheduler", "CosineAnnealingLR")
+        custom_scheduler = None
+        if scheduler_type == "ReduceLROnPlateau":
+            import torch
+            lr_factor = config.get("lr_factor", 0.5)
+            scheduler_patience_val = config.get("scheduler_patience", 10)
+            # Create a dummy optimizer to be replaced by Lightning's configure_optimizers
+            # Instead, we pass the scheduler object directly to PotentialLightningModule
+            # PotentialLightningModule.configure_optimizers uses self.scheduler if not None
+            # We need to defer creation until after optimizer exists — use a lambda approach
+            logging.info(f"Using ReduceLROnPlateau scheduler (factor={lr_factor}, patience={scheduler_patience_val})")
+        
         lit_model = PotentialLightningModule(
             model=self.model.model,
             element_refs=prop_offset,
@@ -796,15 +809,46 @@ class MatGLWrapper(MLIPModel):
             decay_alpha=decay_alpha,
         )
         
+        # If ReduceLROnPlateau was requested, override configure_optimizers 
+        if scheduler_type == "ReduceLROnPlateau":
+            import torch
+            lr_factor = config.get("lr_factor", 0.5)
+            scheduler_patience_val = config.get("scheduler_patience", 10)
+            original_configure = lit_model.configure_optimizers
+            
+            def custom_configure_optimizers():
+                optimizers, _ = original_configure()
+                scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                    optimizers[0], mode="min", factor=lr_factor, patience=scheduler_patience_val
+                )
+                return optimizers, [{"scheduler": scheduler, "monitor": "val_Total_Loss", "interval": "epoch"}]
+            
+            lit_model.configure_optimizers = custom_configure_optimizers
+        
         # 3. Trainer
         history_callback = TrainingHistoryCallback()
         history_callback.training_history.update(self._collect_label_distributions(training_data))
+        
+        callbacks = [history_callback]
+        
+        # Add EarlyStopping if patience is set
+        early_stopping_patience = config.get("patience", None)
+        if early_stopping_patience is not None:
+            from lightning.pytorch.callbacks import EarlyStopping
+            early_stopping = EarlyStopping(
+                monitor="val_Total_Loss",
+                patience=early_stopping_patience,
+                mode="min",
+                verbose=True,
+            )
+            callbacks.append(early_stopping)
+            logging.info(f"EarlyStopping enabled: patience={early_stopping_patience}, monitor=val_Total_Loss")
         
         trainer = pl.Trainer(
             max_epochs=config['max_epochs'],
             accelerator="gpu" if self.device.startswith("cuda") else "cpu",
             devices=1,
-            callbacks=[history_callback],
+            callbacks=callbacks,
             enable_checkpointing=True,
             default_root_dir=output_dir,
             logger=False,
