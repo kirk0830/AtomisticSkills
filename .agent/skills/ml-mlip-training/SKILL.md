@@ -23,18 +23,32 @@ To evaluate and improve the accuracy of a foundation potential (MACE, MatGL, Fai
     python scripts/plot_training_results.py --history history.json
     ```
 
+## Training Config Guides
+
+Each MLIP has its own supported `training_config` parameters. See the per-MLIP guide for full reference tables:
+
+- **FairChem (UMA)**: [resources/guides/fairchem.md](resources/guides/fairchem.md)
+- **MACE**: [resources/guides/mace.md](resources/guides/mace.md)
+- **MatGL (CHGNet/M3GNet)**: [resources/guides/matgl.md](resources/guides/matgl.md)
+
+### Quick Comparison
+
+| Feature | FairChem | MACE | MatGL |
+|:--------|:---------|:-----|:------|
+| Freeze backbone | `freeze_backbone: True` | `freeze_backbone: True` | `freeze_backbone: True` |
+| LR scheduler | Cosine w/ warmup (fixed) | ReduceLROnPlateau | Cosine decay |
+| Early stopping | ❌ Not supported | Via `scheduler_patience` | ❌ Not built-in |
+| Grad clipping | `clip_grad_norm: 100` | N/A | N/A |
+| EMA | `ema_decay: 0.999` | `ema_decay: 0.99` | N/A |
+| Loss weights | Automatic via regression task | `energy/forces/stress_weight` | N/A |
+
 ## Examples
 
-Benchmarking MACE-OMAT-0-small on a new Al-Li dataset:
-```bash
-# After running predictions
-python scripts/plot_training_results.py --results results.json --output_dir plots/
-```
+- [UMA Si-O fine-tuning with frozen backbone](examples/uma-sio-frozen/) — 95 structures, freeze_backbone verified
 
 ## Constraints
 - **Data Size**: For small datasets (<500 structures), `freeze_backbone=True` is strongly recommended.
-- **Units**: Ensure stress labels are in eV/Å³ as per project standards.
-
+- **Units**: Ensure stress labels are in eV/ų as per project standards.
 
 Author: Bowen Deng
 Contact: github username <bowen-bd>

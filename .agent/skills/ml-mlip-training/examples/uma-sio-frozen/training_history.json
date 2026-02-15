@@ -1,0 +1,47 @@
+{
+    "description": "UMA-S-1p1 fine-tuning on 95 Si-O structures (MatPES-PBE labels), freeze_backbone=True, 3 epochs",
+    "model": "uma-s-1p1",
+    "dataset": "Si-O (95 structures, 80/15 train/val split)",
+    "config": {
+        "epochs": 3,
+        "learning_rate": 4e-4,
+        "batch_size": 2,
+        "freeze_backbone": true
+    },
+    "epoch": [
+        0,
+        1,
+        2
+    ],
+    "loss_train": [
+        4.5849,
+        2.0195,
+        0.8062
+    ],
+    "loss_val": [
+        4.8938,
+        4.8693,
+        4.8322
+    ],
+    "energy_mae_val": [
+        0.2833,
+        0.2816,
+        0.2792
+    ],
+    "force_mae_val": [
+        0.0468,
+        0.0468,
+        0.0469
+    ],
+    "stress_mae_val": [
+        0.009,
+        0.009,
+        0.009
+    ],
+    "freeze_backbone_verification": {
+        "backbone_params_unchanged": 143,
+        "backbone_params_changed": 0,
+        "head_params_updated": 6,
+        "verdict": "PASS"
+    }
+}
