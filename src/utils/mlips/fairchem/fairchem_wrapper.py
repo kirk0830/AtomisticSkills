@@ -11,7 +11,7 @@ from ase import Atoms
 from ase.calculators.calculator import Calculator
 
 from fairchem.core.units.mlip_unit.api.inference import InferenceSettings, guess_inference_settings
-from fairchem.core.modules.loss import DDPMTLoss, L2NormLoss, PerAtomMAELoss, MAELoss
+
 from ..base import MLIPModel
 
 logger = logging.getLogger(__name__)
@@ -19,85 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class FAIRCHEMHistoryLogger:
-    """Helper class to capture metrics from FAIRCHEM training loop."""
-    def __init__(self, history):
-        self.history = history
-        # Buffers for training metrics to average them per epoch
-        self._train_buffers = {
-            'loss_train': [],
-            'energy_mae_train': [],
-            'force_mae_train': [],
-            'stress_mae_train': []
-        }
-        self.last_epoch = -1
-        
-    def log_summary(self, summary):
-        """Pass-through for log_summary if needed."""
-        pass
-        
-    def _flush_train_buffers(self):
-        """Calculate averages and append to history."""
-        for key, buffer in self._train_buffers.items():
-            if buffer:
-                avg_val = sum(buffer) / len(buffer)
-                self.history[key].append(float(avg_val))
-                self._train_buffers[key] = []
-            elif key in self.history and len(self.history[key]) < len(self.history.get('epoch', [])):
-                # If buffer is empty but we have an epoch, append None or 0 to keep lists aligned
-                # Actually, if we flushed at the end of epoch, they should align.
-                pass
 
-    def log(self, metrics, step=None, commit=True):
-        """Capture metrics and store in history dictionary."""
-        # epoch is often reported as val/epoch or train/epoch
-        epoch = -1
-        if 'val/epoch' in metrics:
-            epoch = int(metrics['val/epoch'])
-        elif 'train/epoch' in metrics:
-            epoch = int(metrics['train/epoch'])
-
-        if epoch != -1 and epoch > self.last_epoch:
-            # New epoch detected! Flush the training buffers from the previous epoch
-            if self.last_epoch != -1:
-                self._flush_train_buffers()
-            
-            # Store the new epoch
-            if epoch not in self.history['epoch']:
-                self.history['epoch'].append(epoch)
-            self.last_epoch = epoch
-        
-        # Accumulate training metrics in buffers
-        if 'train/loss' in metrics:
-            self._train_buffers['loss_train'].append(float(metrics['train/loss']))
-            
-        # Parse task-specific metrics
-        # Keys look like: val/dataset,task,metric_name
-        for k, v in metrics.items():
-            if k.startswith('val/') and 'mae' in k:
-                val = float(v)
-                if 'energy' in k:
-                    self.history['energy_mae_val'].append(val)
-                elif 'forces' in k:
-                    self.history['force_mae_val'].append(val)
-                elif 'stress' in k:
-                    self.history['stress_mae_val'].append(val)
-            elif k.startswith('train/') and 'mae' in k:
-                val = float(v)
-                if 'energy' in k:
-                    self._train_buffers['energy_mae_train'].append(val)
-                elif 'forces' in k:
-                    self._train_buffers['force_mae_train'].append(val)
-                elif 'stress' in k:
-                    self._train_buffers['stress_mae_train'].append(val)
-        
-        # Validation loss is usually logged at the end of epoch along with val/epoch
-        if 'val/loss' in metrics:
-            self.history['loss_val'].append(float(metrics['val/loss']))
-
-    def finalize(self):
-        """Flush any remaining training logs when training ends."""
-        self._flush_train_buffers()
 
 
 # Available FAIRCHEM models and checkpoints
@@ -240,18 +162,35 @@ class FAIRCHEMWrapper(MLIPModel):
         """
         Load a FAIRCHEM model.
         
+        Supports two modes:
+        1. Named pretrained model (e.g., 'uma-s-1p1') — loaded via get_predict_unit
+        2. Fine-tuned checkpoint file path — loaded via load_predict_unit (official API)
+        
         Args:
-            model_path: Path to model checkpoint. If None, loads default pretrained model.
-                       If provided, loads checkpoint from the specified path.
+            model_path: Path to model checkpoint. If None, uses self.model_name which
+                       can be either a named model or a file path to an inference_ckpt.pt.
         """
+        from pathlib import Path
+        from fairchem.core.units.mlip_unit import load_predict_unit
+        
         # Set device first
         if self.device == "auto":
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         
-        if model_path is None:
-            # Load pretrained model
-            # Load pretrained model
-            model_id = self.model_name
+        # Determine if we're loading a file path or a named model
+        load_path = model_path or self.model_name
+        is_file_path = Path(load_path).exists() and Path(load_path).is_file()
+        
+        if is_file_path:
+            # Load fine-tuned checkpoint using official FairChem API
+            logger.info(f"Loading fine-tuned checkpoint from: {load_path}")
+            self.model = load_predict_unit(load_path)
+            self.is_loaded = True
+            self.is_fine_tuned = True
+            logger.info(f"Loaded fine-tuned model from {load_path}")
+        else:
+            # Load pretrained model by name
+            model_id = load_path
             
             # Parse inference settings
             if isinstance(self.inference_settings, (str, InferenceSettings)):
@@ -260,9 +199,6 @@ class FAIRCHEMWrapper(MLIPModel):
                 settings = InferenceSettings(**self.inference_settings)
             else:
                 settings = self.inference_settings
-
-            # Optional: Disable compile for eSEN models if it's known to be unstable
-            # but for now let's respect the settings.
             
             self.model = self.model_class.get_predict_unit(
                 model_name=model_id,
@@ -272,10 +208,6 @@ class FAIRCHEMWrapper(MLIPModel):
             
             self.is_loaded = True
             logger.info(f"Loaded pretrained {self.model_name} model")
-        else:
-            # Load from checkpoint file
-            self.load_checkpoint(model_path)
-            logger.info(f"Loaded model from checkpoint: {model_path}")
     
     def create_calculator(self, task_name: Optional[str] = None) -> Calculator:
         """
@@ -319,642 +251,648 @@ class FAIRCHEMWrapper(MLIPModel):
                   training_config: Optional[Dict[str, Any]] = None,
                   output_dir: Optional[str] = None) -> Dict[str, Any]:
         """
-        Fine-tune the model using the provided training data.
+        Fine-tune the model using the official FairChem CLI pipeline.
+        
+        Wraps the official workflow:
+        1. Convert training data to extxyz format
+        2. Create LMDB datasets + YAML config via fairchem scripts
+        3. Run 'fairchem -c config.yaml' as subprocess
+        4. Parse CLI metrics into standard training_history format
         
         Args:
-            training_data: List of dicts with 'structure' (Atoms) and labels ('energy', 'forces').
+            training_data: List of dicts with 'structure', 'energy', 'forces', 'stress'.
             validation_data: Optional list of dicts for validation.
-            training_config: Configuration dict (epochs, learning_rate, batch_size, task_name).
+            training_config: Configuration dict (max_epochs, learning_rate, batch_size, etc.).
             output_dir: Directory to save results.
             
         Returns:
-            Dictionary with fine-tuning results (status, best_checkpoint_path, history).
+            Dictionary with fine-tuning results (status, checkpoint_path, training_history).
         """
-        # Unwrap configuration
+        import os
+        import re
+        import subprocess
+        import json as json_module
+        from pathlib import Path
+        from pymatgen.core import Structure
+        from pymatgen.io.ase import AseAtomsAdaptor
+        from ase import Atoms
+        from ase.io import write as ase_write
+        import numpy as np
+        
         config = training_config or {}
         epochs = config.get("epochs", config.get("max_epochs", 10))
-        learning_rate = config.get("learning_rate", 1e-4)
-        batch_size = config.get("batch_size", 4)
-        task_name = config.get("task_name", None)
-        # Head selection / resumption
-        # If None, creates new head "shared_efs_head" (default behavior)
-        # If provided (e.g. "omat"), tries to extract weights from pretrained model
-        init_head_name = config.get("init_head_name", None) 
-
+        learning_rate = config.get("learning_rate", 4e-4)
+        batch_size = config.get("batch_size", 2)
+        task_name = config.get("task_name", "omat")
+        base_model = config.get("base_model", self.model_name)
         
-        save_dir = output_dir if output_dir else "./checkpoints"
+        # Advanced config parameters
+        freeze_backbone = config.get("freeze_backbone", False)
+        weight_decay = config.get("weight_decay", 1e-3)
+        warmup_factor = config.get("warmup_factor", 0.2)
+        warmup_epochs = config.get("warmup_epochs", 0.01)
+        lr_min_factor = config.get("lr_min_factor", 0.01)
+        clip_grad_norm = config.get("clip_grad_norm", 100)
+        evaluate_every_n_steps = config.get("evaluate_every_n_steps", 100)
+        checkpoint_every_n_steps = config.get("checkpoint_every_n_steps", 1000)
+        ema_decay = config.get("ema_decay", 0.999)
         
-        # Helper to attach labels to Atoms for create_db
-        def attach_labels(data_list):
-            if not data_list: return []
-            atoms_list = []
-            
-            from pymatgen.core import Structure
-            from pymatgen.io.ase import AseAtomsAdaptor
-            from ase import Atoms
-            from ase.calculators.singlepoint import SinglePointCalculator
-            import ase.units
-            
-            for d in data_list:
-                s_obj = d['structure']
-                at = None
-                
-                if isinstance(s_obj, dict):
-                    # Try to convert from pymatgen dict
-                    try:
-                        struct = Structure.from_dict(s_obj)
-                        at = AseAtomsAdaptor.get_atoms(struct)
-                    except Exception as e:
-                        logging.warning(f"Failed to convert dict to structure: {e}")
-                        continue
-                elif isinstance(s_obj, Atoms):
-                    at = s_obj.copy()
-                
-                if at is None: continue
-
-                # Attach SinglePointCalculator
-                energy = d.get('energy')
-                forces = d.get('forces')
-                stress = d.get('stress')
-                
-                # Check consistency
-                if forces is not None:
-                     forces = np.array(forces)
-                     if len(forces) != len(at):
-                         logging.warning("Forces length mismatch, skipping forces")
-                         forces = None
-                
-                if stress is not None:
-                     stress = np.array(stress)
-                     # Standardized labels are already in eV/A^3 (ASE standard)
-                
-                if energy is not None or forces is not None or stress is not None:
-                     calc = SinglePointCalculator(at, energy=energy, forces=forces, stress=stress)
-                     at.calc = calc
-
-                atoms_list.append(at)
-            return atoms_list
-
-        train_structures = attach_labels(training_data)
-        val_structures = attach_labels(validation_data)
+        save_dir = Path(output_dir if output_dir else "./fairchem_finetune")
+        save_dir.mkdir(parents=True, exist_ok=True)
         
-        # Simple split if validation not provided
-        if not val_structures:
-            if len(train_structures) > 10:
-                split_idx = int(0.9 * len(train_structures))
-                val_structures = train_structures[split_idx:]
-                train_structures = train_structures[:split_idx]
+        # ----- Step 1: Convert data to extxyz -----
+        logging.info("Step 1: Converting training data to extxyz format...")
+        
+        def _to_atoms(data_dict: Dict[str, Any]) -> Atoms:
+            """Convert a data dict to ASE Atoms with info/arrays labels."""
+            s_obj = data_dict["structure"]
+            if isinstance(s_obj, dict):
+                struct = Structure.from_dict(s_obj)
+                atoms = AseAtomsAdaptor.get_atoms(struct)
+            elif isinstance(s_obj, Atoms):
+                atoms = s_obj.copy()
             else:
-                val_structures = train_structures # Use train as val for very small data logic
-
-        import os
-        import tempfile
-        import shutil
-        import ase.db
-        from omegaconf import OmegaConf
-        import torch
-        from torch.utils.data import DataLoader
-        from torch.utils.data.distributed import DistributedSampler
-        
-        # internal fairchem imports
-        from fairchem.core.units.mlip_unit.mlip_unit import (
-            MLIPTrainEvalUnit, 
-            initialize_finetuning_model, 
-            Task,
-            OutputSpec,
-            _get_consine_lr_scheduler,
-            convert_train_checkpoint_to_inference_checkpoint,
-            mt_collater_adapter
-        )
-        from fairchem.core.components.train.train_runner import (
-            TrainEvalRunner, 
-            TrainCheckpointCallback
-        )
-        from fairchem.core.datasets.ase_datasets import AseDBDataset
-        from fairchem.core.common.data_parallel import BalancedBatchSampler
-        from fairchem.core.modules.normalization.normalizer import Normalizer
-        from fairchem.core.modules.loss import DDPMTLoss, PerAtomMAELoss, L2NormLoss
-        from fairchem.core.calculate.pretrained_mlip import pretrained_checkpoint_path_from_name
-        from fairchem.core.datasets.atomic_data import AtomicData
-        from functools import partial
-        import torch.distributed as dist
-
-        from fairchem.core.datasets.mt_concat_dataset import ConcatDataset
-        
-        # Check for model/checkpoint override
-        if training_config:
-            new_model = training_config.get("foundation_model") or training_config.get("checkpoint_path")
-            if new_model and new_model != self.model_name:
-                logging.info(f"Reloading model for fine-tuning: {self.model_name} -> {new_model}")
-                self.model_name = new_model
-                self.is_loaded = False
-                self.load(model_path=new_model if os.path.exists(new_model) else None)
-
-        # Ensure save directory exists
-        os.makedirs(save_dir, exist_ok=True)
-
-        # Initialize process group if not already initialized (required for MLIPTrainEvalUnit)
-        if not dist.is_initialized():
-            # Use gloo backend which supports both CPU and GPU tensors and is more robust for tests
-            # NCCL requires all tensors to be on GPU which can be strict or fail with mismatch
-            backend = "gloo"
-            if torch.cuda.is_available():
-                try:
-                    torch.cuda.set_device(0)
-                except: pass
+                atoms = AseAtomsAdaptor.get_atoms(s_obj)
             
-            # Use a free port to avoid EADDRINUSE errors
-            from torch.distributed.elastic.utils.distributed import get_free_port
-            port = get_free_port()
-            dist.init_process_group(backend=backend, init_method=f"tcp://localhost:{port}", rank=0, world_size=1)
+            # Attach labels as info/arrays (extxyz format)
+            if "energy" in data_dict and data_dict["energy"] is not None:
+                atoms.info["energy"] = float(data_dict["energy"])
+            if "forces" in data_dict and data_dict["forces"] is not None:
+                atoms.arrays["forces"] = np.array(data_dict["forces"], dtype=np.float64)
+            if "stress" in data_dict and data_dict["stress"] is not None:
+                stress = np.array(data_dict["stress"], dtype=np.float64)
+                # Ensure 3x3 format
+                if stress.shape == (6,):
+                    # Voigt: xx, yy, zz, yz, xz, xy → 3x3
+                    v = stress.flatten()
+                    stress = np.array([
+                        [v[0], v[5], v[4]],
+                        [v[5], v[1], v[3]],
+                        [v[4], v[3], v[2]]
+                    ])
+                elif stress.size == 9:
+                    stress = stress.reshape(3, 3)
+                atoms.info["stress"] = stress
+            return atoms
         
-        # --- Determine Task Name ---
-        # --- Determine Task Name ---
-        model_key = self.model_name.lower()
-        model_meta = MODEL_METADATA.get(model_key, {})
-        supported_tasks = model_meta.get("supported_tasks", [])
-        
-        if task_name is None:
-            # 1. Try to get default from metadata
-            if "default_task" in model_meta:
-                task_name = model_meta["default_task"]
-                logging.info(f"Using default task '{task_name}' from metadata for {self.model_name}")
-            else:
-                # 2. Heuristic based on PBC (Fallback if no metadata - though now metadata is required)
-                if train_structures and any(train_structures[0].pbc):
-                    task_name = "omat" # Solid state / Bulk
-                    logging.info(f"Inferred task '{task_name}' based on PBC=True")
-                else:
-                    task_name = "omol" # Finite / Molecule
-                    logging.info(f"Inferred task '{task_name}' based on PBC=False")
-        
-        # Validation
-        if supported_tasks and task_name not in supported_tasks:
-            logging.warning(
-                f"Selected fine-tuning task '{task_name}' is not explicitly listed in "
-                f"supported_tasks for {self.model_name}: {supported_tasks}. "
-                f"Proceeding, but this may fail."
-            )
+        # Split into train/val
+        all_data = list(training_data)
+        if validation_data:
+            val_data = list(validation_data)
+            train_data = all_data
         else:
-             logging.info(f"Using task name: {task_name}")
+            split_idx = max(1, int(0.9 * len(all_data)))
+            train_data = all_data[:split_idx]
+            val_data = all_data[split_idx:]
+            if not val_data:
+                val_data = train_data[-1:]
 
-        energy_key = f"{task_name}_energy"
-        forces_key = f"{task_name}_forces"
-        stress_key = f"{task_name}_stress"
-
-        # Create a temporary directory for datasets and artifacts
-        with tempfile.TemporaryDirectory() as temp_dir:
-            logging.info(f"Created temporary directory for fine-tuning: {temp_dir}")
-            
-            # --- 1. Preparation ---
-            def create_db(structures, db_path, dataset_name):
-                with ase.db.connect(db_path) as db:
-                    for atoms in structures:
-                        # Ensure we have energy and forces if possible
-                        data = {}
-                        if atoms.get_calculator() is not None:
-                            try:
-                                data['energy'] = atoms.get_potential_energy()
-                                data['forces'] = atoms.get_forces()
-                                try:
-                                    data['stress'] = atoms.get_stress()
-                                except: pass
-                            except Exception:
-                                pass
-                        
-                        kv_pairs = {}
-                        if 'energy' in data:
-                             kv_pairs['energy'] = data['energy']
-                        elif 'energy' in atoms.info:
-                             kv_pairs['energy'] = atoms.info['energy']
-                             
-                        if 'forces' in data:
-                             atoms.info['forces'] = np.array(data['forces'])
-                        def _ensure_3x3_stress(s):
-                            s = np.array(s)
-                            if s.shape == (3, 3): return s
-                            if s.size == 9: return s.reshape(3, 3)
-                            if s.size == 6:
-                                # Voigt: xx, yy, zz, yz, xz, xy
-                                v = s.flatten()
-                                return np.array([[v[0], v[5], v[4]], [v[5], v[1], v[3]], [v[4], v[3], v[2]]])
-                            return s.reshape(3, 3) # fallback to try reshape anyway
-
-                        if 'stress' in data:
-                             atoms.info['stress'] = _ensure_3x3_stress(data['stress'])
-                        
-                        # Add dataset name to info so it gets picked up
-                        kv_pairs['dataset_name'] = dataset_name
-                        
-                        db.write(atoms, data=kv_pairs)
-
-            train_db_path = os.path.join(temp_dir, "train.db")
-            val_db_path = os.path.join(temp_dir, "val.db")
-            
-            create_db(train_structures, train_db_path, task_name)
-            create_db(val_structures, val_db_path, task_name)
-            
-            # Check if stress is present to enable stress task
-            has_stress = any(s.get_calculator() is not None and s.get_calculator().results.get('stress') is not None for s in train_structures)
-            
-            # --- 2. Configure Dataset ---
-            # We use AseDBDataset. 
-            # task_name, energy_key,            # Define key mapping for AseDBDataset
-            key_mapping = {
-                "energy": energy_key,
-                "forces": forces_key,
-                "stress": stress_key,
+        # Write extxyz files
+        train_dir = save_dir / "extxyz" / "train"
+        val_dir = save_dir / "extxyz" / "val"
+        train_dir.mkdir(parents=True, exist_ok=True)
+        val_dir.mkdir(parents=True, exist_ok=True)
+        
+        for i, d in enumerate(train_data):
+            atoms = _to_atoms(d)
+            ase_write(str(train_dir / f"train_{i:04d}.extxyz"), atoms, format="extxyz")
+        
+        for i, d in enumerate(val_data):
+            atoms = _to_atoms(d)
+            ase_write(str(val_dir / f"val_{i:04d}.extxyz"), atoms, format="extxyz")
+        
+        logging.info(f"  Wrote {len(train_data)} train + {len(val_data)} val extxyz files")
+        
+        # ----- Step 2: Create LMDB + YAML via fairchem scripts -----
+        logging.info("Step 2: Creating LMDB datasets and YAML config...")
+        
+        
+        
+        lmdb_dir = save_dir / "lmdb_output"
+        # Remove existing lmdb_dir if it exists (create_yaml asserts it doesn't)
+        import shutil
+        if lmdb_dir.exists():
+            shutil.rmtree(lmdb_dir)
+        
+        # Determine regression task type
+        has_stress = any(d.get("stress") is not None for d in train_data)
+        has_forces = any(d.get("forces") is not None for d in train_data)
+        if has_stress:
+            regression_tasks = "efs"
+        elif has_forces:
+            regression_tasks = "ef"
+        else:
+            regression_tasks = "e"
+        
+        # Process train and val data into LMDB
+        # NOTE: We use sequential processing (no mp.Pool) to avoid CUDA fork deadlock
+        # when the model is already loaded on GPU (e.g., in MCP server context).
+        # The upstream launch_processing/compute_normalizer use mp.Pool which forks,
+        # and forked children inherit the CUDA context causing deadlocks.
+        train_lmdb_path = lmdb_dir / "train"
+        val_lmdb_path = lmdb_dir / "val"
+        
+        logging.info("  Creating train LMDB (sequential)...")
+        self._create_lmdb_sequential(train_dir, train_lmdb_path)
+        
+        logging.info("  Computing normalizer and linear reference...")
+        force_rms, linref_coeff = self._compute_normalizer_sequential(train_lmdb_path)
+        if regression_tasks == "e":
+            force_rms = 1.0
+        
+        logging.info("  Creating val LMDB (sequential)...")
+        self._create_lmdb_sequential(val_dir, val_lmdb_path)
+        
+        # Generate YAML config using bundled templates
+        configs_dir = Path(__file__).parent / "finetune_configs"
+        self._create_finetune_yaml(
+            configs_dir=configs_dir,
+            train_lmdb_path=str(train_lmdb_path),
+            val_lmdb_path=str(val_lmdb_path),
+            force_rms=float(force_rms),
+            linref_coeff=linref_coeff,
+            output_dir=lmdb_dir,
+            dataset_name=task_name,
+            regression_tasks=regression_tasks,
+            base_model_name=base_model,
+            epochs=epochs,
+            learning_rate=learning_rate,
+            batch_size=batch_size,
+            freeze_backbone=freeze_backbone,
+            weight_decay=weight_decay,
+            warmup_factor=warmup_factor,
+            warmup_epochs=warmup_epochs,
+            lr_min_factor=lr_min_factor,
+            clip_grad_norm=clip_grad_norm,
+            evaluate_every_n_steps=evaluate_every_n_steps,
+            checkpoint_every_n_steps=checkpoint_every_n_steps,
+            ema_decay=ema_decay,
+        )
+        
+        yaml_config_path = lmdb_dir / "uma_sm_finetune_template.yaml"
+        logging.info(f"  YAML config: {yaml_config_path}")
+        
+        # ----- Step 3: Run fairchem CLI -----
+        logging.info(f"Step 3: Running fairchem CLI for {epochs} epochs...")
+        
+        run_dir = save_dir / "runs"
+        run_dir.mkdir(parents=True, exist_ok=True)
+        
+        timestamp_id = f"run_{epochs}ep"
+        
+        # Clean any prior checkpoint to prevent the CLI from resuming instead of training fresh
+        prior_run = run_dir / timestamp_id
+        if prior_run.exists():
+            import shutil as _shutil
+            _shutil.rmtree(prior_run)
+            logging.info(f"  Removed existing run directory: {prior_run}")
+        
+        # Resolve the fairchem binary from the same conda env as the current Python
+        import sys as _sys
+        fairchem_bin = Path(_sys.executable).parent / "fairchem"
+        if not fairchem_bin.exists():
+            raise FileNotFoundError(
+                f"fairchem CLI not found at {fairchem_bin}. "
+                f"Ensure fairchem-core is installed in the active environment."
+            )
+        
+        cmd = [
+            str(fairchem_bin),
+            "-c", str(yaml_config_path),
+            f"job.run_dir={run_dir}",
+            f"+job.timestamp_id={timestamp_id}",
+        ]
+        
+        logging.info(f"  Command: {' '.join(cmd)}")
+        
+        # Build subprocess environment
+        # When freeze_backbone is used, the helper module is in lmdb_dir and
+        # must be importable by Hydra during instantiation.
+        import os as _os
+        sub_env = _os.environ.copy()
+        existing_pypath = sub_env.get("PYTHONPATH", "")
+        lmdb_dir_str = str(lmdb_dir.resolve())
+        if existing_pypath:
+            sub_env["PYTHONPATH"] = lmdb_dir_str + _os.pathsep + existing_pypath
+        else:
+            sub_env["PYTHONPATH"] = lmdb_dir_str
+        
+        # Run subprocess and capture output
+        process = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=str(save_dir),
+            env=sub_env,
+        )
+        
+        cli_output = process.stdout + "\n" + process.stderr
+        
+        # Save raw output log
+        log_path = save_dir / "fairchem_cli_output.log"
+        with open(log_path, "w") as f:
+            f.write(cli_output)
+        
+        if process.returncode != 0:
+            logging.error(f"fairchem CLI failed with return code {process.returncode}")
+            logging.error(f"stderr: {process.stderr[-2000:]}")
+            return {
+                "status": "failed",
+                "error": f"fairchem CLI exited with code {process.returncode}",
+                "log_path": str(log_path),
             }
-
-            # Configure dataset
-            base_dataset_config = {
-                "src": None,  # Will be set later
-                "a2g_args": {
-                    "r_energy": True,
-                    "r_forces": True,
-                    "r_stress": True, # AtomicData will read stress as 3x3
-                    "max_neigh": 300, # Standard UMA default
-                    "task_name": None, # Should be None if we map keys manually? Or task_name?
-                    # logic: dataset.task_name is used for dataset_name in batch.
-                    # but if we use key mapping, we might not rely on dataset_name for filtering?
-                    # Actually get_output_mask iterates dataset_name.
-                    # So we should set it.
-                },
-                "key_mapping": key_mapping,
-                "transforms": {
-                    "common_transform": {
-                        "dataset_name": task_name
-                    },
-                    "stress_reshape_transform": {}
-                }
-            }
-            
-            # Use ConcatDataset to follow Fairchem standard setup and handle dataset_name injection
-            sampling_config = {"type": "explicit", "ratios": {task_name: 1.0}}
-            
-            # Create training dataset
-            train_config = base_dataset_config.copy()
-            train_config["src"] = train_db_path
-            train_dataset = ConcatDataset(
-                {task_name: AseDBDataset(train_config)}, 
-                sampling=sampling_config
-            )
-            
-            # Create validation dataset
-            val_config = base_dataset_config.copy()
-            val_config["src"] = val_db_path
-            val_dataset = ConcatDataset(
-                {task_name: AseDBDataset(val_config)}, 
-                sampling=sampling_config
-            )
-            
-            # --- 3. Define Tasks ---
-            # We need to create Task objects manually
-            
-            # --- 3. Define Tasks ---
-            tasks = []
-            
-            # Energy Task
-            tasks.append(Task(
-                name=energy_key,
-                level="system",
-                property="energy",
-                out_spec=OutputSpec(dim=[1], dtype="float32"),
-                normalizer=Normalizer(mean=0.0, rmsd=1.0),
-                datasets=[task_name],
-                loss_fn=DDPMTLoss(loss_fn=PerAtomMAELoss(), coefficient=config.get("energy_weight", 1.0)),
-                metrics=["mae"]
-            ))
-
-            # Forces Task
-            tasks.append(Task(
-                name=forces_key,
-                level="atom",
-                property="forces",
-                out_spec=OutputSpec(dim=[3], dtype="float32"),
-                normalizer=Normalizer(mean=0.0, rmsd=1.0),
-                datasets=[task_name],
-                loss_fn=DDPMTLoss(loss_fn=L2NormLoss(), coefficient=config.get("forces_weight", 10.0)),
-                metrics=["mae"],
-                train_on_free_atoms=True,
-                eval_on_free_atoms=True
-            ))
-            if has_stress:
-                stress_task = Task(
-                    name=stress_key,
-                    level="system",
-                    property="stress",
-                    out_spec=OutputSpec(dim=[1, 9], dtype="float32"),
-                    normalizer=Normalizer(mean=0.0, rmsd=1.0),
-                    datasets=[task_name],
-                    # TODO: FairChem doesn't support 3x3 MAE well in metrics yet, check this
-                    loss_fn=DDPMTLoss(loss_fn=MAELoss(), coefficient=config.get("stress_weight", 1.0)),
-                    metrics=["mae"]
-                )
-                tasks.append(stress_task)
-                logging.info(f"Enabling stress task for fine-tuning with weight {config.get('stress_weight', 1.0)}")
-            
-            # --- 4. Dataloaders ---
-            collate_fn = mt_collater_adapter(tasks)
-            
-            train_loader = DataLoader(
-                train_dataset,
-                sampler=DistributedSampler(train_dataset, shuffle=True),
-                batch_size=batch_size,
-                num_workers=0,
-                collate_fn=collate_fn
-            )
-            
-            # Monkey patch for FAIRCHEM compatibility (MLIPTrainEvalUnit requires this method)
-            if hasattr(train_loader, "batch_sampler"):
-                train_loader.batch_sampler.set_epoch_and_start_iteration = lambda epoch, start_iteration: None
-
-            val_loader = DataLoader(
-                val_dataset,
-                sampler=DistributedSampler(val_dataset, shuffle=False),
-                batch_size=batch_size,
-                num_workers=0,
-                collate_fn=collate_fn
-            )
-            
-            # Monkey patch for FAIRCHEM compatibility
-            if hasattr(val_loader, "batch_sampler"):
-                 val_loader.batch_sampler.set_epoch_and_start_iteration = lambda epoch, start_iteration: None
-            
-            # --- 5. Initialize Model ---
-            # We need to reconstruct the model for fine-tuning
-            
-            # Define Heads Configuration
-            heads_config = {}
-            target_head_name = "shared_efs_head"
-            
-            # If resuming a head, we need to extract its config/state first
-            pretrained_head_state_dict = None
-            if init_head_name:
-                logging.info(f"Attempting to resume head '{init_head_name}' from pretrained model...")
-                try:
-                    # Temporary load to get head info
-                    temp_model, temp_ckpt = load_inference_model(ckpt_path, strict=False)
-                    if hasattr(temp_model, "output_heads") and init_head_name in temp_model.output_heads:
-                         # Extract config if possible (often not stored directly in head, need check model_config)
-                         # But FairChem heads are usually MLP_EFS_Head. We just reuse our standard config 
-                         # but load weights.
-                         pretrained_head_state_dict = temp_model.output_heads[init_head_name].state_dict()
-                         target_head_name = init_head_name # Use the same name
-                         logging.info(f"Found head '{init_head_name}'. Weights will be reloaded after initialization.")
-                    else:
-                        logging.warning(f"Head '{init_head_name}' not found in pretrained model. Creating new head '{target_head_name}'.")
-                    del temp_model
-                    del temp_ckpt
-                    import gc
-                    gc.collect()
-                except Exception as e:
-                     logging.warning(f"Failed to extract head '{init_head_name}': {e}. Creating new head.")
-
-            heads_config = {
-                target_head_name: {
-                    "module": "fairchem.core.models.uma.escn_md.MLP_EFS_Head",
-                    "wrap_property": True,  # Output dict {"energy": tensor} for each key
-                    "prefix": task_name,    # Output keys: take simple "omat" etc
-                }
-            }
-            
-            try:
-                ckpt_path = pretrained_checkpoint_path_from_name(self.model_name)
-            except Exception:
-                # Fallback if it's a local path
-                ckpt_path = self.model_name
-                
-            logging.info(f"Using checkpoint for fine-tuning: {ckpt_path}")
-
-            # overrides for initialize_finetuning_model
-            # Default to freezing backbone for efficiency
-            freeze_backbone = config.get("freeze_backbone", True)
-            
-            overrides = {
-                "backbone": {
-                     "otf_graph": True,
-                     # "max_neighbors": 300, # Use model default or config
-                     "regress_stress": has_stress, 
-                     "direct_forces": False,
-                },
-                "pass_through_head_outputs": True,
-                "freeze_backbone": freeze_backbone
-            }
-            
-            if freeze_backbone:
-                logging.info("Enabling FAIRCHEM backbone freezing")
-            
-            model = initialize_finetuning_model(
-                checkpoint_location=ckpt_path,
-                overrides=overrides,
-                heads=heads_config,
-                strict=False # Often needed when changing heads
-            )
-
-            # Reload head weights if resuming
-            if pretrained_head_state_dict is not None and target_head_name in model.output_heads:
-                try:
-                    # The prefix might have changed (e.g. from 'omat' to 'omat' it's fine)
-                    # But if we are fine-tuning on a NEW task name, the logic in forward might use new keys?
-                    # MLP_EFS_Head uses 'prefix' arg which is set in __init__.
-                    # Since we re-initialized the head with correct prefix, loading state dict (linear weights) is safe.
-                    model.output_heads[target_head_name].load_state_dict(pretrained_head_state_dict)
-                    logging.info(f"Successfully reloaded weights for head '{target_head_name}'")
-                except Exception as e:
-                    logging.error(f"Error reloading head weights: {e}")
-
-            # --- 6. Configure Optimization ---
-            # Scheduler (Aligned with official FairChem defaults)
-            # warmup_epochs=0.01, lr_min_factor=0.01, warmup_factor=0.2
-            cosine_lr_fn = lambda optimizer, n_iters_per_epoch: _get_consine_lr_scheduler(
-                warmup_factor=0.2,
-                warmup_epochs=0.01,
-                lr_min_factor=0.01,
-                epochs=epochs,
-                n_iters_per_epoch=n_iters_per_epoch,
-                optimizer=optimizer
-            )
-            
-            # Optimizer (AdamW defaults from log)
-            # Log shows: lr=0.0002 (2e-4), weight_decay=0.001
-            # Must use partial because MLIPTrainEvalUnit accesses .keywords
-            optimizer_fn = partial(
-                torch.optim.AdamW, 
-                lr=learning_rate, 
-                weight_decay=config.get("weight_decay", 0.001)
-            )
-            
-            # --- 7. Configure Runner and Unit ---
-            
-            # Fake job config
-            dummy_config_path = os.path.join(temp_dir, "config.yaml")
-            
-            # The config file must have a 'job' key
-            full_config = OmegaConf.create({
-                "job": {
-                    "debug": False,
-                    "logger": False, # Disable wandb for now
-                    "scheduler": {"ranks_per_node": 1},
-                    "metadata": {
-                        "checkpoint_dir": temp_dir,
-                        "config_path": dummy_config_path
-                    }
-                },
-                "runner": {
-                    "train_eval_unit": {
-                        "model": {}, # Placeholder
-                        "tasks": [
-                            {
-                                "_target_": "fairchem.core.units.mlip_unit.mlip_unit.Task",
-                                "name": energy_key,
-                                "level": "system",
-                                "property": "energy",
-                                "out_spec": {"dim": [1], "dtype": "float32"},
-                            },
-                             {
-                                "_target_": "fairchem.core.units.mlip_unit.mlip_unit.Task",
-                                "name": forces_key,
-                                "level": "atom",
-                                "property": "forces",
-                                "out_spec": {"dim": [3], "dtype": "float32"},
-                            }
-                        ]
-                    }
-                }
-            })
-            
-            # Save the dummy config
-            OmegaConf.save(full_config, dummy_config_path)
-            
-            job_config = full_config.job
-            OmegaConf.set_readonly(job_config, False)
-            job_config.logger = False
-            job_config.debug = False
-
-            # --- 7. Initialize history and logger ---
-            for key in ["epoch", "loss_train", "loss_val", "energy_mae_train", "energy_mae_val", 
-                        "force_mae_train", "force_mae_val", "stress_mae_train", "stress_mae_val"]:
-                if key not in self._training_history:
-                    self._training_history[key] = []
-            
-            # Create our history logger pointing directly to wrapper's history
-            history_logger = FAIRCHEMHistoryLogger(self._training_history)
-            
-            # --- 8. Setup Runner ---
-            unit = MLIPTrainEvalUnit(
-                job_config=job_config,
-                model=model,
-                optimizer_fn=optimizer_fn,
-                # Note: cosine_lr_scheduler_fn needs partial that takes (optimizer, n_iters_per_epoch)
-                # But MLIPTrainEvalUnit calls it as: self.lr_scheduler_fn(self.optimizer, self.n_iters_per_epoch)
-                # So we simply pass our pre-constructed lambda.
-                cosine_lr_scheduler_fn=cosine_lr_fn,
-                tasks=tasks,
-                print_every=1
-            )
-            # Clip grad norm default 100 as per Log
-            unit.clip_grad_norm = config.get("clip_grad_norm", 100.0)
-            
-            # Overwrite logger to catch metrics
-            unit.logger = history_logger
-
-            runner = TrainEvalRunner(
-                train_eval_unit=unit,
-                train_dataloader=train_loader,
-                eval_dataloader=val_loader,
-                max_epochs=epochs,
-                callbacks=[TrainCheckpointCallback(checkpoint_every_n_steps=100)],
-            )
-            
-            # Manually attach job_config as it is not an argument in __init__ but used in run()
-            runner.job_config = job_config
-            
-            # --- 8. Run Training ---
-            logging.info("Starting fine-tuning...")
-            
-            # Reset model to train mode
-            model.train()
-
-            runner.run()
-            
-            # Flush remaining training metrics
-            history_logger.finalize()
-            
-            # --- 9. Save Artifacts ---
-            # Find best or final checkpoint
-            final_dcp_path = os.path.join(temp_dir, "final")
-            target_pt_path = os.path.join(save_dir, "finetuned_model.pt")
-            
-            if os.path.exists(final_dcp_path):
-                convert_train_checkpoint_to_inference_checkpoint(final_dcp_path, target_pt_path)
-                logging.info(f"Saved fine-tuned model to {target_pt_path}")
-                
-                # Update the current model to the fine-tuned one
-                self.load(target_pt_path)
-                self.is_fine_tuned = True
-                
-                try:
-                    # Construct history dictionary compatible with MLIPModel.plot_training_history
-                    # Metrics are already in self._training_history thanks to history_logger
-                    # We just need to add label distributions
-                    
-                    # Also populate label distributions for plotting
-                    try:
-                        # Helper to extract dicts for base method
-                        train_data_dicts = []
-                        for atoms in train_structures:
-                            d = {'structure': atoms}
-                            # check info or calc
-                            if atoms.get_calculator():
-                                try:
-                                    d['energy'] = atoms.get_potential_energy()
-                                    d['forces'] = atoms.get_forces()
-                                    d['stress'] = atoms.get_stress() if hasattr(atoms, 'get_stress') else None
-                                except: pass
-                            elif 'energy' in atoms.info:
-                                d['energy'] = atoms.info['energy']
-                                d['forces'] = atoms.arrays.get('forces')
-                                d['stress'] = atoms.info.get('stress')
-                            
-                            train_data_dicts.append(d)
-                            
-                        # Call the distribution collector from base class
-                        dist_data = self._collect_label_distributions(train_data_dicts)
-                        self._training_history.update(dist_data)
-                    except Exception as e:
-                        logging.warning(f"Could not collect label distributions: {e}")
-                    
-                    # Update the collected history with distribution data
-                    # dist_data already updated above if successful
-                    history = self._training_history
-                    
-                    # Save numerical history to JSON
-                    json_path = Path(save_dir) / "training_history.json"
-                    self.save_training_history(str(json_path))
-                    
-                    # Plot training history
-                    plot_path = Path(save_dir) / "training_history.png"
-                    try:
-                        self.plot_training_history(save_path=str(plot_path), show=False)
-                        logging.info(f"Training history plot saved to {plot_path}")
-                    except Exception as e:
-                        logging.warning(f"Failed to generate training history plot: {e}")
-                        
-                except Exception as e:
-                    logging.warning(f"Could not parse training history: {e}")
-                
-                return {
-                    "is_fine_tuned": True,
-                    "model_saved_to": str(target_pt_path),
-                    "training_history": history,
-                    "final_metrics": history.get("val_loss", [])[-1] if history.get("val_loss") else None,
-                    "plot_path": str(plot_path) if 'plot_path' in locals() else None
-                }
-            else:
-                logging.error("Final checkpoint not found!")
-                raise RuntimeError("Fine-tuning failed to produce a final checkpoint.")
+        
+        # ----- Step 4: Parse CLI metrics -----
+        logging.info("Step 4: Parsing training metrics from CLI output...")
+        
+        training_history = self._parse_fairchem_cli_metrics(cli_output, task_name)
+        
+        # Also populate label distributions for plotting
+        distributions = self._collect_label_distributions(training_data)
+        training_history.update(distributions)
+        self._training_history = training_history
+        self.is_fine_tuned = True
+        
+        # ----- Step 5: Save artifacts -----
+        logging.info("Step 5: Saving training history and plot...")
+        
+        # Save training history JSON
+        json_path = save_dir / "training_history.json"
+        self.save_training_history(str(json_path))
+        
+        # Plot training history
+        plot_path = save_dir / "training_history.png"
+        self.plot_training_history(save_path=str(plot_path), show=False)
+        logging.info(f"  Training history plot saved to {plot_path}")
+        
+        # Find inference checkpoint
+        ckpt_dir = run_dir / timestamp_id / "checkpoints" / "final"
+        inference_ckpt_path = ckpt_dir / "inference_ckpt.pt"
+        
+        if not inference_ckpt_path.exists():
+            logging.warning(f"inference_ckpt.pt not found at {inference_ckpt_path}")
+            # Try alternative locations
+            for ckpt_candidate in run_dir.rglob("inference_ckpt.pt"):
+                inference_ckpt_path = ckpt_candidate
+                break
+        
+        # Extract final metrics
+        final_metrics = {}
+        for key in ["energy_mae_val", "force_mae_val", "stress_mae_val", "loss_val"]:
+            values = [v for v in training_history.get(key, []) if v is not None]
+            if values:
+                final_metrics[f"final_{key}"] = values[-1]
+        
+        return {
+            "status": "completed",
+            "epochs": epochs,
+            "model_saved_to": str(inference_ckpt_path) if inference_ckpt_path.exists() else None,
+            "training_history_path": str(json_path),
+            "training_history_plot": str(plot_path),
+            "log_path": str(log_path),
+            "final_metrics": final_metrics,
+            "training_history": training_history,
+        }
     
+    def _create_finetune_yaml(
+        self,
+        configs_dir: "Path",
+        train_lmdb_path: str,
+        val_lmdb_path: str,
+        force_rms: float,
+        linref_coeff: list,
+        output_dir: "Path",
+        dataset_name: str,
+        regression_tasks: str,
+        base_model_name: str,
+        epochs: int = 10,
+        learning_rate: float = 4e-4,
+        batch_size: int = 2,
+        freeze_backbone: bool = False,
+        weight_decay: float = 1e-3,
+        warmup_factor: float = 0.2,
+        warmup_epochs: float = 0.01,
+        lr_min_factor: float = 0.01,
+        clip_grad_norm: float = 100,
+        evaluate_every_n_steps: int = 100,
+        checkpoint_every_n_steps: int = 1000,
+        ema_decay: float = 0.999,
+    ) -> None:
+        """Generate finetune YAML configs from bundled templates.
+        
+        Args:
+            configs_dir: Path to bundled template config directory.
+            train_lmdb_path: Path to train LMDB dataset.
+            val_lmdb_path: Path to val LMDB dataset.
+            force_rms: RMS of forces for normalizer.
+            linref_coeff: Linear reference coefficients.
+            output_dir: Output directory for generated YAML files.
+            dataset_name: Name of the dataset (used as task key).
+            regression_tasks: One of 'e', 'ef', 'efs'.
+            base_model_name: Name of the base UMA model checkpoint.
+            epochs: Number of training epochs.
+            learning_rate: Peak learning rate for AdamW optimizer.
+            batch_size: Training batch size.
+            freeze_backbone: If True, freeze backbone params (only train heads).
+            weight_decay: Weight decay for AdamW optimizer.
+            warmup_factor: Initial LR = warmup_factor * lr during warmup.
+            warmup_epochs: Fraction of total epochs used for LR warmup.
+            lr_min_factor: Minimum LR = lr_min_factor * lr at end of cosine decay.
+            clip_grad_norm: Max gradient norm for clipping.
+            evaluate_every_n_steps: Run validation every N training steps.
+            checkpoint_every_n_steps: Save checkpoint every N training steps.
+            ema_decay: Exponential moving average decay rate.
+        """
+        import yaml
+        from pathlib import Path
+        
+        data_yaml_dir = Path("data")
+        regression_label_to_yaml = {
+            "e": data_yaml_dir / "uma_conserving_data_task_energy.yaml",
+            "ef": data_yaml_dir / "uma_conserving_data_task_energy_force.yaml",
+            "efs": data_yaml_dir / "uma_conserving_data_task_energy_force_stress.yaml",
+        }
+        
+        # Load and modify data task YAML
+        data_task_yaml = configs_dir / regression_label_to_yaml[regression_tasks]
+        with open(data_task_yaml) as f:
+            template = yaml.safe_load(f)
+        
+        template["dataset_name"] = dataset_name
+        template["normalizer_rmsd"] = force_rms
+        template["elem_refs"] = linref_coeff
+        template["train_dataset"]["splits"]["train"]["src"] = train_lmdb_path
+        template["val_dataset"]["splits"]["val"]["src"] = val_lmdb_path
+        
+        output_dir = Path(output_dir)
+        (output_dir / data_yaml_dir).mkdir(parents=True, exist_ok=True)
+        with open(output_dir / regression_label_to_yaml[regression_tasks], "w") as f:
+            yaml.dump(template, f, default_flow_style=False, sort_keys=False)
+        
+        # Load and modify main finetune YAML
+        uma_yaml = configs_dir / "uma_sm_finetune_template.yaml"
+        with open(uma_yaml) as f:
+            template_ft = yaml.safe_load(f)
+        
+        template_ft["base_model_name"] = base_model_name
+        template_ft["epochs"] = epochs
+        template_ft["lr"] = learning_rate
+        template_ft["batch_size"] = batch_size
+        template_ft["weight_decay"] = weight_decay
+        template_ft["evaluate_every_n_steps"] = evaluate_every_n_steps
+        template_ft["checkpoint_every_n_steps"] = checkpoint_every_n_steps
+        
+        # Update cosine LR scheduler parameters
+        scheduler_cfg = template_ft["runner"]["train_eval_unit"]["cosine_lr_scheduler_fn"]
+        scheduler_cfg["warmup_factor"] = warmup_factor
+        scheduler_cfg["warmup_epochs"] = warmup_epochs
+        scheduler_cfg["lr_min_factor"] = lr_min_factor
+        
+        # Update training unit parameters
+        template_ft["runner"]["train_eval_unit"]["clip_grad_norm"] = clip_grad_norm
+        template_ft["runner"]["train_eval_unit"]["ema_decay"] = ema_decay
+        
+        # Freeze backbone: create a helper module that Hydra can instantiate
+        if freeze_backbone:
+            # Create a helper Python module next to the YAML config that Hydra can call.
+            # This module wraps initialize_finetuning_model and freezes backbone params.
+            helper_path = output_dir / "_freeze_backbone_helper.py"
+            helper_code = (
+                "import torch\n"
+                "from fairchem.core.units.mlip_unit.mlip_unit import initialize_finetuning_model\n"
+                "\n"
+                "def initialize_finetuning_model_frozen(\n"
+                "    checkpoint_location, overrides=None, heads=None, strict=True\n"
+                "):\n"
+                "    model = initialize_finetuning_model(\n"
+                "        checkpoint_location=checkpoint_location,\n"
+                "        overrides=overrides,\n"
+                "        heads=heads,\n"
+                "        strict=strict,\n"
+                "    )\n"
+                "    for param in model.backbone.parameters():\n"
+                "        param.requires_grad = False\n"
+                "    return model\n"
+            )
+            with open(helper_path, "w") as f:
+                f.write(helper_code)
+            
+            # Point the YAML _target_ to our helper function
+            model_cfg = template_ft["runner"]["train_eval_unit"]["model"]
+            model_cfg["_target_"] = "_freeze_backbone_helper.initialize_finetuning_model_frozen"
+            logging.info("  freeze_backbone=True: backbone params will be frozen (only heads train)")
+        
+        template_ft["defaults"][0]["data"] = regression_label_to_yaml[regression_tasks].stem
+        template_ft["train_dataset"]["dataset_configs"][dataset_name] = template_ft[
+            "train_dataset"
+        ]["dataset_configs"].pop("DATASET_NAME")
+        template_ft["val_dataset"]["dataset_configs"][dataset_name] = template_ft[
+            "val_dataset"
+        ]["dataset_configs"].pop("DATASET_NAME")
+        
+        with open(output_dir / "uma_sm_finetune_template.yaml", "w") as f:
+            yaml.dump(template_ft, f, default_flow_style=False, sort_keys=False)
+    
+    def _create_lmdb_sequential(self, data_dir: "Path", output_dir: "Path") -> None:
+        """Create LMDB dataset sequentially (no mp.Pool) to avoid CUDA fork deadlock.
+        
+        Functionally identical to fairchem's launch_processing but runs in a
+        single process, safe when CUDA is already initialized.
+        
+        Args:
+            data_dir: Directory containing extxyz files.
+            output_dir: Output LMDB directory.
+        """
+        import glob
+        import os
+        import numpy as np
+        from ase.db import connect
+        from ase.io import read
+        from tqdm import tqdm
+        
+        os.makedirs(output_dir, exist_ok=True)
+        input_files = [
+            f for f in glob.glob(os.path.join(str(data_dir), "**/*"), recursive=True)
+            if os.path.isfile(f)
+        ]
+        
+        db_file = output_dir / "data.0000.aselmdb"
+        natoms = []
+        successful = []
+        failed = []
+        
+        with connect(str(db_file)) as db:
+            for file in tqdm(input_files):
+                atoms_list = read(file, ":")
+                for i, atoms in enumerate(atoms_list):
+                    if atoms.calc is not None and "energy" in atoms.calc.results and "forces" in atoms.calc.results:
+                        db.write(atoms, data=atoms.info)
+                        natoms.append(len(atoms))
+                        successful.append(f"{file},{i}")
+                    else:
+                        failed.append(f"{file},{i}: missing calc/energy/forces")
+        
+        # Save metadata
+        np.savez_compressed(output_dir / "metadata.npz", natoms=natoms)
+        logging.info(f"    Created LMDB with {len(successful)} entries at {output_dir}")
+    
+    def _compute_normalizer_sequential(self, train_lmdb_path: "Path") -> tuple:
+        """Compute normalizer and linear reference sequentially (no mp.Pool).
+        
+        Functionally identical to fairchem's compute_normalizer_and_linear_reference
+        but runs in a single process, safe when CUDA is already initialized.
+        
+        Args:
+            train_lmdb_path: Path to training LMDB directory.
+            
+        Returns:
+            Tuple of (force_rms, linref_coefficients).
+        """
+        import random
+        import numpy as np
+        from fairchem.core.datasets import AseDBDataset
+        from tqdm import tqdm
+        from fairchem.core.scripts.create_finetune_dataset import compute_lin_ref
+        
+        dataset = AseDBDataset({"src": str(train_lmdb_path)})
+        sample_indices = random.sample(range(len(dataset)), min(100000, len(dataset)))
+        
+        atomic_numbers_list = []
+        energies = []
+        all_forces = []
+        
+        for idx in tqdm(sample_indices, desc="Computing normalizer values."):
+            atoms = dataset.get_atoms(idx)
+            atomic_numbers_list.append(atoms.get_atomic_numbers())
+            energies.append(atoms.get_potential_energy())
+            forces = atoms.get_forces()
+            # Mask fixed atoms
+            n_atoms = len(atoms)
+            fixed_idx = np.zeros(n_atoms)
+            if hasattr(atoms, "constraints"):
+                from ase.constraints import FixAtoms
+                for constraint in atoms.constraints:
+                    if isinstance(constraint, FixAtoms):
+                        fixed_idx[constraint.index] = 1
+            mask = fixed_idx == 0
+            all_forces.extend(forces[mask].tolist())
+        
+        forces_arr = np.array(all_forces)
+        force_rms = np.sqrt(np.mean(np.square(forces_arr)))
+        coeff = compute_lin_ref(atomic_numbers_list, energies)
+        
+        logging.info(f"    force_rms={force_rms:.4f}, linref has {len(coeff)} coeffs")
+        return force_rms, coeff
+    
+    def _parse_fairchem_cli_metrics(
+        self, cli_output: str, task_name: str
+    ) -> Dict[str, Any]:
+        """
+        Parse fairchem CLI stdout/stderr to extract training metrics.
+        
+        CLI output formats:
+        - Training: INFO:root:{'train/loss': 4.82, 'train/lr': 2e-05, 'train/step': 0, 'train/epoch': 0.0, ...}
+        - Validation (aggregated block):
+            val/loss: 4.7798
+            val/{task_name}.val,energy,per_atom_mae: 0.2756
+            val/{task_name}.val,forces,mae: 0.0469
+            val/{task_name}.val,stress,mae: 0.0090
+        
+        Maps to standard training_history keys:
+        - val/{task}.val,energy,per_atom_mae → energy_mae_val
+        - val/{task}.val,forces,mae → force_mae_val
+        - val/{task}.val,stress,mae → stress_mae_val
+        - train/loss → loss_train
+        
+        Returns:
+            Dictionary with standard training_history keys.
+        """
+        import re
+        import ast
+        
+        history: Dict[str, list] = {
+            "epoch": [],
+            "loss_train": [],
+            "loss_val": [],
+            "energy_mae_train": [],
+            "energy_mae_val": [],
+            "force_mae_train": [],
+            "force_mae_val": [],
+            "stress_mae_train": [],
+            "stress_mae_val": [],
+        }
+        
+        # Collect train loss per epoch (last value in epoch wins) and val metrics per epoch
+        current_train_loss = None
+        current_val_metrics: Dict[str, float] = {}
+        epoch_count = 0
+        
+        for line in cli_output.split("\n"):
+            line = line.strip()
+            
+            # Parse training metrics from JSON dict format:
+            # INFO:root:{'train/loss': 4.82, 'train/epoch': 0.0, ...}
+            train_dict_match = re.search(r"INFO:root:(\{'train/loss':.+\})", line)
+            if train_dict_match:
+                dict_str = train_dict_match.group(1)
+                try:
+                    metrics = ast.literal_eval(dict_str)
+                    current_train_loss = metrics.get("train/loss")
+                except (ValueError, SyntaxError):
+                    pass
+                continue
+            
+            # Parse validation metrics from aggregated block (colon-separated):
+            # val/loss: 4.7798
+            val_loss_match = re.search(r"val/loss:\s*([\d.eE+-]+)", line)
+            if val_loss_match:
+                current_val_metrics["loss_val"] = float(val_loss_match.group(1))
+            
+            # val/{task}.val,energy,per_atom_mae: 0.2756
+            energy_match = re.search(
+                rf"val/{re.escape(task_name)}\.val,energy,per_atom_mae:\s*([\d.eE+-]+)", line
+            )
+            if energy_match:
+                current_val_metrics["energy_mae_val"] = float(energy_match.group(1))
+            
+            # val/{task}.val,forces,mae: 0.0469
+            forces_match = re.search(
+                rf"val/{re.escape(task_name)}\.val,forces,mae:\s*([\d.eE+-]+)", line
+            )
+            if forces_match:
+                current_val_metrics["force_mae_val"] = float(forces_match.group(1))
+            
+            # val/{task}.val,stress,mae: 0.0090
+            stress_match = re.search(
+                rf"val/{re.escape(task_name)}\.val,stress,mae:\s*([\d.eE+-]+)", line
+            )
+            if stress_match:
+                current_val_metrics["stress_mae_val"] = float(stress_match.group(1))
+            
+            # Epoch boundary: after validation, the trainer logs "Ended train epoch"
+            if "Ended train epoch" in line and current_val_metrics:
+                history["epoch"].append(epoch_count)
+                history["loss_train"].append(current_train_loss)
+                for key in history:
+                    if key in ("epoch", "loss_train"):
+                        continue
+                    history[key].append(current_val_metrics.get(key, None))
+                epoch_count += 1
+                current_train_loss = None
+                current_val_metrics = {}
+        
+        # Flush any remaining metrics
+        if current_val_metrics:
+            history["epoch"].append(epoch_count)
+            history["loss_train"].append(current_train_loss)
+            for key in history:
+                if key in ("epoch", "loss_train"):
+                    continue
+                history[key].append(current_val_metrics.get(key, None))
+        
+        logging.info(f"  Parsed {len(history['epoch'])} epochs of metrics from CLI output")
+        
+        return history
     def save_checkpoint(self, checkpoint_path: str) -> None:
         """
         Save a model checkpoint.
@@ -988,15 +926,118 @@ class FAIRCHEMWrapper(MLIPModel):
         logger.info(f"Model checkpoint saved to {checkpoint_path}")
     
     def _safe_load_state_dict(self, state_dict):
+        """Load state dict with automatic key prefix and head name remapping.
+        
+        Handles two common mismatches:
+        1. module. prefix: MLIPInferenceCheckpoint uses 'backbone.X' but 
+           AveragedModel expects 'module.backbone.X'
+        2. Head names: Fine-tuning creates 'shared_efs_head' but base model 
+           has 'energyandforcehead.head' or similar
+        
+        Args:
+            state_dict: The state dictionary to load.
+        """
         target_model = self.model
         if not hasattr(target_model, "load_state_dict") and hasattr(target_model, "model"):
             target_model = target_model.model
         
-        if hasattr(target_model, "load_state_dict"):
-             msg = target_model.load_state_dict(state_dict, strict=False)
-             logging.info(f"Loaded state dict: {msg}")
+        if not hasattr(target_model, "load_state_dict"):
+            logging.warning("Model does not support load_state_dict. Skipping state load.")
+            return
+        
+        model_keys = set(target_model.state_dict().keys())
+        ckpt_keys = set(state_dict.keys())
+        
+        # Phase 1: Handle module. prefix mismatch
+        model_has_module = any(k.startswith("module.") for k in model_keys)
+        ckpt_has_module = any(k.startswith("module.") for k in ckpt_keys)
+        
+        remapped = dict(state_dict)
+        if model_has_module and not ckpt_has_module:
+            logging.info("Remapping checkpoint keys: adding 'module.' prefix")
+            remapped = {"module." + k: v for k, v in state_dict.items()}
+        elif not model_has_module and ckpt_has_module:
+            logging.info("Remapping checkpoint keys: stripping 'module.' prefix")
+            remapped = {k.replace("module.", "", 1): v for k, v in state_dict.items()}
+        
+        # Phase 2: Handle output head name mismatch
+        # Extract head names from model and checkpoint keys
+        model_head_names = set()
+        ckpt_head_names = set()
+        for k in model_keys:
+            if "output_heads." in k:
+                # e.g. "module.output_heads.energyandforcehead.head.energy_block.0.weight"
+                parts = k.split("output_heads.")[1].split(".")
+                model_head_names.add(parts[0])
+        for k in remapped.keys():
+            if "output_heads." in k:
+                parts = k.split("output_heads.")[1].split(".")
+                ckpt_head_names.add(parts[0])
+        
+        if model_head_names and ckpt_head_names and model_head_names != ckpt_head_names:
+            # Find weight-name suffix patterns to match heads by structure
+            # Simple approach: if there is exactly 1 head on each side, remap directly
+            if len(model_head_names) == 1 and len(ckpt_head_names) == 1:
+                model_head = next(iter(model_head_names))
+                ckpt_head = next(iter(ckpt_head_names))
+                
+                # Check if the ckpt head weights have a sub-prefix that matches
+                # Base model: output_heads.energyandforcehead.head.energy_block.0.weight
+                # Checkpoint:  output_heads.shared_efs_head.energy_block.0.weight
+                # Need to find what aligns: try mapping ckpt_head -> model_head (with or without .head sub-level)
+                ckpt_head_keys = {k for k in remapped if "output_heads." + ckpt_head in k}
+                
+                # Extract suffixes after the head name
+                ckpt_suffixes = set()
+                for k in ckpt_head_keys:
+                    suffix = k.split("output_heads." + ckpt_head + ".")[1]
+                    ckpt_suffixes.add(suffix)
+                
+                # Find model head suffixes
+                model_head_keys = {k for k in model_keys if "output_heads." + model_head in k}
+                model_suffixes = set()
+                model_head_prefix = None
+                for k in model_head_keys:
+                    suffix = k.split("output_heads." + model_head + ".")[1]
+                    model_suffixes.add(suffix)
+                    if model_head_prefix is None:
+                        # Detect if model has an extra sub-prefix (e.g., "head.")
+                        model_head_prefix = "output_heads." + model_head + "."
+                
+                # If ckpt suffix "energy_block.0.weight" matches model suffix "head.energy_block.0.weight"
+                # then model has an extra "head." sub-prefix
+                extra_prefix = ""
+                if ckpt_suffixes and model_suffixes and ckpt_suffixes != model_suffixes:
+                    # Check if model suffixes all start with a common sub-prefix
+                    sample_ckpt = sorted(ckpt_suffixes)[0]
+                    for ms in model_suffixes:
+                        if ms.endswith(sample_ckpt) and len(ms) > len(sample_ckpt):
+                            extra_prefix = ms[: len(ms) - len(sample_ckpt)]
+                            break
+                
+                logging.info("Remapping head keys: '%s' -> '%s' (extra_prefix='%s')", 
+                           ckpt_head, model_head, extra_prefix)
+                new_remapped = {}
+                for k, v in remapped.items():
+                    if "output_heads." + ckpt_head + "." in k:
+                        old_prefix = "output_heads." + ckpt_head + "."
+                        new_prefix = "output_heads." + model_head + "." + extra_prefix
+                        new_k = k.replace(old_prefix, new_prefix, 1)
+                        new_remapped[new_k] = v
+                    else:
+                        new_remapped[k] = v
+                remapped = new_remapped
+        
+        msg = target_model.load_state_dict(remapped, strict=False)
+        if msg.missing_keys or msg.unexpected_keys:
+            logging.warning("State dict load: %d missing, %d unexpected keys", 
+                          len(msg.missing_keys), len(msg.unexpected_keys))
+            if len(msg.missing_keys) <= 10:
+                logging.warning("Missing keys: %s", msg.missing_keys)
+            if len(msg.unexpected_keys) <= 10:
+                logging.warning("Unexpected keys: %s", msg.unexpected_keys)
         else:
-             logging.warning("Model does not support load_state_dict and no underlying model found. Skipping state load (assuming load_inference_model handled it).")
+            logging.info("State dict loaded successfully with 0 missing, 0 unexpected keys")
 
     def load_checkpoint(self, checkpoint_path: str):
         """
