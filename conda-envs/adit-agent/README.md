@@ -40,8 +40,7 @@ pip install mcp fastmcp
 
 5. Clone the AADT repository:
 ```bash
-cd /path/to/AtomisticSkills
-git clone https://github.com/facebookresearch/all-atom-diffusion-transformer .agent/tmp/adit
+git clone https://github.com/facebookresearch/all-atom-diffusion-transformer /home/bdeng/projects/adit
 ```
 
 ## MCP Tool
@@ -70,8 +69,58 @@ Pre-trained checkpoints are auto-downloaded from HuggingFace on first use:
 | e3nn | 0.5.1 |
 | pymatgen, ase | latest |
 
+## Post-Clone Patches
+
+After cloning the AADT repository, apply these patches to allow inference without `openbabel` (which is only needed for evaluation, not generation):
+
+1. **`src/eval/molecule_reconstruction.py`** — Make `openbabel` import optional:
+```python
+# Replace (line ~21):
+#   from openbabel import openbabel
+#   openbabel.obErrorLog.StopLogging()
+# With:
+try:
+    from openbabel import openbabel
+    openbabel.obErrorLog.StopLogging()
+except ImportError:
+    openbabel = None
+```
+
+2. **`src/eval/molecule_generation.py`** — Make `openbabel` and `posebusters` imports optional:
+```python
+# Replace (line ~11):
+#   from openbabel import openbabel
+#   from posebusters import PoseBusters
+# With:
+try:
+    from openbabel import openbabel
+    openbabel.obErrorLog.StopLogging()
+except ImportError:
+    openbabel = None
+try:
+    from posebusters import PoseBusters
+except ImportError:
+    PoseBusters = None
+```
+
+3. **`src/models/vae_module.py`** — Defer evaluator instantiation to avoid openbabel at model load time:
+```python
+# In __init__ (line ~177), replace eager evaluator creation:
+#   self.val_reconstruction_evaluators = { "mp20": ..., "qm9": MoleculeReconstructionEvaluator(), ... }
+#   self.test_reconstruction_evaluators = { ... }
+# With:
+self.val_reconstruction_evaluators = None
+self.test_reconstruction_evaluators = None
+
+# In on_evaluation_epoch_start(), add lazy init before existing code:
+if self.val_reconstruction_evaluators is None:
+    self.val_reconstruction_evaluators = { ... }
+if self.test_reconstruction_evaluators is None:
+    self.test_reconstruction_evaluators = { ... }
+```
+
 ## Notes
 
-- The AADT repository must be on `PYTHONPATH` (configured automatically in `mcp_config.json`)
+- The AADT repository is auto-discovered as a sibling directory (e.g. `../adit` relative to the project root)
 - First run downloads ~1-2 GB of model checkpoints from HuggingFace
 - ADiT supports **dataset-type** (crystals vs molecules) and **spacegroup** conditioning only — no composition or property conditioning

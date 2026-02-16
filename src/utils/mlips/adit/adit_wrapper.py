@@ -8,7 +8,7 @@ Pretrained weights from: https://huggingface.co/chaitjo/all-atom-diffusion-trans
 
 Requirements:
     - Conda environment: adit-agent
-    - AADT repo cloned to .agent/tmp/adit/ and on PYTHONPATH
+    - AADT repo cloned and accessible (see conda-envs/adit-agent/README.md)
 """
 
 import logging
@@ -65,7 +65,7 @@ class ADiTWrapper:
         Args:
             device: Device to use ('auto', 'cpu', 'cuda').
             adit_repo_path: Path to the cloned AADT repository.
-                           Defaults to .agent/tmp/adit relative to project root.
+                           Auto-discovered from project siblings or PYTHONPATH.
         """
         import sys
         import importlib
@@ -82,9 +82,13 @@ class ADiTWrapper:
             project_root = os.environ.get(
                 "PYTHONPATH", ""
             ).split(":")[0]
+            # Look for the AADT repo as a sibling of the project root,
+            # or in common locations relative to the project.
+            project_dir = os.path.dirname(project_root) if project_root else ""
             candidates = [
-                os.path.join(project_root, ".agent/tmp/adit"),
-                os.path.join(os.path.dirname(__file__), "../../../../.agent/tmp/adit"),
+                os.path.join(project_dir, "adit"),
+                os.path.join(project_root, "adit"),
+                os.path.join(os.path.expanduser("~"), "projects", "adit"),
             ]
             for c in candidates:
                 if os.path.isdir(c):
@@ -92,8 +96,8 @@ class ADiTWrapper:
                     break
             if adit_repo_path is None:
                 raise RuntimeError(
-                    "AADT repository not found. Please clone it to .agent/tmp/adit/ "
-                    "or provide adit_repo_path."
+                    "AADT repository not found. Please clone it with: "
+                    "git clone https://github.com/facebookresearch/all-atom-diffusion-transformer <path>/adit "
                 )
 
         self.adit_repo_path = adit_repo_path

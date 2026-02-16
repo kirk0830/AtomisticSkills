@@ -78,7 +78,7 @@
         "src.mcp_server.adit_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills:/home/bdeng/projects/AtomisticSkills/.agent/tmp/adit"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     }
   }
