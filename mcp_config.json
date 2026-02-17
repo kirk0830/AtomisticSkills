@@ -80,6 +80,16 @@
       "env": {
         "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
+    },
+    "diffcsp": {
+      "command": "/home/bdeng/miniforge3/envs/diffcsp-agent/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.diffcsp_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+      }
     }
   }
 }

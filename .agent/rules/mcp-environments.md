@@ -19,6 +19,7 @@ For detailed installation instructions, please refer to the `README.md` and `ins
 - **atomate2-agent**: `conda-envs/atomate2-agent/` (Core: atomate2, pymatgen)
 - **smol-agent**: `conda-envs/smol-agent/` (Core: smol, pymatgen)
 - **adit-agent**: `conda-envs/adit-agent/` (Core: ADiT, lightning, hydra, PyG)
+- **diffcsp-agent**: `conda-envs/diffcsp-agent/` (Core: DiffCSP++, hydra, PyG, pyxtal)
 
 | MCP Server | Conda Environment | Python Path |
 | :--- | :--- | :--- |
@@ -29,3 +30,4 @@ For detailed installation instructions, please refer to the `README.md` and `ins
 | atomate2 | `atomate2-agent` | `<conda_base>/envs/atomate2-agent/bin/python` |
 | smol | `smol-agent` | `<conda_base>/envs/smol-agent/bin/python` |
 | adit | `adit-agent` | `<conda_base>/envs/adit-agent/bin/python` |
+| diffcsp | `diffcsp-agent` | `<conda_base>/envs/diffcsp-agent/bin/python` |
