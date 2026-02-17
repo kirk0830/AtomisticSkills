@@ -288,6 +288,15 @@ class FAIRCHEMWrapper(MLIPModel):
         
         # Advanced config parameters
         freeze_backbone = config.get("freeze_backbone", False)
+        
+        # reinit_head: FairChem always re-initializes output heads for new task names
+        # (via initialize_finetuning_model). This key is accepted for API consistency 
+        # with MACE/MatGL but has no functional effect — heads are always fresh.
+        reinit_head = config.get("reinit_head", False)
+        if reinit_head:
+            logging.info("reinit_head=True: FairChem always re-initializes heads for new tasks (no-op)")
+        else:
+            logging.info("reinit_head=False: Note — FairChem always re-initializes heads for new task names")
         weight_decay = config.get("weight_decay", 1e-3)
         warmup_factor = config.get("warmup_factor", 0.2)
         warmup_epochs = config.get("warmup_epochs", 0.01)
@@ -848,26 +857,26 @@ class FAIRCHEMWrapper(MLIPModel):
             if val_loss_match:
                 current_val_metrics["loss_val"] = float(val_loss_match.group(1))
             
-            # val/{task}.val,energy,per_atom_mae: 0.2756
+            # val/{task}.val,energy,per_atom_mae: 0.2756  (in eV/atom)
             energy_match = re.search(
                 rf"val/{re.escape(task_name)}\.val,energy,per_atom_mae:\s*([\d.eE+-]+)", line
             )
             if energy_match:
-                current_val_metrics["energy_mae_val"] = float(energy_match.group(1))
+                current_val_metrics["energy_mae_val"] = float(energy_match.group(1)) * 1000  # eV/atom → meV/atom
             
-            # val/{task}.val,forces,mae: 0.0469
+            # val/{task}.val,forces,mae: 0.0469  (in eV/Å)
             forces_match = re.search(
                 rf"val/{re.escape(task_name)}\.val,forces,mae:\s*([\d.eE+-]+)", line
             )
             if forces_match:
-                current_val_metrics["force_mae_val"] = float(forces_match.group(1))
+                current_val_metrics["force_mae_val"] = float(forces_match.group(1)) * 1000  # eV/Å → meV/Å
             
-            # val/{task}.val,stress,mae: 0.0090
+            # val/{task}.val,stress,mae: 0.0090  (in eV/Å³)
             stress_match = re.search(
                 rf"val/{re.escape(task_name)}\.val,stress,mae:\s*([\d.eE+-]+)", line
             )
             if stress_match:
-                current_val_metrics["stress_mae_val"] = float(stress_match.group(1))
+                current_val_metrics["stress_mae_val"] = float(stress_match.group(1)) * 1000  # eV/Å³ → meV/Å³
             
             # Epoch boundary: after validation, the trainer logs "Ended train epoch"
             if "Ended train epoch" in line and current_val_metrics:

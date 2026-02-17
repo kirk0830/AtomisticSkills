@@ -56,7 +56,7 @@ def load_model(model_name: str = 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', device:
     - PES Models: 'TensorNet-MatPES-PBE-v2025.1-PES', 'TensorNet-MatPES-r2SCAN-v2025.1-PES', 'M3GNet-ANI-1x-Subset-PES', 'SO3Net-ANI-1x-Subset-PES'
     
     Args:
-        model_name: Name of the model to load (e.g., "M3GNet", "CHGNet").
+        model_name: Name of the model to load.
         device: Device to use ("auto", "cpu", "cuda").
         
     Returns:

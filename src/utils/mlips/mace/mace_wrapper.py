@@ -361,8 +361,8 @@ class MACEWrapper(MLIPModel):
         # Default training configuration
         default_config = {
             "max_epochs": 100,
-            "learning_rate": 1e-4,
-            "batch_size": 32,
+            "learning_rate": 0.01,
+            "batch_size": 2,
             "validation_split": 0.1,
             "early_stopping_patience": 10,
             "save_best_model": True
@@ -546,6 +546,16 @@ if __name__ == "__main__":
             cmd[1] = str(wrapper_script_path)
             cmd.pop(2) # remove "-m" or "mace.cli.run_train"
         
+        # reinit_head: control whether to re-initialize the readout head (default: False)
+        # MACE CLI: --foundation_model_readout is action="store_false" (default=True).
+        # Passing the flag DISABLES readout reuse (forces re-init).
+        reinit_head = training_config.get("reinit_head", False) if training_config else False
+        if reinit_head:
+            cmd.append("--foundation_model_readout")
+            logger.info("reinit_head=True: Passing --foundation_model_readout to MACE CLI (readout will be re-initialized)")
+        else:
+            logger.info("reinit_head=False: Preserving pre-trained readout head (MACE default)")
+        
         # Add stress support if stress is present in training data
         if has_stress:
             # Use universal loss which supports energy, forces, and stress
@@ -553,20 +563,6 @@ if __name__ == "__main__":
             # Set stress weight (default is 1.0, but make it explicit)
             stress_weight = training_config.get("stress_weight", 1.0) if training_config else 1.0
             cmd.extend(["--stress_weight", str(stress_weight)])
-            
-            # Pass arbitrary arguments from training_config to CLI
-            reserved_keys = ["max_epochs", "learning_rate", "batch_size", "validation_split", 
-                             "early_stopping_patience", "save_best_model", "use_foundation_model", 
-                             "stress_weight", "project", "entity", "name", "tags", "mode"]
-            
-            if training_config:
-                for k, v in training_config.items():
-                    if k not in reserved_keys:
-                        # Convert value to string format for CLI
-                        # Handle dicts/lists by converting to string representation
-                        val_str = str(v).replace("'", '"') if isinstance(v, (dict, list)) else str(v)
-                        cmd.extend([f"--{k}", val_str])
-                        logger.info(f"Passing custom arg to MACE: --{k} {val_str}")
             # Specify stress key name in XYZ file
             cmd.extend(["--stress_key", "REF_stress"])
             # Enable stress computation and reporting
@@ -574,6 +570,49 @@ if __name__ == "__main__":
             # Use error table that includes stress/virials MAE
             cmd.extend(["--error_table", "PerAtomMAEstressvirials"])
             logger.info(f"Including stress in loss function with weight {stress_weight} and enabling stress MAE reporting")
+        
+        # --- Official MACE fine-tuning defaults (per mace-docs.readthedocs.io) ---
+        # Apply these unless the user explicitly overrides them in training_config
+        official_defaults = {
+            "ema": True,              # Exponential Moving Average for stable evaluation
+            "ema_decay": 0.99,        # EMA decay rate
+            "amsgrad": True,           # AMSGrad variant of Adam optimizer
+            "default_dtype": "float64",  # Double precision for numerical stability
+            "scaling": "rms_forces_scaling",  # Normalizes loss contributions
+        }
+        # Merge: user's training_config overrides official defaults
+        effective_extra_config = dict(official_defaults)
+        if training_config:
+            effective_extra_config.update(training_config)
+        
+        # Pass arbitrary arguments from effective_extra_config to CLI
+        reserved_keys = {"max_epochs", "learning_rate", "batch_size", "validation_split",
+                         "early_stopping_patience", "save_best_model", "use_foundation_model",
+                         "stress_weight", "project", "entity", "name", "tags", "mode",
+                         "freeze_backbone", "multiheads_finetuning", "trainable_modules",
+                         "compute_stress", "compute_forces", "foundation_model", "checkpoint_path",
+                         "reinit_head", "foundation_model_readout", "epochs"}
+        
+        # MACE CLI boolean store_true flags that don't accept a value
+        # NOTE: foundation_model_readout is NOT here — it's action="store_false"
+        # and handled via reinit_head above
+        store_true_flags = {"ema", "amsgrad", "swa", "lbfgs", "wandb", "pair_repulsion",
+                            "distributed", "keep_checkpoints", "save_all_checkpoints",
+                            "restart_latest", "save_cpu", "dry_run",
+                            "compute_polarizability",
+                            "compute_atomic_dipole", "disallow_random_padding_pt"}
+        for k, v in effective_extra_config.items():
+            if k not in reserved_keys:
+                if k in store_true_flags:
+                    # store_true flags: add flag only if True, skip if False
+                    if v:
+                        cmd.append(f"--{k}")
+                        logger.info(f"Passing boolean flag to MACE: --{k}")
+                else:
+                    # Convert value to string format for CLI
+                    val_str = str(v).replace("'", '"') if isinstance(v, (dict, list)) else str(v)
+                    cmd.extend([f"--{k}", val_str])
+                    logger.info(f"Passing custom arg to MACE: --{k} {val_str}")
         
         # Add validation file if provided
         if val_xyz_path:

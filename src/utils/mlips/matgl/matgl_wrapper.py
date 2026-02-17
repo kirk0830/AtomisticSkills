@@ -680,7 +680,13 @@ class MatGLWrapper(MLIPModel):
         from pymatgen.io.ase import AseAtomsAdaptor
         adaptor = AseAtomsAdaptor()
         structures = [adaptor.get_structure(a) for a in train_atoms]
-        element_types = get_element_list(structures)
+        
+        # CRITICAL: Use the MODEL's element_types for the graph converter, NOT
+        # get_element_list(structures).  The model's property_offset (element_refs)
+        # and embedding layers are indexed by position in element_types.  Using a
+        # subset from the training data (e.g. ['O','Si']) would create wrong
+        # node_type indices, causing AtomRef to look up wrong reference energies.
+        element_types = self.model.model.element_types
         
         # Get cutoff from model
         cutoff = getattr(self.model.model, 'cutoff', 5.0)
@@ -751,9 +757,12 @@ class MatGLWrapper(MLIPModel):
         )
 
         # 2. Setup Training Module
-        prop_offset = getattr(self.model, 'element_refs', None)
-        if prop_offset and hasattr(prop_offset, 'property_offset'):
-            prop_offset = prop_offset.property_offset
+        # Pass backbone + element_refs to PotentialLightningModule.
+        # CRITICAL: data_std/data_mean must be forwarded from the pre-trained model.
+        # The backbone learned to output values that get multiplied by data_std
+        # in Potential.forward(). Resetting data_std to 1.0 would make predictions
+        # ~data_std times too small (e.g. CHGNet data_std=3.25 → 3.25x error).
+        import torch as _torch
             
         # Freezing backbone (Default: True)
         freeze_backbone = config.get("freeze_backbone", True)
@@ -775,6 +784,21 @@ class MatGLWrapper(MLIPModel):
                 logging.warning("No MatGL readout parameters found to unfreeze!")
             else:
                 logging.info(f"MatGL backbone frozen. Unfrozen {unfrozen_count} parameters in readout layers.")
+        
+        # reinit_head: re-initialize readout weights (default: False = preserve pre-trained)
+        reinit_head = config.get("reinit_head", False)
+        if reinit_head:
+            reinit_count = 0
+            for name, module in self.model.model.named_modules():
+                if any(x in name.lower() for x in ["readout", "mlp_out", "final", "output"]):
+                    for pname, param in module.named_parameters():
+                        if "weight" in pname:
+                            _torch.nn.init.xavier_uniform_(param)
+                            reinit_count += 1
+                        elif "bias" in pname:
+                            _torch.nn.init.zeros_(param)
+                            reinit_count += 1
+            logging.info(f"reinit_head=True: Re-initialized {reinit_count} readout parameters")
 
         # Determine stress_weight: use config value if given, else auto-detect from data
         has_stress = np.any(train_stresses)
@@ -791,12 +815,18 @@ class MatGLWrapper(MLIPModel):
             import torch
             lr_factor = config.get("lr_factor", 0.5)
             scheduler_patience_val = config.get("scheduler_patience", 10)
-            # Create a dummy optimizer to be replaced by Lightning's configure_optimizers
-            # Instead, we pass the scheduler object directly to PotentialLightningModule
-            # PotentialLightningModule.configure_optimizers uses self.scheduler if not None
-            # We need to defer creation until after optimizer exists — use a lambda approach
             logging.info(f"Using ReduceLROnPlateau scheduler (factor={lr_factor}, patience={scheduler_patience_val})")
         
+        # Extract element_refs for PotentialLightningModule construction
+        prop_offset = getattr(self.model, 'element_refs', None)
+        if prop_offset and hasattr(prop_offset, 'property_offset'):
+            prop_offset = prop_offset.property_offset
+
+        # Forward data_std and data_mean from the pre-trained Potential
+        pre_data_std = float(self.model.data_std)
+        pre_data_mean = float(self.model.data_mean)
+        logging.info(f"Pre-trained model data_std={pre_data_std:.4f}, data_mean={pre_data_mean:.4f}")
+
         lit_model = PotentialLightningModule(
             model=self.model.model,
             element_refs=prop_offset,
@@ -807,6 +837,8 @@ class MatGLWrapper(MLIPModel):
             stress_weight=stress_weight,
             decay_steps=decay_steps,
             decay_alpha=decay_alpha,
+            data_std=pre_data_std,
+            data_mean=pre_data_mean,
         )
         
         # If ReduceLROnPlateau was requested, override configure_optimizers 
