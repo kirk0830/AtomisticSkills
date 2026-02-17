@@ -1,20 +1,29 @@
 # UMA Si-O Fine-Tuning with Frozen Backbone
 
-Fine-tuning UMA-S-1p1 on 95 Si-O structures with MatPES-PBE DFT labels.
+Fine-tuning UMA-S-1p1 on 93 Si-O structures with MatPES-PBE DFT labels.
 Backbone parameters are frozen — only the output head is trained.
+Dataset was filtered to remove 2 outlier structures with extreme forces/stresses.
+
+## Data Preparation
+
+The original 95-structure dataset was filtered to remove 2 outliers:
+- 1 structure with max force = 81 eV/Å and max stress = 5.2 eV/Å³
+- 1 structure with max force = 4.4 eV/Å
+
+**Filter criteria**: max|F| ≤ 2.0 eV/Å, max|S| ≤ 0.5 eV/Å³
 
 ## Setup
 
 - **Model**: `uma-s-1p1`
-- **Dataset**: 95 Si-O structures (80 train / 15 val)
+- **Dataset**: 93 Si-O structures (filtered)
 - **Labels**: MatPES-PBE static calculations via atomate2
 
 ## MCP Tool Call
 
 ```python
 result = fine_tune_model(
-    training_data_path="training_data.json",
-    epochs=3,
+    training_data_path="training_data_filtered.json",
+    epochs=10,
     learning_rate=4e-4,
     output_dir="output/",
     training_config={
@@ -25,27 +34,21 @@ result = fine_tune_model(
 
 ## Expected Results
 
-| Metric | Epoch 0 | Epoch 2 |
+| Metric | Epoch 0 | Epoch 9 |
 |:-------|:--------|:--------|
-| Train loss | 4.585 | 0.806 |
-| Val loss | 4.894 | 4.832 |
-| Energy MAE (val) | 0.283 eV/atom | 0.279 eV/atom |
-| Force MAE (val) | 0.047 eV/Å | 0.047 eV/Å |
-| Stress MAE (val) | 0.009 eV/ų | 0.009 eV/ų |
+| Energy MAE (val) | 266.1 meV/atom | 259.7 meV/atom |
+| Force MAE (val) | 46.5 meV/Å | 46.7 meV/Å |
+| Stress MAE (val) | 9.0 meV/Å³ | 9.0 meV/Å³ |
+| Val loss | 65.84 | 64.74 |
 
-## Freeze Backbone Verification
-
-All 143 backbone parameters remain identical to the base model.
-6 output head parameters were updated during training (max diff up to 0.98).
-
-| Check | Result |
-|:------|:-------|
-| Backbone params unchanged | 143 / 143 |
-| Backbone params changed | 0 |
-| Head params updated | 6 |
-| **Verdict** | **PASS** |
+> [!NOTE]
+> UMA shows very slow convergence with frozen backbone — energy MAE decreases
+> only slightly (266→260 meV/atom) over 10 epochs, while forces and stress
+> remain essentially flat. This is expected because FairChem uses a cosine
+> annealing LR scheduler with warmup, and the frozen backbone limits the
+> model's capacity to adapt.
 
 ## Output Files
 
-- `training_history.json` — Convergence metrics and verification results
+- `training_history.json` — Convergence metrics per epoch
 - `training_history.png` — Training curve plot

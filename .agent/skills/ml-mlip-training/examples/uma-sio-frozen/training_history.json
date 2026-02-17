@@ -1,47 +1,62 @@
 {
-    "description": "UMA-S-1p1 fine-tuning on 95 Si-O structures (MatPES-PBE labels), freeze_backbone=True, 3 epochs",
-    "model": "uma-s-1p1",
-    "dataset": "Si-O (95 structures, 80/15 train/val split)",
-    "config": {
-        "epochs": 3,
-        "learning_rate": 4e-4,
-        "batch_size": 2,
-        "freeze_backbone": true
-    },
-    "epoch": [
-        0,
-        1,
-        2
-    ],
-    "loss_train": [
-        4.5849,
-        2.0195,
-        0.8062
-    ],
-    "loss_val": [
-        4.8938,
-        4.8693,
-        4.8322
-    ],
     "energy_mae_val": [
-        0.2833,
-        0.2816,
-        0.2792
+        266.1,
+        265.9,
+        265.3,
+        264.6,
+        263.9,
+        263.1,
+        262.3,
+        261.4,
+        260.6,
+        259.7
     ],
     "force_mae_val": [
-        0.0468,
-        0.0468,
-        0.0469
+        46.5,
+        46.5,
+        46.5,
+        46.5,
+        46.6,
+        46.6,
+        46.6,
+        46.6,
+        46.6,
+        46.7
     ],
     "stress_mae_val": [
-        0.009,
-        0.009,
-        0.009
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+        9.0,
+        9.0
     ],
-    "freeze_backbone_verification": {
-        "backbone_params_unchanged": 143,
-        "backbone_params_changed": 0,
-        "head_params_updated": 6,
-        "verdict": "PASS"
-    }
+    "loss_train": [
+        28.765,
+        168.235,
+        37.442,
+        114.643,
+        8.083,
+        71.098,
+        133.624,
+        8.779,
+        125.615,
+        5.803
+    ],
+    "loss_val": [
+        65.839,
+        65.791,
+        65.700,
+        65.591,
+        65.469,
+        65.333,
+        65.193,
+        65.048,
+        64.896,
+        64.740
+    ]
 }
