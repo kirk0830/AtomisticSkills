@@ -122,6 +122,7 @@ mcp_drugdisc_convert_to_pdbqt(
 * **Protonation**: Default pH-based hydrogen addition is a baseline.
 * **Missing residues**: By default, missing residues are ignored to avoid introducing uncertain loop models.
 * **PDBQT**: PDBQT conversion is delegated to the `mcp_drugdisc_convert_to_pdbqt` tool (which uses Meeko).
+---
 
-Author: Matthew Cox
-Contact: github username <mcox3406>
+**Author:** Matthew Cox  
+**Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

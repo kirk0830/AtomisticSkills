@@ -111,6 +111,7 @@ Expected H2O vibrational modes (experimental reference):
   - `mace-agent` for MACE models
   - `matgl-agent` for MatGL/CHGNet models
   - `fairchem-agent` for FairChem/UMA models
+---
 
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

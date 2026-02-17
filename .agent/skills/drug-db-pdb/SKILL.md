@@ -110,6 +110,7 @@ python .agent/skills/drug-db-pdb/scripts/query_pdb.py \
 - **File formats**: Prefer mmCIF for robustness; legacy PDB may be incomplete or unavailable for some entries.
 - **Quality selection**: For drug discovery, do not select structures using resolution alone -- use wwPDB validation reports and ligand-quality metrics when available.
 - **Environment**: Requires the `base-agent` conda environment.
+---
 
-Author: Matthew Cox
-Contact: github username <mcox3406>
+**Author:** Matthew Cox  
+**Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

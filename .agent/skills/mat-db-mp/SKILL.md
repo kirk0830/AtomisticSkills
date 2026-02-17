@@ -294,6 +294,7 @@ Structures:
 - **Elasticity** (`mpr.materials.elasticity`): Elastic modulus and tensor data  
 - **Magnetism** (`mpr.materials.magnetism`): Magnetic ordering and moments
 - **Similarity** (`mpr.materials.similarity`): CrystalNN-based structure matching
+---
 
-Author: Bowen Deng  
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

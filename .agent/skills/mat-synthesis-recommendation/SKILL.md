@@ -118,7 +118,7 @@ The synthesis recipes are extracted from scientific literature using natural lan
 
 - [mat-stability](../mat-stability/SKILL.md): Verify thermodynamic stability before attempting synthesis
 - [mat-intercalation-voltage](../mat-intercalation-voltage/SKILL.md): Calculate electrochemical properties of synthesized cathode materials
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

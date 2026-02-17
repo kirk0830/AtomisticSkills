@@ -172,6 +172,7 @@ See `examples/` for:
 - Fine-tuning on custom datasets with complete example data
 
 ---
+---
 
-Author: Bowen Deng  
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -148,6 +148,7 @@ python .agent/skills/drug-db-pubchem/scripts/query_pubchem.py \
 - **Dependencies**: Standard library only (`urllib`, `json`, `argparse`).
 
 ---
+---
 
-Author: Matthew Cox
-Contact: github username <mcox3406>
+**Author:** Matthew Cox  
+**Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

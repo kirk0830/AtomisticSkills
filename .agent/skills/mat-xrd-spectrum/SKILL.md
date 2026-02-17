@@ -50,7 +50,7 @@ python .agent/skills/mat-xrd-spectrum/scripts/calculate_xrd.py examples/LiFePO4/
 Since XRD is a purely geometric property of the crystal structure, it does not require a machine learning interatomic potential (MLIP) for the calculation itself. However, it is **highly recommended** to perform a structure relaxation using a high-quality MLIP (e.g., MACE, CHGNet) before calculating the XRD pattern to ensure the structure is at its energy minimum.
 
 For recommendations on relaxation models, see the [ml-foundation-potentials](file:///home/bdeng/projects/AtomisticSkills/.agent/skills/ml-foundation-potentials/SKILL.md) skill.
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

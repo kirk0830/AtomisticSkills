@@ -77,7 +77,7 @@ For referencing or phase diagram generation, apply this correction to every entr
 ## Constraints
 - **Environment**: `base-agent` (requires `pymatgen`).
 - **Input Energy**: Must be the *total energy* in eV (not per atom).
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

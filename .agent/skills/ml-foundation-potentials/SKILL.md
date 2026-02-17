@@ -84,7 +84,7 @@ For general materials where no specific constraints apply:
 ## Performance Benchmark
 
 For detailed inference speed and memory usage of various MLIPs, refer to the dedicated **[ml-mlip-speed](../ml-mlip-speed/SKILL.md)** skill. This skill provides automatic benchmarks to help you choose the most efficient model for your simulation scale.
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

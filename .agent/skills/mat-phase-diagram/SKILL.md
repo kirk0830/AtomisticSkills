@@ -136,4 +136,4 @@ See `examples/` directory for:
 ---
 
 **Author:** Bowen Deng  
-**Contact:** github.com/bowen-bd
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -160,7 +160,7 @@ By sweeping Δμ, we can map out the entire compositional range and identify:
 3. **Refine Δμ spacing**: Near phase transitions, use finer spacing to resolve phase boundaries.
 4. **Compare with experiments**: If available, validate against experimental phase diagrams.
 5. **Multiple runs**: For critical regions, run multiple independent simulations to check reproducibility.
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

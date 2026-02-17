@@ -152,6 +152,7 @@ python .agent/skills/drug-db-chembl/scripts/query_chembl.py \
 * **Dependencies**: Standard library only (`urllib`, `json`, `csv`, etc.).
 
 ---
+---
 
-Author: Matthew Cox
-Contact: github username <mcox3406>
+**Author:** Matthew Cox  
+**Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

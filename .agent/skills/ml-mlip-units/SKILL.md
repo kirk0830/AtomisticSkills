@@ -124,6 +124,7 @@ energy_kcal_per_mol = energy_eV * units.kcal / units.mol
 - **Always** verify stress units when comparing MLIP predictions to DFT references.
 - Training data JSON files must use eV/Å³ for stress — wrapper-internal conversion handles the rest.
 - When reporting MAE in papers/docs, specify the unit explicitly (e.g., "Force MAE: 50 meV/Å").
+---
 
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -121,6 +121,7 @@ ADiT uses a two-stage latent diffusion approach:
 This unified framework handles both periodic (crystals) and non-periodic (molecules) systems.
 
 ---
+---
 
-Author: Bowen Deng  
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -159,6 +159,7 @@ python .agent/skills/drug-docking-vina/scripts/run_docking.py \
 4. Paggi, J. M.; Pandit, A.; Dror, R. O. The Art and Science of Molecular Docking. *Annu. Rev. Biochem.* **2024**, *93*, 389–410. https://doi.org/10.1146/annurev-biochem-030222-120000
 
 5. Feinstein, W. P.; Brylinski, M. Calculating an Optimal Box Size for Ligand Docking and Virtual Screening against Experimental and Predicted Binding Pockets. *J. Cheminform.* **2015**, *7*, 18. https://doi.org/10.1186/s13321-015-0067-5
+---
 
-Author: Matthew Cox
-Contact: github username <mcox3406>
+**Author:** Matthew Cox  
+**Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

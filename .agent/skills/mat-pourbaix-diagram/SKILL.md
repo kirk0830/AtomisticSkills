@@ -214,7 +214,7 @@ This allows thermodynamically consistent mixing of:
 4. **Related skills**: 
    - [mat-stability](../mat-stability/SKILL.md) for convex hull calculations
    - [mat-elemental-energies](../mat-elemental-energies/SKILL.md) for retrieving pre-calculated elemental reference energies required for formation energy calculations.
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

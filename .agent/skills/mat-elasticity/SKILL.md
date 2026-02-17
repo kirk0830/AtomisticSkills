@@ -93,6 +93,7 @@ python .agent/skills/mat-elasticity/scripts/calculate_elasticity.py \
 - **Linear Regime**: Strains must be small enough to remain in the linear elastic regime. The default values are appropriate for most inorganic crystalline materials.
 - **Unit Conversion**: MatCalc returns moduli in eV/ų (bulk, shear) and Pa (Young's). The script converts all to GPa.
 - **Symmetry**: By default, symmetry reduction is disabled (`--symmetry` flag enables it). This means all 21 independent components are fitted independently.
+---
 
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

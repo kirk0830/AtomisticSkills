@@ -72,6 +72,7 @@ mcp_drugdisc_compute_molecular_descriptors(
 - **Veber interpretation**: Primary check uses **TPSA ≤ 140 Å² and rotatable bonds ≤ 10**, and additionally reports the alternative **(HBD + HBA ≤ 12)** criterion
 - **Standardization**: If SMILES contains multiple fragments (e.g., salts, "."), results are reported but flagged with a warning; consider desalting/neutralization upstream for library triage
 - **TPSA option**: By default, TPSA uses RDKit's default behavior (no S/P); `include_sandp_tpsa=True` includes S/P contributions
+---
 
-Author: Matthew Cox
-Contact: github username <mcox3406>
+**Author:** Matthew Cox  
+**Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

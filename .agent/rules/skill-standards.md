@@ -243,15 +243,20 @@ See [`.agent/skills/melting-point/`](./../skills/melting-point/) for a comprehen
 
 ### 7. Author Information
 
-At the very end of every `SKILL.md` file, you MUST include the author's contact information in the following format:
+At the very end of every `SKILL.md` file, include a footer separated by a horizontal rule (`---`).
 
-```text
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**GitHub contact (preferred):**
+```markdown
+---
+
+**Author:** Name  
+**Contact:** [GitHub @username](https://github.com/username)
 ```
 
-If an email is provided, use:
-```text
-Author: Bowen Deng
-Contact: email <name@gmail.com>
+**Email contact:**
+```markdown
+---
+
+**Author:** Name  
+**Contact:** [name@example.com](mailto:name@example.com)
 ```

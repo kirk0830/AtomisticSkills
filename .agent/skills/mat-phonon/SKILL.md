@@ -91,7 +91,7 @@ python .agent/skills/mat-phonon/scripts/get_mp_phonon.py \
 ## 5. Examples
 
 See `examples/` for detailed usage scenarios.
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

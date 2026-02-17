@@ -99,7 +99,7 @@ For accurate barrier calculations, the choice of foundation potential is critica
 ## Examples
 
 See `examples/` directory for sample inputs and outputs.
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

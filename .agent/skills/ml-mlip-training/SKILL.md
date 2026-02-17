@@ -57,5 +57,7 @@ Each MLIP has its own supported `training_config` parameters. See the per-MLIP g
 - **Units (output)**: All `training_history.json` files use **meV** units: energy MAE in meV/atom, force MAE in meV/Å, stress MAE in meV/Å³.
 
 
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+---
+
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

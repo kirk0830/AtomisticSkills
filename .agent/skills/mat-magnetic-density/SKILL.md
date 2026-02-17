@@ -220,6 +220,7 @@ Choosing the right exchange-correlation functional is critical for accurate magn
 - Pymatgen Documentation: [Magnetic Structure Analysis](https://pymatgen.org/pymatgen.analysis.magnetism.html)
 
 ---
+---
 
-Author: Bowen Deng  
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

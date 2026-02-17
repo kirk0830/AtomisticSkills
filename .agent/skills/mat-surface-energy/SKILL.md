@@ -97,7 +97,7 @@ python .agent/skills/mat-surface-energy/scripts/generate_wulff.py --energies_jso
 - **Vacuum**: Ensure sufficient vacuum (typically >15 Å) to avoid interactions between periodic images.
 - **Slab Thickness**: Ensure sufficient slab thickness (typically >10 Å) to recover bulk-like behavior in the center of the slab.
 - **Consistency**: Use the SAME MLIP and convergence settings for both bulk and slab relaxations.
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

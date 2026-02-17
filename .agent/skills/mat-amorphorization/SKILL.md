@@ -69,7 +69,7 @@ Use the `analyze_amorphous.py` script to verify the results:
 
 ## Examples
 See `.agent/skills/mat-amorphorization/examples/` for validated amorphous structures.
+---
 
-
-Author: Bowen Deng
-Contact: github username <bowen-bd>
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

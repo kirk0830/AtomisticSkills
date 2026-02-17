@@ -112,6 +112,7 @@ The tool returns a JSON with:
 - **Heatmap rendering**: Limited to ≤250 compounds due to memory constraints
 - **Similarity metric**: Tanimoto coefficient (Jaccard index for bit vectors)
 - **Clustering algorithm**: Butina (leader-picker style); cutoff = similarity threshold (not distance)
+---
 
-Author: Matthew Cox
-Contact: github username <mcox3406>
+**Author:** Matthew Cox  
+**Contact:** [GitHub @mcox3406](https://github.com/mcox3406)
