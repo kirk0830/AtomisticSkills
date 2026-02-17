@@ -36,19 +36,25 @@ Each MLIP has its own supported `training_config` parameters. See the per-MLIP g
 | Feature | FairChem | MACE | MatGL |
 |:--------|:---------|:-----|:------|
 | Freeze backbone | `freeze_backbone` | `freeze_backbone` | `freeze_backbone` |
+| Re-init readout head | `reinit_head` (no-op¹) | `reinit_head` | `reinit_head` |
 | LR scheduler | Cosine w/ warmup (fixed) | ReduceLROnPlateau (configurable) | CosineAnnealingLR or ReduceLROnPlateau |
 | Early stopping | ❌ Not supported | `patience: 2048` (default off) | `patience` (disabled by default) |
 | Grad clipping | `clip_grad_norm: 100` | `clip_grad: 10.0` | N/A |
 | EMA | `ema_decay: 0.999` | `ema_decay: 0.99` | N/A |
 | Loss weights | Automatic via regression task | `energy/forces/stress_weight` | `energy/force/stress_weight` |
 
+¹ FairChem always re-initializes output heads for new task names — `reinit_head` is accepted for API consistency.
+
 ## Examples
 
 - [UMA Si-O fine-tuning with frozen backbone](examples/uma-sio-frozen/) — 95 structures, freeze_backbone verified
+- [MACE Si-O fine-tuning with frozen backbone](examples/mace-sio-frozen/) — MACE-OMAT-0-small, 10 epochs
+- [CHGNet Si-O fine-tuning with frozen backbone](examples/chgnet-sio-frozen/) — CHGNet-MatPES-PBE, 10 epochs
 
 ## Constraints
 - **Data Size**: For small datasets (<500 structures), `freeze_backbone=True` is strongly recommended.
-- **Units**: Ensure stress labels are in eV/Å³ as per project standards.
+- **Units (input)**: Stress labels must be in eV/Å³ as per project standards.
+- **Units (output)**: All `training_history.json` files use **meV** units: energy MAE in meV/atom, force MAE in meV/Å, stress MAE in meV/Å³.
 
 
 Author: Bowen Deng

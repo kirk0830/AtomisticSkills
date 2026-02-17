@@ -15,6 +15,7 @@ MatGL fine-tuning uses PyTorch Lightning with M3GNet or CHGNet models. Parameter
 | Key | Type | Default | Choices | Description |
 |:----|:-----|:--------|:--------|:------------|
 | `freeze_backbone` | bool | True | `True`, `False` | Freeze all layers except the final readout. |
+| `reinit_head` | bool | False | `True`, `False` | Re-initialize readout weights (Xavier uniform for weights, zeros for biases). Default preserves pre-trained readout. |
 
 ## LR Scheduler
 

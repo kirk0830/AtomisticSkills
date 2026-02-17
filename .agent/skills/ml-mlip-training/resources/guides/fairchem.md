@@ -17,6 +17,7 @@ FairChem fine-tuning wraps the official `fairchem` CLI with a Hydra-based YAML c
 | Key | Type | Default | Choices | Description |
 |:----|:-----|:--------|:--------|:------------|
 | `freeze_backbone` | bool | False | `True`, `False` | Freeze all backbone parameters; only output heads are trained. Strongly recommended for small datasets (<500 structures). |
+| `reinit_head` | bool | False | `True`, `False` | Accepted for API consistency. No functional effect — FairChem always re-initializes heads for new task names. |
 
 When `freeze_backbone=True`, a helper module wraps `initialize_finetuning_model` and sets `requires_grad=False` on all `model.backbone` parameters. Only the output head layers are updated.
 
