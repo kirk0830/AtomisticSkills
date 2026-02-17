@@ -117,7 +117,7 @@ python .agent/skills/ml-generative-diffcsp/scripts/unconditional_generate.py \
 DiffCSP++ works well in combination with:
 - **Structure relaxation**: Use MLIP tools ([MACE](../ml-foundation-potentials/SKILL.md), FairChem, MatGL) to optimize generated structures
 - **Stability analysis**: Use [mat-stability](../mat-stability/SKILL.md) to calculate E_hull
-- **Comparison**: Generate structures with DiffCSP++, [ADiT](../ml-generative-adit/SKILL.md), and [MatterGen](../ml-mattergen/SKILL.md) for diversity
+- **Comparison**: Generate structures with DiffCSP++, [ADiT](../ml-generative-adit/SKILL.md), and [MatterGen](../ml-generative-mattergen/SKILL.md) for diversity
 
 ---
 

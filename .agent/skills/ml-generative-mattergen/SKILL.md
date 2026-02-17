@@ -1,5 +1,5 @@
 ---
-name: ml-mattergen
+name: ml-generative-mattergen
 description: Generate inorganic material structures using MatterGen, a diffusion-based generative model.
 category: machine-learning
 ---
@@ -72,7 +72,7 @@ Fine-tune MatterGen on custom datasets using the skill scripts:
 ### Step 1: Prepare Training Data
 
 ```bash
-cd /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mattergen
+cd /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-generative-mattergen
 conda activate mattergen-agent
 
 # Convert structures and properties to CSV format
