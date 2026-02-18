@@ -90,6 +90,16 @@
       "env": {
         "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
+    },
+    "mattergen": {
+      "command": "/home/bdeng/miniforge3/envs/mattergen-agent/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.mattergen_server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+      }
     }
   }
 }
