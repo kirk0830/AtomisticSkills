@@ -1,0 +1,7 @@
+name: xrd-agent
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+prefix: /home/gridsan/nsegal/.conda/envs/xrd-agent
