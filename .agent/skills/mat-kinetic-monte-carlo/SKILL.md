@@ -17,7 +17,7 @@ This skill focuses on best-practice, physics-grounded KMC:
 - and robust postprocessing (event stats, MSD -> diffusivity, Arrhenius).
 
 This skill is designed to compose with:
-- [mat-neb-barrier](../mat-neb-barrier/SKILL.md) — compute migration barriers via NEB with MLIPs.
+- [chem-neb-barrier](../chem-neb-barrier/SKILL.md) — compute migration barriers via NEB with MLIPs.
 - [mat-phonon](../mat-phonon/SKILL.md) — compute vibrational frequencies for hTST prefactors (Vineyard formula).
 - [mat-diffusion-analysis](../mat-diffusion-analysis/SKILL.md) — MSD fitting, Arrhenius analysis, and D → σ via Nernst-Einstein.
 
@@ -280,7 +280,7 @@ python examples/literature_validation/prepare_h_migration.py \
     --model_type mace --model_name MACE-OMAT-0-small
 
 # 2) NEB barrier (Env: mace-agent, GPU)
-python .agent/skills/mat-neb-barrier/scripts/calculate_barrier.py \
+python .agent/skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure start_relaxed.cif --end_structure end_relaxed.cif \
     --model_type mace --model_name MACE-OMAT-0-small \
     --n_images 5 --fmax 0.02 --output_dir neb_results

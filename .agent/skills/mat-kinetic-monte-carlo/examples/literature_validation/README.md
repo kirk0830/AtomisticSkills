@@ -99,7 +99,7 @@ python prepare_h_migration.py --model_type mace --model_name MACE-OMAT-0-small -
 
 **Step 2: Run NEB** (on GPU, using neb-barrier skill)
 ```bash
-python ../../mat-neb-barrier/scripts/calculate_barrier.py \
+python ../../chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure start_relaxed.cif \
     --end_structure end_relaxed.cif \
     --model_type mace --model_name MACE-OMAT-0-small \
