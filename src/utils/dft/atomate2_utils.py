@@ -151,21 +151,20 @@ class Atomate2Handler:
         user_incar = config or {}
         
         if preset == "matpes-r2scan":
-            # For MatPES, we apply custom settings to the relevant makers
-            # Note: MatPesStaticFlowMaker doesn't easily expose nested config in init
-            # but we can try to wrap it or just use standard makers if config is provided
+            meta_maker = MatPesMetaGGAStaticMaker()
+            if user_incar:
+                meta_maker.input_set_generator.user_incar_settings.update(user_incar)
             return MatPesStaticFlowMaker(
                 static1=None,
-                static2=MatPesMetaGGAStaticMaker(
-                    input_set_generator=MatPesMetaGGAStaticMaker().input_set_generator.default_factory()
-                ).update_incar(user_incar) if user_incar else MatPesMetaGGAStaticMaker(),
+                static2=meta_maker,
                 static3=None
             )
         elif preset == "matpes-pbe":
+            gga_maker = MatPesGGAStaticMaker()
+            if user_incar:
+                gga_maker.input_set_generator.user_incar_settings.update(user_incar)
             return MatPesStaticFlowMaker(
-                static1=MatPesGGAStaticMaker(
-                    input_set_generator=MatPesGGAStaticMaker().input_set_generator.default_factory()
-                ).update_incar(user_incar) if user_incar else MatPesGGAStaticMaker(),
+                static1=gga_maker,
                 static2=None,
                 static3=None
             )
@@ -182,9 +181,6 @@ class Atomate2Handler:
                 raise ValueError(f"Unknown calculation_type: {calculation_type}")
             
             if user_incar:
-                # For BandStructureMaker, we might need to apply incar settings to underlying static/bs makers
-                # But typically maker.input_set_generator access works for simple makers.
-                # BandStructureMaker has static_maker and bs_maker.
                 if calculation_type == "band_structure":
                      if hasattr(maker.static_maker, "input_set_generator"):
                          maker.static_maker.input_set_generator.user_incar_settings.update(user_incar)
