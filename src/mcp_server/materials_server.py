@@ -248,10 +248,7 @@ def visualize_structure(
                     img_path = out_dir / f"{struct_name}_structure.png"
                     
                     # Import visualization function
-                    try:
-                        from src.utils.structure_viz import structure_3d_custom
-                    except ImportError:
-                        from utils.structure_viz import structure_3d_custom
+                    from src.utils.structure_viz import structure_3d_custom
                     
                     # Generate and save figure
                     fig = structure_3d_custom(structure, scale=scale)
@@ -318,10 +315,7 @@ def visualize_structure(
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Use custom implementation for better style control (Vesta colors, 3D lighting)
-        try:
-            from src.utils.structure_viz import structure_3d_custom
-        except ImportError:
-            from utils.structure_viz import structure_3d_custom
+        from src.utils.structure_viz import structure_3d_custom
             
         # Generate the figure with custom settings
         fig = structure_3d_custom(
