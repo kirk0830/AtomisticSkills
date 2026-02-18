@@ -66,9 +66,6 @@ def generate_structures(
     """
     Generate crystal or molecule structures using ADiT (All-atom Diffusion Transformer).
 
-    ADiT is a unified latent diffusion model (ICML 2025) that generates both
-    periodic crystal structures and non-periodic molecules from a shared latent space.
-
     Args:
         generation_type: Type of structures to generate.
                         "crystals" - Generate periodic crystal structures (MP20-trained, saved as CIF)

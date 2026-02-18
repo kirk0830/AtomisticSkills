@@ -1,6 +1,6 @@
 ---
 name: mat-ionic-substitution
-description: Discover new crystal structures by data-mined ionic substitution — propose candidates from existing structures (forward) or find all precursors for a target composition (reverse).
+description: Discover new crystal structures by data-mined ionic substitution — propose candidates from existing structures (forward) or find potential structures for a target composition (reverse).
 category: materials
 ---
 
