@@ -198,7 +198,7 @@ The `adsorption_results.json` file contains:
 ## See Also
 
 - [mat-surface-energy](../mat-surface-energy/SKILL.md): Calculate surface energies and Wulff shapes
-- [mat-molecular-dynamics](../mat-molecular-dynamics/SKILL.md): MD simulations with MLIPs
+- [general-molecular-dynamics](../general-molecular-dynamics/SKILL.md): MD simulations with MLIPs
 - [ml-foundation-potentials](../ml-foundation-potentials/SKILL.md): Guide for MLIP selection
 ---
 
