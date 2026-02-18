@@ -113,6 +113,21 @@ Document important limitations, safety rules, and requirements:
 - **System Size**: Recommended for supercells with >50 atoms to reduce noise.
 ```
 
+### 6. References Section
+Include literature references for the methods, algorithms, or datasets that the skill is based on. This ensures scientific reproducibility and gives proper attribution.
+
+```markdown
+## References
+- Author et al., "Paper Title", *Journal Name*, Year. [DOI](https://doi.org/...)
+- Author et al., "Another Paper", *Journal*, Year. [DOI](https://doi.org/...)
+```
+
+**Guidelines:**
+- Cite the **original paper** describing the method or algorithm used
+- Include DOI links when available
+- If the skill wraps a software package, cite the package's canonical reference
+- For skills based on well-known textbook methods, a brief description of the method origin is acceptable in lieu of a formal citation
+
 ## Script Documentation Standards
 
 All Python scripts in the `scripts/` directory must include:
