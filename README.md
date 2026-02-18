@@ -94,9 +94,9 @@ Workflow: "Find stable Li-ion conductors"
   │     ├── Tool: Load structure from Materials Project (MCP)
   │     ├── Tool: Relax structure with MLIP (MCP)
   │     └── Tool: Calculate formation energy (Skill Script)
-  └── Skill: "Compute ionic diffusion"
-        ├── Tool: Run MD simulation (MCP)
-        └── Tool: Analyze MSD and fit diffusivity (Skill Script)
+  ├── Skill: "Compute ionic diffusion"
+  │     ├── Tool: Run MD simulation (MCP)
+  │     └── Tool: Analyze MSD and fit diffusivity (Skill Script)
 ```
 
 ---
