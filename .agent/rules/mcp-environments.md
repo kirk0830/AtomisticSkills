@@ -12,7 +12,7 @@ For general development logic that cuts across tools, usually `base-agent` is su
 
 For detailed installation instructions, please refer to the `README.md` and `install.sh` located in each environment's directory under `conda-envs/<env_name>/`.
 
-- **base-agent**: `conda-envs/base-agent/` (Core: atomate2, pymatgen, ase)
+- **base-agent**: `conda-envs/base-agent/` (Core: pymatgen, ase, rdkit, packmol)
 - **mace-agent**: `conda-envs/mace-agent/` (Core: mace-torch, pymatgen, ase)
 - **matgl-agent**: `conda-envs/matgl-agent/` (Core: matgl, pymatgen, dgl)
 - **fairchem-agent**: `conda-envs/fairchem-agent/` (Core: fairchem-core, pymatgen)

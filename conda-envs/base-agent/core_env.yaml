@@ -1,6 +1,10 @@
 name: base-agent
+channels:
+  - conda-forge
 dependencies:
   - python=3.11
+  - rdkit
+  - packmol
   - pip
   - pip:
     - mcp
