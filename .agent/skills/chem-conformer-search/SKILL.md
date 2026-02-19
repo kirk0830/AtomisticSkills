@@ -16,6 +16,12 @@ Generate a diverse ensemble of low-energy conformers for a given molecule. The w
 > [!IMPORTANT]
 > This skill is optimized for **organic molecules** and uses `MACE-OFF23` models by default. For inorganic clusters, switch to `MACE-OMAT` or `MatGL` models.
 
+### Recommended Models
+
+- **MACE-OFF23**: `MACE-OFF23-small` (default), `MACE-OFF23-medium` — trained on organic molecules (Env: `mace-agent`)
+- **MACE-MH**: `MACE-MH-1` with head `omol` — multi-head model with molecular head (Env: `mace-agent`)
+- **UMA**: `uma-s-1p1` with head `omol` — general molecular model (Env: `fairchem-agent`)
+
 ## 1. Prerequisites
 
 - **Conda Environment**: `mace-agent` (recommended as it includes both `mace` and `rdkit`).
@@ -88,7 +94,18 @@ The output directory will contain:
 
 See `examples/aspirin` for a complete example run on Acetylsalicylic acid.
 
-## 6. References
+## 6. Constraints
 
-- **ETKDG**: Riniker, S.; Landrum, G. A. "Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation", *J. Chem. Inf. Model.* **2015**, 55, 2562.
-- **MACE-OFF23**: Kovács, D. P. et al. "MACE-OFF23: Transferable Machine Learning Force Fields for Organic Molecules", *arXiv* **2023**.
+- **Environment**: Use the conda environment matching the chosen model: `mace-agent` (MACE), `fairchem-agent` (FairChem/UMA), or `matgl-agent` (MatGL). All include RDKit.
+- **Input**: Either `--smiles` or `--structure` must be provided, but not both.
+- **Molecule Type**: Optimized for organic molecules. For inorganic clusters, switch to `MACE-OMAT` or `MatGL` models.
+- **Non-periodic**: All conformers are treated as non-periodic (isolated molecules).
+
+## 7. References
+
+- Riniker, S.; Landrum, G. A., "Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation", *J. Chem. Inf. Model.*, 2015, 55, 2562. [DOI](https://doi.org/10.1021/acs.jcim.5b00654)
+
+---
+
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

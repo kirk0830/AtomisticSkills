@@ -1,11 +1,14 @@
 ---
 name: chem-react-ot
-description: Generate transition state structures for chemical reactions using React-OT (Optimal Transport).
+description: Generate transition state structures for chemical reactions using React-OT.
+category: chemistry
 ---
 
 # `chem-react-ot` — React-OT Transition State Generation
 
-Generates transition state (TS) structures given reactant and product structures using the React-OT model (Optimal Transport). React-OT is a generative model that predicts TS geometries directly without requiring an initial guesspath (like NEB).
+## Goal
+
+Generate transition state (TS) structures given reactant and product structures using the React-OT model (Optimal Transport). React-OT is a generative model that predicts TS geometries directly without requiring an initial guess path (like NEB).
 
 **Category:** `chemistry`
 **Environment:** `react-ot-agent`
@@ -23,6 +26,7 @@ Generates transition state (TS) structures given reactant and product structures
 This skill requires the `react-ot-agent` conda environment. Ensure it is installed:
 
 ```bash
+# Env: react-ot-agent
 cd conda-envs/react-ot-agent
 bash install.sh
 ```
@@ -44,9 +48,7 @@ The checkpoint is saved to `~/.cache/react-ot/checkpoints/sb-pretrained.ckpt`.
 Run the generation script with reactant and product files (xyz, cif, pdb, etc. - anything ASE reads).
 
 ```bash
-# activate react-ot-agent
-conda activate react-ot-agent
-
+# Env: react-ot-agent
 python .agent/skills/chem-react-ot/scripts/generate_ts.py \
     --reactants reactant.xyz \
     --products product.xyz \
@@ -64,13 +66,26 @@ python .agent/skills/chem-react-ot/scripts/generate_ts.py \
 ## Example
 
 ```bash
+# Env: react-ot-agent
 python .agent/skills/chem-react-ot/scripts/generate_ts.py \
     --reactants .agent/skills/chem-react-ot/examples/oxadiazole_isomerization/reactant.xyz \
     --products .agent/skills/chem-react-ot/examples/oxadiazole_isomerization/product.xyz \
     --output_dir .agent/skills/chem-react-ot/examples/oxadiazole_isomerization/output
 ```
 
+## Constraints
+
+- **Environment**: All scripts require the `react-ot-agent` conda environment.
+- **Input Format**: Reactant and product structures must be in any format readable by ASE (XYZ, CIF, PDB, etc.).
+- **Atom Ordering**: Reactant and product structures must have the same number of atoms with consistent atom ordering.
+- **Model Checkpoint**: The pre-trained checkpoint must be downloaded before first use (see step 2).
+
 ## References
 
 - [React-OT GitHub](https://github.com/deepprinciple/react-ot)
-- Duan, C. et al. "React-OT: Optimal Transport for Generating Transition State in Chemical Reactions".
+- Duan, C., Liu, G.-H., Du, Y. et al., "Optimal transport for generating transition states in chemical reactions", *Nature Machine Intelligence*, 2025. [DOI](https://doi.org/10.1038/s42256-025-01010-0)
+
+---
+
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
