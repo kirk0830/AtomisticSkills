@@ -16,6 +16,15 @@ This skill provides tools for calculating lattice thermal conductivity of materi
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
 - `matcalc`, `phonopy`, and `phono3py` must be installed in the relevant conda environment.
 
+### Required Patch for phono3py ≥ 3.x
+
+phono3py 3.x renamed `ConductivityRTA.kappa_TOT_RTA` to `.kappa`. Apply the following one-line fix in `matcalc/src/matcalc/_phonon3.py`:
+
+```diff
+-kappa = np.asarray(phonon3.thermal_conductivity.kappa_TOT_RTA)
++kappa = np.asarray(phonon3.thermal_conductivity.kappa)
+```
+
 ## 2. Choosing a Foundation Potential
 
 Phonon and thermal conductivity calculations are highly sensitive to the quality of the potential energy surface (PES). 
