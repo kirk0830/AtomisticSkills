@@ -89,10 +89,14 @@ def query_synthesis_recipes(
             
             print(f"Searching for synthesis recipes for {normalized_formula}...")
             
-            # Query synthesis database
+            # Query synthesis database (pull more chunks if filtering to ensure enough results)
+            fetch_limit = limit
+            if synthesis_type or min_temp or max_temp:
+                fetch_limit = max(100, limit)
+            
             recipes = mpr.synthesis.search(
                 target_formula=normalized_formula,
-                num_chunks=limit
+                num_chunks=fetch_limit
             )
             
             if not recipes:
