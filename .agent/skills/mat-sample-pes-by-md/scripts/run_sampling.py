@@ -63,6 +63,7 @@ def run_sampling():
     parser.add_argument("--ensemble", choices=["nvt", "npt"], default="npt", help="MD ensemble (default: npt)")
     parser.add_argument("--n_clusters", type=int, default=20, help="Number of structures to sample/clusters")
     parser.add_argument("--target_atoms", type=int, default=50, help="Target number of atoms for supercell expansion")
+    parser.add_argument("--min_length", type=float, default=None, help="Minimum lattice length for supercell expansion in Angstroms")
     parser.add_argument("--time_step", type=float, help="MD time step in fs (default auto-detected)")
 
     args = parser.parse_args()
@@ -104,6 +105,7 @@ def run_sampling():
         n_clusters=args.n_clusters,
         output_dir=args.output_dir,
         target_atoms=args.target_atoms,
+        min_length=args.min_length,
         time_step=args.time_step
     )
     

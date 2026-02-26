@@ -196,6 +196,7 @@ class OffEquilibriumSampler:
                  temperature: float = 1000.0, 
                  ensemble: str = "npt",
                  n_clusters: int = 200,
+                 min_length: Optional[float] = None,
                  time_step: Optional[float] = None):
         """
         Initialize OffEquilibriumSampler.
@@ -211,6 +212,7 @@ class OffEquilibriumSampler:
             temperature: Temperature in Kelvin (default: 1000.0)
             ensemble: MD ensemble ("nvt", "npt") (default: "npt")
             n_clusters: Number of structures to sample via clustering (default: 200)
+            min_length: Minimum lattice length for supercell expansion in Angstroms
             time_step: Time step in fs. (default: 5.0 fs, or 2.0 fs if H is present)
         """
         self.calculator = calculator
@@ -223,7 +225,7 @@ class OffEquilibriumSampler:
         # Expand supercell to reach target number of atoms (around 50) with cubic-like expansion
         from src.utils.structure_utils import expand_structure
         MAX_SAFE_ATOMS = 120  # Enforce safety limit to prevent OOM
-        expanded_atoms = expand_structure(atoms, target_atoms=target_atoms, max_atoms=MAX_SAFE_ATOMS)
+        expanded_atoms = expand_structure(atoms, target_atoms=target_atoms, max_atoms=MAX_SAFE_ATOMS, min_length=min_length)
         
         # Re-relax after supercell expansion to remove any residual stress
         # This is critical for stable MD - expanded cells often have residual stress
