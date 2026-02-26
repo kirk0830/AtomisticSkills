@@ -194,6 +194,7 @@ class OffEquilibriumSampler:
                  output_dir: Optional[str] = None,
                  target_atoms: int = 50, 
                  temperature: float = 1000.0, 
+                 ensemble: str = "npt",
                  n_clusters: int = 200,
                  time_step: Optional[float] = None):
         """
@@ -208,6 +209,7 @@ class OffEquilibriumSampler:
                          Note: Maximum safe limit is 120 atoms to prevent OOM in VASP calculations.
                                Structures with >120 atoms may cause memory issues during DFT labeling.
             temperature: Temperature in Kelvin (default: 1000.0)
+            ensemble: MD ensemble ("nvt", "npt") (default: "npt")
             n_clusters: Number of structures to sample via clustering (default: 200)
             time_step: Time step in fs. (default: 5.0 fs, or 2.0 fs if H is present)
         """
@@ -252,6 +254,7 @@ class OffEquilibriumSampler:
         self.total_steps = total_steps if total_steps is not None else 10000
         self.log_interval = 10  # Log every 5 steps for real-time monitoring
         self.temperature = temperature  # K
+        self.ensemble = ensemble.lower()
         
         # Slower heating: reach target in around half of total time
         # Assuming 5 * tau ~ equilibration time => 5 * tau = total_time / 2
@@ -342,7 +345,7 @@ class OffEquilibriumSampler:
         atoms = self.atoms.copy()
         atoms.calc = self.calculator
         
-        logger.info(f"Starting NPT MD simulation:")
+        logger.info(f"Starting {self.ensemble.upper()} MD simulation:")
         logger.info(f"  - Number of atoms: {len(atoms)}")
         logger.info(f"  - Number of MD steps: {self.total_steps}")
         logger.info(f"  - Total simulation time: {total_time_ps:.2f} ps")
@@ -375,20 +378,35 @@ class OffEquilibriumSampler:
         if self.output_dir:
             from pathlib import Path
             trajfile = str(Path(self.output_dir) / "md_trajectory.traj")
-        
-        dyn = Inhomogeneous_NPTBerendsen(
-            atoms,
-            timestep=self.time_step * units.fs,
-            temperature_K=self.temperature,
-            pressure_au=self.pressure_au,
-            taut=self.taut,
-            taup=self.taup,
-            compressibility_au=self.compressibility_au,
-            trajectory=trajfile,
-            logfile=None,  # We use MDLogger separately
-            loginterval=self.log_interval,
-            append_trajectory=False,
-        )
+            
+        if self.ensemble == "npt":
+            dyn = Inhomogeneous_NPTBerendsen(
+                atoms,
+                timestep=self.time_step * units.fs,
+                temperature_K=self.temperature,
+                pressure_au=self.pressure_au,
+                taut=self.taut,
+                taup=self.taup,
+                compressibility_au=self.compressibility_au,
+                trajectory=trajfile,
+                logfile=None,  # We use MDLogger separately
+                loginterval=self.log_interval,
+                append_trajectory=False,
+            )
+        elif self.ensemble == "nvt":
+            from ase.md.langevin import Langevin
+            dyn = Langevin(
+                atoms,
+                timestep=self.time_step * units.fs,
+                temperature_K=self.temperature,
+                friction=0.02, # Usually 0.01 to 0.05
+                trajectory=trajfile,
+                logfile=None,
+                loginterval=self.log_interval,
+                append_trajectory=False,
+            )
+        else:
+            raise ValueError(f"Unsupported ensemble '{self.ensemble}'. Must be 'nvt' or 'npt'.")
         
         # Add observers
         dyn.attach(self.trajectory_observer, interval=self.log_interval)

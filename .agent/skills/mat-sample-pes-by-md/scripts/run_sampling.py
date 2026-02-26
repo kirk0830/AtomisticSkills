@@ -60,6 +60,7 @@ def run_sampling():
     parser.add_argument("--model_name", help="Name of the MLIP model to use")
     parser.add_argument("--total_steps", type=int, default=10000, help="Total MD steps for off-equilibrium")
     parser.add_argument("--temperature", type=float, default=1000.0, help="MD temperature in Kelvin")
+    parser.add_argument("--ensemble", choices=["nvt", "npt"], default="npt", help="MD ensemble (default: npt)")
     parser.add_argument("--n_clusters", type=int, default=20, help="Number of structures to sample/clusters")
     parser.add_argument("--target_atoms", type=int, default=50, help="Target number of atoms for supercell expansion")
     parser.add_argument("--time_step", type=float, help="MD time step in fs (default auto-detected)")
@@ -99,6 +100,7 @@ def run_sampling():
         atoms=atoms,
         total_steps=args.total_steps,
         temperature=args.temperature,
+        ensemble=args.ensemble,
         n_clusters=args.n_clusters,
         output_dir=args.output_dir,
         target_atoms=args.target_atoms,

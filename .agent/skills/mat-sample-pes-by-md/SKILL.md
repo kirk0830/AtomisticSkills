@@ -7,7 +7,7 @@ category: materials
 # Sample PES by MD
 
 ## Goal
-To generate diverse and representative atomic configurations from a starting structure to augment training data for Machine Learning Interatomic Potentials (MLIPs). This is achieved through MD-based sampling with crystal feature clustering (for off-equilibrium states) or Ewald-sum based ordering (for disordered structures).
+To generate diverse and representative atomic configurations from a starting structure to augment training data for Machine Learning Interatomic Potentials (MLIPs). This is achieved through MD-based sampling with crystal feature clustering.
 
 ## Instructions
 

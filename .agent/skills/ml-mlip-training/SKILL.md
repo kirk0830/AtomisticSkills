@@ -11,8 +11,8 @@ To evaluate and improve the accuracy of a foundation potential (MACE, MatGL, Fai
 
 ## Instructions
 
-1.  **PES Sampling**: Generate diverse structural configurations using the near-equilibrium or off-equilibrium samplers.
-2.  **Labeling**: Obtain high-fidelity energy and forces using DFT (via `prepare_vasp_inputs`) or a high-quality mock potential (UMA).
+1.  **PES Sampling**: Generate diverse representative structural configurations. For off-equilibrium state sampling, use the [mat-sample-pes-by-md](../mat-sample-pes-by-md/SKILL.md) skill. For disordered structures, use the `run_ordering` script under the [mat-disorder](../mat-disorder/SKILL.md) skill.
+2.  **Labeling**: Obtain high-fidelity energy and forces using DFT (via `prepare_vasp_inputs`) or a expensive high-quality MLIPs (MLIP distillation).
 3.  **Benchmarking**: Predict results on the new labels and generate parity plots using [plot_training_results.py](scripts/plot_training_results.py).
     ```bash
     python scripts/plot_training_results.py --results benchmarking.json
