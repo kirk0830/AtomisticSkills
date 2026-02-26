@@ -9,6 +9,7 @@ scratch/
 .agent/test/
 tests/.agent/test/
 tests/tmp_*/
+tmp/
 
 # Python
 /*.py
