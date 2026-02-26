@@ -39,10 +39,13 @@ from src.utils.research_utils import create_new_research_dir
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("MaterialsServer")
+logger = logging.getLogger("BaseServer")
 
 # Create MCP server
-mcp = FastMCP("materials_tools")
+mcp = FastMCP("base_tools")
+
+# Import literature utils
+from src.utils.literature_utils import query_openalex, reconstruct_abstract
 
 @mcp.tool()
 def create_research_dir(research_topic: str) -> str:
@@ -454,6 +457,72 @@ def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> D
             json.dump(results, f, indent=2)
             
     return results
+
+@mcp.tool()
+def search_literature_openalex(query: str, limit: int = 10, save_to_file: Optional[str] = None) -> str:
+    """Search the OpenAlex database for scientific literature.
+    
+    Args:
+        query: The search term (e.g., "solid state battery LGPS").
+        limit: Maximum number of results to return (default 10, max 50).
+        save_to_file: Optional path to save the full JSON results.
+        
+    Returns:
+        Formatted markdown summary of the top papers found.
+    """
+    try:
+        import json
+        from pathlib import Path
+        
+        limit = min(limit, 50) # Cap at 50 to avoid massive responses
+        results = query_openalex(query, limit)
+        
+        if not results:
+            return f"No results found on OpenAlex for query: '{query}'"
+            
+        # Optional: Save raw JSON data
+        if save_to_file:
+            save_path = Path(save_to_file)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(save_path, 'w') as f:
+                json.dump(results, f, indent=2)
+                
+        # Format the output summary
+        summary = f"Found {len(results)} papers on OpenAlex for query '{query}':\n\n"
+        
+        for i, work in enumerate(results, 1):
+            title = work.get('title', 'Unknown Title')
+            year = work.get('publication_year', 'Unknown Year')
+            authors = ", ".join(work.get('authors', [])[:3])
+            if len(work.get('authors', [])) > 3:
+                authors += " et al."
+            
+            doi = work.get('doi', 'No DOI')
+            citations = work.get('cited_by_count', 0)
+            is_oa = "Yes" if work.get('is_oa') else "No"
+            
+            summary += f"### {i}. {title}\n"
+            summary += f"- **Authors:** {authors}\n"
+            summary += f"- **Year:** {year} | **Citations:** {citations} | **Open Access:** {is_oa}\n"
+            summary += f"- **DOI:** https://doi.org/{doi}\n"
+            
+            # Reconstruct abstract
+            abstract_idx = work.get('abstract_inverted_index')
+            abstract_text = reconstruct_abstract(abstract_idx)
+            
+            # Truncate abstract if it's too long
+            if len(abstract_text) > 500:
+                abstract_text = abstract_text[:497] + "..."
+                
+            summary += f"- **Abstract:** {abstract_text}\n\n"
+            
+        if save_to_file:
+            summary += f"\nFull results saved to {save_to_file}"
+            
+        return summary
+        
+    except Exception as e:
+        return f"Error searching OpenAlex: {str(e)}"
 
 if __name__ == "__main__":
     run_fastmcp_server(mcp, mcp_pipe_binary)

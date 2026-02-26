@@ -185,7 +185,7 @@ export ATOMATE2_REMOTE_PROJECT="remote_perlmutter"
 
 This project runs as a collection of MCP servers. Some require specific setup:
 
-### 1. [base-server](src/mcp_server/materials_server.py)
+### 1. [base-server](src/mcp_server/base_server.py)
 *   **Purpose**: Querying structure databases (Materials Project) and VASP I/O.
 *   **Requirements**: `MP_API_KEY` must be set.
 

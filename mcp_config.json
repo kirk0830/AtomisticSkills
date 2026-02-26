@@ -35,7 +35,7 @@
       "command": "/home/bdeng/miniforge3/envs/base-agent/bin/python",
       "args": [
         "-m",
-        "src.mcp_server.materials_server"
+        "src.mcp_server.base_server"
       ],
       "env": {
         "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"

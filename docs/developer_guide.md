@@ -37,7 +37,7 @@ Each MCP server is a standalone Python module that exposes tools via the FastMCP
 | [mace_server.py](../src/mcp_server/mace_server.py) | `mace-agent` | MACE model loading, prediction, relaxation, MD, fine-tuning |
 | [matgl_server.py](../src/mcp_server/matgl_server.py) | `matgl-agent` | CHGNet/M3GNet/TensorNet operations, bandgap prediction |
 | [fairchem_server.py](../src/mcp_server/fairchem_server.py) | `fairchem-agent` | UMA/ESEN models |
-| [materials_server.py](../src/mcp_server/materials_server.py) | `base-agent` | Materials Project queries, VASP I/O, research directory management |
+| [base_server.py](../src/mcp_server/base_server.py) | `base-agent` | Materials Project queries, VASP I/O, research directory management |
 | [atomate2_server.py](../src/mcp_server/atomate2_server.py) | `atomate2-agent` | Query remote DFT databases, job status monitoring |
 | [smol_server.py](../src/mcp_server/smol_server.py) | `smol-agent` | Cluster expansion training and Monte Carlo simulations |
 | [drugdisc_server.py](../src/mcp_server/drugdisc_server.py) | `drugdisc-agent` | Molecular descriptors, standardization, PDBQT conversion |
