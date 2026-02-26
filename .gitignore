@@ -11,6 +11,7 @@ tests/.agent/test/
 tests/tmp_*/
 
 # Python
+/*.py
 __pycache__/
 *.py[cod]
 *$py.class
