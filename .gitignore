@@ -69,3 +69,7 @@ Thumbs.db
 stdout.txt
 stderr.txt
 debug*
+*.log
+*out*.txt
+*_pid
+*_help.txt

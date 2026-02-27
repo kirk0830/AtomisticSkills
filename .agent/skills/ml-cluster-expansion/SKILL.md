@@ -99,7 +99,28 @@ result = mcp_smol_train_cluster_expansion(
 > [!NOTE]
 > **Training Workflow**: You can perform a **Simple Training** by only using the initially `sample_ordered_structures` set. This is often sufficient for basic property predictions. For high-accuracy ground-state exploration, you should continue with the **Active Learning** loop (MC sampling and iterative refinement).
 
-### Step 5: Active Learning Loop (Optional)
+### Step 5: Direct Feature Matrix Fitting (Optional)
+
+In some scenarios, you may have pre-computed feature matrices and energies (e.g., from literature or external workflows). You can directly fit these without building a `ClusterSubspace` first, using the `mcp_smol_fit_feature_matrix` tool. This is also how you can utilize advanced techniques like **Sparse Group Lasso (SGL)**.
+
+```python
+# MCP Tool: mcp_smol_fit_feature_matrix
+result = mcp_smol_fit_feature_matrix(
+    feature_matrix_path="fm.npy",
+    energies_path="e.npy",
+    groups_path="groups.npy", # Required for sgl
+    fit_method="sgl",         # 'ls', 'lasso', 'ridge', or 'sgl'
+    alpha=0.002,
+    lambda_mixing=0.5,
+    test_size=0.2
+)
+```
+> [!TIP]
+> **Sparse Group Lasso (SGL)** is highly recommended for complex, high-component systems as it naturally selects important cluster groups while maintaining sparsity. It requires a `groups.npy` file that assigns each feature column to a cluster orbit group.
+
+---
+
+### Step 6: Active Learning Loop (Optional)
 
 #### A. Run Monte Carlo Sampling
 ```python
