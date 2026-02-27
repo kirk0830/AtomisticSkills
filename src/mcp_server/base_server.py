@@ -46,6 +46,8 @@ mcp = FastMCP("base_tools")
 
 # Import literature utils
 from src.utils.literature_utils import query_openalex, reconstruct_abstract
+import subprocess
+import json
 
 @mcp.tool()
 def create_research_dir(research_topic: str) -> str:
@@ -202,7 +204,8 @@ def visualize_structure(
         from pymatgen.io.ase import AseAtomsAdaptor
 
         input_path = Path(structure_path)
-        current_research_dir = os.environ.get("CURRENT_RESEARCH_DIR")
+        from src.utils.research_utils import get_current_research_dir
+        current_research_dir = str(get_current_research_dir())
         
         # Check if input is a directory
         if input_path.is_dir():
@@ -459,20 +462,23 @@ def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> D
     return results
 
 @mcp.tool()
-def search_literature_openalex(query: str, limit: int = 10, save_to_file: Optional[str] = None) -> str:
-    """Search the OpenAlex database for scientific literature.
+def search_literature(query: str, limit: int = 10, download: bool = True, save_to_file: Optional[str] = None) -> str:
+    """Search the OpenAlex database for scientific literature and optionally download full-text.
     
     Args:
         query: The search term (e.g., "solid state battery LGPS").
         limit: Maximum number of results to return (default 10, max 50).
+        download: Whether to automatically attempt downloading the full text of discovered papers.
         save_to_file: Optional path to save the full JSON results.
         
     Returns:
-        Formatted markdown summary of the top papers found.
+        Formatted markdown summary of the top papers found, downloading status, and paywall warnings.
     """
     try:
         import json
+        import os
         from pathlib import Path
+        from src.utils.literature_utils import query_openalex, reconstruct_abstract
         
         limit = min(limit, 50) # Cap at 50 to avoid massive responses
         results = query_openalex(query, limit)
@@ -488,7 +494,18 @@ def search_literature_openalex(query: str, limit: int = 10, save_to_file: Option
                 json.dump(results, f, indent=2)
                 
         # Format the output summary
-        summary = f"Found {len(results)} papers on OpenAlex for query '{query}':\n\n"
+        summary = f"Found {len(results)} papers on OpenAlex for query '{query}':\\n\\n"
+        
+        # Determine download directory early
+        output_dir = None
+        if download:
+            from src.utils.paper_downloader import download_paper_by_publisher
+            from src.utils.research_utils import get_current_research_dir
+            working_dir = get_current_research_dir()
+            output_dir = Path(working_dir) / "papers"
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+        paywalled_notifications = []
         
         for i, work in enumerate(results, 1):
             title = work.get('title', 'Unknown Title')
@@ -501,28 +518,49 @@ def search_literature_openalex(query: str, limit: int = 10, save_to_file: Option
             citations = work.get('cited_by_count', 0)
             is_oa = "Yes" if work.get('is_oa') else "No"
             
-            summary += f"### {i}. {title}\n"
-            summary += f"- **Authors:** {authors}\n"
-            summary += f"- **Year:** {year} | **Citations:** {citations} | **Open Access:** {is_oa}\n"
-            summary += f"- **DOI:** https://doi.org/{doi}\n"
+            summary += f"### {i}. {title}\\n"
+            summary += f"- **Authors:** {authors}\\n"
+            summary += f"- **Year:** {year} | **Citations:** {citations} | **Open Access:** {is_oa}\\n"
+            summary += f"- **DOI:** https://doi.org/{doi}\\n"
+            
+            if download and doi and doi != 'No DOI':
+                # Determine "publisher" intuitively. Try elsevier/springer, fallback to unpaywall.
+                publisher_hint = "unpaywall"
+                # Naive check, could be expanded if raw OpenAlex host metadata is passed
+                if "elsevier" in (work.get("primary_location") or {}).get("landing_page_url", "").lower():
+                    publisher_hint = "elsevier"
+                elif "springer" in (work.get("primary_location") or {}).get("landing_page_url", "").lower():
+                    publisher_hint = "springer"
+                    
+                downloaded_path = download_paper_by_publisher(doi, publisher_hint, output_dir)
+                if downloaded_path:
+                    summary += f"- **Downloaded Full-Text:** {downloaded_path}\\n"
+                else:
+                    summary += f"- **Download Failed:** Hit paywall or access restriction.\\n"
+                    paywalled_notifications.append(f"[{i}] {title} (DOI: {doi})")
             
             # Reconstruct abstract
             abstract_idx = work.get('abstract_inverted_index')
             abstract_text = reconstruct_abstract(abstract_idx)
-            
-            # Truncate abstract if it's too long
             if len(abstract_text) > 500:
                 abstract_text = abstract_text[:497] + "..."
-                
-            summary += f"- **Abstract:** {abstract_text}\n\n"
+            summary += f"- **Abstract:** {abstract_text}\\n\\n"
+            
+        if download and paywalled_notifications:
+            summary += "\\n### ⚠️ Paywall Notice\\n"
+            summary += "The following papers could not be automatically downloaded due to publisher paywalls or lack of Open Access availability:\\n"
+            for note in paywalled_notifications:
+                summary += f"- {note}\\n"
+            summary += "\\nPlease download these PDFs manually via your institutional proxy and upload them to the workspace if you need their full text.\\n"
             
         if save_to_file:
-            summary += f"\nFull results saved to {save_to_file}"
+            summary += f"\\nFull results saved to {save_to_file}"
             
         return summary
         
     except Exception as e:
-        return f"Error searching OpenAlex: {str(e)}"
+        return f"Error executing search_literature: {str(e)}"
+
 
 if __name__ == "__main__":
     run_fastmcp_server(mcp, mcp_pipe_binary)

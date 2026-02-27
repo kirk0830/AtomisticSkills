@@ -13,3 +13,4 @@ dependencies:
     - mp-api
     - typing-extensions
     - h5py
+    - pymupdf

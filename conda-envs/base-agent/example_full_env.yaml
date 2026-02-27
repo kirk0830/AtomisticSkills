@@ -80,6 +80,7 @@ dependencies:
       - pyjwt==2.11.0
       - pymatgen==2025.10.7
       - pymatgen-io-validation==0.1.2
+      - pymupdf==1.27.1
       - pyparsing==3.3.2
       - python-dateutil==2.9.0.post0
       - python-dotenv==1.2.1

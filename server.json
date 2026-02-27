@@ -33,6 +33,30 @@
                     "isSecret": false
                 },
                 {
+                    "name": "ELSEVIER_API_KEY",
+                    "description": "API Key for accessing Elsevier ScienceDirect API.",
+                    "isRequired": false,
+                    "isSecret": true
+                },
+                {
+                    "name": "ELSEVIER_INST_TOKEN",
+                    "description": "Optional institutional token for Elsevier access.",
+                    "isRequired": false,
+                    "isSecret": true
+                },
+                {
+                    "name": "SPRINGER_API_KEY",
+                    "description": "API Key for accessing Springer Nature Meta API v2.",
+                    "isRequired": false,
+                    "isSecret": true
+                },
+                {
+                    "name": "UNPAYWALL_EMAIL",
+                    "description": "Email required for accessing the Unpaywall API to retrieve open access preprints and papers.",
+                    "isRequired": false,
+                    "isSecret": false
+                },
+                {
                     "name": "ATOMATE2_REMOTE_PROJECT",
                     "description": "Default project name for remote job submission (auto-detected if blank). Required by atomate2-server.",
                     "isRequired": false,
