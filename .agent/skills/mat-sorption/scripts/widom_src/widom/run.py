@@ -1,5 +1,5 @@
 # Copyright (c) 2025 CuspAI
-# All rights reserved.
+# Modified by AtomisticSkills (gas optimization, logging).
 
 import logging
 
