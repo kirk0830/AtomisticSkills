@@ -4,7 +4,7 @@ description: Relax porous frameworks and compute gas adsorption (Henry coefficie
 category: materials
 ---
 
-# Framework Sorption (UMA)
+# mat-sorption
 
 ## Goal
 
@@ -65,7 +65,7 @@ python .agent/skills/mat-sorption/scripts/run_widom_uma.py \
 - `--num-insertions`: Number of Widom insertion attempts (default 5000).
 - `--min-interplanar-distance`: Min interplanar distance before supercell (default 12 Å).
 
-3. **(Optional) GCMC** — adsorption isotherm. Use the **relaxed** structure. Supports **single-component** (CO2 or N2) and **multicomponent** mixtures (e.g. CO2+N2). Both modes write a JSON plus PNGs (default `output_dir/gcmc_results.json`, `output_dir/nmols*.png`, `output_dir/energy.png`, or `--output` for JSON path).
+3. **(Optional) GCMC** — adsorption isotherm. Use the **relaxed** structure. Supports **single-component** (CO2 or N2) and **multicomponent** mixtures (e.g. CO2+N2). Both modes write a JSON plus PNGs (single-component default `output_dir/gcmc_results.json`, multicomponent default `output_dir/multi_gcmc.json`, `output_dir/nmols*.png`, `output_dir/energy.png`, or `--output` for JSON path).
 
 **3a. Single-component GCMC (CO2 or N2):**
 
@@ -114,8 +114,8 @@ python .agent/skills/mat-sorption/scripts/run_gcmc_uma_multi.py \
 
 **Key parameters (multicomponent):**
 - `--cif`: Relaxed framework CIF.
-- `--output-dir`: Directory for results (default: current directory). Writes `gcmc_results.json`, `nmols_*.png` (per species), combined `nmols.png`, `energy.png`.
-- `--output`: Optional path for the GCMC results JSON (overrides `output_dir/gcmc_results.json`).
+- `--output-dir`: Directory for results (default: current directory). Writes `multi_gcmc.json`, `nmols_*.png` (per species), combined `nmols.png`, `energy.png`.
+- `--output`: Optional path for the GCMC results JSON (overrides `output_dir/multi_gcmc.json`).
 - `--weights`, `--task-name`, `--steps`, `--temperature-K`, `--scheme`, `--restart-traj`, `--restart-frame`: Same meaning as single-component GCMC.
 - `--gases`: List of gas species (e.g. `CO2 N2`, order-free).
 - `--y`: Mole fractions aligned with `--gases` (will be normalized).
@@ -127,6 +127,7 @@ python .agent/skills/mat-sorption/scripts/run_gcmc_uma_multi.py \
 **Full workflow (relax → Widom → GCMC):**
 
 ```bash
+# Env: fairchem-agent
 # 1. Relax (writes to ./results/)
 python .agent/skills/mat-sorption/scripts/run_relax_uma.py \
     --structure my_cof.cif --name COF-1 --weights /path/to/uma.pt --output-dir ./results
@@ -149,7 +150,7 @@ All outputs are **JSON** (plus CIF/XYZ for relax, which are needed for downstrea
 
 - **Relax**: `output_dir/` → all CIF and XYZ files produced (e.g. `name.relaxed.cif`, `name.relaxed.xyz`, `name_supercell.relaxed.cif` if supercell built), plus `relax_results.json` (paths to those files and optional comparison metrics).
 - **Widom**: One standalone JSON file (default `output_dir/widom_results.json`, or `--output`). Contains COFclean-style Henry fields: `adsorbates`, `temperature_K`, `henry_mol_kg_Pa`, `henry_stderr_mol_kg_Pa`, `heat_of_adsorption_kJ_mol`, `heat_of_adsorption_std_kJ_mol`, `source`, `method`, etc.
-- **GCMC (single + multicomponent)**: One standalone JSON file (default `output_dir/gcmc_results.json`, or `--output`) plus PNGs. Single-component: `nmols.png`, `energy.png`. Multicomponent: per-species `nmols_<species>.png`, optional combined `nmols.png`, and `energy.png`. JSON contains COFclean-style isotherm: `adsorbates`, `temperature_K`, `source`, `units`, `points` (`p_total`, `p_partial` per species, `q_total`, `q_by_adsorbate`), plus optional `wall_time_s`, `steps_per_s`.
+- **GCMC (single + multicomponent)**: One standalone JSON file (single-component default `output_dir/gcmc_results.json`, multicomponent default `output_dir/multi_gcmc.json`, or `--output`) plus PNGs. Single-component: `nmols.png`, `energy.png`. Multicomponent: per-species `nmols_<species>.png`, optional combined `nmols.png`, and `energy.png`. JSON contains COFclean-style isotherm: `adsorbates`, `temperature_K`, `source`, `units`, `points` (`p_total`, `p_partial` per species, `q_total`, `q_by_adsorbate`), plus optional `wall_time_s`, `steps_per_s`.
 
 ## Constraints
 
@@ -157,15 +158,18 @@ All outputs are **JSON** (plus CIF/XYZ for relax, which are needed for downstrea
 - **UMA only**: This skill uses UMA (FairChem) only.
 - **Input structure**: For Widom and GCMC, use a **relaxed** framework CIF from the relax script for consistent results.
 - **Gases**: Widom supports gases buildable with `ase.build.molecule` (e.g. CO2, N2). GCMC scripts support CO2 and N2 (Peng–Robinson parameters) for both single-component and multicomponent mixtures (`--gases`/`--y`).
-- **Paths**: Run commands from the **project root** so that `python .agent/skills/mat-sorption/scripts/...` resolves and script imports (relax_common, widom_common, etc.) work.
+- **Paths**: Run commands from the **project root** so that `python .agent/skills/mat-sorption/scripts/run_*.py` resolves and script imports (relax_common, widom_common, etc.) work.
 
 ## References
 
 - FairChem / UMA: [FairChem](https://github.com/Open-Catalyst-Project/fairchem)
-- Widom insertion: Henry coefficients and heats of adsorption from insertion Monte Carlo (e.g. DAC-SIM, MIT-licensed)
-- GCMC: Grand Canonical Monte Carlo with BVT (ASE-MC), Peng–Robinson equation of state for gas fugacity
+- Widom, B., “Some Topics in the Theory of Fluids”, *J. Chem. Phys.* **39** (11), 2808–2812 (1963). [DOI](https://doi.org/10.1063/1.1734110)
+- Metropolis, N. et al., “Equation of State Calculations by Fast Computing Machines”, *J. Chem. Phys.* **21** (6), 1087–1092 (1953). [DOI](https://doi.org/10.1063/1.1699114)
+- Peng, D.-Y. and Robinson, D. B., “A New Two-Constant Equation of State”, *Ind. Eng. Chem. Fundam.* **15** (1), 59–64 (1976). [DOI](https://doi.org/10.1021/i160057a011)
+- Widom code adapted from: Anuroop Sriram, Logan M. Brabson, Xiaohan Yu, Sihoon Choi, Kareem Abdelmaqsoud, Elias Moubarak, Pim de Haan, Sindy Löwe, Johann Brehmer, John R. Kitchin, Max Welling, C. Lawrence Zitnick, Zachary Ulissi, Andrew J. Medford, David S. Sholl, “The Open DAC 2025 Dataset for Sorbent Discovery in Direct Air Capture” (arXiv:2508.03162). [DOI](https://doi.org/10.48550/arXiv.2508.03162)
+- GCMC code adapted from: Woodrow N. Wilson, Vivek S. Bharadwaj, Neeraj Rai, “Python Library for Monte Carlo Simulations with Ab Initio and Machine-Learned Interatomic Potentials”, *J. Chem. Theory Comput.* **21** (20), 2025.
 
 ---
 
-**Author:** Artur Lyssenko
-**Contact:** arturlyssenko12
+**Author:** Artur Lyssenko  
+**Contact:** [GitHub @arturlyssenko12](https://github.com/arturlyssenko12)

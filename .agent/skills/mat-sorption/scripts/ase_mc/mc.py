@@ -3,13 +3,12 @@
 import warnings
 import numpy as np
 from ase.optimize.optimize import Dynamics
+from .logger import MCLogger
 from ase.parallel import world, DummyMPI
 from ase.io.trajectory import Trajectory
 from ase import units
 from ase.calculators.calculator import all_properties
 from ase.calculators.singlepoint import SinglePointCalculator
-
-from .logger import MCLogger
 
 
 class MonteCarlo(Dynamics):

@@ -1,0 +1,42 @@
+{
+  "adsorbates": [
+    "CO2",
+    "N2"
+  ],
+  "temperature_K": 298.0,
+  "source": "simulation",
+  "units": {
+    "pressure_total": "bar",
+    "pressure_partial": "bar",
+    "loading_total": "mmol/g",
+    "loading_by_adsorbate": "mmol/g"
+  },
+  "points": [
+    {
+      "p_total": 1.0,
+      "p_partial": {
+        "CO2": 0.15,
+        "N2": 0.85
+      },
+      "q_total": 14.64585502890592,
+      "q_by_adsorbate": {
+        "CO2": 0.0,
+        "N2": 14.64585502890592
+      }
+    }
+  ],
+  "ref": null,
+  "notes": "scheme=gcmc",
+  "wall_time_s": 1234.1562957828864,
+  "steps_per_s": 8.102701444031045,
+  "qst_kJ_mol_by_adsorbate": {
+    "CO2": 9.773511122658176,
+    "N2": 3.8868780454109366
+  },
+  "qst_std_kJ_mol_by_adsorbate": {
+    "CO2": 7.631651161266324,
+    "N2": 1.569733025870333
+  },
+  "qst_n_blocks": 30,
+  "qst_block_size": 13
+}

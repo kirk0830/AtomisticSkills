@@ -17,6 +17,7 @@ Requirements:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 import time
 from pathlib import Path
@@ -31,52 +32,32 @@ _script_dir = Path(__file__).resolve().parent
 if str(_script_dir) not in sys.path:
     sys.path.insert(0, str(_script_dir))
 
-try:
-    from .ase_mc import BVT, BVT_GCMCOnly, MonteCarlo  # type: ignore[import-not-found]
-    from .gcmc_common import (  # type: ignore[import-not-found]
-        B_peng_robinson_mixture_for_framework,
-        analyze_and_plot_multicomponent,
-        build_moveset_bvt,
-        canonicalize_species_key,
-        ensure_tags,
-        get_radius_probe,
-        load_host_atoms,
-        load_restart_atoms,
-        print_restart_sanity_multicomponent,
-        run_mc,
-        write_timing_kv,
-        compute_eq_loading_from_traj_multicomponent,
-        gcmc_standalone_payload_multicomponent,
-        write_gcmc_results_json,
-        GAS_PR_PARAMS_CO2_N2,
-        gcmc_output_dir,
-        _parse_kij_entry,
-        _resolve_species_name,
-    )
-    from .uma_calculator import load_uma_calculators, set_uma_spin_info  # type: ignore[import-not-found]
-except Exception:
-    from ase_mc import BVT, BVT_GCMCOnly, MonteCarlo
-    from gcmc_common import (
-        B_peng_robinson_mixture_for_framework,
-        analyze_and_plot_multicomponent,
-        build_moveset_bvt,
-        canonicalize_species_key,
-        ensure_tags,
-        get_radius_probe,
-        load_host_atoms,
-        load_restart_atoms,
-        print_restart_sanity_multicomponent,
-        run_mc,
-        write_timing_kv,
-        compute_eq_loading_from_traj_multicomponent,
-        gcmc_standalone_payload_multicomponent,
-        write_gcmc_results_json,
-        GAS_PR_PARAMS_CO2_N2,
-        gcmc_output_dir,
-        _parse_kij_entry,
-        _resolve_species_name,
-    )
-    from uma_calculator import load_uma_calculators, set_uma_spin_info
+from ase_mc import BVT, BVT_GCMCOnly, MonteCarlo
+from gcmc_common import (
+    B_peng_robinson_mixture_for_framework,
+    analyze_and_plot_multicomponent,
+    build_moveset_bvt,
+    canonicalize_species_key,
+    ensure_tags,
+    get_radius_probe,
+    load_host_atoms,
+    load_restart_atoms,
+    print_restart_sanity_multicomponent,
+    run_mc,
+    write_timing_kv,
+    compute_eq_loading_from_traj_multicomponent,
+    gcmc_standalone_payload_multicomponent,
+    write_gcmc_results_json,
+    GAS_PR_PARAMS_CO2_N2,
+    gcmc_output_dir,
+    _parse_kij_entry,
+    _resolve_species_name,
+    qst_multicomponent_fluctuation_from_series,
+)
+from uma_calculator import load_uma_calculators, set_uma_spin_info
+
+
+LOGGER = logging.getLogger(__name__)
 
 # Gas DB: same as single-component skill (CO2, N2). Extend here or via JSON if needed.
 GAS_DB = GAS_PR_PARAMS_CO2_N2
@@ -107,13 +88,24 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     p.add_argument("--steps", type=int, required=True, help="Number of Monte Carlo steps.")
     p.add_argument("--temperature-K", type=float, required=True, help="Simulation temperature in Kelvin.")
     p.add_argument("--scheme", choices=["gcmc", "hmc"], default="gcmc")
-    p.add_argument("--output-dir", type=Path, default=Path("."), help="Directory for results (gcmc_results.json + PNGs).")
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("."),
+        help="Directory for results (multi_gcmc.json + PNGs).",
+    )
     p.add_argument("--restart-traj", type=Path, default=None, help="Optional: restart from previous ASE .traj.")
     p.add_argument("--restart-frame", type=int, default=-1, help="Frame index to restart from (default -1).")
     p.add_argument("--device", type=str, default="cuda", help="Device string (e.g. 'cuda', 'cpu').")
     p.add_argument("--weights", type=Path, required=True, help="Path to UMA checkpoint (.pt).")
     p.add_argument("--task-name", type=str, default="odac", help="UMA task name (default: odac).")
-    p.add_argument("--output", "-o", type=Path, default=None, help="Output JSON path (default: output_dir/gcmc_results.json)")
+    p.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="Output JSON path (default: output_dir/multi_gcmc.json)",
+    )
     p.add_argument(
         "--starting-tag",
         type=int,
@@ -170,24 +162,25 @@ def main(argv: Optional[list[str]] = None) -> int:
     p_bar_map = {nm: float(y_i * p_total_bar) for nm, y_i in zip(species_names, y)}
 
     out_dir = gcmc_output_dir(args.output_dir)
-    gcmc_json_path = args.output if args.output is not None else out_dir / "gcmc_results.json"
+    # Use a distinct default filename from the single-component script
+    gcmc_json_path = args.output if args.output is not None else out_dir / "multi_gcmc.json"
     starting_tag = int(args.starting_tag)
     species_tags = [starting_tag + i for i in range(len(species_names))]
 
-    print(f"[INFO] CIF            : {cif_path}")
-    print(f"[INFO] UMA weights    : {args.weights}")
-    print(f"[INFO] Task name      : {args.task_name}")
-    print(f"[INFO] Device         : {args.device}")
-    print(f"[INFO] Steps (MC)     : {args.steps}")
-    print(f"[INFO] T [K]          : {T}")
-    print(f"[INFO] Scheme         : {args.scheme}")
-    print(f"[INFO] Species (canon): {species_names}")
-    print(f"[INFO] y (canon)      : {y}")
-    print(f"[INFO] p_total [bar]  : {p_total_bar}")
-    print(f"[INFO] p_partial [bar]: {p_bar_map}")
-    print(f"[INFO] Output dir     : {out_dir}")
-    print(f"[INFO] starting_tag   : {starting_tag}")
-    print(f"[INFO] species_tags   : {species_tags}")
+    LOGGER.info("CIF            : %s", cif_path)
+    LOGGER.info("UMA weights    : %s", args.weights)
+    LOGGER.info("Task name      : %s", args.task_name)
+    LOGGER.info("Device         : %s", args.device)
+    LOGGER.info("Steps (MC)     : %d", args.steps)
+    LOGGER.info("T [K]          : %.3f", T)
+    LOGGER.info("Scheme         : %s", args.scheme)
+    LOGGER.info("Species (canon): %s", species_names)
+    LOGGER.info("y (canon)      : %s", y)
+    LOGGER.info("p_total [bar]  : %.6f", p_total_bar)
+    LOGGER.info("p_partial [bar]: %s", p_bar_map)
+    LOGGER.info("Output dir     : %s", out_dir)
+    LOGGER.info("starting_tag   : %d", starting_tag)
+    LOGGER.info("species_tags   : %s", species_tags)
 
     t0 = time.perf_counter()
     calc_mol, calc_host = _load_uma_calcs(
@@ -195,7 +188,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         task_name=args.task_name,
         device=args.device,
     )
-    print(f"[INFO] Loaded UMA calculators in {time.perf_counter() - t0:.3f} s")
+    LOGGER.info("Loaded UMA calculators in %.3f s", time.perf_counter() - t0)
 
     # Build + relax probes (vacuum), same logic as COFclean
     probes: list[Atoms] = []
@@ -222,12 +215,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         E_probe = float(probe.get_potential_energy())
         r_probe = float(get_radius_probe(probe))
         probe.calc = None
-        print(f"[INFO] Probe {nm}: E_ref={E_probe:.6f} eV | radius={r_probe:.3f} Å | tag={tag}")
+        LOGGER.info(
+            "Probe %s: E_ref=%.6f eV | radius=%.3f Å | tag=%d",
+            nm,
+            E_probe,
+            r_probe,
+            tag,
+        )
         probes.append(probe)
         ref_energies.append(E_probe)
         radii.append(r_probe)
 
-    rcavity = 0.8 * (min(radii) if radii else 0.0)
+    rcavity = 0.8 * min(radii)
 
     host, host_natoms, restart_label = load_host_atoms(
         cif_path=cif_path,
@@ -242,9 +241,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     try:
         host_max = int(np.max(np.asarray(tags[:host_natoms], dtype=int))) if host_natoms > 0 else int(np.max(tags))
         if starting_tag <= host_max:
-            print(
-                f"[WARN] starting_tag={starting_tag} <= host_max_tag={host_max}. "
-                f"Consider using --starting-tag {host_max + 1} to avoid overlap."
+            LOGGER.warning(
+                "starting_tag=%d <= host_max_tag=%d. Consider using --starting-tag %d to avoid overlap.",
+                starting_tag,
+                host_max,
+                host_max + 1,
             )
     except Exception:
         pass
@@ -257,7 +258,12 @@ def main(argv: Optional[list[str]] = None) -> int:
         species_tags=species_tags,
         label=restart_label,
     )
-    print(f"[INFO] Host atoms={len(host)} | host_natoms(from CIF)={host_natoms} | pbc={tuple(bool(x) for x in host.pbc)}")
+    LOGGER.info(
+        "Host atoms=%d | host_natoms(from CIF)=%d | pbc=%s",
+        len(host),
+        host_natoms,
+        tuple(bool(x) for x in host.pbc),
+    )
 
     # PR mixture -> per-component B (same as COFclean)
     Tc = np.array([float(GAS_DB[nm]["Tc"]) for nm in species_names], dtype=float)
@@ -292,9 +298,20 @@ def main(argv: Optional[list[str]] = None) -> int:
         phase="vapor",
         p_ref_bar=1.0,
     )
-    print(f"[INFO] Framework volume: {host.get_volume():.3f} Å^3 ({V_cell_m3:.3e} m^3) | Z={Z:.6f}")
+    LOGGER.info(
+        "Framework volume: %.3f Å^3 (%.3e m^3) | Z=%.6f",
+        host.get_volume(),
+        V_cell_m3,
+        Z,
+    )
     for nm, Bv, phiv, bmu in zip(species_names, B_ads, phi, beta_mu):
-        print(f"[INFO] PR mixture: {nm:>6s} phi={phiv:.6f}  beta_mu={bmu:.6f}  B={Bv:.6f}")
+        LOGGER.info(
+            "PR mixture: %6s phi=%.6f  beta_mu=%.6f  B=%.6f",
+            nm,
+            phiv,
+            bmu,
+            Bv,
+        )
 
     exclusion_list = np.arange(host_natoms, dtype=int)
     grid_resolution = int(args.grid_resolution)
@@ -322,7 +339,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         moveset=moveset,
         dft_calc=calc_host,
         out_dir=out_dir,
-        io_stub="mc",
+        io_stub="multi_mc",
         steps=int(args.steps),
         scheme=args.scheme,
         restarting=restarting,
@@ -330,7 +347,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         perf_counter=time.perf_counter,
         info_prefix="[INFO] ",
     )
-    print(f"[INFO] MC completed in {dt_mc:.3f} s | {steps_per_sec:.2f} steps/s")
+    LOGGER.info("MC completed in %.3f s | %.2f steps/s", dt_mc, steps_per_sec)
 
     write_timing_kv(
         out_dir=out_dir,
@@ -351,7 +368,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         },
     )
 
-    print("[INFO] Analyzing trajectory and writing nmols/energy plots...")
+    LOGGER.info("Analyzing trajectory and writing nmols/energy plots...")
     analyze_and_plot_multicomponent(
         traj_path=traj_path,
         out_dir=out_dir,
@@ -359,8 +376,45 @@ def main(argv: Optional[list[str]] = None) -> int:
         species_list=probes,
         species_names=species_names,
         species_tags=species_tags,
-        combined_plot=True,
+        combined_plot=False,
     )
+
+    # Qst_i (partial isosteric heats) via fluctuation formula from time series
+    qst_mean_by_adsorbate = None
+    qst_std_by_adsorbate = None
+    qst_n_blocks = None
+    qst_block_size = None
+    try:
+        energy_path = out_dir / "energy.npy"
+        if energy_path.exists():
+            energy_eV = np.load(energy_path)
+            nmols_by_species: dict[str, np.ndarray] = {}
+            all_present = True
+            for nm in species_names:
+                nm_path = out_dir / f"nmols_{nm}.npy"
+                if not nm_path.exists():
+                    all_present = False
+                    break
+                nmols_by_species[nm] = np.load(nm_path)
+
+            if all_present:
+                mol_energy_eV_by_species = {
+                    nm: float(ref) for nm, ref in zip(species_names, ref_energies)
+                }
+                (
+                    qst_mean_by_adsorbate,
+                    qst_std_by_adsorbate,
+                    qst_n_blocks,
+                    qst_block_size,
+                ) = qst_multicomponent_fluctuation_from_series(
+                    energy_eV=energy_eV,
+                    nmols_by_species=nmols_by_species,
+                    species_names=species_names,
+                    temperature_K=T,
+                    mol_energy_eV_by_species=mol_energy_eV_by_species,
+                )
+    except Exception as e:
+        LOGGER.warning("Failed to compute multicomponent Qst from series: %s", e)
 
     q_by_adsorbate, q_total = compute_eq_loading_from_traj_multicomponent(
         traj_path=traj_path,
@@ -381,15 +435,23 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
     payload["wall_time_s"] = dt_mc
     payload["steps_per_s"] = steps_per_sec
+    payload["qst_kJ_mol_by_adsorbate"] = qst_mean_by_adsorbate
+    payload["qst_std_kJ_mol_by_adsorbate"] = qst_std_by_adsorbate
+    payload["qst_n_blocks"] = qst_n_blocks
+    payload["qst_block_size"] = qst_block_size
     write_gcmc_results_json(gcmc_json_path, payload)
-    print(f"[INFO] Wrote {gcmc_json_path}")
+    LOGGER.info("Wrote %s", gcmc_json_path)
 
-    for p in (traj_path, log_path):
+    # Remove traj/log and .npy intermediates; keep JSON and PNGs
+    cleanup_paths = [traj_path, log_path, out_dir / "energy.npy"]
+    for name in species_names:
+        cleanup_paths.append(out_dir / f"nmols_{name}.npy")
+    for p in cleanup_paths:
         try:
             if p is not None and p.exists():
                 p.unlink()
         except Exception as e:
-            print(f"[WARN] Could not remove {p}: {e}")
+            LOGGER.warning("Could not remove %s: %s", p, e)
 
     return 0
 

@@ -52,7 +52,7 @@ def add_common_widom_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--gas", type=str, required=True, help="Gas molecule name (e.g. CO2, N2)")
     parser.add_argument("--temperature", type=float, required=True, help="Temperature in Kelvin")
     parser.add_argument("--num-insertions", type=int, default=5000, help="Number of Widom insertion attempts")
-    parser.add_argument("--optimize-structures", action="store_false", help="Optimize framework and gas before insertion")
+    parser.add_argument("--optimize-structures", action="store_true", help="Optimize framework and gas before insertion (default: use structure as-is)")
     parser.add_argument("--cutoff-distance", type=float, default=1.0, help="Minimum framework-gas distance (Å)")
     parser.add_argument("--cutoff-to-com", action="store_false", help="Use gas center-of-mass for cutoff checks")
     parser.add_argument("--min-interplanar-distance", type=float, default=12.0, help="Min interplanar distance before supercell (Å)")
@@ -138,7 +138,7 @@ def run_widom_job(
     }
     if extra_config:
         config.update(extra_config)
-    print(config)
+    LOGGER.debug("Widom configuration: %s", config)
 
     results = run_widom_insertion(
         calculator=calculator,

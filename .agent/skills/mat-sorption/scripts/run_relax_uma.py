@@ -11,6 +11,7 @@ Requirements:
 
 from pathlib import Path
 import argparse
+import logging
 import os
 import sys
 
@@ -27,11 +28,13 @@ from relax_common import (
     read_atoms,
     output_paths,
     run_fire_relaxation,
-    compare_structures,
     build_supercell,
     write_relax_results_json,
     prepare_relax_run_dir,
 )
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def normalize_charge_spin(atoms) -> None:
@@ -113,7 +116,7 @@ def relax_with_uma(
     atoms_for_relax = reference_atoms.copy()
     normalize_charge_spin(atoms_for_relax)
     if supercell is not None and any(v > 1 for v in supercell):
-        print(f"Applying requested pre-relax supercell: {supercell}")
+        LOGGER.info("Applying requested pre-relax supercell: %s", supercell)
         atoms_for_relax = atoms_for_relax.repeat(supercell)
 
     paths = output_paths(target_dir, name, is_supercell=False)
@@ -128,7 +131,6 @@ def relax_with_uma(
         fmax,
     )
 
-    comparison = compare_structures(reference_atoms, optimized_atoms, paths["save_prefix"])
     relaxed_cifs = [paths["out_cif"]]
     relaxed_xyzs = [paths["out_xyz"]]
 
@@ -157,7 +159,6 @@ def relax_with_uma(
         source_cif=structure,
         relaxed_cifs=relaxed_cifs,
         relaxed_xyzs=relaxed_xyzs,
-        comparison=comparison,
     )
     return 0
 

@@ -2,9 +2,6 @@ import warnings
 from ase import units
 from ase.geometry.analysis import Analysis
 from ase.build import sort
-from ase.io import write
-import numpy as np
-
 from .moves import (
     Translate,
     Rotate,
@@ -14,6 +11,8 @@ from .moves import (
     Delete,
 )
 from .utility import get_components
+from ase.io import write
+import numpy as np
 
 
 def process_temperature(temperature, temperature_K, orig_unit):

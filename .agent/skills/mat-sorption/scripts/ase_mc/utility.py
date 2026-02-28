@@ -136,3 +136,4 @@ def chemical_potential_to_activity(
     arg = chemical_potential_kjpermol * kj_to_j / Avogadro / Boltzmann / temperature_K
     activity_one_over_angstrom3 = np.exp(arg) / debroglie3
     return activity_one_over_angstrom3
+

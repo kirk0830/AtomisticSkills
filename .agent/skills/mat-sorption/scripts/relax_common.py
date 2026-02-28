@@ -7,12 +7,16 @@ from pathlib import Path
 import json
 import os
 from typing import Any, Dict
+import logging
 
 import numpy as np
 from ase.io import read, write
 from ase.io.trajectory import Trajectory
 from ase.optimize import FIRE
 from ase.filters import FrechetCellFilter
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def select_device(requested: str) -> str:
@@ -75,14 +79,14 @@ def run_fire_relaxation(
 
     try:
         e = atoms.get_potential_energy()
-        print(f"Relaxation complete. Final energy: {e} eV")
+        LOGGER.info("Relaxation complete. Final energy: %.6f eV", e)
     except Exception:
-        print("Relaxation complete.")
+        LOGGER.info("Relaxation complete.")
 
-    print(f"Wrote: {out_xyz}")
-    print(f"Wrote: {out_cif}")
+    LOGGER.info("Wrote: %s", out_xyz)
+    LOGGER.info("Wrote: %s", out_cif)
     if out_traj is not None:
-        print(f"Wrote: {out_traj}")
+        LOGGER.info("Wrote: %s", out_traj)
     return atoms
 
 
@@ -98,9 +102,10 @@ def build_supercell(source_atoms, cutoff_distance: float = 6.0) -> tuple[bool, o
 
     supercell = np.ceil(cutoff_distance / plane_distances).astype(int)
     if np.any(supercell > 1):
-        print(
-            f"Making supercell: {supercell} to enforce "
-            f"min interplanar distance ≥ {cutoff_distance} Å"
+        LOGGER.info(
+            "Making supercell: %s to enforce min interplanar distance ≥ %.3f Å",
+            supercell,
+            cutoff_distance,
         )
         structure = structure.repeat(supercell)
         return True, structure
@@ -153,7 +158,7 @@ def compare_structures(reference_atoms, optimized_atoms, save_prefix: Path) -> D
         f"RMSD = {rmsd:.4f} Å\n"
         f"Max displacement = {maxd:.4f} Å"
     )
-    print(report)
+    LOGGER.info("\n%s", report)
 
     return {
         "cell_lengths_angstrom": {"a": (float(a_r), float(a_o)), "b": (float(b_r), float(b_o)), "c": (float(c_r), float(c_o))},

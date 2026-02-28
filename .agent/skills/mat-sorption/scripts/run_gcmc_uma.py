@@ -11,6 +11,7 @@ Requirements:
 """
 
 import argparse
+import logging
 import sys
 import time
 from pathlib import Path
@@ -24,33 +25,8 @@ from ase import Atoms, build
 from ase.io import read
 from ase.optimize import LBFGS
 
-try:
-    # Package-relative imports (preferred when importable as a package).
-    from .ase_mc import BVT, BVT_GCMCOnly, MonteCarlo  # type: ignore[import-not-found]
-    from .gcmc_common import (  # type: ignore[import-not-found]
-        B_peng_robinson_for_framework,
-        analyze_and_plot_single,
-        build_moveset_bvt,
-        get_radius_probe,
-        load_restart_atoms,
-        print_restart_sanity_single,
-        GAS_PR_PARAMS_CO2_N2,
-        gcmc_output_dir,
-        load_host_atoms,
-        mc_traj_log_paths,
-        maybe_record_starting_config,
-        run_mc_with_timing,
-        write_timing_kv,
-        compute_eq_loading_from_traj_single,
-        gcmc_standalone_payload_single,
-        write_gcmc_results_json,
-        ensure_tags,
-    )
-    from .uma_calculator import load_uma_calculators, set_uma_spin_info  # type: ignore[import-not-found]
-except Exception:
-    # Script execution fallback (expects scripts/ on sys.path).
-    from ase_mc import BVT, BVT_GCMCOnly, MonteCarlo
-    from gcmc_common import (
+from ase_mc import BVT, BVT_GCMCOnly, MonteCarlo
+from gcmc_common import (
     B_peng_robinson_for_framework,
     analyze_and_plot_single,
     build_moveset_bvt,
@@ -68,8 +44,12 @@ except Exception:
     gcmc_standalone_payload_single,
     write_gcmc_results_json,
     ensure_tags,
-    )
-    from uma_calculator import load_uma_calculators, set_uma_spin_info
+    qst_single_fluctuation_from_series,
+)
+from uma_calculator import load_uma_calculators, set_uma_spin_info
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _load_uma_calcs(*, weights_path: str, task_name: str, device: str) -> tuple[object, object]:
@@ -134,16 +114,16 @@ def main() -> int:
     else:
         gcmc_json_path = out_dir / "gcmc_results.json"
 
-    print(f"[INFO] CIF          : {cif_path}")
-    print(f"[INFO] UMA weights  : {args.weights}")
-    print(f"[INFO] Task name    : {args.task_name}")
-    print(f"[INFO] Device       : {args.device}")
-    print(f"[INFO] Steps (MC)   : {args.steps}")
-    print(f"[INFO] T [K]        : {args.temperature_K}")
-    print(f"[INFO] p [bar]      : {args.pressure_bar}")
-    print(f"[INFO] Scheme       : {args.scheme}")
-    print(f"[INFO] Adsorbate    : {args.adsorbate}")
-    print(f"[INFO] Output dir   : {out_dir}")
+    LOGGER.info("CIF          : %s", cif_path)
+    LOGGER.info("UMA weights  : %s", args.weights)
+    LOGGER.info("Task name    : %s", args.task_name)
+    LOGGER.info("Device       : %s", args.device)
+    LOGGER.info("Steps (MC)   : %d", args.steps)
+    LOGGER.info("T [K]        : %.3f", args.temperature_K)
+    LOGGER.info("p [bar]      : %.3f", args.pressure_bar)
+    LOGGER.info("Scheme       : %s", args.scheme)
+    LOGGER.info("Adsorbate    : %s", args.adsorbate)
+    LOGGER.info("Output dir   : %s", out_dir)
 
     t0 = time.perf_counter()
     calc_mol, calc_host = _load_uma_calcs(
@@ -151,7 +131,7 @@ def main() -> int:
         task_name=args.task_name,
         device=args.device,
     )
-    print(f"[INFO] Loaded UMA calculators in {time.perf_counter() - t0:.3f} s")
+    LOGGER.info("Loaded UMA calculators in %.3f s", time.perf_counter() - t0)
 
     PR_PARAMS = GAS_PR_PARAMS_CO2_N2
     gas = PR_PARAMS[args.adsorbate]
@@ -163,7 +143,11 @@ def main() -> int:
     opt = LBFGS(probe, trajectory=None, logfile=None)
     opt.run(fmax=0.05, steps=200)
     E_probe = probe.get_potential_energy()
-    print(f"[INFO] Probe relaxation done in {time.perf_counter() - t1:.3f} s | E_probe = {E_probe:.6f} eV")
+    LOGGER.info(
+        "Probe relaxation done in %.3f s | E_probe = %.6f eV",
+        time.perf_counter() - t1,
+        E_probe,
+    )
 
     host, host_natoms, restart_label = load_host_atoms(
         cif_path=cif_path,
@@ -188,7 +172,12 @@ def main() -> int:
         host, host_natoms, probe,
         label=restart_label + (" [retagged guests]" if retagged else ""),
     )
-    print(f"[INFO] Host atoms={len(host)} | host_natoms(from CIF)={host_natoms} | pbc={tuple(bool(x) for x in host.pbc)}")
+    LOGGER.info(
+        "Host atoms=%d | host_natoms(from CIF)=%d | pbc=%s",
+        len(host),
+        host_natoms,
+        tuple(bool(x) for x in host.pbc),
+    )
 
     T = args.temperature_K
     p_bar = args.pressure_bar
@@ -201,8 +190,17 @@ def main() -> int:
         omega=gas["omega"],
         molar_mass=gas["M"],
     )
-    print(f"[INFO] Framework volume: {host.get_volume():.3f} Å^3 ({V_cell_m3:.3e} m^3)")
-    print(f"[INFO] PR EOS: B = {B_val:.3f}, beta_mu = {beta_mu:.6f}, phi = {phi:.6f}")
+    LOGGER.info(
+        "Framework volume: %.3f Å^3 (%.3e m^3)",
+        host.get_volume(),
+        V_cell_m3,
+    )
+    LOGGER.info(
+        "PR EOS: B = %.3f, beta_mu = %.6f, phi = %.6f",
+        B_val,
+        beta_mu,
+        phi,
+    )
 
     t3 = time.perf_counter()
     exclusion_list = np.arange(host_natoms)
@@ -224,7 +222,14 @@ def main() -> int:
     ensemble = EnsembleClass(**bvt_kwargs)
     moveset = build_moveset_bvt(ensemble, scheme=args.scheme)
     moveset.adjust_parameter("Translate", "max_delta", translate_max)
-    print(f"[INFO] BVT/moveset ready in {time.perf_counter() - t3:.3f} s | rcavity={rcavity:.2f} Å | grid={grid_resolution} | b={B_val:.2f} | translate_max={translate_max:.2f} Å")
+    LOGGER.info(
+        "BVT/moveset ready in %.3f s | rcavity=%.2f Å | grid=%d | b=%.2f | translate_max=%.2f Å",
+        time.perf_counter() - t3,
+        rcavity,
+        grid_resolution,
+        B_val,
+        translate_max,
+    )
 
     restarting = args.restart_traj is not None
     traj_path, log_path = mc_traj_log_paths(out_dir=out_dir, restarting=restarting, stub="mc")
@@ -238,12 +243,15 @@ def main() -> int:
         gcmc_energy_only=(args.scheme == "gcmc"),
     )
     maybe_record_starting_config(dyn)
-    print(
-        f"[INFO] Starting MC run: scheme={args.scheme}, steps={args.steps}, "
-        f"traj={traj_path.name}, log={log_path.name}"
+    LOGGER.info(
+        "Starting MC run: scheme=%s, steps=%d, traj=%s, log=%s",
+        args.scheme,
+        args.steps,
+        traj_path.name,
+        log_path.name,
     )
     dt_mc, steps_per_sec = run_mc_with_timing(dyn=dyn, steps=args.steps, perf_counter=time.perf_counter)
-    print(f"[INFO] MC completed in {dt_mc:.3f} s | {steps_per_sec:.2f} steps/s")
+    LOGGER.info("MC completed in %.3f s | %.2f steps/s", dt_mc, steps_per_sec)
 
     write_timing_kv(
         out_dir=out_dir,
@@ -260,8 +268,33 @@ def main() -> int:
         },
     )
 
-    print("[INFO] Analyzing trajectory and writing nmols/energy plots...")
+    LOGGER.info("Analyzing trajectory and writing nmols/energy plots...")
     analyze_and_plot_single(traj_path, probe, out_dir, host_natoms=host_natoms)
+
+    # Qst (isosteric heat) via fluctuation formula from time series
+    qst_kJ_mol = None
+    qst_std_kJ_mol = None
+    qst_n_blocks = None
+    qst_block_size = None
+    try:
+        nmols_path = out_dir / "nmols.npy"
+        energy_path = out_dir / "energy.npy"
+        if nmols_path.exists() and energy_path.exists():
+            energy_eV = np.load(energy_path)
+            nmols = np.load(nmols_path)
+            (
+                qst_kJ_mol,
+                qst_std_kJ_mol,
+                qst_n_blocks,
+                qst_block_size,
+            ) = qst_single_fluctuation_from_series(
+                energy_eV=energy_eV,
+                nmols=nmols,
+                temperature_K=args.temperature_K,
+                mol_energy_eV=E_probe,
+            )
+    except Exception as e:
+        LOGGER.warning("Failed to compute Qst from series: %s", e)
 
     q_mmol_g = compute_eq_loading_from_traj_single(
         traj_path=traj_path,
@@ -279,16 +312,25 @@ def main() -> int:
     )
     payload["wall_time_s"] = dt_mc
     payload["steps_per_s"] = steps_per_sec
+    payload["qst_kJ_mol"] = qst_kJ_mol
+    payload["qst_std_kJ_mol"] = qst_std_kJ_mol
+    payload["qst_n_blocks"] = qst_n_blocks
+    payload["qst_block_size"] = qst_block_size
     write_gcmc_results_json(gcmc_json_path, payload)
-    print(f"[INFO] Wrote {gcmc_json_path}")
+    LOGGER.info("Wrote %s", gcmc_json_path)
 
-    # Remove traj/log; keep JSON and PNGs (nmols.png, energy.png)
-    for p in (traj_path, log_path):
+    # Remove traj/log and .npy intermediates; keep JSON and PNGs (nmols.png, energy.png)
+    for p in (
+        traj_path,
+        log_path,
+        out_dir / "nmols.npy",
+        out_dir / "energy.npy",
+    ):
         try:
             if p is not None and p.exists():
                 p.unlink()
         except Exception as e:
-            print(f"[WARN] Could not remove {p}: {e}")
+            LOGGER.warning("Could not remove %s: %s", p, e)
 
     return 0
 
