@@ -611,13 +611,17 @@ class MatGLWrapper(MLIPModel):
 
             # Extract site features
             # CHGNet usually uses 'node_feat' or 'atom_feat' at top level
-            features = model_output.get("node_feat") or model_output.get("atom_feat")
+            features = model_output.get("node_feat")
+            if features is None:
+                 features = model_output.get("atom_feat")
             
             # M3GNet hides them in nested 'gc_X' layer outputs
             if features is None:
                 for k in reversed(list(model_output.keys())):
                     if k.startswith("gc_") and isinstance(model_output[k], dict):
-                        features = model_output[k].get("node_feat") or model_output[k].get("atom_feat")
+                        features = model_output[k].get("node_feat")
+                        if features is None:
+                            features = model_output[k].get("atom_feat")
                         if features is not None:
                             logger.info(f"Extracted MatGL features from layer: {k}")
                             break
@@ -637,6 +641,8 @@ class MatGLWrapper(MLIPModel):
             import traceback
             logger.error(f"Failed to predict atomic features (MatGL): {e}\n{traceback.format_exc()}")
             return {"error": f"Failed to predict atomic features: {str(e)}"}
+
+
 
     def fine_tune(
         self,

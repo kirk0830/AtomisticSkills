@@ -405,7 +405,13 @@ class FAIRCHEMWrapper(MLIPModel):
         self._create_lmdb_sequential(train_dir, train_lmdb_path)
         
         logging.info("  Computing normalizer and linear reference...")
-        force_rms, linref_coeff = self._compute_normalizer_sequential(train_lmdb_path)
+        if "linref_coeff" in training_config:
+            force_rms = 1.0
+            linref_coeff = training_config["linref_coeff"]
+            logging.info("  Using provided linref_coeff from config.")
+        else:
+            force_rms, linref_coeff = self._compute_normalizer_sequential(train_lmdb_path)
+        
         if regression_tasks == "e":
             force_rms = 1.0
         
@@ -1176,7 +1182,9 @@ class FAIRCHEMWrapper(MLIPModel):
             "optimization": True,
             "relaxation": True
         }
-    
+        
+
+
     def predict_atomic_features(self, structure_data: Any) -> Dict[str, Any]:
         """
         Predict atomic latent features (descriptors) for a structure.
