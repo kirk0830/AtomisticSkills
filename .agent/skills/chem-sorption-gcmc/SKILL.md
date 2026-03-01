@@ -85,5 +85,5 @@ python .agent/skills/chem-sorption-gcmc/scripts/run_gcmc.py \
 
 ---
 
-**Author:** Antigravity  
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Author:** Artur Lyssenko  
+**Contact:** [GitHub @arturlyssenko12](https://github.com/arturlyssenko12)

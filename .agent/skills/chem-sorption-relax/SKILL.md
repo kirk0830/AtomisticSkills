@@ -79,5 +79,5 @@ mcp_fairchem_relax_structure(
 
 ---
 
-**Author:** Antigravity  
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Author:** Artur Lyssenko  
+**Contact:** [GitHub @arturlyssenko12](https://github.com/arturlyssenko12)

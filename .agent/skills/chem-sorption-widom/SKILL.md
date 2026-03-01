@@ -70,5 +70,5 @@ python .agent/skills/chem-sorption-widom/scripts/run_widom.py \
 
 ---
 
-**Author:** Antigravity  
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Author:** Artur Lyssenko  
+**Contact:** [GitHub @arturlyssenko12](https://github.com/arturlyssenko12)
