@@ -10,8 +10,8 @@ Usage:
         --steps 100000 --temperature-K 298 --gases CO2 N2 --y 0.15 0.85 --p-total-bar 1.0
 
 Requirements:
-    - Conda environment: fairchem-agent
-    - Required packages: ase, ase-mc, numpy, matplotlib, torch, fairchem
+    - Conda environment: Varies based on `--calculator`
+    - Required packages: ase, ase-mc, numpy, matplotlib, torch, MLIP backend package
 """
 
 from __future__ import annotations
@@ -28,9 +28,9 @@ from ase import Atoms, build
 from ase.io import read
 from ase.optimize import LBFGS
 
-_script_dir = Path(__file__).resolve().parent
-if str(_script_dir) not in sys.path:
-    sys.path.insert(0, str(_script_dir))
+_project_root = Path(__file__).resolve().parents[4]
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
 
 from ase_mc import BVT, BVT_GCMCOnly, MonteCarlo
 from gcmc_common import (
@@ -54,7 +54,7 @@ from gcmc_common import (
     _resolve_species_name,
     qst_multicomponent_fluctuation_from_series,
 )
-from uma_calculator import load_uma_calculators, set_uma_spin_info
+from src.utils.mlips.loader import load_wrapper
 
 
 LOGGER = logging.getLogger(__name__)
@@ -63,21 +63,23 @@ LOGGER = logging.getLogger(__name__)
 GAS_DB = GAS_PR_PARAMS_CO2_N2
 
 
-def _load_uma_calcs(*, weights_path: str, task_name: str, device: str) -> tuple[object, object]:
-    """Return (calc_probe, calc_host), supporting both loader signatures/returns (same as COFclean)."""
+def normalize_charge_spin(atoms) -> None:
+    info = atoms.info if isinstance(atoms.info, dict) else {}
+    if atoms.info is not info:
+        atoms.info = info
     try:
-        ret = load_uma_calculators(weights_path=weights_path, task_name=task_name, device=device)
-    except TypeError:
-        ret = load_uma_calculators(model=weights_path, task_name=task_name, device=device)
-    if isinstance(ret, dict):
-        calc_host = ret.get("host")
-        calc_probe = ret.get("probe")
-        if calc_host is None or calc_probe is None:
-            raise RuntimeError(f"load_uma_calculators returned dict missing keys: {list(ret.keys())}")
-        return calc_probe, calc_host
-    if isinstance(ret, (tuple, list)) and len(ret) >= 3:
-        return ret[1], ret[2]
-    raise RuntimeError(f"Unrecognized load_uma_calculators return type: {type(ret)}")
+        charge = int(info.get("charge", info.get("chg", 0)))
+    except Exception:
+        charge = 0
+    try:
+        spin_mult = int(
+            info.get("spin_multiplicity", info.get("multiplicity", info.get("spin", 1)))
+        )
+    except Exception:
+        spin_mult = 1
+    atoms.info["charge"] = charge
+    atoms.info["spin_multiplicity"] = spin_mult
+    atoms.info["spin"] = spin_mult
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
@@ -96,9 +98,21 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     )
     p.add_argument("--restart-traj", type=Path, default=None, help="Optional: restart from previous ASE .traj.")
     p.add_argument("--restart-frame", type=int, default=-1, help="Frame index to restart from (default -1).")
-    p.add_argument("--device", type=str, default="cuda", help="Device string (e.g. 'cuda', 'cpu').")
-    p.add_argument("--weights", type=Path, required=True, help="Path to UMA checkpoint (.pt).")
-    p.add_argument("--task-name", type=str, default="odac", help="UMA task name (default: odac).")
+    p.add_argument("--device", type=str, default="auto", help="Device string (e.g. 'cuda', 'cpu', 'auto').")
+    p.add_argument(
+        "--calculator",
+        type=str,
+        required=True,
+        choices=["mace", "fairchem", "matgl"],
+        help="Backend MLIP calculator to use."
+    )
+    p.add_argument("--model-name", type=str, required=True, help="Name or path of the model checkpoint")
+    p.add_argument(
+        "--task-name",
+        type=str,
+        default=None,
+        help="Optional task name required by some calculators (e.g. odac for fairchem).",
+    )
     p.add_argument(
         "--output",
         "-o",
@@ -168,7 +182,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     species_tags = [starting_tag + i for i in range(len(species_names))]
 
     LOGGER.info("CIF            : %s", cif_path)
-    LOGGER.info("UMA weights    : %s", args.weights)
+    LOGGER.info("Calculator     : %s", args.calculator)
+    LOGGER.info("Model name     : %s", args.model_name)
     LOGGER.info("Task name      : %s", args.task_name)
     LOGGER.info("Device         : %s", args.device)
     LOGGER.info("Steps (MC)     : %d", args.steps)
@@ -183,12 +198,15 @@ def main(argv: Optional[list[str]] = None) -> int:
     LOGGER.info("species_tags   : %s", species_tags)
 
     t0 = time.perf_counter()
-    calc_mol, calc_host = _load_uma_calcs(
-        weights_path=str(args.weights),
-        task_name=args.task_name,
+    wrapper = load_wrapper(
+        args.calculator,
+        model_name=args.model_name,
         device=args.device,
+        task_name=args.task_name,
     )
-    LOGGER.info("Loaded UMA calculators in %.3f s", time.perf_counter() - t0)
+    calc_mol = wrapper.create_calculator()
+    calc_host = wrapper.create_calculator()
+    LOGGER.info("Loaded generic MLIP calculators in %.3f s", time.perf_counter() - t0)
 
     # Build + relax probes (vacuum), same logic as COFclean
     probes: list[Atoms] = []
@@ -206,7 +224,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                 probe = build.molecule(mol_name)
             except Exception:
                 probe = Atoms(mol_name)
-        set_uma_spin_info(probe)
+        normalize_charge_spin(probe)
         for a in probe:
             a.tag = int(tag)
         probe.calc = calc_mol
@@ -235,7 +253,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         read_fn=read,
         load_restart_atoms_fn=load_restart_atoms,
     )
-    set_uma_spin_info(host)
+    normalize_charge_spin(host)
     host.calc = calc_host
     tags = ensure_tags(host)
     try:

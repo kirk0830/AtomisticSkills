@@ -1,13 +1,14 @@
 """
-BVT/GCMC Monte Carlo adsorption of CO2 or N2 into a periodic framework using UMA (FairChem).
+BVT/GCMC Monte Carlo adsorption of CO2 or N2 into a periodic framework using any supported MLIP.
 
 Usage:
-    python run_gcmc_uma.py --cif path/to/relaxed.cif --output-dir ./out --weights path/to/uma.pt \\
-        --steps 100000 --temperature-K 298 --pressure-bar 1 --cof-dir ./out/MYCOF
+    python run_gcmc.py --cif path/to/relaxed.cif --output-dir ./out \\
+        --calculator fairchem --model-name uma-s-1p1.pt --task-name odac \\
+        --steps 100000 --temperature-K 298 --pressure-bar 1
 
 Requirements:
-    - Conda environment: fairchem-agent
-    - Required packages: ase, ase-mc, numpy, matplotlib, torch, fairchem
+    - Conda environment: Varies based on `--calculator`
+    - Required packages: ase, ase-mc, numpy, matplotlib, torch, MLIP backend package
 """
 
 import argparse
@@ -16,9 +17,9 @@ import sys
 import time
 from pathlib import Path
 
-_script_dir = Path(__file__).resolve().parent
-if str(_script_dir) not in sys.path:
-    sys.path.insert(0, str(_script_dir))
+_project_root = Path(__file__).resolve().parents[4]
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
 
 import numpy as np
 from ase import Atoms, build
@@ -46,27 +47,29 @@ from gcmc_common import (
     ensure_tags,
     qst_single_fluctuation_from_series,
 )
-from uma_calculator import load_uma_calculators, set_uma_spin_info
+from src.utils.mlips.loader import load_wrapper
 
 
 LOGGER = logging.getLogger(__name__)
 
 
-def _load_uma_calcs(*, weights_path: str, task_name: str, device: str) -> tuple[object, object]:
-    """Return (calc_probe, calc_host), supporting both loader signatures/returns (same as COFclean)."""
+def normalize_charge_spin(atoms) -> None:
+    info = atoms.info if isinstance(atoms.info, dict) else {}
+    if atoms.info is not info:
+        atoms.info = info
     try:
-        ret = load_uma_calculators(weights_path=weights_path, task_name=task_name, device=device)
-    except TypeError:
-        ret = load_uma_calculators(model=weights_path, task_name=task_name, device=device)
-    if isinstance(ret, dict):
-        calc_host = ret.get("host")
-        calc_probe = ret.get("probe")
-        if calc_host is None or calc_probe is None:
-            raise RuntimeError(f"load_uma_calculators returned dict missing keys: {list(ret.keys())}")
-        return calc_probe, calc_host
-    if isinstance(ret, (tuple, list)) and len(ret) >= 3:
-        return ret[1], ret[2]
-    raise RuntimeError(f"Unrecognized load_uma_calculators return type: {type(ret)}")
+        charge = int(info.get("charge", info.get("chg", 0)))
+    except Exception:
+        charge = 0
+    try:
+        spin_mult = int(
+            info.get("spin_multiplicity", info.get("multiplicity", info.get("spin", 1)))
+        )
+    except Exception:
+        spin_mult = 1
+    atoms.info["charge"] = charge
+    atoms.info["spin_multiplicity"] = spin_mult
+    atoms.info["spin"] = spin_mult
 
 
 def retag_all_guests_single_species(atoms: Atoms, host_natoms: int) -> int | None:
@@ -85,22 +88,34 @@ def retag_all_guests_single_species(atoms: Atoms, host_natoms: int) -> int | Non
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="BVT Monte Carlo adsorption of a probe gas (CO2 or N2) into a periodic host (CIF) using UMA/FairChem."
+        description="BVT Monte Carlo adsorption of a probe gas into a periodic host using a generic MLIP."
     )
     p.add_argument("--cif", type=Path, required=True, help="Path to periodic framework CIF file.")
     p.add_argument("--steps", type=int, required=True, help="Number of Monte Carlo steps.")
     p.add_argument("--temperature-K", type=float, required=True, help="Simulation temperature in Kelvin.")
-    p.add_argument("--pressure-bar", type=float, default=1.0, help="Gas pressure in bar for PR->B.")
+    p.add_argument("--pressure-bar", type=float, default=1.0, help="Gas pressure in bar.")
     p.add_argument("--scheme", choices=["gcmc", "hmc"], default="gcmc")
     p.add_argument("--adsorbate", choices=["CO2", "N2"], default="CO2", help="Probe gas to adsorb.")
-    p.add_argument("--output-dir", type=Path, default=Path("."), help="Directory for results (gcmc_results.json + PNGs).")
-    p.add_argument("--restart-traj", type=Path, default=None, help="Optional: restart from previous ASE trajectory (.traj).")
-    p.add_argument("--restart-frame", type=int, default=-1, help="Frame index to restart from (default -1 = last frame).")
-    p.add_argument("--device", type=str, default="cuda", help="Device string (e.g. 'cuda', 'cpu').")
-    p.add_argument("--weights", type=Path, required=True, help="Path to UMA checkpoint (.pt).")
-    p.add_argument("--task-name", type=str, default="odac", help="UMA task name (default: odac).")
+    p.add_argument("--output-dir", type=Path, default=Path("."), help="Directory for results.")
+    p.add_argument("--restart-traj", type=Path, default=None, help="Optional: restart from previous ASE trajectory.")
+    p.add_argument("--restart-frame", type=int, default=-1, help="Frame index to restart from.")
+    p.add_argument(
+        "--calculator",
+        type=str,
+        required=True,
+        choices=["mace", "fairchem", "matgl"],
+        help="Backend MLIP calculator to use."
+    )
+    p.add_argument("--model-name", type=str, required=True, help="Name or path of the model checkpoint")
+    p.add_argument(
+        "--task-name",
+        type=str,
+        default=None,
+        help="Optional task name required by some calculators (e.g. odac for fairchem).",
+    )
+    p.add_argument("--device", type=str, default="auto", help="Device string (e.g. 'cuda', 'cpu', 'auto').")
+    p.add_argument("--model-tag", type=str, default=None, help="Model tag for metadata.")
     p.add_argument("--output", "-o", type=Path, default=None, help="Output JSON path (default: output_dir/gcmc_results.json)")
-    p.add_argument("--model-tag", type=str, default="uma", help="Model tag for metadata.")
     return p.parse_args()
 
 
@@ -115,7 +130,8 @@ def main() -> int:
         gcmc_json_path = out_dir / "gcmc_results.json"
 
     LOGGER.info("CIF          : %s", cif_path)
-    LOGGER.info("UMA weights  : %s", args.weights)
+    LOGGER.info("Calculator   : %s", args.calculator)
+    LOGGER.info("Model name   : %s", args.model_name)
     LOGGER.info("Task name    : %s", args.task_name)
     LOGGER.info("Device       : %s", args.device)
     LOGGER.info("Steps (MC)   : %d", args.steps)
@@ -126,18 +142,21 @@ def main() -> int:
     LOGGER.info("Output dir   : %s", out_dir)
 
     t0 = time.perf_counter()
-    calc_mol, calc_host = _load_uma_calcs(
-        weights_path=str(args.weights),
-        task_name=args.task_name,
+    wrapper = load_wrapper(
+        args.calculator,
+        model_name=args.model_name,
         device=args.device,
+        task_name=args.task_name,
     )
-    LOGGER.info("Loaded UMA calculators in %.3f s", time.perf_counter() - t0)
+    calc_mol = wrapper.create_calculator()
+    calc_host = wrapper.create_calculator()
+    LOGGER.info("Loaded generic MLIP calculators in %.3f s", time.perf_counter() - t0)
 
     PR_PARAMS = GAS_PR_PARAMS_CO2_N2
     gas = PR_PARAMS[args.adsorbate]
     t1 = time.perf_counter()
     probe = build.molecule(gas["mol_name"])
-    set_uma_spin_info(probe)
+    normalize_charge_spin(probe)
     probe.calc = calc_mol
     out_dir.mkdir(parents=True, exist_ok=True)
     opt = LBFGS(probe, trajectory=None, logfile=None)
@@ -156,7 +175,7 @@ def main() -> int:
         read_fn=read,
         load_restart_atoms_fn=load_restart_atoms,
     )
-    set_uma_spin_info(host)
+    normalize_charge_spin(host)
     host.calc = calc_host
 
     retagged = False

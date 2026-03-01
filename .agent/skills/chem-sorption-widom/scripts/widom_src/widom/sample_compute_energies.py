@@ -4,7 +4,7 @@
 import numpy as np
 from ase import Atoms
 from ase.calculators.calculator import Calculator
-from tqdm_loggable.auto import tqdm
+from tqdm.auto import tqdm
 
 from .structure_preparation import (
     create_combined_structure,
