@@ -24,7 +24,7 @@ To predict the macroscopic adsorption uptake of a gas (or gas mixture) in a poro
 python .agent/skills/chem-sorption-gcmc/scripts/run_gcmc.py \
     --cif path/to/relaxed_supercell.cif \
     --calculator fairchem \
-    --model-name uma-s-1p1.pt \
+    --model-name uma-s-1p1 \
     --task-name omol \
     --steps 50000 \
     --temperature-K 298 \
@@ -40,7 +40,7 @@ python .agent/skills/chem-sorption-gcmc/scripts/run_gcmc.py \
 python .agent/skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
     --cif path/to/relaxed_supercell.cif \
     --calculator fairchem \
-    --model-name uma-s-1p1.pt \
+    --model-name uma-s-1p1 \
     --task-name omol \
     --steps 50000 \
     --temperature-K 298 \
@@ -69,7 +69,7 @@ python .agent/skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
 python .agent/skills/chem-sorption-gcmc/scripts/run_gcmc.py \
     --cif ./data/MOF-5_supercell.cif \
     --calculator fairchem \
-    --model-name uma-s-1p1.pt \
+    --model-name uma-s-1p1 \
     --task-name omol \
     --steps 50000 \
     --temperature-K 298 \

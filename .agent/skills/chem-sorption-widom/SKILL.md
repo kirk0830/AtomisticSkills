@@ -25,7 +25,7 @@ python .agent/skills/chem-sorption-widom/scripts/run_widom.py \
     --structure path/to/relaxed_supercell.cif \
     --name MY_FRAMEWORK \
     --calculator fairchem \
-    --model-name uma-s-1p1.pt \
+    --model-name uma-s-1p1 \
     --task-name omol \
     --gas CO2 \
     --temperature 298 \
@@ -53,7 +53,7 @@ python .agent/skills/chem-sorption-widom/scripts/run_widom.py \
     --structure ./results/COF-1_supercell.cif \
     --name COF-1 \
     --calculator fairchem \
-    --model-name uma-s-1p1.pt \
+    --model-name uma-s-1p1 \
     --task-name omol \
     --gas CO2 \
     --temperature 298 \
