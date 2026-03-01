@@ -222,10 +222,11 @@ The required environment must be consistent across:
 - **Examples**: Provide realistic, working examples with actual filenames and values
 - **Error Prevention**: Document common pitfalls and validation steps (e.g., "Verify coexistence before production run")
 
-### 5. Integration with MCP Tools
+### 5. Integration with MCP Tools and MLIPs
 - Clearly distinguish between MCP tool calls and local script execution
 - Provide explicit output paths for MCP tools to avoid ambiguity
 - Document expected return values and how to use them in subsequent steps
+- **MLIP Usage**: When a skill involves Machine Learning Interatomic Potentials (MLIPs), prioritize using existing MCP tools. If writing a custom script is necessary, ALWAYS import and use the centralized `src.utils.mlips.loader.load_wrapper` function to load models consistently.
 
 ### 6. Validation and Quality Checks
 - Include verification steps within the workflow (e.g., phase verification in melting-point skill)

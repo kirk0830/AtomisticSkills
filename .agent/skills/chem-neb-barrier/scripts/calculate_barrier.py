@@ -18,6 +18,8 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 
+from src.utils.mlips.loader import load_wrapper
+
 def is_periodic(atoms) -> bool:
     """Check if an ASE Atoms object has periodic boundary conditions."""
     return np.any(atoms.pbc)
@@ -42,40 +44,6 @@ def generate_path_cif_from_images(images: list, filename: str) -> None:
 def generate_path_xyz_from_images(images: list, filename: str) -> None:
     """Generate an XYZ trajectory file from a list of image atoms (non-periodic systems)."""
     write(filename, images, format="extxyz")
-
-
-def load_wrapper(model_type: str, model_name: str, model_head: str = None, device: str = "auto"):
-    """
-    Load the appropriate model wrapper.
-
-    Args:
-        model_type: Type of MLIP ('mace', 'fairchem', 'matgl').
-        model_name: Model name or path.
-        model_head: Model head for multi-head models.
-        device: Device to run on.
-
-    Returns:
-        Loaded model wrapper.
-    """
-    model_type = model_type.lower()
-    
-    if model_type == "mace":
-        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
-        wrapper = MACEWrapper(model_name=model_name, device=device)
-    elif model_type == "fairchem":
-        from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
-        wrapper = FAIRCHEMWrapper(model_name=model_name, device=device)
-    elif model_type == "matgl":
-        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-        wrapper = MatGLWrapper(model_name=model_name, device=device)
-    else:
-        raise ValueError(f"Unknown model type: {model_type}. Supported: mace, fairchem, matgl")
-    
-    if model_head is not None:
-        wrapper.load(task_name=model_head)
-    else:
-        wrapper.load()
-    return wrapper
 
 
 def plot_barrier(neb, output_dir: str) -> None:
