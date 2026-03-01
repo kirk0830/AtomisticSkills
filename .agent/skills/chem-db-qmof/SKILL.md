@@ -36,7 +36,13 @@ python .agent/skills/chem-db-qmof/scripts/query_qmof.py \
 
 ## Examples
 
-**Example 1: Query for 5 MOFs containing Zinc**
+**Example 1: Automated testing script (Zinc MOF)**
+```bash
+# Env: base-agent
+bash .agent/skills/chem-db-qmof/examples/test_qmof.sh
+```
+
+**Example 2: Query for 5 MOFs containing Zinc manually**
 ```bash
 # Env: base-agent
 python .agent/skills/chem-db-qmof/scripts/query_qmof.py \
@@ -61,5 +67,5 @@ python .agent/skills/chem-db-qmof/scripts/query_qmof.py \
 
 ---
 
-**Author:** Bowen  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
