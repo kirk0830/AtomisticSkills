@@ -43,36 +43,7 @@ logger = logging.getLogger("Vibration-Skill")
 TRANSLATION_ROTATION_THRESHOLD = 50.0
 
 
-def load_wrapper(model_type: str, model_name: Optional[str] = None, device: str = "auto"):
-    """
-    Load the appropriate MLIP wrapper.
-
-    Args:
-        model_type: Type of model ('mace', 'fairchem', 'matgl')
-        model_name: Specific model name (optional, uses default if None)
-        device: Device to use ('auto', 'cpu', 'cuda')
-
-    Returns:
-        Loaded MLIP wrapper instance
-    """
-    model_type = model_type.lower()
-
-    if model_type == "mace":
-        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
-        wrapper = MACEWrapper(model_name=model_name, device=device)
-    elif model_type == "fairchem":
-        from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
-        wrapper = FAIRCHEMWrapper(model_name=model_name, device=device)
-    elif model_type == "matgl":
-        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-        wrapper = MatGLWrapper(model_name=model_name, device=device)
-    else:
-        raise ValueError(f"Unknown model type: {model_type}. Supported: mace, fairchem, matgl")
-
-    wrapper.load()
-    logger.info(f"Loaded {model_type} model: {wrapper.model_name}")
-    return wrapper
-
+from src.utils.mlips.loader import load_wrapper
 
 def check_linearity(atoms, tol: float = 5.0) -> bool:
     """

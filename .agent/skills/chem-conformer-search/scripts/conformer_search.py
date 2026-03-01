@@ -42,29 +42,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("ConformerSearch")
 
 
-def load_wrapper(model_type: str, model_name: Optional[str] = None, device: str = "auto"):
-    """Load the appropriate MLIP wrapper."""
-    model_type = model_type.lower()
-    
-    if model_type == "mace":
-        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
-        # If model_name is not specified, MACEWrapper defaults to MACE-MP-0-medium usually.
-        # But for this skill, we prefer MACE-OFF23-small if not specified.
-        # However, the wrapper logic handles defaults. We will let the user or caller specify.
-        wrapper = MACEWrapper(model_name=model_name, device=device)
-    elif model_type == "fairchem":
-        from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
-        wrapper = FAIRCHEMWrapper(model_name=model_name, device=device)
-    elif model_type == "matgl":
-        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-        wrapper = MatGLWrapper(model_name=model_name, device=device)
-    else:
-        raise ValueError(f"Unknown model type: {model_type}. Supported: mace, fairchem, matgl")
-
-    wrapper.load()
-    logger.info(f"Loaded {model_type} model: {wrapper.model_name}")
-    return wrapper
-
+from src.utils.mlips.loader import load_wrapper
 
 def smiles_to_atoms_list(smiles: str, num_conformers: int, rms_threshold: float) -> List[Atoms]:
     """
