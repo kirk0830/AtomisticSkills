@@ -69,7 +69,7 @@ def _load_pr_gas_db_from_resources() -> dict[str, dict[str, float | str]]:
     base = _default_pr_gas_params()
 
     try:
-        # resources/ is sibling to scripts/ inside the mat-sorption skill.
+        # resources/ is sibling to scripts/ inside the chem-sorption skill.
         script_dir = Path(__file__).resolve().parent
         resources_dir = script_dir.parent / "resources"
         json_path = resources_dir / "pr_eos_gases.json"

@@ -2,7 +2,7 @@
 Vendored Widom insertion implementation.
 
 This package is vendored from the widom package by CuspAI (Apache 2.0)
-to keep the mat-sorption skill self-contained. The public API is re-exported as:
+to keep the chem-sorption skill self-contained. The public API is re-exported as:
 
 - `WidomInsertionResults`
 - `run_widom_insertion()`
@@ -13,7 +13,7 @@ Requirements:
 """
 
 # Copyright (c) 2025 CuspAI
-# Vendored from the widom package (CuspAI) for mat-sorption skill.
+# Vendored from the widom package (CuspAI) for chem-sorption skill.
 # Modified by AtomisticSkills (docstring and attribution).
 
 from .run import WidomInsertionResults, run_widom_insertion

@@ -1,0 +1,14 @@
+{
+  "cof_name": "Hb-DBD-AA",
+  "source_cif": ".agent/skills/chem-sorption/examples/Hb-DBD-AA.cif",
+  "relaxed_cifs": [
+    ".agent/skills/chem-sorption/examples/Hb-DBD-AA.relaxed.cif",
+    ".agent/skills/chem-sorption/examples/Hb-DBD-AA_supercell.relaxed.cif"
+  ],
+  "relaxed_xyzs": [
+    ".agent/skills/chem-sorption/examples/Hb-DBD-AA.relaxed.xyz",
+    ".agent/skills/chem-sorption/examples/Hb-DBD-AA_supercell.relaxed.xyz"
+  ],
+  "relaxed_cif": ".agent/skills/chem-sorption/examples/Hb-DBD-AA_supercell.relaxed.cif",
+  "relaxed_xyz": ".agent/skills/chem-sorption/examples/Hb-DBD-AA_supercell.relaxed.xyz"
+}

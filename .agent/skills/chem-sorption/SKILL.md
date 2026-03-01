@@ -1,10 +1,10 @@
 ---
-name: mat-sorption
+name: chem-sorption
 description: Relax porous frameworks and compute gas adsorption (Henry coefficient, heat of adsorption, isotherms) using UMA (FairChem) from the CLI.
 category: materials
 ---
 
-# mat-sorption
+# chem-sorption
 
 ## Goal
 
@@ -22,7 +22,7 @@ To run a **relax → Widom / GCMC** workflow for porous frameworks (e.g. COFs, M
 
 ```bash
 # Env: fairchem-agent
-python .agent/skills/mat-sorption/scripts/run_relax_uma.py \
+python .agent/skills/chem-sorption/scripts/run_relax_uma.py \
     --structure path/to/framework.cif \
     --name MYCOF \
     --weights path/to/uma.pt \
@@ -47,7 +47,7 @@ python .agent/skills/mat-sorption/scripts/run_relax_uma.py \
 
 ```bash
 # Env: fairchem-agent
-python .agent/skills/mat-sorption/scripts/run_widom_uma.py \
+python .agent/skills/chem-sorption/scripts/run_widom_uma.py \
     --structure ./out/MYCOF.relaxed.cif \
     --name MYCOF \
     --weights path/to/uma.pt \
@@ -71,7 +71,7 @@ python .agent/skills/mat-sorption/scripts/run_widom_uma.py \
 
 ```bash
 # Env: fairchem-agent
-python .agent/skills/mat-sorption/scripts/run_gcmc_uma.py \
+python .agent/skills/chem-sorption/scripts/run_gcmc_uma.py \
     --cif ./out/MYCOF.relaxed.cif \
     --output-dir ./out \
     --weights path/to/uma.pt \
@@ -99,7 +99,7 @@ python .agent/skills/mat-sorption/scripts/run_gcmc_uma.py \
 
 ```bash
 # Env: fairchem-agent
-python .agent/skills/mat-sorption/scripts/run_gcmc_uma_multi.py \
+python .agent/skills/chem-sorption/scripts/run_gcmc_uma_multi.py \
     --cif ./out/MYCOF.relaxed.cif \
     --output-dir ./out \
     --weights path/to/uma.pt \
@@ -129,16 +129,16 @@ python .agent/skills/mat-sorption/scripts/run_gcmc_uma_multi.py \
 ```bash
 # Env: fairchem-agent
 # 1. Relax (writes to ./results/)
-python .agent/skills/mat-sorption/scripts/run_relax_uma.py \
+python .agent/skills/chem-sorption/scripts/run_relax_uma.py \
     --structure my_cof.cif --name COF-1 --weights /path/to/uma.pt --output-dir ./results
 
 # 2. Widom (use a relaxed CIF from step 1; see relax_results.json for paths)
-python .agent/skills/mat-sorption/scripts/run_widom_uma.py \
+python .agent/skills/chem-sorption/scripts/run_widom_uma.py \
     --structure ./results/COF-1.relaxed.cif \
     --name COF-1 --weights /path/to/uma.pt --gas CO2 --temperature 298 --output-dir ./results
 
 # 3. GCMC
-python .agent/skills/mat-sorption/scripts/run_gcmc_uma.py \
+python .agent/skills/chem-sorption/scripts/run_gcmc_uma.py \
     --cif ./results/COF-1.relaxed.cif \
     --output-dir ./results \
     --weights /path/to/uma.pt --steps 50000 --temperature-K 298 --pressure-bar 1 --adsorbate CO2
@@ -158,7 +158,7 @@ All outputs are **JSON** (plus CIF/XYZ for relax, which are needed for downstrea
 - **UMA only**: This skill uses UMA (FairChem) only.
 - **Input structure**: For Widom and GCMC, use a **relaxed** framework CIF from the relax script for consistent results.
 - **Gases**: Widom supports gases buildable with `ase.build.molecule` (e.g. CO2, N2). GCMC scripts support CO2 and N2 (Peng–Robinson parameters) for both single-component and multicomponent mixtures (`--gases`/`--y`).
-- **Paths**: Run commands from the **project root** so that `python .agent/skills/mat-sorption/scripts/run_*.py` resolves and script imports (relax_common, widom_common, etc.) work.
+- **Paths**: Run commands from the **project root** so that `python .agent/skills/chem-sorption/scripts/run_*.py` resolves and script imports (relax_common, widom_common, etc.) work.
 
 ## References
 
