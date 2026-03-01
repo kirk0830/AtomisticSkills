@@ -1,6 +1,6 @@
 # AgPd DFT Cluster Expansion Fitting
 
-This example adapts the [icet AgPd tutorial](https://icet.materialsmodeling.org/get_started/build_cluster_expansion.html) demonstrating how to process reference DFT training data and use the complete `smol` MCP pipeline to train a cluster expansion for AgPd.
+This example adapts the [icet AgPd tutorial](https://icet.materialsmodeling.org/get_started/construct_cluster_expansion.html) demonstrating how to process reference DFT training data and use the complete `smol` MCP pipeline to train a cluster expansion for AgPd.
 
 **Dataset Origin:** The 137 training structures and their mixing energies used for this Cluster Expansion training are sourced from the [`icet` tutorial](https://gitlab.com/materials-modeling/icet/-/raw/master/examples/tutorial/reference_data.db?inline=false).
 
@@ -61,3 +61,7 @@ print(result["rmse"]) # Expected ~0.00185 eV/atom
 
 ## 4. Result Verification
 After running a compilation of the script above (e.g. `python build_AgPd_CE.py`), the result of the training will be the `cluster_expansion.json` file. The model should emit an RMSE around `1.8 - 2.0` meV/atom which faithfully matches the original `icet` notebook's ARDR training accuracy. This model is now ready to be used for Monte Carlo sampling.
+
+## References
+1. [icet AgPd MC](https://icet.materialsmodeling.org/get_started/run_monte_carlo.html)
+1. [icet Paper](https://arxiv.org/abs/1901.08790)

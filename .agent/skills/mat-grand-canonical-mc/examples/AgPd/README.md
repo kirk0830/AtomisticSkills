@@ -1,6 +1,6 @@
 # AgPd GCMC Example
 
-This example adapts the [icet AgPd tutorial](https://icet.materialsmodeling.org/get_started/run_monte_carlo.html) demonstrating how to map out a phase diagram using Semi-Grand Canonical (SGC) Monte Carlo sampling on a trained Cluster Expansion (CE).
+This example adapts the [icet AgPd tutorial](https://icet.materialsmodeling.org/get_started/run_monte_carlo.html) demonstrating how to map out a phase diagram using Semi-Grand Canonical (SGC) Monte Carlo sampling on a trained Cluster Expansion (CE) in `smol`.
 
 ## Quick Start
 
@@ -27,7 +27,7 @@ conda run -n smol-agent python ../../scripts/run_gcmc_sweep.py \
 <img src="mu_vs_composition.png" alt="GCMC Sweep Analysis" width="50%"/> <img src="phase_diagram.png" alt="Phase Diagram" width="44%"/>
 
 **Key transition points at T=300K:**
-- There is a clear discontinuity in composition between 0.55 and 1.0, indicating a miscibility gap. Note that for `phase_diagram.png`, you can sample at more temperatures to get the complete immiscibility gap.
+- There is a clear discontinuity in composition between 0.55 and 1.0, indicating a miscibility gap. Note that for `phase_diagram.png`, you can sample at more temperatures to get the complete miscibility gap.
 
 ## Analysis and Visualization
 
