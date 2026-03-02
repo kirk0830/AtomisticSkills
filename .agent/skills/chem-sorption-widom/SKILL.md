@@ -1,7 +1,7 @@
 ---
 name: chem-sorption-widom
 description: Calculates Henry coefficient and heat of adsorption for a gas in a porous framework using Widom insertion with any supported MLIP.
-category: materials
+category: [materials, chemistry]
 ---
 
 # chem-sorption-widom

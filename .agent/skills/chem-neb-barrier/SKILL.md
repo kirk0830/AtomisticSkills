@@ -1,7 +1,7 @@
 ---
 name: chem-neb-barrier
 description: Calculate activation barrier using Nudged Elastic Band (NEB) method with MLIPs.
-category: chemistry, materials
+category: [chemistry, materials]
 ---
 
 # NEB Barrier Calculation

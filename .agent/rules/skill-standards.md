@@ -40,8 +40,9 @@ category: category-name
 **Guidelines:**
 - `name`: Use lowercase letters, numbers, and hyphens only (kebab-case)
 - `description`: Should be clear enough for the agent to decide if this skill is relevant to a user query
-- `category`: Must be one of the following:
+- `category`: Must be one of the following (use a YAML list like `[materials, chemistry]` if multiple apply):
   - `materials`: Materials science simulation and analysis skills (prefix: `mat-`)
+  - `chemistry`: Chemistry and molecular simulation skills (prefix: `chem-`)
   - `machine-learning`: MLIP training, model selection, and ML workflows (prefix: `ml-`)
   - `drug-discovery`: Drug design, docking, and molecular property prediction (prefix: `drug-`)
   - `general`: General-purpose research utilities (prefix: `general-`)

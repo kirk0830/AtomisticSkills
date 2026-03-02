@@ -1,7 +1,7 @@
 ---
 name: chem-sorption-relax
 description: Prepares supercells for porous frameworks based on minimum interplanar distance and relaxes them using standard MLIP relaxation tools.
-category: materials
+category: [materials, chemistry]
 ---
 
 # chem-sorption-relax

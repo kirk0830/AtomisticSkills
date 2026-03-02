@@ -1,7 +1,7 @@
 ---
 name: chem-db-qmof
 description: Query the Quantum MOF (QMOF) database via Materials Project's MPContribs platform for DFT-computed properties (bandgap) and optimized crystal structures of Metal-Organic Frameworks.
-category: materials
+category: [materials, chemistry]
 ---
 
 # chem-db-qmof

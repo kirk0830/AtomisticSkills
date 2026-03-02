@@ -1,7 +1,7 @@
 ---
 name: chem-sorption-gcmc
 description: Calculates gas adsorption isotherms via BVT/GCMC Monte Carlo simulations in a porous framework using MLIP.
-category: materials
+category: [materials, chemistry]
 ---
 
 # chem-sorption-gcmc
