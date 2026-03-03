@@ -13,6 +13,7 @@ This installs:
 - python 3.10
 - fairchem-core
 - pymatgen
+- sella
 
 ## Full Reproduction
 If you need to reproduce the exact environment state (including all pinned dependency versions), use the full example configuration:
