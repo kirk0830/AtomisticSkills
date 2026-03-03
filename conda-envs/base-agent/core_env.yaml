@@ -14,3 +14,4 @@ dependencies:
     - typing-extensions
     - h5py
     - pymupdf
+    - reaction-network
