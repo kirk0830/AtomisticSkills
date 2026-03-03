@@ -530,87 +530,91 @@ class Atomate2Handler:
             except Exception as e:
                 logger.warning(f"Error fetching flows by flow_ids: {e}")
             
-        # If no IDs provided, but formula/chemsys are, we search all completed jobs.
-        # This is a bit expensive, but useful for broad retrieval.
+        # If no IDs provided, but formula/chemsys are, we search MongoDB directly.
+        docs_to_process = []
+        
         if not (job_ids or flow_ids) and (formula or chemsys):
             try:
-                # Query completed jobs
-                jobs_info = jc.get_jobs_info(states=[JobState.COMPLETED], limit=limit)
-                f_ids = list(set([j.flow_id for j in jobs_info if hasattr(j, 'flow_id')]))
-                if f_ids:
-                    all_flows.extend(jc.get_flows_info(flow_ids=f_ids))
+                query = {}
+                if formula:
+                    query["output.formula_pretty"] = formula
+                if chemsys:
+                    query["output.chemsys"] = chemsys
+                
+                # Fetch directly from collection
+                # output.last_updated is used by atomate2 MongoStores
+                docs_to_process = list(jc.jobstore.docs_store._collection.find(query).sort("output.last_updated", -1).limit(limit))
             except Exception as e:
                  logger.warning(f"Error searching flows by metadata: {e}")
+        else:
+            seen_job_uuids = set()
+            for flow_info in all_flows:
+                for jid in getattr(flow_info, "job_ids", []):
+                    if jid in seen_job_uuids:
+                        continue
+                    seen_job_uuids.add(jid)
+                    try:
+                        doc = jobstore.get_output(jid)
+                        if not doc:
+                            doc = jobstore.get_output(getattr(flow_info, "flow_id", jid))
+                        if doc:
+                            docs_to_process.append(doc)
+                    except Exception:
+                        continue
         
         results = []
-        seen_job_uuids = set()
 
-        for flow_info in all_flows:
-            for jid in flow_info.job_ids:
-                if jid in seen_job_uuids:
-                    continue
+        for doc in docs_to_process:
+            if not doc:
+                continue
+            
+            doc_dict = jsanitize(doc)
+            
+            # Extract data early to handle nested filtering
+            task_doc = doc_dict.get("output", doc_dict)
+            
+            # Check filtering (TaskDoc fields)
+            if formula and task_doc.get("formula_pretty") != formula:
+                continue
+            if chemsys and task_doc.get("chemsys") != chemsys:
+                continue
                 
-                try:
-                    doc = jobstore.get_output(jid)
-                    if not doc:
-                        # Fallback to flow level output if job output is missing
-                        doc = jobstore.get_output(flow_info.flow_id)
-                except Exception:
-                    continue
+            # VASP outputs (energy, forces, stress) are typically nested another level down
+            # under task_doc["output"] in standard JobFlow wrappers.
+            actual_output = task_doc.get("output", task_doc) if isinstance(task_doc, dict) else task_doc
+            
+            # The structure in TaskDoc is typically in doc_dict["output"]["structure"]
+            structure = task_doc.get("structure") or doc_dict.get("structure")
+            
+            # Energy
+            energy = actual_output.get("energy") or actual_output.get("final_energy") or task_doc.get("energy")
+            
+            # Forces
+            forces = actual_output.get("forces") or task_doc.get("forces")
+            
+            # Stress
+            stress = actual_output.get("stress") or task_doc.get("stress")
+            
+            if structure and energy is not None:
+                # Convert stress from kB to GPa if requested
+                if stress is not None and convert_units:
+                    # VASP stress is in kB. 1 kB = 0.1 GPa.
+                    # We standardize to eV/A^3 (ASE standard).
+                    import ase.units
+                    stress = (np.array(stress) * 0.1 * ase.units.GPa).tolist()
                 
-                if not doc:
-                    continue
+                if forces is not None:
+                    forces = np.array(forces).tolist()
                 
-                doc_dict = jsanitize(doc)
-                
-                # Check filtering (TaskDoc fields)
-                if formula and doc_dict.get("formula_pretty") != formula:
-                    continue
-                if chemsys and doc_dict.get("chemsys") != chemsys:
-                    continue
-                
-                # Extract data
-                output_field = doc_dict.get("output", {})
-                
-                # Support both direct TaskDoc and nested structures
-                if isinstance(output_field, dict) and ("energy" in output_field or "final_energy" in output_field):
-                    actual_output = output_field
-                else:
-                    actual_output = doc_dict
-                
-                # The structure in TaskDoc is typically in doc_dict["structure"]
-                structure = doc_dict.get("structure") or output_field.get("structure")
-                
-                # Energy
-                energy = actual_output.get("energy") or actual_output.get("final_energy")
-                
-                # Forces
-                forces = actual_output.get("forces")
-                
-                # Stress
-                stress = actual_output.get("stress")
-                
-                if structure and energy is not None:
-                    # Convert stress from kB to GPa if requested
-                    if stress is not None and convert_units:
-                        # VASP stress is in kB. 1 kB = 0.1 GPa.
-                        # We standardize to eV/A^3 (ASE standard).
-                        import ase.units
-                        stress = (np.array(stress) * 0.1 * ase.units.GPa).tolist()
-                    
-                    if forces is not None:
-                        forces = np.array(forces).tolist()
-                    
-                    results.append({
-                        "structure": structure,
-                        "energy": energy,
-                        "forces": forces,
-                        "stress": stress,
-                        "job_uuid": jid,
-                        "flow_id": flow_info.flow_id,
-                        "formula": doc_dict.get("formula_pretty"),
-                        "chemsys": doc_dict.get("chemsys")
-                    })
-                    seen_job_uuids.add(jid)
+                results.append({
+                    "structure": structure,
+                    "energy": energy,
+                    "forces": forces,
+                    "stress": stress,
+                    "job_uuid": doc_dict.get("uuid", "Unknown"),
+                    "flow_id": doc_dict.get("flow_id", "Unknown"),
+                    "formula": task_doc.get("formula_pretty"),
+                    "chemsys": task_doc.get("chemsys")
+                })
 
         return results
