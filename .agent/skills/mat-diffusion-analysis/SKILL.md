@@ -1,7 +1,7 @@
 ---
 name: mat-diffusion-analysis
 description: Calculate ionic diffusion coefficients and activation energy from MD trajectories using pymatgen.
-category: materials
+category: [materials]
 ---
 
 # Diffusion Analysis

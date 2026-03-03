@@ -1,7 +1,7 @@
 ---
 name: drug-db-chembl
 description: Query ChEMBL web services for targets, molecules, and curated bioactivity measurements (IC50, Ki, EC50, etc.).
-category: drug-discovery
+category: [drug-discovery]
 ---
 
 # db-chembl

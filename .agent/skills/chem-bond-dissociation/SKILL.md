@@ -1,7 +1,7 @@
 ---
 name: chem-bond-dissociation
 description: Calculate homolytic bond dissociation energies (BDEs) for all single bonds in a molecule using MLIPs with RDKit fragmentation.
-category: chemistry
+category: [chemistry]
 ---
 
 # Bond Dissociation Energy Skill

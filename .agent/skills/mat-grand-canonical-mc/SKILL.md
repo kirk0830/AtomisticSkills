@@ -1,7 +1,7 @@
 ---
 name: mat-grand-canonical-mc
 description: Run Grand Canonical Monte Carlo (GCMC) simulations with cluster expansion models to map composition-temperature phase diagrams via chemical potential sweeps.
-category: materials
+category: [materials]
 ---
 
 # Grand Canonical Monte Carlo

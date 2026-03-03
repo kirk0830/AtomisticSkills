@@ -1,7 +1,7 @@
 ---
 name: mat-disorder
 description: Generate ordered structures from disordered starting points with partial occupancies.
-category: materials
+category: [materials]
 ---
 
 # Disordered Material

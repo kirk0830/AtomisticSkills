@@ -1,7 +1,7 @@
 ---
 name: general-presentation
 description: Generate and iteratively refine PowerPoint presentations from simulation results using python-pptx.
-category: general
+category: [general]
 ---
 
 # Presentation Generation

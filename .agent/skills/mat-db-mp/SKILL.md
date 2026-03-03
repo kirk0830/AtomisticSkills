@@ -1,7 +1,7 @@
 ---
 name: mat-db-mp
 description: Query Materials Project database for crystal structures, computed properties, elastic/magnetic data, and structurally similar materials using the MP API.
-category: materials
+category: [materials]
 ---
 
 # Materials Project Database Query

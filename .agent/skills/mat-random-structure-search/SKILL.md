@@ -1,7 +1,7 @@
 ---
 name: mat-random-structure-search
 description: Generate random crystal structures for a given composition (AIRSS-style) and relax with MLIPs to find low-energy candidates.
-category: materials
+category: [materials]
 ---
 
 # Random Structure Search (AIRSS-Style)

@@ -1,7 +1,7 @@
 ---
 name: ml-mlip-speed
 description: Benchmark of inference speed of Machine Learning Interatomic Potentials (MLIPs).
-category: machine-learning
+category: [machine-learning]
 ---
 
 # MLIP Performance Benchmarking

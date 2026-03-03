@@ -1,7 +1,7 @@
 ---
 name: mat-reaction-network
 description: Predict thermodynamically optimal solid-state inorganic synthesis pathways and tabulates basic reactions.
-category: materials
+category: [materials]
 ---
 
 # Material Reaction Network Prediction

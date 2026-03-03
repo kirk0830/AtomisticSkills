@@ -1,7 +1,7 @@
 ---
 name: mat-intercalation-voltage
 description: Calculate the average intercalation voltage of cathode materials using MLIPs.
-category: materials
+category: [materials]
 ---
 
 # Intercalation Voltage

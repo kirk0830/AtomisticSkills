@@ -1,7 +1,7 @@
 ---
 name: ml-foundation-potentials
 description: Guide for selecting the most appropriate foundation MLIP model based on simulation requirements.
-category: machine-learning
+category: [machine-learning]
 ---
 
 # Foundation Potentials Selection

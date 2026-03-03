@@ -1,7 +1,7 @@
 ---
 name: mat-stability
 description: Calculate the thermodynamic stability and energy above the convex hull (E_hull) of a material at 0K.
-category: materials
+category: [materials]
 ---
 
 # Stability Calculation

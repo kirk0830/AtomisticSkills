@@ -1,7 +1,7 @@
 ---
 name: chem-react-ot
 description: Generate transition state structures for chemical reactions using React-OT.
-category: chemistry
+category: [chemistry]
 ---
 
 # `chem-react-ot` — React-OT Transition State Generation

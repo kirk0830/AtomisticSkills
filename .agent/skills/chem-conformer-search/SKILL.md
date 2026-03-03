@@ -1,7 +1,7 @@
 ---
 name: chem-conformer-search
 description: Generate molecular conformers with RDKit ETKDG, relax with MLIPs, and rank by energy with Boltzmann weighting.
-category: chemistry
+category: [chemistry]
 ---
 
 # Molecular Conformer Search & Ranking

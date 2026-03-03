@@ -1,7 +1,7 @@
 ---
 name: mat-elasticity
 description: Calculate the full elastic tensor and mechanical properties (bulk modulus, shear modulus, Young's modulus, Poisson's ratio) using MLIPs.
-category: materials
+category: [materials]
 ---
 
 # Elastic Tensor Skill

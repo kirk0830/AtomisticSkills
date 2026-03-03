@@ -1,7 +1,7 @@
 ---
 name: mat-melting-point
 description: Calculate the melting temperature of a material using the solid-liquid interface (coexistence) method.
-category: materials
+category: [materials]
 ---
 
 # Melting Point

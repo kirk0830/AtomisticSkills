@@ -1,7 +1,7 @@
 ---
 name: mat-defect-energy
 description: Calculate point-defect formation energies (vacancies, substitutions, interstitials) using MLIPs.
-category: materials
+category: [materials]
 ---
 
 # Point-Defect Formation Energy (MLIP)

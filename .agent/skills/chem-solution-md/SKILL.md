@@ -1,7 +1,7 @@
 ---
 name: chem-solution-md
 description: Set up and run molecular dynamics simulations of molecules in explicit solvent boxes using Packmol for box construction and MLIPs for dynamics.
-category: chemistry
+category: [chemistry]
 ---
 
 # Solution-Phase Molecular Dynamics

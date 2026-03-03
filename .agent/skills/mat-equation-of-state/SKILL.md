@@ -1,7 +1,7 @@
 ---
 name: mat-equation-of-state
 description: Calculate equation of state (bulk modulus, equilibrium volume) using MLIPs.
-category: materials
+category: [materials]
 ---
 
 # Equation of State Skill

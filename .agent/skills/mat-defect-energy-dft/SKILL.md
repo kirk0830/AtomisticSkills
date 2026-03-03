@@ -1,7 +1,7 @@
 ---
 name: mat-defect-energy-dft
 description: Calculate charged defect formation energies and transition level diagrams using pymatgen-analysis-defects and atomate2 VASP workflows.
-category: materials
+category: [materials]
 ---
 
 # Point-Defect Formation Energy (DFT)

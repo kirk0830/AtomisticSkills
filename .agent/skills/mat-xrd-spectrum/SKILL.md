@@ -1,7 +1,7 @@
 ---
 name: mat-xrd-spectrum
 description: Calculate the X-ray Diffraction (XRD) spectrum of a material using pymatgen.
-category: materials
+category: [materials]
 ---
 
 # XRD Spectrum Calculation

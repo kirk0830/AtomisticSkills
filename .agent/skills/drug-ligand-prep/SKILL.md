@@ -1,7 +1,7 @@
 ---
 name: drug-ligand-prep
 description: Prepare small-molecule ligands for docking/analysis: optional state enumeration, 3D conformer generation, MMFF/UFF minimization, and export to SDF + AutoDock PDBQT.
-category: drug-discovery
+category: [drug-discovery]
 ---
 
 # Ligand Preparation

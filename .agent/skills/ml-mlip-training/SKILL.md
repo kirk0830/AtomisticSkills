@@ -1,7 +1,7 @@
 ---
 name: ml-mlip-training
 description: Benchmark and fine-tune Machine Learning Interatomic Potentials (MLIPs) using data-augmentation.
-category: machine-learning
+category: [machine-learning]
 ---
 
 # MLIP Training

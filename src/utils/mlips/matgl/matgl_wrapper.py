@@ -642,8 +642,6 @@ class MatGLWrapper(MLIPModel):
             logger.error(f"Failed to predict atomic features (MatGL): {e}\n{traceback.format_exc()}")
             return {"error": f"Failed to predict atomic features: {str(e)}"}
 
-
-
     def fine_tune(
         self,
         training_data: List[Dict[str, Any]],

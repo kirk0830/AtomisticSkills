@@ -1,7 +1,7 @@
 ---
 name: drug-db-pdb
 description: Search, filter, and retrieve macromolecular structures from the RCSB Protein Data Bank (PDB), including metadata, bound ligands, and optional coordinate/validation downloads.
-category: drug-discovery
+category: [drug-discovery]
 ---
 
 # db-pdb

@@ -1,7 +1,7 @@
 ---
 name: mat-synthesis-recommendation
 description: Query and rank synthesis recipes from Materials Project's text-mined literature database with precursors, procedures, and journal references.
-category: materials
+category: [materials]
 ---
 
 # Synthesis Recommendation

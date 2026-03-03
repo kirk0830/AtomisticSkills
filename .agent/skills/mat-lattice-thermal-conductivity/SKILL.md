@@ -1,7 +1,7 @@
 ---
 name: mat-lattice-thermal-conductivity
 description: Calculate lattice thermal conductivity of materials with MLIPs.
-category: materials
+category: [materials]
 ---
 
 # Lattice Thermal Conductivity Calculation Skill

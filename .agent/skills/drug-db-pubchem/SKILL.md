@@ -1,7 +1,7 @@
 ---
 name: drug-db-pubchem
 description: Query PubChem via PUG-REST to retrieve CIDs, computed properties, synonyms, and 2D/3D SDF structures.
-category: drug-discovery
+category: [drug-discovery]
 ---
 
 # PubChem Database Query

@@ -1,7 +1,7 @@
 ---
 name: mat-mp2020-compatibility
 description: Energy corrections needed when using certain MLIPs for phase diagram construction / formation energy calculations.
-category: materials
+category: [materials]
 ---
 
 # MP2020 Compatibility

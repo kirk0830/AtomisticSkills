@@ -1,7 +1,7 @@
 ---
 name: mat-pourbaix-diagram
 description: Calculate Pourbaix (pH-voltage) diagrams for aqueous electrochemical stability using water-corrected MLIP energies and pymatgen.
-category: materials
+category: [materials]
 ---
 
 # Pourbaix Diagram

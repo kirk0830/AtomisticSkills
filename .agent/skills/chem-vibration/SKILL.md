@@ -1,7 +1,7 @@
 ---
 name: chem-vibration
 description: Calculate vibrational frequencies, normal modes, zero-point energy, and IR spectra of molecules and clusters using MLIPs.
-category: chemistry
+category: [chemistry]
 ---
 
 # Molecular Vibration Analysis Skill

@@ -1,7 +1,7 @@
 ---
 name: mat-amorphorization
 description: Generate amorphorized structures from crystalline starting points using a melt-quench MD protocol.
-category: materials
+category: [materials]
 ---
 
 # Amorphorization

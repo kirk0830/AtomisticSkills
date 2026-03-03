@@ -255,7 +255,7 @@ class MACEWrapper(MLIPModel):
             print(f"Failed to predict atomic features: {e}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
             return {"error": f"Failed to predict atomic features: {str(e)}"}
-    
+            
     def save_checkpoint(self, checkpoint_path: str) -> None:
         """
         Save a model checkpoint.

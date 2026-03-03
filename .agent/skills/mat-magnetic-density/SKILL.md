@@ -1,7 +1,7 @@
 ---
 name: mat-magnetic-density
 description: Calculate magnetic moments and spin density from spin-polarized DFT calculations using VASP.
-category: materials
+category: [materials]
 ---
 
 # Magnetic Density

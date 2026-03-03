@@ -1,7 +1,7 @@
 ---
 name: mat-electronic-structure
 description: Calculate electronic band structure and density of states using atomate2 and VASP.
-category: materials
+category: [materials]
 ---
 
 # Electronic Structure

@@ -1,7 +1,7 @@
 ---
 name: mat-kinetic-monte-carlo
 description: Simulate long-time kinetics using rejection-free kinetic Monte Carlo (KMC): event catalog construction, rate assignment (TST/Arrhenius), detailed-balance validation, superbasin handling, and analysis of transport.
-category: materials
+category: [materials]
 ---
 
 # Kinetic Monte Carlo (KMC)

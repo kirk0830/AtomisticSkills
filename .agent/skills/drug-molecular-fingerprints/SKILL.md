@@ -1,7 +1,7 @@
 ---
 name: drug-molecular-fingerprints
 description: Compute Morgan/ECFP fingerprints, Tanimoto similarity, and optional Butina clusters/heatmaps for small-molecule comparison.
-category: drug-discovery
+category: [drug-discovery]
 ---
 
 # Molecular Fingerprints

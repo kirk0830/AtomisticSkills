@@ -1,7 +1,7 @@
 ---
 name: general-molecular-dynamics
 description: Best practices and tools for running stable Machine Learning Interatomic Potential (MLIP) molecular dynamics.
-category: general
+category: [general]
 ---
 
 # Molecular Dynamics

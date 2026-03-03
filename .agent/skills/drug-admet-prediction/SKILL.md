@@ -1,7 +1,7 @@
 ---
 name: drug-admet-prediction
 description: Compute RDKit physicochemical descriptors and rule-based drug-likeness heuristics (Ro5, Veber, QED) from SMILES.
-category: drug-discovery
+category: [drug-discovery]
 ---
 
 # admet-prediction

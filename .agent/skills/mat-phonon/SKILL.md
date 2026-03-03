@@ -1,7 +1,7 @@
 ---
 name: mat-phonon
 description: Calculate vibrational properties (phonon dispersions, density of states, thermal properties) using MLIPs.
-category: materials
+category: [materials]
 ---
 
 # Phonon Calculation Skill

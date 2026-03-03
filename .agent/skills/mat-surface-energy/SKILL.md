@@ -1,7 +1,7 @@
 ---
 name: mat-surface-energy
 description: Calculate surface energy of various (hkl) planes and generate the equilibrium crystal shape (Wulff shape).
-category: materials
+category: [materials]
 ---
 
 # Surface Energy Calculation

@@ -1,7 +1,7 @@
 ---
 name: mat-elemental-energies
 description: A library of ground-state element structures and their energies calculated from MLIPs. Used to calculate formation energies of compounds.
-category: materials
+category: [materials]
 ---
 
 # Elemental Energies

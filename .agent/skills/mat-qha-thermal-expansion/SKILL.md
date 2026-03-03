@@ -1,7 +1,7 @@
 ---
 name: mat-qha-thermal-expansion
 description: Calculate Quasi-Harmonic Approximation (QHA) thermal properties using MLIPs.
-category: materials
+category: [materials]
 ---
 
 # QHA Thermal Expansion Skill

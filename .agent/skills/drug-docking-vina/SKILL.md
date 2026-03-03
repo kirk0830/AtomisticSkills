@@ -1,7 +1,7 @@
 ---
 name: drug-docking-vina
 description: Dock small-molecule ligands into a protein receptor using AutoDock Vina (Python API) and save ranked poses + docking metadata for reproducible virtual screening.
-category: drug-discovery
+category: [drug-discovery]
 ---
 
 # docking-vina

@@ -1,7 +1,7 @@
 ---
 name: chem-thermochemistry
 description: Compute gas-phase thermodynamic quantities (H, S, G) and reaction thermochemistry (ΔH, ΔS, ΔG) using MLIPs with the ideal-gas/rigid-rotor/harmonic-oscillator approximation.
-category: chemistry
+category: [chemistry]
 ---
 
 # Gas-Phase Thermochemistry Skill

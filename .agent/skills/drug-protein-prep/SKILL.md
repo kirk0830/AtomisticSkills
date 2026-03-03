@@ -1,7 +1,7 @@
 ---
 name: drug-protein-prep
 description: Prepare macromolecular receptor structures (PDB/mmCIF or RCSB PDB ID) for docking or simulation by fixing common structure issues and adding hydrogens.
-category: drug-discovery
+category: [drug-discovery]
 ---
 
 # protein-prep
