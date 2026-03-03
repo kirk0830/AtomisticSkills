@@ -17,8 +17,10 @@ Each skill must reside in its own subdirectory with the following structure:
 │   ├── script1.py
 │   └── script2.py
 ├── examples/                 # Optional: Reference input/output files
-│   ├── example_input.cif
-│   └── example_output.json
+│   └── example-name/
+│       ├── README.md         # Required for each example
+│       ├── example_input.cif
+│       └── example_output.json
 └── resources/                # Optional: Config files, templates, data
     ├── config_template.yaml
     └── reference_data.json
@@ -91,7 +93,9 @@ mcp_<tool_name>(
 - Cross-reference other skills using relative links (e.g., `[molecular-dynamics](../molecular-dynamics/SKILL.md)`)
 
 ### 4. Examples Section
-Provide concrete, runnable examples that demonstrate typical usage:
+Provide concrete, runnable examples that demonstrate typical usage.
+
+**CRITICAL RULE:** Each distinct example should be placed in its own dedicated subdirectory within `examples/` (e.g., `examples/my-example/`) and MUST contain its own `README.md` file. This README should comprehensively document the example's goal, step-by-step instructions, and expected outputs.
 
 ```markdown
 ## Examples
