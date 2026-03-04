@@ -86,15 +86,17 @@ def search_materials_project_by_formula(
     if not mp_key:
         return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
         
-    from mp_api.client import MPRester
-
-    with MPRester(mp_key) as mprester:
-        atoms = get_structure_by_formula(formula, mprester)
+    try:
+        from mp_api.client import MPRester
+        with MPRester(mp_key) as mprester:
+            atoms = get_structure_by_formula(formula, mprester)
+                
+        if atoms is None:
+            return f"Error: No structure found for formula {formula} in Materials Project."
             
-    if atoms is None:
-        return f"Error: No structure found for formula {formula} in Materials Project."
-        
-    return _save_atoms(atoms, formula, save_to_file)
+        return _save_atoms(atoms, formula, save_to_file)
+    except Exception as e:
+        return f"Error executing search_materials_project_by_formula: {str(e)}"
 
 @mcp.tool()
 def search_materials_project_by_chemsys(
@@ -116,45 +118,47 @@ def search_materials_project_by_chemsys(
     if not mp_key:
         return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
         
-    from mp_api.client import MPRester
-
-    with MPRester(mp_key) as mprester:
-        atoms_list = get_structure_by_chemsys(chemsys, mprester)
+    try:
+        from mp_api.client import MPRester
+        with MPRester(mp_key) as mprester:
+            atoms_list = get_structure_by_chemsys(chemsys, mprester)
+                
+        if not atoms_list:
+            return f"Error: No structures found on convex hull for chemical system {chemsys} in Materials Project."
+        
+        # Determine save directory
+        if save_to_file:
+            save_dir = Path(save_to_file)
+        else:
+            safe_name = chemsys.replace("-", "").replace(" ", "")
+            save_dir = Path(f"{safe_name}_structures")
+        
+        # Create directory
+        save_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Save all structures
+        saved_paths = []
+        for atoms in atoms_list:
+            mp_id = atoms.info.get('material_id', 'unknown')
+            formula = atoms.info.get('formula', 'unknown')
+            e_hull = atoms.info.get('energy_above_hull', 0.0)
             
-    if not atoms_list:
-        return f"Error: No structures found on convex hull for chemical system {chemsys} in Materials Project."
-    
-    # Determine save directory
-    if save_to_file:
-        save_dir = Path(save_to_file)
-    else:
-        safe_name = chemsys.replace("-", "").replace(" ", "")
-        save_dir = Path(f"{safe_name}_structures")
-    
-    # Create directory
-    save_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Save all structures
-    saved_paths = []
-    for atoms in atoms_list:
-        mp_id = atoms.info.get('material_id', 'unknown')
-        formula = atoms.info.get('formula', 'unknown')
-        e_hull = atoms.info.get('energy_above_hull', 0.0)
+            # Create filename: {mp-id}_{formula}.cif
+            filename = f"{mp_id}_{formula}.cif"
+            filepath = save_dir / filename
+            
+            save_structure(atoms, filepath)
+            saved_paths.append(f"{mp_id} ({formula}, E_hull={e_hull:.6f} eV/atom)")
         
-        # Create filename: {mp-id}_{formula}.cif
-        filename = f"{mp_id}_{formula}.cif"
-        filepath = save_dir / filename
+        summary = f"Found {len(atoms_list)} structures on convex hull for {chemsys}\n"
+        summary += f"Saved to directory: {save_dir.absolute()}\n\n"
+        summary += "Structures:\n"
+        for path_info in saved_paths:
+            summary += f"  - {path_info}\n"
         
-        save_structure(atoms, filepath)
-        saved_paths.append(f"{mp_id} ({formula}, E_hull={e_hull:.6f} eV/atom)")
-    
-    summary = f"Found {len(atoms_list)} structures on convex hull for {chemsys}\n"
-    summary += f"Saved to directory: {save_dir.absolute()}\n\n"
-    summary += "Structures:\n"
-    for path_info in saved_paths:
-        summary += f"  - {path_info}\n"
-    
-    return summary
+        return summary
+    except Exception as e:
+        return f"Error executing search_materials_project_by_chemsys: {str(e)}"
 
 def _save_atoms(atoms: Any, name_hint: str, save_to_file: Optional[str] = None) -> str:
     """Helper to save ASE atoms to file."""
@@ -386,10 +390,14 @@ def prepare_vasp_inputs(
             sub_dir = out_path / sub_name
             sub_dir.mkdir(parents=True, exist_ok=True)
             
-            structure = load_structure_from_file(str(struct_file))
-            if structure:
+            structure_loaded = load_structure_from_file(str(struct_file))
+            if structure_loaded:
+                from ase import Atoms
+                from pymatgen.io.ase import AseAtomsAdaptor
+                if not isinstance(structure_loaded, Atoms):
+                    structure_loaded = AseAtomsAdaptor.get_atoms(structure_loaded)
                 write_vasp_input_files(
-                    atoms=structure,
+                    atoms=structure_loaded,
                     output_dir=str(sub_dir),
                     preset_type=preset_type,
                     calculation_type=calculation_type,
@@ -401,13 +409,18 @@ def prepare_vasp_inputs(
         
     else:
         # Single file processing
-        structure = load_structure_from_file(structure_path)
-        if structure is None:
+        structure_loaded = load_structure_from_file(structure_path)
+        if structure_loaded is None:
             return f"Error: Could not load structure from {structure_path}"
+            
+        from ase import Atoms
+        from pymatgen.io.ase import AseAtomsAdaptor
+        if not isinstance(structure_loaded, Atoms):
+            structure_loaded = AseAtomsAdaptor.get_atoms(structure_loaded)
         
         # Write files
         files = write_vasp_input_files(
-            atoms=structure,
+            atoms=structure_loaded,
             output_dir=output_dir,
             preset_type=preset_type,
             calculation_type=calculation_type,

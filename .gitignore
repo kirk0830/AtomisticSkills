@@ -11,6 +11,13 @@ tests/.agent/test/
 tests/tmp_*/
 tmp/
 papers/
+private_data/
+
+# Models and root scripts
+*.model
+*.pt
+/*.sh
+clean_root.sh
 
 # Python
 /*.py

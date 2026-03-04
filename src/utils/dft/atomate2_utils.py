@@ -366,7 +366,8 @@ class Atomate2Handler:
                 if entry["stress"] is not None:
                     import ase.units
                     # Atomate2 standardizes stress to GPa. We convert to eV/A^3.
-                    entry["stress"] = (np.array(entry["stress"]) * ase.units.GPa).tolist()
+                    # VASP uses compressive positive convention, while ASE uses tensile positive. Multiply by -1.
+                    entry["stress"] = (np.array(entry["stress"]) * -1.0 * ase.units.GPa).tolist()
                 
                 extracted.append(entry)
 
@@ -600,8 +601,10 @@ class Atomate2Handler:
                 if stress is not None and convert_units:
                     # VASP stress is in kB. 1 kB = 0.1 GPa.
                     # We standardize to eV/A^3 (ASE standard).
+                    # VASP uses compressive positive convention, while ASE uses tensile positive convention.
+                    # So we need to multiply by -1
                     import ase.units
-                    stress = (np.array(stress) * 0.1 * ase.units.GPa).tolist()
+                    stress = (np.array(stress) * -0.1 * ase.units.GPa).tolist()
                 
                 if forces is not None:
                     forces = np.array(forces).tolist()

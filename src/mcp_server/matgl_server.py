@@ -178,7 +178,7 @@ def predict_bandgap(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any
     try:
         if _bandgap_wrapper is None:
             from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-            _bandgap_wrapper = MatGLWrapper(model_name="MEGNet-MP-2019.4.1-BandGap-mfi")
+            _bandgap_wrapper = MatGLWrapper(model_name="MEGNet-MP-2019.4.1-BandGap-mfi", device="cpu")
             _bandgap_wrapper.load()
         
         return _bandgap_wrapper.static_calculation(structure_data)

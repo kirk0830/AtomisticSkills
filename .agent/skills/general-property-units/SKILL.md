@@ -1,5 +1,5 @@
 ---
-name: ml-mlip-units
+name: general-property-units
 description: Reference guide for energy, force, and stress units across MLIPs, DFT codes, and ASE, including conversion factors.
 category: [machine-learning]
 ---
@@ -84,11 +84,11 @@ The `training_history.json` keys and their units:
 
 ### Sign Convention
 
-VASP reports stress with the **opposite sign** to the physics convention:
+VASP reports stress with the **opposite sign** to the physics and ASE convention:
 - VASP: positive = **compressive** (pressure-like)
-- ASE/Physics: positive = **tensile**
+- ASE/Physics/MLIPs: positive = **tensile**
 
-The sign flip is handled during VASP output parsing.
+The sign flip is handled during VASP output parsing (e.g. in the `atomate2` MCP tool, VASP stress is multiplied by `-1` in addition to the unit conversion).
 
 ## Common Conversion Factors
 

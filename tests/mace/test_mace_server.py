@@ -72,3 +72,14 @@ def test_run_md(loaded_server, cu_structure):
     if "trajectory_path" in res:
         assert os.path.exists(res["trajectory_path"])
 
+
+def test_load_model(loaded_server):
+    res = loaded_server.load_model("MACE-MP-small", device="cpu")
+    assert "error" not in res
+    assert "Successfully loaded" in res
+
+def test_predict_atomic_features(loaded_server, cu_structure):
+    res = loaded_server.predict_atomic_features(cu_structure)
+    assert "error" not in res
+    assert "atomic_features" in res
+    assert "feature_dim" in res

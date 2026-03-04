@@ -21,7 +21,7 @@ def test_ternary_alloy_enumeration(smol_wrapper):
     num_structures = 20 # Small number for fast test
     
     structs = smol_wrapper.sample_ordered_structures(
-        primordial_structure=struct,
+        disordered_structure=struct,
         cutoffs=cutoffs,
         num_structures=num_structures,
         target_num_sites=16 # small target for test
@@ -54,7 +54,7 @@ def test_binary_sublattice_enumeration(smol_wrapper):
     num_structures = 20
     
     structs = smol_wrapper.sample_ordered_structures(
-        primordial_structure=struct,
+        disordered_structure=struct,
         cutoffs=cutoffs,
         num_structures=num_structures,
         target_num_sites=16
@@ -81,7 +81,7 @@ def test_large_enumeration(smol_wrapper):
     num_structures = 100
     
     structs = smol_wrapper.sample_ordered_structures(
-        primordial_structure=struct,
+        disordered_structure=struct,
         cutoffs=cutoffs,
         num_structures=num_structures,
         target_num_sites=32

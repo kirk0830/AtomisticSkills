@@ -59,7 +59,12 @@ def skip_if_wrong_env(request, current_env):
         'matgl': 'matgl-agent',
         'fairchem': 'fairchem-agent',
         'atomate2': 'atomate2-agent',
-        'base': 'base-agent'
+        'base': 'base-agent',
+        'drugdisc': 'drugdisc-agent',
+        'diffcsp': 'diffcsp-agent',
+        'adit': 'adit-agent',
+        'mattergen': 'mattergen-agent',
+        'smol': 'smol-agent'
     }
     
     for marker, required_env in env_map.items():

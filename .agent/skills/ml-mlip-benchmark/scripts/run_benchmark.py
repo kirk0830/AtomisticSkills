@@ -29,6 +29,7 @@ def main():
     parser.add_argument("--backend", type=str, required=True, choices=["mace", "fairchem", "matgl"])
     parser.add_argument("--task_name", type=str, default=None, help="Optional task name (omat_pbe, oc20, etc.)")
     parser.add_argument("--output", type=str, required=True, help="Output JSON for metrics and parity data")
+    parser.add_argument("--vasp-stress-conversion", action="store_true", help="If flag is present, multiplies target stress arrays by -1/1602.1766208 to convert from kB (VASP) to eV/Å³")
     
     args = parser.parse_args()
     
@@ -54,10 +55,15 @@ def main():
     valid_data = []
 
     for i, data in enumerate(dataset):
-        if "structure" not in data or ("energy" not in data and "forces" not in data):
+        struct_data = data.get("structure") or data.get("atoms")
+        targ_e_raw = data.get("energy") if data.get("energy") is not None else data.get("vasp_e")
+        targ_f_raw = data.get("forces") if data.get("forces") is not None else data.get("vasp_f")
+        targ_s_raw = data.get("stress") if data.get("stress") is not None else data.get("vasp_s")
+        
+        if struct_data is None or (targ_e_raw is None and targ_f_raw is None):
             continue
             
-        system = Structure.from_dict(data["structure"])
+        system = Structure.from_dict(struct_data)
         num_atoms = len(system)
         
         try:
@@ -69,10 +75,10 @@ def main():
         valid_point = {"id": i, "num_atoms": num_atoms}
         
         # Energy
-        if "energy" in data and data["energy"] is not None:
+        if targ_e_raw is not None:
             # We standardize to energy per atom for comparison
-            # data["energy"] is typically total energy string or float
-            targ_e = float(data["energy"]) / num_atoms
+            # targ_e_raw is typically total energy string or float
+            targ_e = float(targ_e_raw) / num_atoms
             pred_e = float(pred["energy"]) / num_atoms
             all_energy_targs.append(targ_e)
             all_energy_preds.append(pred_e)
@@ -80,8 +86,8 @@ def main():
             valid_point["energy_pred"] = pred_e
             
         # Forces
-        if "forces" in data and data["forces"] is not None:
-            targ_f = np.array(data["forces"])
+        if targ_f_raw is not None:
+            targ_f = np.array(targ_f_raw)
             pred_f = np.array(pred["forces"])
             if targ_f.shape == pred_f.shape:
                 all_forces_targs.extend(targ_f.flatten())
@@ -90,14 +96,27 @@ def main():
                 valid_point["forces_pred"] = pred_f.tolist()
                 
         # Stress
-        if "stress" in data and data["stress"] is not None and "stress" in pred and pred["stress"] is not None:
-            targ_s = np.array(data["stress"])
+        if targ_s_raw is not None and "stress" in pred and pred["stress"] is not None:
+            targ_s = np.array(targ_s_raw)
+            if args.vasp_stress_conversion:
+                targ_s = targ_s * (-1.0 / 1602.1766208)
             pred_s = np.array(pred["stress"])
-            # standardize formats if applicable
-            all_stress_targs.extend(targ_s.flatten())
-            all_stress_preds.extend(pred_s.flatten())
-            valid_point["stress_target"] = targ_s.tolist()
-            valid_point["stress_pred"] = pred_s.tolist()
+            
+            # Convert 3x3 to 6-element Voigt if necessary
+            def to_voigt(s):
+                s = np.array(s)
+                if s.shape == (3, 3):
+                    return np.array([s[0,0], s[1,1], s[2,2], s[1,2], s[0,2], s[0,1]])
+                return s
+                
+            targ_s_6 = to_voigt(targ_s)
+            pred_s_6 = to_voigt(pred_s)
+            
+            if targ_s_6.shape == pred_s_6.shape:
+                all_stress_targs.extend(targ_s_6.tolist())
+                all_stress_preds.extend(pred_s_6.tolist())
+                valid_point["stress_target"] = targ_s_6.tolist()
+                valid_point["stress_pred"] = pred_s_6.tolist()
             
         valid_data.append(valid_point)
 
