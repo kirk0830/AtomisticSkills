@@ -583,11 +583,37 @@ class FAIRCHEMWrapper(MLIPModel):
         if hasattr(model, 'module'):
             model = model.module
             
-        raise NotImplementedError(
-            f"Determining exact supported elements for FAIRCHEM models dynamically is not supported natively. "
-            f"While model.backbone.max_num_elements defines the embedding layer size, "
-            f"this does not guarantee intermediate elements (e.g., f-block, noble gases) were present in the training datasets (like OMat24 or OMol). "
-            f"Please check the specific FAIRCHEM documentation or dataset to confirm element coverage."
+        supported_z = set()
+        
+        # FairChem models store linear reference energies by task in `atom_refs` on the predict unit. 
+        # Elements with `0.0` weights were not present in the original dataset for that task.
+        if hasattr(self.model, "atom_refs") and self.model.atom_refs:
+            for target, refs in self.model.atom_refs.items():
+                if isinstance(refs, (list, tuple)) or type(refs).__name__ == "ListConfig":
+                    for z, energy in enumerate(refs):
+                        # Some tasks use -1 or 0 index for other purposes
+                        if z > 0 and z < len(chemical_symbols) and energy != 0.0:
+                            supported_z.add(z)
+                elif isinstance(refs, dict) or type(refs).__name__ == "DictConfig":
+                    for z_str, charge_dict in refs.items():
+                        try:
+                            z = int(z_str)
+                            if 0 < z < len(chemical_symbols):
+                                for charge, energy in charge_dict.items():
+                                    if energy != 0.0:
+                                        supported_z.add(z)
+                        except ValueError:
+                            pass
+
+        if supported_z:
+            return [chemical_symbols[z] for z in sorted(list(supported_z))]
+
+        # If atom_refs is missing or entirely empty, we cannot reliably guess elements since 
+        # max_num_elements acts merely as an embedding dimension ceiling.
+        raise RuntimeError(
+            f"Could not conclusively determine supported elements for {self.model_name}. "
+            f"The `atom_refs` dictionary is missing or empty, meaning no explicit elemental reference "
+            f"energies are available to confirm dataset occupancy."
         )
 
 

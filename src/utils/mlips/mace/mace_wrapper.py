@@ -350,7 +350,9 @@ class MACEWrapper(MLIPModel):
             if hasattr(temp_calc, 'z_table') and temp_calc.z_table is not None:
                 from ase.data import chemical_symbols
                 return [chemical_symbols[int(z)] for z in temp_calc.z_table.zs]
-        except Exception:
-            pass
-            
-        return ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Ac", "Th", "Pa", "U", "Np", "Pu"]
+        except Exception as e:
+            # If we couldn't properly load the calculator to extract the z_table, we must not guess.
+            raise RuntimeError(
+                f"Could not determine supported elements for {self.model_name}. "
+                f"Failed to extract z_table from the MACECalculator. Internal error: {str(e)}"
+            )

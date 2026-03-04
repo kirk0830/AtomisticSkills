@@ -573,12 +573,16 @@ class MatGLWrapper(MLIPModel):
                 if hasattr(inner_model, 'element_types'):
                     return list(inner_model.element_types)
                     
-            # Fallback for standard models if not loaded but known
-            if self.model_name.startswith("M3GNet") or self.model_name.startswith("CHGNet"):
-                # Standard MP-trained models support 89 elements
-                return ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Ac", "Th", "Pa", "U", "Np", "Pu"]
-                
-        return []
+            # If we couldn't properly extract element_types from the inner model
+            raise RuntimeError(
+                f"Could not determine supported elements for {self.model_name}. "
+                f"Failed to extract 'element_types' from the loaded model architecture."
+            )
+            
+        raise RuntimeError(
+            f"Could not determine supported elements for {self.model_name}. "
+            f"Model not loaded. Call load() first before querying supported elements."
+        )
 
     def get_model_capabilities(self) -> Dict[str, bool]:
         """Get model capabilities."""
