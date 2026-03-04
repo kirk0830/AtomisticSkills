@@ -84,4 +84,6 @@ conda run -n base-agent python .agent/skills/ml-mlip-benchmark/scripts/plot_benc
 - Use `ml-mlip-training` if the benchmark metric thresholds are unsatisfactory.
 
 ---
-**Author**: Antigravity Atomistic Simulation Agent
+
+**Author:** Bowen Deng  
+**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

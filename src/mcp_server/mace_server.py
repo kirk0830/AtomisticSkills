@@ -298,10 +298,6 @@ def run_md(
         traceback.print_exc(file=sys.stderr) # Reverted to original traceback.print_exc
         return {"error": f"MD execution failed: {str(e)}", "traceback": traceback.format_exc()}
 
-
-
-
-
 @mcp.tool()
 def get_info() -> Dict[str, Any]:
     """
