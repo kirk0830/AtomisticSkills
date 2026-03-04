@@ -93,30 +93,7 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
         return {"error": "Model not loaded. Please call load_model first."}
     
     return wrapper.static_calculation(structure_data)
-
-@mcp.tool()
-async def fine_tune_model(
-    training_data_path: str,
-    epochs: int = 10,
-    learning_rate: float = 4e-4,
-    output_dir: Optional[str] = None,
-    training_config: Optional[dict] = None
-) -> str:
-    """
-    Fine-tune the current FAIRCHEM model.
-
-    Args:
-        training_data_path: Path to a JSON file containing the training data list.
-        epochs: Number of training epochs.
-        learning_rate: Learning rate.
-        output_dir: Directory to save the fine-tuned model.
-        training_config: Optional dictionary for advanced configuration.
-    """
-    return (
-        "Fairchem fine-tuning via this standalone MCP tool is deprecated due to long-running PyTorch dataloader hangs on MCP server threads. "
-        "Please read the `.agent/skills/ml-fairchem-finetune/SKILL.md` skill documentation and execute the provided `scripts/prepare_fairchem_data.py` script and `fairchem` CLI directly. \n\n"
-        "Check `test_fairchem_finetuning.sh` for an automated bash flow."
-    )
+    
 
 @mcp.tool()
 def get_info() -> Dict[str, Any]:

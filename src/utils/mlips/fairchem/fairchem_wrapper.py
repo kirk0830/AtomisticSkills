@@ -18,10 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 
-
-
-
-
 # Available FAIRCHEM models and checkpoints
 # Model configurations, default tasks, and supported tasks
 MODEL_METADATA = {
@@ -587,17 +583,12 @@ class FAIRCHEMWrapper(MLIPModel):
         if hasattr(model, 'module'):
             model = model.module
             
-        # Check for max_num_elements in backbone (common for EquiformerV2/HydraModel used in FAIRCHEM)
-        if hasattr(model, 'backbone') and hasattr(model.backbone, 'max_num_elements'):
-            num_elements = model.backbone.max_num_elements
-            # max_num_elements defines the size of the embedding layer (nn.Embedding(num_elements, ...))
-            # which supports indices 0 to num_elements-1.
-            # Since atomic numbers start at 1 (H=1), the supported Z range is 1 to num_elements-1.
-            return [chemical_symbols[i] for i in range(1, num_elements) if i < len(chemical_symbols)]
-        
-        # Fallback: All FAIRCHEM models (UMA/ESEN) typically support 1-100
-        logger.info(f"Could not determine exact elements from model structure, defaulting to 1-100 for {self.model_name}")
-        return [chemical_symbols[i] for i in range(1, 101) if i < len(chemical_symbols)]
+        raise NotImplementedError(
+            f"Determining exact supported elements for FAIRCHEM models dynamically is not supported natively. "
+            f"While model.backbone.max_num_elements defines the embedding layer size, "
+            f"this does not guarantee intermediate elements (e.g., f-block, noble gases) were present in the training datasets (like OMat24 or OMol). "
+            f"Please check the specific FAIRCHEM documentation or dataset to confirm element coverage."
+        )
 
 
 if __name__ == "__main__":
