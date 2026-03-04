@@ -237,6 +237,16 @@ See [docs/developer_guide.md](docs/developer_guide.md) for architecture details,
 
 ---
 
+## Best Practice for Users
+
+1. Fork this repo and clone to local (preferable on a machine with local GPU resources so cheap MLIP tasks can be executed locally).
+2. Open this repo through opening a new project in agentic IDEs like Antigravity / Cursor / Claude Code.
+3. Setup conda envs, MCPs, make sure the agentic IDEs have access to the MCP tools, rules and SKILLs.
+4. For customization, add your own SKILL / MCP tool / and Workflow to the project.
+5. If you think your own tool / SKILL is beneficial (this requires the tool and implementation to be clean and open-sourced) to the public, please make a PR to the main branch. We will acknowledge all contributors.
+
+---
+
 ## Contributing
 **AtomisticSkills** is developed as an open framework for automated atomistic research. Contributions to new potentials, sampling methods, simulation workflows, or skills are welcome.
 
