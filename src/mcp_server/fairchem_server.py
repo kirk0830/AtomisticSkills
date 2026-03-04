@@ -95,53 +95,28 @@ def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, A
     return wrapper.static_calculation(structure_data)
 
 @mcp.tool()
-def fine_tune_model(
+async def fine_tune_model(
     training_data_path: str,
-    epochs: int = 100,
-    learning_rate: float = 1e-4,
+    epochs: int = 10,
+    learning_rate: float = 4e-4,
     output_dir: Optional[str] = None,
-    training_config: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
+    training_config: Optional[dict] = None
+) -> str:
     """
     Fine-tune the current FAIRCHEM model.
 
     Args:
         training_data_path: Path to a JSON file containing the training data list.
-                             Each sample must have:
-                               - 'structure': Dict (ASE atoms or pymatgen format)
-                               - 'energy': Total potential energy (float, eV)
-                               - 'forces': Atomic forces (list/array, eV/A)
-                               - 'stress': (Optional) Stress tensor (list/array) in eV/Å³. 
-                                 NOTE: Provide stress in eV/Å³. (Standard ASE unit)
         epochs: Number of training epochs.
         learning_rate: Learning rate.
         output_dir: Directory to save the fine-tuned model.
         training_config: Optional dictionary for advanced configuration.
     """
-    global wrapper
-    if wrapper is None:
-        return {"error": "Model not loaded. Please call load_model first."}
-        
-    try:
-        with open(training_data_path, 'r') as f:
-            training_data = json.load(f)
-        
-        final_config = {
-            "max_epochs": epochs,
-            "learning_rate": learning_rate
-        }
-        if training_config:
-            final_config.update(training_config)
-        
-        result = wrapper.fine_tune(
-            training_data=training_data,
-            training_config=final_config,
-            output_dir=output_dir if output_dir else str(get_current_research_dir() / "fairchem" / "fine_tuning")
-        )
-        
-        return result
-    except Exception as e:
-        return {"error": f"Fine-tuning failed: {str(e)}"}
+    return (
+        "Fairchem fine-tuning via this standalone MCP tool is deprecated due to long-running PyTorch dataloader hangs on MCP server threads. "
+        "Please read the `.agent/skills/ml-fairchem-finetune/SKILL.md` skill documentation and execute the provided `scripts/prepare_fairchem_data.py` script and `fairchem` CLI directly. \n\n"
+        "Check `test_fairchem_finetuning.sh` for an automated bash flow."
+    )
 
 @mcp.tool()
 def get_info() -> Dict[str, Any]:

@@ -1,6 +1,6 @@
-# MACE Fine-Tuning Example: WBM High-Energy States
+# MACE Fine-Tuning Example: Softening Dataset
 
-This example demonstrates how to fine-tune the `MACE-OMAT-0-small` foundation model on a subset of the WBM (Wolverton-Bhatia-Mills) dataset containing high-energy crystal structures. It highlights the use of the `--vasp-stress-conversion` flag, which mathematically corrects raw VASP stress labels (`kB`) into the `eV/Å³` standard with the proper sign convention expected by the ASE/MACE calculators.
+This example demonstrates how to fine-tune the `MACE-OMAT-0-small` foundation model on a [softening dataset](https://figshare.com/articles/dataset/WBM_high_energy_states/27307776?file=50005317) containing high-energy crystal structures.
 
 ## Goal
 To document a functional 10-epoch fine-tuning workflow on challenging high-energy VASP data, proving the stability of the MACE fine-tuning when thermodynamic constraints (energy, forces, and particularly stress units) are aligned correctly.
@@ -50,9 +50,6 @@ The `output` directory contains the artifacts generated from a 10-epoch executio
 - `finetune_config.yaml`: The exact configuration generated for `mace_run_train`.
 - `training_history.json`: Parsed loss and MAE metrics extracted across epochs natively from MACE's logs.
 - `training_history.png`: Standardized loss degradation 2x2 grid plot proving model convergence without catastrophic divergence.
-
-> [!WARNING]
-> **Artifact Retention**: Example folders are purely for structural reference. NEVER commit or retain large execution artifacts such as the PyTorch model checkpoints (`.model`), checkpoint snapshots (`.pt`), or uncompressed trajectory aggregations (`.xyz`) inside these example subdirectories as they bloat the core codebase.
 
 ---
 

@@ -1,6 +1,6 @@
-# MatGL Fine-Tuning Example: WBM High-Energy States
+# MatGL Fine-Tuning Example: Softening Dataset
 
-This example demonstrates how to fine-tune the `CHGNet-MatPES-PBE-2025.2.10-2.7M-PES` foundation model on a subset of the WBM (Wolverton-Bhatia-Mills) dataset containing high-energy crystal structures. It highlights the use of the `--vasp-stress-conversion` flag, which mathematically corrects raw VASP stress labels (`kB`) into the `eV/Å³` standard natively supported by both the MatGL implementation and `general-property-units`.
+This example demonstrates how to fine-tune the `CHGNet-MatPES-PBE-2025.2.10-2.7M-PES` foundation model on a [softening dataset](https://figshare.com/articles/dataset/WBM_high_energy_states/27307776?file=50005317) containing high-energy crystal structures.
 
 ## Goal
 To document a functional 10-epoch fine-tuning workflow on challenging high-energy VASP data, proving the stability of the decoupled `train_matgl.py` infrastructure directly without wrapping the internal MatGL native components.
@@ -36,16 +36,6 @@ conda run -n matgl-agent python .agent/skills/ml-matgl-finetune/scripts/train_ma
     --batch-size 10 \
     --freeze-backbone \
     --patience 3
-```
-
-### 3. Verify Stress Unit Conversions
-
-To explicitly secure that the MAE scaling mathematically binds identically against external workflows, you can natively invoke `CHGNet` via ASE isolated from lightning handlers and benchmark the resulting output stress vector against the exact identical tensor targets:
-
-```bash
-# Env: matgl-agent
-cd .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/
-conda run -n matgl-agent python test_stress_mae.py
 ```
 
 ## Expected Outputs
