@@ -8,5 +8,7 @@ dependencies:
     - pymatgen
     - ase
     - matcalc
+    - setuptools<70
+    - setuptools-scm
     - sella
     - typing-extensions

@@ -7,6 +7,8 @@ dependencies:
     - fairchem-core
     - pymatgen
     - matcalc
+    - setuptools<70
+    - setuptools-scm
     - sella
     - typing-extensions
     - ase
