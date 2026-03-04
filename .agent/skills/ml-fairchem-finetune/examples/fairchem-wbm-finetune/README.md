@@ -30,7 +30,7 @@ python .agent/skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
     --lr 1e-4 \
     --batch-size 2 \
     --freeze-backbone \
-    --output-dir .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output/lmdb_output \
+    --output-dir .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/lmdb_output \
     --vasp-stress-conversion
 ```
 
@@ -49,7 +49,7 @@ Once training converges, extract the diagnostic learning curves (energy, forces,
 ```bash
 # Env: fairchem-agent
 conda run -n fairchem-agent python .agent/skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
-    --log-file .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output/tensorboard/uma_sm_finetune*/train.log \
+    --log-file .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/tensorboard/uma_sm_finetune*/train.log \
     --output-dir .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output
 ```
 

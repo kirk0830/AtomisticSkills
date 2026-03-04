@@ -41,7 +41,7 @@ Once training converges, extract the diagnostic learning curves (energy, forces,
 # Env: mace-agent
 cd /path/to/project_root
 conda run -n mace-agent python .agent/skills/ml-mace-finetune/scripts/extract_mace_logs.py \
-    --results-dir .agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/results
+    --results-dir .agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/results
 ```
 
 ## Expected Outputs

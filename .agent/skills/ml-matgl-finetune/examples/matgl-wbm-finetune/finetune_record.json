@@ -1,7 +1,7 @@
 {
   "model": "CHGNet-MatPES-PBE-2025.2.10-2.7M-PES",
-  "train_data": ".agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output/train_data.json",
-  "val_data": ".agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output/val_data.json",
+  "train_data": ".agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/train_data.json",
+  "val_data": ".agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/val_data.json",
   "training_config": {
     "max_epochs": 10,
     "learning_rate": 0.0001,

@@ -27,8 +27,8 @@ The script structures data internally with `MGLDataset` and natively connects di
 ```bash
 # Env: matgl-agent
 conda run -n matgl-agent python .agent/skills/ml-matgl-finetune/scripts/train_matgl.py \
-    --train-data .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output/train_data.json \
-    --val-data .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output/val_data.json \
+    --train-data .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/train_data.json \
+    --val-data .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/val_data.json \
     --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
     --output-dir .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output \
     --epochs 10 \
