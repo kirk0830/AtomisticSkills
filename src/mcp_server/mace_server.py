@@ -300,61 +300,7 @@ def run_md(
 
 
 
-@mcp.tool()
-def fine_tune_model(
-    training_data_path: str,
-    epochs: int = 10,
-    learning_rate: float = 1e-4,
-    output_dir: Optional[str] = None,
-    training_config: Optional[Dict[str, Any]] = None
-) -> Dict[str, Any]:
-    """
-    Fine-tune the current MACE model.
-    
-    Args:
-        training_data_path: Path to a JSON file containing the training data list.
-                             Each sample must have:
-                               - 'structure': Dict (ASE atoms or pymatgen format)
-                               - 'energy': Total potential energy (float, eV)
-                               - 'forces': Atomic forces (list/array, eV/A)
-                               - 'stress': (Optional) Stress tensor (list/array) in eV/A^3.
-        epochs: Number of training epochs.
-        learning_rate: Learning rate.
-        output_dir: Directory to save the fine-tuned model.
-        training_config: Optional dictionary for advanced configuration.
-        
-    Returns:
-        Dictionary with fine-tuning results.
-    """
-    import json
-    import contextlib
-    global wrapper
-    if wrapper is None or not wrapper.is_loaded:
-        return {"error": "Model not loaded. Please call load_model first."}
-    
-    if not output_dir:
-        output_dir = str(get_current_research_dir() / "mace" / "fine_tuning")
-        
-    # Load training data
-    try:
-        with open(training_data_path, 'r') as f:
-            training_data = json.load(f)
-    except Exception as e:
-        return {"error": f"Failed to load training data from {training_data_path}: {e}"}
-        
-    # Prepare config
-    config = training_config or {}
-    config.update({
-        "max_epochs": epochs,
-        "learning_rate": learning_rate
-    })
-        
-    result = wrapper.fine_tune(
-        training_data=training_data,
-        output_dir=output_dir,
-        training_config=config
-    )
-    return recursive_tolist(result)
+
 
 @mcp.tool()
 def get_info() -> Dict[str, Any]:
