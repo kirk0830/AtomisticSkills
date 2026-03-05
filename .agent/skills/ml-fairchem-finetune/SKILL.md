@@ -79,6 +79,7 @@ conda run -n fairchem-agent python .agent/skills/ml-fairchem-finetune/scripts/ex
 
 ## Constraints
 - **Multi-task Setup**: UMA and ESEN are trained explicitly on tasks. Be absolutely sure to specify the right `--task-name` for your datasets (`omat` vs `omol`).
+- **Reference Energies (`linref_coeff`)**: If your fine-tuning data is computed using the same DFT functional (e.g., PBE) as the foundation model's original training data, you should extract and pass the foundation model's original `linref_coeff` array instead of allowing the script to automatically re-fit it via Least Squares. This maintains thermodynamic scale compatibility across the periodic table.
 - **GPU Overhead**: Fairchem configuration files compile PyTorch networks prior to run and memory overhead can cause execution to take over 5 minutes to generate logs if using data parallel or multi-gpu execution. Disable wandb using the `--debug` parameter within the configuration file if training stalls completely.
 
 ---

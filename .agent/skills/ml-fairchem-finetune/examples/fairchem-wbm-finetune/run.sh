@@ -3,7 +3,7 @@ set -e
 
 # Target directory
 EX_DIR=".agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune"
-OUT_DIR="$EX_DIR/output"
+OUT_DIR="$EX_DIR"
 
 mkdir -p "$OUT_DIR"
 
@@ -11,13 +11,18 @@ mkdir -p "$OUT_DIR"
 echo "Preparing FAIRCHEM Finetuning Data..."
 conda run -n fairchem-agent python .agent/skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
     --data private_data/WBM_subset_200_configs.json \
+    --vasp-stress-conversion \
+    --output-dir "$OUT_DIR"
+
+echo "Generating FAIRCHEM Config..."
+conda run -n fairchem-agent python .agent/skills/ml-fairchem-finetune/scripts/generate_fairchem_config.py \
+    --data-metadata "$OUT_DIR/dataset_metadata.json" \
     --model uma-s-1p1 \
     --task-name omat \
     --epochs 10 \
     --lr 1e-4 \
     --batch-size 2 \
     --freeze-backbone \
-    --vasp-stress-conversion \
     --output-dir "$OUT_DIR"
 
 # 2. Run FAIRCHEM Trainer

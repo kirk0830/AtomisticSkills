@@ -122,144 +122,14 @@ def _compute_normalizer_sequential(train_lmdb_path):
     logging.info(f"force_rms={force_rms:.4f}, linref has {len(coeff)} coeffs")
     return force_rms, coeff
 
-def _create_finetune_yaml(configs_dir, train_lmdb_path, val_lmdb_path, force_rms, linref_coeff,
-                          output_dir, dataset_name, regression_tasks, base_model_name, args):
-    """Generate finetune YAML configs from bundled templates."""
-    output_dir = Path(output_dir)
-    output_yaml_path = output_dir / "uma_sm_finetune_template.yaml"
-    yaml_config_path = Path(output_yaml_path)
-    
-    # Also need to copy the 'data' directory if it exists, because hydra searches for it.
-    src_data_dir = configs_dir / "data"
-    dst_data_dir = yaml_config_path.parent / "data"
-    if src_data_dir.exists():
-        if not dst_data_dir.exists():
-            shutil.copytree(src_data_dir, dst_data_dir)
-            
-    # Determine the data task YAML file based on regression_tasks
-    data_yaml_dir = Path("data")
-    regression_label_to_yaml = {
-        "e": data_yaml_dir / "uma_conserving_data_task_energy.yaml",
-        "ef": data_yaml_dir / "uma_conserving_data_task_energy_force.yaml",
-        "efs": data_yaml_dir / "uma_conserving_data_task_energy_force_stress.yaml",
-    }
-    data_task_yaml_name = regression_label_to_yaml[regression_tasks].name
-    
-    # Load the data task template and save it to the output directory's data folder
-    data_task_template_path = configs_dir / data_yaml_dir / data_task_yaml_name
-    with open(data_task_template_path) as f:
-        template = yaml.safe_load(f)
-    
-    template["dataset_name"] = dataset_name
-    template["normalizer_rmsd"] = force_rms
-    template["elem_refs"] = linref_coeff
-    template["train_dataset"]["splits"]["train"]["src"] = train_lmdb_path
-    template["val_dataset"]["splits"]["val"]["src"] = val_lmdb_path
-    
-    output_dir = Path(output_dir)
-    (output_dir / data_yaml_dir).mkdir(parents=True, exist_ok=True)
-    with open(output_dir / regression_label_to_yaml[regression_tasks], "w") as f:
-        yaml.dump(template, f, default_flow_style=False, sort_keys=False)
-    
-    # Use text replacement for `defaults` to avoid pyyaml mangling hydra's special syntax
-    uma_yaml = configs_dir / "uma_sm_finetune_template.yaml"
-    with open(uma_yaml, 'r') as f:
-        template_text = f.read()
-
-    # The template has `- data: ??`. We want to specify the YAML filename without .yaml extension
-    data_cfg_name = data_task_yaml_name.replace(".yaml", "")
-    
-    # We replace the exact string `- data: ??` 
-    template_text = template_text.replace("- data: ??", f"- data: {data_cfg_name}")
-    
-    # If the file already was modified and has something like `- data: uma_conserving...`, 
-    # we don't need to replace, but since we are reading the pristine template, it should be fine.
-    
-    template_ft = yaml.safe_load(template_text)
-    
-    template_ft["base_model_name"] = base_model_name
-    template_ft["epochs"] = args.epochs
-    template_ft["lr"] = args.lr
-    template_ft["batch_size"] = args.batch_size
-    template_ft["weight_decay"] = args.weight_decay
-    template_ft["evaluate_every_n_steps"] = args.evaluate_every_n_steps
-    template_ft["checkpoint_every_n_steps"] = args.checkpoint_every_n_steps
-    
-    scheduler_cfg = template_ft["runner"]["train_eval_unit"]["cosine_lr_scheduler_fn"]
-    scheduler_cfg["warmup_factor"] = args.warmup_factor
-    scheduler_cfg["warmup_epochs"] = args.warmup_epochs
-    scheduler_cfg["lr_min_factor"] = args.lr_min_factor
-    
-    template_ft["runner"]["train_eval_unit"]["clip_grad_norm"] = args.clip_grad_norm
-    template_ft["runner"]["train_eval_unit"]["ema_decay"] = args.ema_decay
-    
-    if args.freeze_backbone:
-        helper_path = output_dir / "_freeze_backbone_helper.py"
-        helper_code = (
-            "import torch\n"
-            "from fairchem.core.units.mlip_unit.mlip_unit import initialize_finetuning_model\n\n"
-            "def initialize_finetuning_model_frozen(checkpoint_location, overrides=None, heads=None, strict=True):\n"
-            "    model = initialize_finetuning_model(\n"
-            "        checkpoint_location=checkpoint_location, overrides=overrides, heads=heads, strict=strict\n"
-            "    )\n"
-            "    for param in model.backbone.parameters():\n"
-            "        param.requires_grad = False\n"
-            "    return model\n"
-        )
-        with open(helper_path, "w") as f:
-            f.write(helper_code)
-        
-        model_cfg = template_ft["runner"]["train_eval_unit"]["model"]
-        model_cfg["_target_"] = "_freeze_backbone_helper.initialize_finetuning_model_frozen"
-        logging.info("freeze_backbone=True: backbone params will be frozen")
-    
-    # Disable multiprocess dataloading which hangs on some systems
-    template_ft["train_dataloader"]["num_workers"] = 0
-    template_ft["eval_dataloader"]["num_workers"] = 0
-    
-    # Replace WandB Logger with Tensorboard to avoid hanging on authentications
-    if "logger" in template_ft.get("job", {}):
-        template_ft["job"]["logger"] = {
-            "_target_": "fairchem.core.common.logger.TensorboardLogger",
-            "_partial_": True
-        }
-    
-    template_ft["train_dataset"]["dataset_configs"][dataset_name] = template_ft["train_dataset"]["dataset_configs"].pop("DATASET_NAME")
-    template_ft["val_dataset"]["dataset_configs"][dataset_name] = template_ft["val_dataset"]["dataset_configs"].pop("DATASET_NAME")
-    
-    # Write the config
-    final_yaml_path = output_dir / "uma_sm_finetune_template.yaml"
-    with open(final_yaml_path, "w") as f:
-        yaml.dump(template_ft, f, default_flow_style=False, sort_keys=False)
-    
-    return final_yaml_path
-
 def main():
-    parser = argparse.ArgumentParser(description="Prepare custom data for Fairchem training and generate finetune YAML.")
+    parser = argparse.ArgumentParser(description="Prepare custom data for Fairchem training into LMDBs.")
     parser.add_argument("--data", required=True, help="Path to JSON file containing training split")
     parser.add_argument("--val-data", help="Path to JSON file containing validation split. (Optional, otherwise 90/10 split)")
     parser.add_argument("--val-split", type=float, default=0.1, help="Validation split if --val-data is not provided")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    
-    parser.add_argument("--model", default="uma-s-1p1", help="Base model name or path to checkpoint")
-    parser.add_argument("--task-name", default="omat", help="Task name ('omat', 'omol', etc)")
-    
-    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
-    parser.add_argument("--lr", type=float, default=4e-4, help="Peak learning rate")
-    parser.add_argument("--batch-size", type=int, default=2, help="Batch size")
-    parser.add_argument("--freeze-backbone", action="store_true", help="Freeze backbone parameters")
-    
-    parser.add_argument("--weight-decay", type=float, default=1e-3)
-    parser.add_argument("--warmup-factor", type=float, default=0.2)
-    parser.add_argument("--warmup-epochs", type=float, default=0.01)
-    parser.add_argument("--lr-min-factor", type=float, default=0.01)
-    parser.add_argument("--clip-grad-norm", type=float, default=100.0)
-    parser.add_argument("--evaluate-every-n-steps", type=int, default=100)
-    parser.add_argument("--checkpoint-every-n-steps", type=int, default=1000)
-    parser.add_argument("--ema-decay", type=float, default=0.999)
     parser.add_argument("--linref-coeff", type=str, help="Comma separated linear reference coefficients or JSON list string. Overrides auto compute.")
     parser.add_argument("--vasp-stress-conversion", action="store_true", help="If flag is present, multiplies stress arrays by -1/1602.1766208 to convert from kB to eV/Å³")
-
     parser.add_argument("--output-dir", default="./fairchem_finetuning", help="Directory to save the configuration and data")
 
     args = parser.parse_args()
@@ -392,52 +262,27 @@ def main():
         
     _create_lmdb_sequential(val_extxyz_dir, val_lmdb_path)
     
-    # 3. Create YAML config
-    try:
-        from fairchem.core import __file__ as fairchem_file
-        fairchem_pkg_dir = Path(fairchem_file).parent
-    except ImportError:
-        logging.error("Failed to import fairchem.core. Ensure fairchem-agent conda environment is active.")
-        sys.exit(1)
-        
-    # Get config templates from mlips wrapper path, fallback correctly.
-    # We'll just define the templates directory based on this script path, 
-    # Get template directory from src/utils/mlips/fairchem/finetune_configs
-    # The script is in .agent/skills/ml-fairchem-finetune/scripts/
-    # The repo root is thus 4 levels up
-    repo_root = Path(__file__).resolve().parents[4]
+    # 3. Save metadata JSON
+    metadata = {
+        "train_lmdb_path": str(train_lmdb_path.absolute()),
+        "val_lmdb_path": str(val_lmdb_path.absolute()),
+        "force_rms": float(force_rms),
+        "linref_coeff": linref_coeff,
+        "regression_tasks": regression_tasks
+    }
     
-    config_dir = repo_root / "src" / "utils" / "mlips" / "fairchem" / "finetune_configs"
-    if not config_dir.exists():
-        logging.error(f"Cannot find Fairchem config templates at {config_dir}. Check repository structure.")
-        sys.exit(1)
-        
-    yaml_config_path = _create_finetune_yaml(
-        configs_dir=config_dir,
-        train_lmdb_path=str(train_lmdb_path),
-        val_lmdb_path=str(val_lmdb_path),
-        force_rms=float(force_rms),
-        linref_coeff=linref_coeff,
-        output_dir=lmdb_dir,
-        dataset_name=args.task_name,
-        regression_tasks=regression_tasks,
-        base_model_name=args.model,
-        args=args
-    )
-    
-    run_dir = save_dir / "runs"
-    timestamp_id = f"run_{args.epochs}ep"
+    metadata_path = save_dir / "dataset_metadata.json"
+    with open(metadata_path, "w") as f:
+        json.dump(metadata, f, indent=2)
     
     print("\n=======================================================")
     print("Data successfully prepared!")
     print(f"LMDB datasets created at: {lmdb_dir}")
-    print(f"Configuration written to: {yaml_config_path}")
+    print(f"Dataset metadata written to: {metadata_path}")
     print("=======================================================\n")
-    print("To start training, simply run:")
+    print("To generate training configs and start training, run:")
     print(f"  conda activate fairchem-agent")
-    print(f"  export PYTHONPATH={lmdb_dir.absolute()}:$PYTHONPATH")
-    print(f"  cd {lmdb_dir.absolute()}")
-    print(f"  fairchem -c {yaml_config_path.name} job.run_dir={run_dir.absolute()} +job.timestamp_id={timestamp_id}")
+    print(f"  python generate_fairchem_config.py --data-metadata {metadata_path.absolute()} --output-dir {save_dir.absolute()}")
 
 if __name__ == "__main__":
     main()

@@ -30,7 +30,7 @@ python .agent/skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
     --lr 1e-4 \
     --batch-size 2 \
     --freeze-backbone \
-    --output-dir .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/lmdb_output \
+    --output-dir .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune \
     --vasp-stress-conversion
 ```
 
@@ -39,7 +39,7 @@ The script generates a `uma_sm_finetune_template.yaml` file compatible with the 
 
 ```bash
 # Env: fairchem-agent
-cd .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output
+cd .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune
 conda run -n fairchem-agent fairchem-train --config-yml uma_sm_finetune_template.yaml
 ```
 
@@ -50,11 +50,11 @@ Once training converges, extract the diagnostic learning curves (energy, forces,
 # Env: fairchem-agent
 conda run -n fairchem-agent python .agent/skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
     --log-file .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/tensorboard/uma_sm_finetune*/train.log \
-    --output-dir .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune/output
+    --output-dir .agent/skills/ml-fairchem-finetune/examples/fairchem-wbm-finetune
 ```
 
 ## Expected Outputs
-The `output` directory contains the artifacts generated from a 10-epoch execution of the above commands over the isolated 200 structures (split structurally 90/10 into train/validation).
+This directory contains the artifacts generated from a 10-epoch execution of the above commands over the isolated 200 structures (split structurally 90/10 into train/validation).
 
 - `lmdb_output/`: Contains the generated LMDB datasets and the `uma_sm_finetune_template.yaml` configuration file.
 - `runs/run_10ep/`: Contains the FairChem native training outputs, checkpoints, and logs.

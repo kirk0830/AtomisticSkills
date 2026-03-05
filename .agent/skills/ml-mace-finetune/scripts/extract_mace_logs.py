@@ -49,6 +49,12 @@ def main():
         'force_mae_val': [],
         'stress_mae_train': [],
         'stress_mae_val': [],
+        'energy_rmse_train': [],
+        'energy_rmse_val': [],
+        'force_rmse_train': [],
+        'force_rmse_val': [],
+        'stress_rmse_train': [],
+        'stress_rmse_val': [],
         'epoch': []
     }
     
@@ -61,13 +67,12 @@ def main():
     if project_root not in sys.path:
         sys.path.insert(0, project_root)
     
-    # Optional dependency: Only try to plot if we have access to MACEWrapper
     try:
-        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+        from src.utils.mlips.plot_utils import plot_training_history
         can_plot = True
     except ImportError as e:
         can_plot = False
-        print(f"Warning: Could not import MACEWrapper for standard plotting. Error: {e}")
+        print(f"Warning: Could not import plot_training_history. Error: {e}")
 
     with open(log_file, 'r') as f:
         for line in f:
@@ -97,14 +102,31 @@ def main():
                 history['loss_train'].append(avg_train_loss)
                 current_epoch_train_losses = [] # reset for next epoch
                 
-                history['loss_val'].append(data.get('loss', 0.0))
-                history['energy_mae_val'].append(data.get('mae_e', 0.0) * 1000)
-                history['force_mae_val'].append(data.get('mae_f', 0.0) * 1000)
-                history['stress_mae_val'].append(data.get('mae_stress', 0.0) * 1000)
+                history['loss_val'].append(data.get('loss', None))
                 
-                history['energy_mae_train'].append(0.0)
-                history['force_mae_train'].append(0.0)
-                history['stress_mae_train'].append(0.0)
+                # MAE Extraction
+                e_mae = data.get('mae_e_per_atom', data.get('mae_e'))
+                history['energy_mae_val'].append(e_mae * 1000 if e_mae is not None else None)
+                f_mae = data.get('mae_f')
+                history['force_mae_val'].append(f_mae * 1000 if f_mae is not None else None)
+                s_mae = data.get('mae_stress')
+                history['stress_mae_val'].append(s_mae * 1000 if s_mae is not None else None)
+                
+                history['energy_mae_train'].append(None)
+                history['force_mae_train'].append(None)
+                history['stress_mae_train'].append(None)
+                
+                # RMSE Extraction
+                e_rmse = data.get('rmse_e_per_atom', data.get('rmse_e'))
+                history['energy_rmse_val'].append(e_rmse * 1000 if e_rmse is not None else None)
+                f_rmse = data.get('rmse_f')
+                history['force_rmse_val'].append(f_rmse * 1000 if f_rmse is not None else None)
+                s_rmse = data.get('rmse_stress')
+                history['stress_rmse_val'].append(s_rmse * 1000 if s_rmse is not None else None)
+                
+                history['energy_rmse_train'].append(None)
+                history['force_rmse_train'].append(None)
+                history['stress_rmse_train'].append(None)
 
     with open(json_path, 'w') as f:
         json.dump(history, f, indent=4)

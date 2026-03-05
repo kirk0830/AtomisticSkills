@@ -79,6 +79,7 @@ MatGL fine-tuning is divided into a data preparation step (formatting nested dic
 
 ## Constraints
 - **Data Size**: For small datasets, `--freeze-backbone` is strongly recommended to prevent catastrophic forgetting.
+- **Reference Energies (`element_refs`)**: If your fine-tuning data is computed using the same DFT functional (e.g., PBE) as the foundation model's original training data, you should reuse the foundation model's original isolated atom reference energies instead of re-fitting them. This maintains thermodynamic compatibility across the periodic table.
 - **Environment**: Must be executed within the `matgl-agent` conda environment where MatGL and DGL are properly configured.
 - **Stress Units**: MatGL inherently converts stress internally to GPa, however the standard expected inputs directly into its JSON files are `eV/Å³`. Raw VASP stress obtained directly via some JSON files may be in kilo-Bar (`kB`). The Atomate2 MCP tool handles this conversion automatically when `convert_units=True`. However, if your JSON labels contain raw `kB` stress, you MUST pass the `--vasp-stress-conversion` flag to `scripts/prepare_matgl_data.py` to automatically scale them by `-1/160.2x`. For more details on unit standardization, see @[.agent/skills/general-property-units/SKILL.md].
 

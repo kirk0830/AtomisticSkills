@@ -21,7 +21,7 @@ conda run -n mace-agent python .agent/skills/ml-mace-finetune/scripts/prepare_ma
     --lr 1e-4 \
     --batch-size 8 \
     --freeze-backbone \
-    --output-dir .agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/output \
+    --output-dir .agent/skills/ml-mace-finetune/examples/mace-wbm-finetune \
     --vasp-stress-conversion
 ```
 
@@ -30,7 +30,7 @@ The script generates a `finetune_config.yaml` file natively compatible with the 
 
 ```bash
 # Env: mace-agent
-cd .agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/output
+cd .agent/skills/ml-mace-finetune/examples/mace-wbm-finetune
 conda run -n mace-agent mace_run_train --config finetune_config.yaml
 ```
 
@@ -45,7 +45,7 @@ conda run -n mace-agent python .agent/skills/ml-mace-finetune/scripts/extract_ma
 ```
 
 ## Expected Outputs
-The `output` directory contains the artifacts generated from a 10-epoch execution of the above commands over the isolated 200 structures (split structurally 90/10 into train/validation).
+This directory contains the artifacts generated from a 10-epoch execution of the above commands over the isolated 200 structures (split structurally 90/10 into train/validation).
 
 - `finetune_config.yaml`: The exact configuration generated for `mace_run_train`.
 - `training_history.json`: Parsed loss and MAE metrics extracted across epochs natively from MACE's logs.

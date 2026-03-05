@@ -33,6 +33,12 @@ def parse_fairchem_cli_metrics(cli_output_text: str, task_name: str) -> dict:
         "force_mae_val": [],
         "stress_mae_train": [],
         "stress_mae_val": [],
+        "energy_rmse_train": [],
+        "energy_rmse_val": [],
+        "force_rmse_train": [],
+        "force_rmse_val": [],
+        "stress_rmse_train": [],
+        "stress_rmse_val": [],
     }
     
     current_train_loss = None
@@ -56,6 +62,7 @@ def parse_fairchem_cli_metrics(cli_output_text: str, task_name: str) -> dict:
         if val_loss_match:
             current_val_metrics["loss_val"] = float(val_loss_match.group(1))
         
+        # MAE Matching
         energy_match = re.search(rf"val/{re.escape(task_name)}\.val,energy,per_atom_mae:\s*([\d.eE+-]+)", line)
         if energy_match:
             current_val_metrics["energy_mae_val"] = float(energy_match.group(1)) * 1000
@@ -67,6 +74,19 @@ def parse_fairchem_cli_metrics(cli_output_text: str, task_name: str) -> dict:
         stress_match = re.search(rf"val/{re.escape(task_name)}\.val,stress,mae:\s*([\d.eE+-]+)", line)
         if stress_match:
             current_val_metrics["stress_mae_val"] = float(stress_match.group(1)) * 1000
+            
+        # RMSE Matching if available
+        energy_rmse_match = re.search(rf"val/{re.escape(task_name)}\.val,energy,per_atom_rmse:\s*([\d.eE+-]+)", line)
+        if energy_rmse_match:
+            current_val_metrics["energy_rmse_val"] = float(energy_rmse_match.group(1)) * 1000
+        
+        forces_rmse_match = re.search(rf"val/{re.escape(task_name)}\.val,forces,rmse:\s*([\d.eE+-]+)", line)
+        if forces_rmse_match:
+            current_val_metrics["force_rmse_val"] = float(forces_rmse_match.group(1)) * 1000
+            
+        stress_rmse_match = re.search(rf"val/{re.escape(task_name)}\.val,stress,rmse:\s*([\d.eE+-]+)", line)
+        if stress_rmse_match:
+            current_val_metrics["stress_rmse_val"] = float(stress_rmse_match.group(1)) * 1000
         
         if "Ended train epoch" in line and current_val_metrics:
             history["epoch"].append(epoch_count)

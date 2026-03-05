@@ -16,7 +16,7 @@ Because the raw `vasp_s` labels in this dataset are recorded in `kB`, we MUST pa
 # Env: matgl-agent
 conda run -n matgl-agent python .agent/skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
     --data private_data/WBM_high_energy_states.json \
-    --output-dir .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output \
+    --output-dir .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune \
     --val-split 0.1 \
     --vasp-stress-conversion
 ```
@@ -30,7 +30,7 @@ conda run -n matgl-agent python .agent/skills/ml-matgl-finetune/scripts/train_ma
     --train-data .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/train_data.json \
     --val-data .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/val_data.json \
     --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
-    --output-dir .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/output \
+    --output-dir .agent/skills/ml-matgl-finetune/examples/matgl-wbm-finetune \
     --epochs 10 \
     --lr 1e-4 \
     --batch-size 10 \
@@ -39,7 +39,7 @@ conda run -n matgl-agent python .agent/skills/ml-matgl-finetune/scripts/train_ma
 ```
 
 ## Expected Outputs
-The `output` directory contains the artifacts generated from a localized run splitting 8,377 structures over a randomized 90/10 split.
+This directory contains the artifacts generated from a localized run splitting 8,377 structures over a randomized 90/10 split.
 
 - `fine_tuned_model.pth`: The natively wrapped checkpoint perfectly mapped back to standalone `MatGLWrapper.load_checkpoint()` logic.
 - `training_history.json`: Parsed loss and MAE metrics dynamically tracked per-epoch independent of DGL dependencies.

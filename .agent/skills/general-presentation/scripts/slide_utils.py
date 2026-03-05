@@ -707,3 +707,67 @@ def _style_cell(
     if fill_color:
         cell.fill.solid()
         cell.fill.fore_color.rgb = fill_color
+
+def get_approx_text_width_inches(text: str, font_size: int = 10) -> float:
+    """Estimate the physical width of text in inches.
+    
+    Args:
+        text: The string to measure.
+        font_size: Font size in points.
+        
+    Returns:
+        Estimated width in inches.
+    """
+    base_char_width = 0.08 * (font_size / 10.0)
+    padding = 0.15
+    return (len(text) * base_char_width) + padding
+
+def add_autofit_box(
+    slide: "pptx.slide.Slide",
+    left: int,
+    top: int,
+    height: int,
+    text: str,
+    bg_color: RGBColor,
+    font_color: RGBColor = RGBColor(0xFF, 0xFF, 0xFF),
+    font_size: int = 10,
+    is_rounded: bool = True,
+    bold: bool = False,
+) -> tuple["pptx.shapes.autoshape.Shape", float]:
+    """Add a colored box that automatically scales its width to fit the text.
+    
+    Args:
+        slide: The Slide object.
+        left: Left position in EMU.
+        top: Top position in EMU.
+        height: Box height in EMU.
+        text: Text content.
+        bg_color: Background color.
+        font_color: Text color.
+        font_size: Font size in points.
+        is_rounded: If True, uses rounded rectangle.
+        bold: If True, makes text bold.
+        
+    Returns:
+        A tuple of (Shape object, calculated width in inches).
+    """
+    width_inches = get_approx_text_width_inches(text, font_size)
+    width = Inches(width_inches)
+    
+    shape_type = MSO_SHAPE.ROUNDED_RECTANGLE if is_rounded else MSO_SHAPE.RECTANGLE
+    shape = slide.shapes.add_shape(shape_type, left, top, width, height)
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = bg_color
+    shape.line.color.rgb = bg_color
+    
+    tf = shape.text_frame
+    tf.word_wrap = False
+    p = tf.paragraphs[0]
+    p.text = text
+    p.font.size = Pt(font_size)
+    p.font.color.rgb = font_color
+    p.font.bold = bold
+    p.alignment = PP_ALIGN.CENTER
+    shape.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+    
+    return shape, width_inches

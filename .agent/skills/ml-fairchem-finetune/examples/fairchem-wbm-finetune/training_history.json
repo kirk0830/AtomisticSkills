@@ -12,16 +12,16 @@
     9
   ],
   "loss_train": [
-    5.559431612627725,
-    3.2853925740715932,
-    3.807186486511752,
-    5.173374429418404,
-    5.326361998835328,
-    3.1635475843075915,
-    2.9196311558469965,
-    3.382408362152171,
-    3.667745008702461,
-    3.1015129571888336
+    5.55943161821566,
+    3.2853926299509477,
+    3.807186671379283,
+    5.1733743558439205,
+    5.32636212642652,
+    3.16354803599904,
+    2.9196314068384304,
+    3.382408818500233,
+    3.6677446203409474,
+    3.1015132701132186
   ],
   "loss_val": [
     4.6524,
@@ -106,5 +106,77 @@
     17.6,
     17.2,
     16.8
+  ],
+  "energy_rmse_train": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "energy_rmse_val": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "force_rmse_train": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "force_rmse_val": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "stress_rmse_train": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "stress_rmse_val": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
   ]
 }

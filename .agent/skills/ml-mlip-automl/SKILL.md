@@ -32,18 +32,24 @@ Different MLIP frameworks expose different tunable parameters. When deducing you
 | **Learning Rate** | `--lr` (Default: 4e-4) | `--lr` (Default: 1e-3) | `--lr` (Default: 1e-4) |
 | **Batch Size** | `--batch-size` | `--batch-size` | `--batch-size` |
 | **Scheduler** | Cosine with Warmup | Cosine or Plateau | Exponential or Plateau |
-| **Weight Decay** | `--weight-decay` | N/A | `weight_decay` (YAML) |
+| **Force Loss Ratio** | `--force-weight` | `--force-weight` | `--forces-weight` |
+| **Energy Loss Ratio** | `--energy-weight` | `--energy-weight` | `--energy-weight` |
+| **Loss Criterion** | Huber/L1/L2 | Huber/L1/L2 | universal/weighted |
 
 > [!TIP]
 > **Constraints & Best Practices**
-> - **Freezing**: For datasets <500 structures, always begin with the backbone **frozen** to prevent catastrophic forgetting.
-> - **MACE LR Sensitivity**: Never exceed `1e-4` for MACE-OMAT fine-tuning initially, as higher values trigger immediate divergence.
+> - **Key hyperparameters to explore**: Learning rate, backbone freezing, force loss ratio, energy loss ratio, and loss criterion.
+> - **Batch Size**: Should generally be set to around 8.
+> - **Trial Count**: Spend around 10 trials on different sets of hyperparameters.
+> - **Epoch Count during Search**: Use only ~10 epochs per trial on a small dataset to quickly gauge convergence.
+> - **Dataset Size**: If the dataset is already small (smaller than 1000 structures), we don't need to test on a subset. Just use the full dataset.
+> - **Final Training**: Afterwards, use the best set of hyperparameters discovered to train on the full dataset for many epochs with early stopping.
 
 ## Invoking the Search (User Prompt Template)
 
 To initiate this workflow, users should provide an anchor dataset and instruction similar to:
 
-> "I have a dataset at `private_data/my_dataset.json`. I want to fine-tune `MACE-OMAT-0-small` to achieve an energy MAE below 5 meV/atom. Please orchestrate an LLM-driven hyperparameter search over learning rates (`1e-3`, `1e-4`), batch sizes (`2`, `8`), and backbone freezing strategies. Execute one run at a time, read the `training_history.json`, explain your logic for the next permutation, and stop when you find the best combination."
+> "I have a dataset at `private_data/my_dataset.json`. Please orchestrate an LLM-driven hyperparameter search over learning rates, batch sizes (~8), freezing strategies, and loss ratios. Execute one run at a time for ~10 epochs, read the `training_history.json`, explain your logic for the next permutation, and stop after ~10 trials to find the best combination. Finally, train the best model for many epochs with early stopping."
 
 ---
 

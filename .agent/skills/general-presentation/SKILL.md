@@ -37,9 +37,10 @@ Available functions:
 | `add_image_and_text_slide(prs, title, image_path, text, ...)` | Image + text layout |
 | `add_table_slide(prs, title, headers, rows)` | Data table slide |
 | `add_bullets_slide(prs, title, bullets)` | Bullet point slide |
+| `add_autofit_box(slide, left, top, height, text, bg_color)` | Add a colored box that auto-scales width to text |
 | `save_presentation(prs, path)` | Save to `.pptx` file |
 
-Every builder function returns the `Slide` object, allowing further customization with raw `python-pptx` calls if needed.
+Every builder function returns the `Slide` (or Shape) object, allowing further customization with raw `python-pptx` calls if needed.
 
 ### 3. Customize the Theme (Optional)
 
@@ -51,13 +52,22 @@ THEME["primary"] = RGBColor(0x00, 0x50, 0x80)
 THEME["font_family"] = "Arial"
 ```
 
-### 4. Save and Iterate
+### 4. Save and Iterate Visually
 
 ```python
 save_presentation(prs, "output.pptx")
 ```
 
-The agent edits the script and re-runs to reflect changes. Iteration happens on the Python script itself.
+The agent edits the Python script and re-runs to reflect changes. 
+**CRITICAL ITERATION LOOP**: The agent **MUST** visually inspect the generated slides using their VLM capabilities to ensure elements do not overlap, text fits perfectly within boxes, and the slide space is used efficiently with a universal, professional design style.
+
+To preview a slide as an image for visual inspection:
+```bash
+# Render PPTX to PDF using LibreOffice, then to PNG
+libreoffice --headless --convert-to pdf output.pptx --outdir .
+pdftocairo -png output.pdf output
+# This generates output-1.png, which you can visually inspect.
+```
 
 ## Examples
 

@@ -106,9 +106,9 @@ def main():
         print(f"Validation structures: {len(val_data)}")
     print(f"Data written to: {output_path}")
     print("=======================================================\n")
-    print("To start training, simply run:")
+    print("To generate training config and start training, run:")
     print(f"  conda activate matgl-agent")
-    print(f"  python train_matgl.py --train-data {train_path} --val-data {val_path} --model {args.model} --output-dir {output_path}")
+    print(f"  python generate_matgl_config.py --train-data {train_path.absolute()} " + (f"--val-data {val_path.absolute()} " if val_data else "") + f"--model {args.model} --output-dir {output_path.absolute()}")
 
 if __name__ == "__main__":
     main()

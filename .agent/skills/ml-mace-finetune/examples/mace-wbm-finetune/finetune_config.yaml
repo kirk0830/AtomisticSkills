@@ -1,6 +1,6 @@
 name: mace-omat-0-small_fine_tuned
-train_file: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/train.xyz
-valid_file: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/valid.xyz
+train_file: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/train.xyz
+valid_file: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/valid.xyz
 max_num_epochs: 10
 lr: 0.0001
 batch_size: 2
@@ -9,9 +9,9 @@ energy_key: REF_energy
 forces_key: REF_forces
 device: cuda
 seed: 42
-checkpoints_dir: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/checkpoints
-results_dir: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/results
-log_dir: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/logs
+checkpoints_dir: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/checkpoints
+results_dir: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/results
+log_dir: /home/bdeng/projects/AtomisticSkills/.agent/skills/ml-mace-finetune/examples/mace-wbm-finetune/output/logs
 plot: true
 plot_frequency: 1
 multiheads_finetuning: false
@@ -43,6 +43,10 @@ E0s: '{1: -1.117340087890625, 2: 0.0009675900219008327, 3: -0.29754725098609924,
   -0.12454673647880554, 81: -0.3173719346523285, 82: -0.7764493227005005, 83: -1.3262728452682495,
   89: -0.2682715058326721, 90: -0.9081742763519287, 91: -2.476531982421875, 92: -4.904385566711426,
   93: -7.633789539337158, 94: -10.772377014160156}'
+patience: 20
+scheduler: ReduceLROnPlateau
+scheduler_patience: 5
+lr_scheduler_gamma: 0.9
 atomic_numbers: '[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
   20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
   40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,

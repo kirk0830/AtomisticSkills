@@ -144,66 +144,78 @@ def plot_training_history(training_history: Dict[str, Any], save_path: Optional[
     gs = fig.add_gridspec(2, 2, hspace=0.3, wspace=0.3)
     fig.suptitle(f'Training History - {model_name}', fontsize=16, fontweight='bold')
     
-    ax4 = fig.add_subplot(gs[0, 0])  # Energy MAE
-    ax5 = fig.add_subplot(gs[0, 1])  # Force MAE
-    ax6 = fig.add_subplot(gs[1, 0])  # Stress MAE
+    ax4 = fig.add_subplot(gs[0, 0])  # Energy Error
+    ax5 = fig.add_subplot(gs[0, 1])  # Force Error
+    ax6 = fig.add_subplot(gs[1, 0])  # Stress Error
     ax_loss = fig.add_subplot(gs[1, 1]) # Loss
     
     axes = [ax4, ax5, ax6]
     
-    # Energy MAE (meV/atom)
-    energy_mae_train = [x for x in training_history.get('energy_mae_train', []) if x is not None]
-    energy_mae_val = [x for x in training_history.get('energy_mae_val', []) if x is not None]
-    if len(energy_mae_train) > 0 or len(energy_mae_val) > 0:
-        if len(energy_mae_train) > 0:
-            epochs_train = range(1, len(energy_mae_train) + 1)
-            axes[0].plot(epochs_train, np.array(energy_mae_train), 'b-', label='Train', linewidth=2, marker='o')
-        if len(energy_mae_val) > 0:
-            epochs_val = range(1, len(energy_mae_val) + 1)
-            axes[0].plot(epochs_val, np.array(energy_mae_val), 'r-', label='Validation', linewidth=2, marker='s')
+    # Energy Error (meV/atom)
+    has_mae_e = 'energy_mae_val' in training_history or 'energy_mae_train' in training_history
+    e_val_str = 'energy_mae_val' if has_mae_e else 'energy_rmse_val'
+    e_train_str = 'energy_mae_train' if has_mae_e else 'energy_rmse_train'
+    e_label = 'MAE' if has_mae_e else 'RMSE'
+    energy_err_train = [x for x in training_history.get(e_train_str, []) if x is not None]
+    energy_err_val = [x for x in training_history.get(e_val_str, []) if x is not None]
+    if len(energy_err_train) > 0 or len(energy_err_val) > 0:
+        if len(energy_err_train) > 0:
+            epochs_train = range(1, len(energy_err_train) + 1)
+            axes[0].plot(epochs_train, np.array(energy_err_train), 'b-', label='Train', linewidth=2, marker='o')
+        if len(energy_err_val) > 0:
+            epochs_val = range(1, len(energy_err_val) + 1)
+            axes[0].plot(epochs_val, np.array(energy_err_val), 'r-', label='Validation', linewidth=2, marker='s')
         axes[0].set_xlabel('Epoch')
-        axes[0].set_ylabel('Energy MAE (meV/atom)')
+        axes[0].set_ylabel(f'Energy {e_label} (meV/atom)')
         axes[0].legend()
         axes[0].grid(True, alpha=0.3)
     else:
-        axes[0].text(0.5, 0.5, 'No energy MAE data', ha='center', va='center', transform=axes[0].transAxes)
-    axes[0].set_title('Energy MAE')
+        axes[0].text(0.5, 0.5, f'No energy {e_label} data', ha='center', va='center', transform=axes[0].transAxes)
+    axes[0].set_title(f'Energy {e_label}')
     
-    # Force MAE (meV/Å)
-    force_mae_train = [x for x in training_history.get('force_mae_train', []) if x is not None]
-    force_mae_val = [x for x in training_history.get('force_mae_val', []) if x is not None]
-    if len(force_mae_train) > 0 or len(force_mae_val) > 0:
-        if len(force_mae_train) > 0:
-            epochs_train = range(1, len(force_mae_train) + 1)
-            axes[1].plot(epochs_train, np.array(force_mae_train), 'b-', label='Train', linewidth=2, marker='o')
-        if len(force_mae_val) > 0:
-            epochs_val = range(1, len(force_mae_val) + 1)
-            axes[1].plot(epochs_val, np.array(force_mae_val), 'r-', label='Validation', linewidth=2, marker='s')
+    # Force Error (meV/Å)
+    has_mae_f = 'force_mae_val' in training_history or 'force_mae_train' in training_history
+    f_val_str = 'force_mae_val' if has_mae_f else 'force_rmse_val'
+    f_train_str = 'force_mae_train' if has_mae_f else 'force_rmse_train'
+    f_label = 'MAE' if has_mae_f else 'RMSE'
+    force_err_train = [x for x in training_history.get(f_train_str, []) if x is not None]
+    force_err_val = [x for x in training_history.get(f_val_str, []) if x is not None]
+    if len(force_err_train) > 0 or len(force_err_val) > 0:
+        if len(force_err_train) > 0:
+            epochs_train = range(1, len(force_err_train) + 1)
+            axes[1].plot(epochs_train, np.array(force_err_train), 'b-', label='Train', linewidth=2, marker='o')
+        if len(force_err_val) > 0:
+            epochs_val = range(1, len(force_err_val) + 1)
+            axes[1].plot(epochs_val, np.array(force_err_val), 'r-', label='Validation', linewidth=2, marker='s')
         axes[1].set_xlabel('Epoch')
-        axes[1].set_ylabel('Force MAE (meV/Å)')
+        axes[1].set_ylabel(f'Force {f_label} (meV/Å)')
         axes[1].legend()
         axes[1].grid(True, alpha=0.3)
     else:
-        axes[1].text(0.5, 0.5, 'No force MAE data', ha='center', va='center', transform=axes[1].transAxes)
-    axes[1].set_title('Force MAE')
+        axes[1].text(0.5, 0.5, f'No force {f_label} data', ha='center', va='center', transform=axes[1].transAxes)
+    axes[1].set_title(f'Force {f_label}')
     
-    # Stress MAE (meV/Å³)
-    stress_mae_train = [x for x in training_history.get('stress_mae_train', []) if x is not None]
-    stress_mae_val = [x for x in training_history.get('stress_mae_val', []) if x is not None]
-    if len(stress_mae_train) > 0 or len(stress_mae_val) > 0:
-        if len(stress_mae_train) > 0:
-            epochs_train = range(1, len(stress_mae_train) + 1)
-            axes[2].plot(epochs_train, np.array(stress_mae_train), 'b-', label='Train', linewidth=2, marker='o')
-        if len(stress_mae_val) > 0:
-            epochs_val = range(1, len(stress_mae_val) + 1)
-            axes[2].plot(epochs_val, np.array(stress_mae_val), 'r-', label='Validation', linewidth=2, marker='s')
+    # Stress Error (meV/Å³)
+    has_mae_s = 'stress_mae_val' in training_history or 'stress_mae_train' in training_history
+    s_val_str = 'stress_mae_val' if has_mae_s else 'stress_rmse_val'
+    s_train_str = 'stress_mae_train' if has_mae_s else 'stress_rmse_train'
+    s_label = 'MAE' if has_mae_s else 'RMSE'
+    stress_err_train = [x for x in training_history.get(s_train_str, []) if x is not None]
+    stress_err_val = [x for x in training_history.get(s_val_str, []) if x is not None]
+    if len(stress_err_train) > 0 or len(stress_err_val) > 0:
+        if len(stress_err_train) > 0:
+            epochs_train = range(1, len(stress_err_train) + 1)
+            axes[2].plot(epochs_train, np.array(stress_err_train), 'b-', label='Train', linewidth=2, marker='o')
+        if len(stress_err_val) > 0:
+            epochs_val = range(1, len(stress_err_val) + 1)
+            axes[2].plot(epochs_val, np.array(stress_err_val), 'r-', label='Validation', linewidth=2, marker='s')
         axes[2].set_xlabel('Epoch')
-        axes[2].set_ylabel('Stress MAE (meV/Å³)')
+        axes[2].set_ylabel(f'Stress {s_label} (meV/Å³)')
         axes[2].legend()
         axes[2].grid(True, alpha=0.3)
     else:
-        axes[2].text(0.5, 0.5, 'No stress MAE data', ha='center', va='center', transform=axes[2].transAxes)
-    axes[2].set_title('Stress MAE')
+        axes[2].text(0.5, 0.5, f'No stress {s_label} data', ha='center', va='center', transform=axes[2].transAxes)
+    axes[2].set_title(f'Stress {s_label}')
     
     # Loss plot
     loss_train = [x for x in training_history.get('loss_train', []) if x is not None]
