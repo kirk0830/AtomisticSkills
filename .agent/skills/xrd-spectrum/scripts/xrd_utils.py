@@ -43,7 +43,7 @@ def superimposed_pseudo_voigt(x, xy_merge, U, V, W, eta):
     return total
 
 
-def simulate_pv_xrd_for_row(xy_merge, U, V, W, eta, bin=0.01):
+def simulate_pv_xrd_for_row(xy_merge, U, V, W, eta, bin=0.05):
     """
     Simulate a pseudo-Voigt XRD pattern for a given set of peaks.
 
@@ -62,7 +62,7 @@ def simulate_pv_xrd_for_row(xy_merge, U, V, W, eta, bin=0.01):
     return sim_xrd, x
 
 
-def get_sim_xrd_from_pattern(pattern, eta, caglioti_params, bin=0.01):
+def get_sim_xrd_from_pattern(pattern, eta, caglioti_params, bin=0.05):
     """
     Get the simulated XRD pattern for pymatgen generated pattern object
     """

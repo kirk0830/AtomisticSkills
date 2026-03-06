@@ -33,7 +33,7 @@ python .agent/skills/xrd-spectrum/scripts/calculate_xrd.py <structure_file> --ou
 ## Output Files
 
 1.  `<filename>_xrd.json`: Contains $2\theta$ positions, intensities, d-spacings, and (hkl) indices.
-2.  `<filename>_PV_xrd.png`: A plot of the simulated XRD spectrum (pseudo-Voigt).
+2.  `<filename>_PV_xrd.png`: A plot of the simulated XRD spectrum (Pseudo-Voigt model).
 
 ## Example
 

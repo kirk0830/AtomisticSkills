@@ -32,8 +32,8 @@ def calculate_xrd(structure_path, output_dir, wavelength="CuKa", symprec=0.1, et
     
     # Save pattern data to JSON
     results = {
-        "x": list(pattern.x),
-        "y": list(pattern.y),
+        "x": list(theta),
+        "y": list(sim_xrd),
         "hkls": [str(hkl[0]['hkl']) for hkl in pattern.hkls], # Simplify HKL info
         "d_spacings": list(pattern.d_hkls)
     }
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     parser.add_argument("--symprec", type=float, default=0.1, help="Symmetry precision for XRD calculation.")
     parser.add_argument("--eta", type=float, default=0.1, help="Fraction of Lorentzian component for simulated XRD.")
     parser.add_argument("--caglioti_params", type=tuple, default=(0.1, 0.01, 0.1), help="Caglioti parameters for simulated XRD.")
-    parser.add_argument("--bin", type=float, default=0.01, help="Bin size for simulated XRD.")
+    parser.add_argument("--bin", type=float, default=0.05, help="Bin size for simulated XRD.")
     args = parser.parse_args()
     
     calculate_xrd(args.structure, args.output_dir, args.wavelength, args.symprec, args.eta, args.caglioti_params, args.bin)
