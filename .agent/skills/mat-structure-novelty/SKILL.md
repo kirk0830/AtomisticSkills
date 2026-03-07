@@ -1,10 +1,10 @@
 ---
-name: mat-structure-match
+name: mat-structure-novelty
 description: Determine if a given structure matches known experimental or theoretical structures, or compare two user-provided structures.
 category: materials
 ---
 
-# mat-structure-match
+# mat-structure-novelty
 
 ## Goal
 To determine whether a user-provided structure (or list of structures) has been previously reported. This is done by matching the target structure against:
@@ -31,14 +31,14 @@ Use the `match_structure.py` script to perform a symmetry-aware structural compa
 
 ```bash
 # Env: base-agent
-python .agent/skills/mat-structure-match/scripts/match_structure.py target_structure.cif candidates/ --output match_results.json
+python .agent/skills/mat-structure-novelty/scripts/match_structure.py target_structure.cif candidates/ --output match_results.json
 ```
 
 **Custom Candidate Matching:** If a user provides two distinct structures and simply wants to know if they match each other, you can bypass Step 1 and provide the second structure as the candidate:
 
 ```bash
 # Env: base-agent
-python .agent/skills/mat-structure-match/scripts/match_structure.py target_structure_1.cif target_structure_2.xyz --output match_results.json
+python .agent/skills/mat-structure-novelty/scripts/match_structure.py target_structure_1.cif target_structure_2.xyz --output match_results.json
 ```
 
 **Literature Fallback (Novel/Unmatched Structures):** 
@@ -61,7 +61,7 @@ Checking if a generated structure has been experimentally reported:
 ```bash
 # Env: base-agent
 mcp_search_materials_project_by_formula(formula="LiFePO4", return_all=True, save_to_file="LiFePO4_candidates")
-python .agent/skills/mat-structure-match/scripts/match_structure.py generated_LFP.cif LiFePO4_candidates/ --output match_results.json
+python .agent/skills/mat-structure-novelty/scripts/match_structure.py generated_LFP.cif LiFePO4_candidates/ --output match_results.json
 ```
 
 ## Constraints

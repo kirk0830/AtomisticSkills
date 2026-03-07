@@ -1,6 +1,6 @@
 # Example: Literature Fallback Matching
 
-This example demonstrates how the `mat-structure-match` skill handles a material that **does not exist** in the Materials Project or ICSD structural databases, but **has** been reported in literature.
+This example demonstrates how the `mat-structure-novelty` skill handles a material that **does not exist** in the Materials Project or ICSD structural databases, but **has** been reported in literature.
 
 In this case, we use `Li2ZrCl6` (LZC)—a known halide solid-state electrolyte (e.g., from arXiv:2403.08237) that currently has 0 entries in the Materials Project.
 

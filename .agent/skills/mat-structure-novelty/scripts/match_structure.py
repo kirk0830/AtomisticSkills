@@ -23,7 +23,7 @@ import inspect
 
 # Use inspect to get the absolute path of the script robustly
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-# Project root is four levels up: .agent/skills/mat-structure-match/scripts
+# Project root is four levels up: .agent/skills/mat-structure-novelty/scripts
 project_root = os.path.abspath(os.path.join(script_dir, "../../../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
