@@ -16,7 +16,7 @@ import re
 from pathlib import Path
 
 
-def convert_dif_to_xy(dif_path: Path, output_path: Path) -> None:
+def convert_dif_to_xy(dif_path: Path) -> None:
     """
     Convert a DIF-format XRD file to .xy format for DARA.
 
@@ -28,7 +28,6 @@ def convert_dif_to_xy(dif_path: Path, output_path: Path) -> None:
 
     Args:
         dif_path: Path to DIF file (.txt or .dif).
-        output_path: Path to output .xy file.
     """
     with open(dif_path) as f:
         lines = f.readlines()
@@ -70,7 +69,7 @@ def convert_dif_to_xy(dif_path: Path, output_path: Path) -> None:
             f"No 2-theta/intensity data found in DIF file after line {data_start}"
         )
 
-    output_path = Path(output_path, dif_path.stem + ".xy") # replace .dif with .xy
+    output_path = Path(dif_path.parent / (dif_path.stem + ".xy"))
     with open(output_path, "w") as f:
         for two_theta, intensity in pairs:
             f.write(f"{two_theta:.6f} {intensity:.6f}\n")
@@ -78,13 +77,12 @@ def convert_dif_to_xy(dif_path: Path, output_path: Path) -> None:
     print(f"Converted {len(pairs)} data points from {dif_path} to {output_path}")
 
 
-def convert_json_to_xy(json_path: Path, output_path: Path) -> None:
+def convert_json_to_xy(json_path: Path) -> None:
     """
     Convert XRD JSON output to .xy format.
     
     Args:
         json_path: Path to JSON file from xrd-spectrum skill
-        output_path: Path to output .xy file
     """
     with open(json_path) as f:
         data = json.load(f)
@@ -100,7 +98,7 @@ def convert_json_to_xy(json_path: Path, output_path: Path) -> None:
         raise ValueError(f"x and y arrays must have same length: {len(x)} vs {len(y)}")
     
     # Write .xy file (two space-separated columns)
-    output_path = Path(output_path, json_path.stem + ".xy") 
+    output_path = Path(json_path.parent / (json_path.stem + ".xy"))
     with open(output_path, "w") as f:
         for angle, intensity in zip(x, y):
             f.write(f"{angle:.6f} {intensity:.6f}\n")
@@ -117,10 +115,6 @@ def main():
         help="Path to XRD file: JSON (from xrd-spectrum skill) or experimental DIF (.txt)"
     )
     parser.add_argument(
-        "--output_xy",
-        help="Path to output .xy file"
-    )
-    parser.add_argument(
         "--format",
         choices=("auto", "json", "dif"),
         default="auto",
@@ -131,8 +125,6 @@ def main():
     input_path = Path(args.input_file)
     if not input_path.exists():
         raise FileNotFoundError(f"Input file not found: {input_path}")
-
-    output_path = Path(args.output_xy)
 
     fmt = args.format
     if fmt == "auto":
@@ -147,9 +139,11 @@ def main():
             fmt = "dif" if ("2-THETA" in content or "2THETA" in content) else "json"
 
     if fmt == "json":
-        convert_json_to_xy(input_path, output_path)
+        convert_json_to_xy(input_path)
+    elif fmt == "dif":
+        convert_dif_to_xy(input_path)
     else:
-        convert_dif_to_xy(input_path, output_path)
+        raise ValueError(f"Invalid format: {fmt}")
 
 
 if __name__ == "__main__":
