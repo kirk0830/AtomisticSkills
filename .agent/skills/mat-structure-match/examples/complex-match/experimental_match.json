@@ -1,0 +1,14 @@
+{
+  "target": "known_experimental.cif",
+  "target_formula": "Li10Ge(PS6)2",
+  "matches": [
+    {
+      "candidate_formula": "Li10Ge(PS6)2",
+      "material_id_hint": "mp-696138"
+    }
+  ],
+  "num_candidates_checked": 3,
+  "match_found": true,
+  "target_spacegroup": "P1",
+  "target_crystal_system": "triclinic"
+}

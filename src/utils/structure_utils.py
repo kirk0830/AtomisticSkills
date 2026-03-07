@@ -52,18 +52,34 @@ def load_structure_from_file(filename: Union[str, Path]):
     from pymatgen.core import Structure
     return Structure.from_file(str(filename))
 
-def get_structure_by_formula(formula: str, mprester: Any) -> Any:
+def get_structure_by_formula(formula: str, mprester: Any, return_all: bool = False) -> Any:
     """
-    Search for the most stable structure by formula in Materials Project.
-    Returns ASE Atoms object.
+    Search for structures by formula in Materials Project.
+    Returns ASE Atoms object (most stable) or list of ASE Atoms (if return_all=True).
     """
-    docs = mprester.summary.search(formula=formula, fields=["structure", "energy_above_hull"])
+    docs = mprester.summary.search(formula=formula, fields=["structure", "energy_above_hull", "material_id", "theoretical", "database_IDs"])
     if not docs:
-        return None
-    # Sort by stability
-    stable_doc = min(docs, key=lambda x: x.energy_above_hull)
+        return [] if return_all else None
+        
     from pymatgen.io.ase import AseAtomsAdaptor
-    return AseAtomsAdaptor.get_atoms(stable_doc.structure)
+    
+    if return_all:
+        atoms_list = []
+        for doc in docs:
+            atoms = AseAtomsAdaptor.get_atoms(doc.structure)
+            atoms.info['material_id'] = doc.material_id
+            atoms.info['formula'] = formula
+            atoms.info['energy_above_hull'] = doc.energy_above_hull
+            atoms.info['theoretical'] = doc.theoretical
+            atoms_list.append(atoms)
+        return atoms_list
+    else:
+        # Sort by stability
+        stable_doc = min(docs, key=lambda x: x.energy_above_hull)
+        atoms = AseAtomsAdaptor.get_atoms(stable_doc.structure)
+        atoms.info['material_id'] = stable_doc.material_id
+        atoms.info['theoretical'] = stable_doc.theoretical
+        return atoms
 
 def get_structure_by_chemsys(chemsys: str, mprester: Any) -> List[Any]:
     """

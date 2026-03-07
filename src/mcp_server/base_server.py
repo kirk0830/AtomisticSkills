@@ -70,17 +70,19 @@ def search_materials_project_by_formula(
 
     formula: str,
     api_key: Optional[str] = None,
-    save_to_file: Optional[str] = None
+    save_to_file: Optional[str] = None,
+    return_all: bool = False
 ) -> str:
     """Search Materials Project by formula. Supports wildcards.
     
     Args:
         formula: Chemical formula (e.g., "Si", "Fe2O3", "Si*").
         api_key: Optional MP API key (defaults to environment).
-        save_to_file: Optional save path.
+        save_to_file: Optional save path (or directory if return_all=True).
+        return_all: If True, returns all matching structures instead of just the ground state.
         
     Returns:
-        Path to saved CIF file.
+        Path to saved CIF file(s).
     """
     mp_key = api_key or os.getenv("MP_API_KEY")
     if not mp_key:
@@ -89,12 +91,42 @@ def search_materials_project_by_formula(
     try:
         from mp_api.client import MPRester
         with MPRester(mp_key) as mprester:
-            atoms = get_structure_by_formula(formula, mprester)
+            result = get_structure_by_formula(formula, mprester, return_all=return_all)
                 
-        if atoms is None:
+        if result is None or (isinstance(result, list) and len(result) == 0):
             return f"Error: No structure found for formula {formula} in Materials Project."
             
-        return _save_atoms(atoms, formula, save_to_file)
+        if return_all:
+            # Result is a list of atoms
+            if save_to_file:
+                save_dir = Path(save_to_file)
+            else:
+                safe_name = formula.replace("-", "").replace(" ", "").replace("*", "_star")
+                save_dir = Path(f"{safe_name}_structures")
+                
+            save_dir.mkdir(parents=True, exist_ok=True)
+            
+            saved_paths = []
+            for atoms in result:
+                mp_id = atoms.info.get('material_id', 'unknown')
+                form = atoms.info.get('formula', formula)
+                theoretical = atoms.info.get('theoretical', True)
+                
+                # Create filename
+                filename = f"{mp_id}_{form}.cif"
+                filepath = save_dir / filename
+                
+                save_structure(atoms, filepath)
+                saved_paths.append(f"{mp_id} (theoretical={theoretical})")
+                
+            summary = f"Found {len(result)} structures for {formula}\n"
+            summary += f"Saved to directory: {save_dir.absolute()}\n\n"
+            summary += "Structures:\n"
+            for path_info in saved_paths:
+                summary += f"  - {path_info}\n"
+            return summary
+        else:
+            return _save_atoms(result, formula, save_to_file)
     except Exception as e:
         return f"Error executing search_materials_project_by_formula: {str(e)}"
 
