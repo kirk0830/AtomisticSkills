@@ -2,6 +2,7 @@
 Perform Rietveld refinement with known phases using DARA.
 
 This script wraps DARA's RefinementMaker to perform Rietveld refinement
+Based on the DARA tutorial: https://cedergrouphub.github.io/dara/notebooks/automated_refinement.html
 on observed XRD patterns with provided candidate phases.
 
 Usage:
@@ -39,7 +40,7 @@ def refine(
     Perform Rietveld refinement with known phases.
     
     Args:
-        xrd_data_path: Path to experimental XRD pattern (.xy format)
+        xrd_data_path: Path to experimental XRD pattern (.xy .xrdml or .raw format)
         cif_paths: List of CIF file paths, or None to auto-discover from cifs/ or XRD directory
         instrument_profile: Instrument profile name
         phase_params: Phase-specific refinement parameters
@@ -85,8 +86,7 @@ def refine(
         show_progress=show_progress,
     )
 
-    # Generate visualization using DARA's Plotly backend (same as tutorial).
-    # https://cedergrouphub.github.io/dara/notebooks/automated_refinement.html
+    # Generate visualization using DARA's Plotly backend
     stem = "refinement"
     if getattr(result, "lst_data", None) is not None:
         pattern_name = getattr(result.lst_data, "pattern_name", "")
@@ -109,7 +109,6 @@ def refine(
         print(f"Warning: failed to create refinement plot: {e}")
 
     # Export peak_data (simulated peaks in the calculated pattern) as CSV.
-    # See https://cedergrouphub.github.io/dara/notebooks/automated_refinement.html
     peak_data_path = stem_dir / f"{stem}_peak_data.csv"
     if getattr(result, "peak_data", None) is not None:
         result.peak_data.to_csv(peak_data_path, index=False)
@@ -181,7 +180,7 @@ def main():
     parser.add_argument(
         "--xrd_data",
         required=True,
-        help="Path to experimental XRD pattern file (.xy format)"
+        help="Path to experimental XRD pattern file (.xy .xrdml or .raw format)"
     )
     parser.add_argument(
         "--cifs",
