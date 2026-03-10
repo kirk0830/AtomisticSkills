@@ -132,14 +132,14 @@ def get_extrapolation_uncertainty(
     var_y = (x_target**2 * cov[0,0] + cov[1,1] + 2 * x_target * cov[0,1])
     return np.sqrt(var_y)
 
-def calculate_activation_energy(root_dir: str = ".") -> None:
+def calculate_activation_energy(root_dir: str = ".", struct_path: str = None) -> None:
     """
     Read diffusion results from directory, fit Arrhenius, and save plot.
     
     Args:
-        root_dir: Directory containing md_*K/diffusion_results.json files.
+        root_dir: Directory containing md_*K/diffusion*.json files.
     """
-    json_files = glob.glob(os.path.join(root_dir, "md_*K/diffusion_results.json"))
+    json_files = glob.glob(os.path.join(root_dir, "*md_*K/diffusion*.json"))
     if not json_files:
         print(f"No diffusion_results.json files found in {root_dir}/md_*K/")
         return
@@ -168,6 +168,23 @@ def calculate_activation_energy(root_dir: str = ".") -> None:
     has_err = any(d > 0 for d in diff_errs_arr)
     Ea, D0, std_Ea = fit_arrhenius(temps_arr, diffs_arr, mode="linear", 
                                    diffusivity_errors=diff_errs_arr if has_err else None)
+                                   
+    # Calculate R-squared to warn about bad fits or outliers
+    x = 1000.0 / temps_arr
+    y = np.log(diffs_arr)
+    y_mean = np.mean(y)
+    ss_tot = np.sum((y - y_mean)**2)
+    kB = 8.617333262e-5
+    y_fit = np.log(D0) - Ea / (kB * temps_arr)
+    ss_res = np.sum((y - y_fit)**2)
+    r2 = 1.0 if ss_tot == 0 else 1 - (ss_res / ss_tot)
+    
+    if r2 < 0.95:
+        print(f"\n[WARNING] The Arrhenius fit shows significant deviations (R^2 = {r2:.3f}).")
+        print("This could be due to phase transitions, melting, non-linear diffusion regimes, or isolated outliers.")
+        print("Please review the generated arrhenius_plot.png visually.\n")
+    else:
+        print(f"Fit quality (R^2): {r2:.3f}")
     
     RT = 300.0
     D_RT = get_extrapolated_diffusivity(temps_arr, diffs_arr, RT, mode="linear")
@@ -175,8 +192,9 @@ def calculate_activation_energy(root_dir: str = ".") -> None:
                                                 diff_errs_arr if has_err else None)
     
     sigma_RT, sigma_RT_err = None, None
-    struct_path = os.path.join(root_dir, "LGPS_221.cif")
-    if os.path.exists(struct_path):
+    if struct_path is None:
+        struct_path = os.path.join(root_dir, "LGPS_221.cif")
+    if struct_path and os.path.exists(struct_path):
         structure = Structure.from_file(struct_path)
         sigma_RT = get_extrapolated_conductivity(temps_arr, diffs_arr, RT, structure, "Li")
         sigma_RT_err = sigma_RT * sigma_lnD_RT
@@ -196,7 +214,8 @@ if __name__ == "__main__":
         description="Calculate Activation Energy ($E_a$) and RT conductivity from diffusion data."
     )
     parser.add_argument("root_dir", nargs="?", default=".", 
-                        help="Root directory containing md_*K/diffusion_results.json")
+                        help="Root directory containing md_*K/diffusion*.json")
+    parser.add_argument("--structure", type=str, default=None, help="Path to structural CIF for conductivity computation")
     args = parser.parse_args()
-    calculate_activation_energy(args.root_dir)
+    calculate_activation_energy(args.root_dir, args.structure)
 

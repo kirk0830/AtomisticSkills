@@ -486,6 +486,14 @@ def main():
     
     logger.info(f"Starting MatGL fine-tuning for {training_config['max_epochs']} epochs")
     
+    if processed_val_data and val_loader:
+        logger.info("Evaluating initial zero-shot performance (Epoch 0)...")
+        trainer.validate(lit_model, val_loader)
+        # Pad train lists with None so they align with the initial validation step
+        for key in history_callback.training_history:
+            if 'train' in key:
+                history_callback.training_history[key].append(None)
+                
     trainer.fit(lit_model, train_loader, val_loader)
     
     logger.info("Fine-tuning complete!")

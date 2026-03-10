@@ -56,6 +56,18 @@ def parse_fairchem_cli_metrics(cli_output_text: str, task_name: str) -> dict:
                 current_train_loss = metrics.get("train/loss")
             except (ValueError, SyntaxError):
                 pass
+            
+            # If we have validation metrics and haven't saved epoch 0 yet, this means 
+            # we just finished an initial evaluation and are starting training!
+            if epoch_count == 0 and current_val_metrics and "loss_val" in current_val_metrics:
+                history["epoch"].append(0)
+                history["loss_train"].append(None)
+                for key in history:
+                    if key in ("epoch", "loss_train"): continue
+                    history[key].append(current_val_metrics.get(key, None))
+                epoch_count = 1
+                current_val_metrics = {}
+                
             continue
         
         val_loss_match = re.search(r"val/loss:\s*([\d.eE+-]+)", line)

@@ -132,10 +132,11 @@ python scripts/run_finetuning.py \
 
 > [!WARNING]
 > **Chemical System vs. Stoichiometry**
-> - `chemical_system` parameter controls which **elements** are present
-> - It does **NOT** control exact composition ratios
-> - Example: `chemical_system="Li-Zr-Cl"` generates various compositions (Li3Cl5, LiZrCl4, etc.)
-> - To get exact stoichiometry (e.g., Li2ZrCl6): generate many structures and filter
+> - `chemical_system` parameter controls which **elements** are encouraged to be present.
+> - It does **NOT** guarantee that all specified elements will be in the output structure.
+> - It does **NOT** prevent other elements from occasionally appearing if guidance is too low.
+> - Example: `chemical_system="Li-Zr-Cl"` might generate LiCl, ZrCl4, or even structures missing Li, alongside the desired ternaries (e.g., Li2ZrCl6).
+> - **Action Required:** You MUST write a post-processing script to filter the output `.cif` files and keep only the ones that match your exact target elemental composition.
 
 > [!WARNING]
 > **CSP Mode Not Available**
@@ -149,6 +150,7 @@ python scripts/run_finetuning.py \
 > - **GPU Required**: MatterGen requires a CUDA-compatible GPU. CPU is extremely slow.
 > - **Batch Size**: Use larger batches (10-50) for efficient GPU utilization
 > - **Guidance Scale**: Higher values (1.0-5.0) enforce stronger conditioning
+> - **Composition Filtering**: Always filter the generated output CIFs using `pymatgen` to verify that the structures contain exactly the target elements.
 > - **Validation**: Always validate generated structures via relaxation and stability analysis
 
 > [!TIP]

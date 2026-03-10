@@ -89,16 +89,25 @@ def main():
                     continue
                     
             mode = data.get('mode')
-            epoch = data.get('epoch')
+            raw_epoch = data.get('epoch')
+            
+            # MACE logs pre-training eval as epoch=None. We will map this to 0.
+            if mode == 'eval' and raw_epoch is None:
+                epoch = 0
+            else:
+                epoch = raw_epoch
             
             if mode == 'opt' and epoch is not None:
                 current_epoch_train_losses.append(data.get('loss', 0.0))
             elif mode == 'eval' and epoch is not None:
-                # End of epoch evaluation
+                # End of epoch evaluation (or initial evaluation at epoch 0)
                 history['epoch'].append(epoch)
                 
-                # Average train loss
-                avg_train_loss = sum(current_epoch_train_losses) / len(current_epoch_train_losses) if current_epoch_train_losses else 0.0
+                # Average train loss (will be 0.0 for initial epoch 0)
+                if epoch == 0:
+                    avg_train_loss = None
+                else:
+                    avg_train_loss = sum(current_epoch_train_losses) / len(current_epoch_train_losses) if current_epoch_train_losses else 0.0
                 history['loss_train'].append(avg_train_loss)
                 current_epoch_train_losses = [] # reset for next epoch
                 

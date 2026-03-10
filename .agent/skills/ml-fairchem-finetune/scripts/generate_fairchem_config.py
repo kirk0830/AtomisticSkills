@@ -120,7 +120,45 @@ def _create_finetune_yaml(configs_dir, train_lmdb_path, val_lmdb_path, force_rms
     with open(final_yaml_path, "w") as f:
         yaml.dump(template_ft, f, default_flow_style=False, sort_keys=False)
     
-    return final_yaml_path
+    run_script_path = output_dir / "run_fairchem_finetuning.py"
+    run_code = f"""#!/usr/bin/env python
+import sys
+import logging
+from pathlib import Path
+import hydra
+
+# Fairchem imports
+from fairchem.core._cli import get_hydra_config_from_yaml
+
+def main():
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    
+    config_path = "{final_yaml_path.name}"
+    run_dir = "{run_dir.absolute()}"
+    timestamp_id = "{timestamp_id}"
+    
+    overrides = [f"job.run_dir={{run_dir}}", f"+job.timestamp_id={{timestamp_id}}"]
+    
+    logging.info(f"Loading YAML config: {{config_path}}")
+    cfg = get_hydra_config_from_yaml(config_path, overrides)
+    
+    logging.info("Instantiating runner...")
+    runner = hydra.utils.instantiate(cfg.runner, _recursive_=False)
+    
+    # Force an initial validation (Epoch 0) BEFORE any training steps occur
+    logging.info("Executing initial zero-shot performance evaluation (Epoch 0)...")
+    runner.evaluate()
+    
+    logging.info("Starting fine-tuning...")
+    runner.train()
+
+if __name__ == "__main__":
+    main()
+"""
+    with open(run_script_path, "w") as f:
+        f.write(run_code)
+        
+    return final_yaml_path, run_script_path
 
 def main():
     parser = argparse.ArgumentParser(description="Generate fairchem training config.")
@@ -159,7 +197,7 @@ def main():
         logging.error(f"Cannot find Fairchem config templates at {config_dir}. Check repository structure.")
         sys.exit(1)
         
-    yaml_config_path = _create_finetune_yaml(
+    yaml_config_path, run_script_path = _create_finetune_yaml(
         configs_dir=config_dir,
         train_lmdb_path=metadata["train_lmdb_path"],
         val_lmdb_path=metadata["val_lmdb_path"],
@@ -172,18 +210,16 @@ def main():
         args=args
     )
     
-    run_dir = save_dir / "runs"
-    timestamp_id = f"run_{args.epochs}ep"
-    
     print("\\n=======================================================")
-    print("Configuration successfully generated!")
+    print("Configuration and Run Script successfully generated!")
     print(f"Configuration written to: {yaml_config_path}")
+    print(f"Runner script written to: {run_script_path}")
     print("=======================================================\\n")
-    print("To start training, simply run:")
+    print("To evaluate zero-shot performance and then start training, run:")
     print(f"  conda activate fairchem-agent")
     print(f"  export PYTHONPATH={save_dir.absolute()}:$PYTHONPATH")
     print(f"  cd {save_dir.absolute()}")
-    print(f"  fairchem -c {yaml_config_path.name} job.run_dir={run_dir.absolute()} +job.timestamp_id={timestamp_id}")
+    print(f"  python {run_script_path.name} | tee fairchem_cli_output.log")
 
 if __name__ == "__main__":
     main()
