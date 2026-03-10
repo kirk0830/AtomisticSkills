@@ -20,9 +20,8 @@ This skill:
 - Conda environment: `xrd-agent` (see `conda-envs/xrd-agent`).
 - Dependencies: `dara-xrd` (and its Ray/BGMN stack).
 - BGMN: DARA will prompt to download or use a local BGMN installation.
-- For **internet-restricted HPC**:
-  - Login nodes typically have internet; compute nodes don't.
-  - This skill supports a **two-step workflow** (download CIFs on login, run Ray search on compute).
+- For clusters where only some nodes have internet:
+  - You can optionally use a **two-step workflow** (download CIFs on a node with internet, run Ray search elsewhere).
 
 ## Script
 
@@ -34,11 +33,9 @@ This skill:
 - Output directory (default):
   - `phase_analysis_results/` under the **same directory as the XRD pattern**.
 
-## Usage Modes
+## Usage
 
-### Mode A: Single-step (compute node has internet)
-
-Use when your compute node can reach the COD servers.
+Use this script when the node where you run it can reach the COD servers (for automatic CIF download), or when you have a local directory of CIFs you want to search.
 
 ```bash
 # Env: xrd-agent
@@ -50,7 +47,7 @@ python .agent/skills/xrd-phase-analysis/scripts/phase_search.py \
 This will:
 1. Create `phase_analysis_results/` next to the XRD file.
 2. Download and filter CIFs for `Ge-O-Zn` into `phase_analysis_results/cifs/`.
-3. Start a local Ray cluster on the compute node.
+3. Start a local Ray cluster.
 4. Run `search_phases(...)`.
 5. Write plots and reports into `phase_analysis_results/`.
 
@@ -64,43 +61,7 @@ python .../phase_search.py \
 
 In this case no internet / COD download is used; only `--cif_dir` is searched.
 
-### Mode B: Two-step (login node has internet; compute node does not)
-
-**Step 1 – Login node (download CIFs only; no Ray required)**
-
-```bash
-# Login node, internet available
-python .agent/skills/xrd-phase-analysis/scripts/phase_search.py \
-  --xrd_data .agent/skills/xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
-  --chemical_system "Ge-O-Zn" \
-  --download_cifs_only
-```
-
-This step:
-- Creates `phase_analysis_results/cifs/` next to the XRD file.
-- Downloads and filters CIFs via COD into that directory.
-- **Does not import or start Ray**, and does **not** run `search_phases`.
-
-**Step 2 – Compute node (no internet; Ray works)**
-
-On the same shared filesystem:
-
-```bash
-# Compute node, no internet needed
-python .agent/skills/xrd-phase-analysis/scripts/phase_search.py \
-  --xrd_data .agent/skills/xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
-  --chemical_system "Ge-O-Zn"
-```
-
-The script:
-- Looks for CIFs in `phase_analysis_results/cifs/`.
-  - If found, **uses them** and skips COD download.
-  - If not found, and `--chemical_system` is set, it will try to download (which will fail without internet).
-- Imports Ray locally and runs `ray.init(address="local", ...)` on the compute node.
-- Calls `search_phases(...)`.
-- Writes all outputs under `phase_analysis_results/`.
-
-You can also be explicit and skip `--chemical_system` on the compute node:
+Specific example:
 
 ```bash
 python .../phase_search.py \
@@ -122,8 +83,6 @@ python .../phase_search.py \
   - X-ray source: `Cu`, `Co`, `Cr`, `Fe`, `Mo`, or a numeric wavelength in nm. Default: `Cu`.
 - `--instrument_profile` (optional):
   - BGMN instrument profile. Default: `Aeris-fds-Pixcel1d-Medipix3`.
-- `--download_cifs_only`:
-  - If set, only performs the CIF download/preparation step and exits. No Ray and no phase search are run.
 - `--quiet`:
   - Suppress verbose logging/prints.
 

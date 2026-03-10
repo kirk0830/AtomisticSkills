@@ -7,12 +7,10 @@ Follows the DARA tutorial: https://cedergrouphub.github.io/dara/notebooks/phase_
 - Step 3: Save results and refinement plots under phase_analysis_results/.
 
 Usage:
-    # 1) On login node (internet): download CIFs only
-    python phase_search.py --xrd_data pattern.xrdml --chemical_system "Ge-O-Zn" --download_cifs_only
-
-    # 2) On compute node (no internet): reuse downloaded CIFs and run full search
+    # Download CIFs and perform phase analysis
     python phase_search.py --xrd_data pattern.xrdml --chemical_system "Ge-O-Zn"
-    # or explicitly:
+
+    # Alternative: reuse pre-downloaded CIFs (no COD download)
     python phase_search.py --xrd_data pattern.xrdml --cif_dir path/to/cifs
 
 Output (default: same directory as the pattern, under phase_analysis_results/):
@@ -51,7 +49,6 @@ def phase_search(
     wavelength: str = "Cu",
     instrument_profile: str = "Aeris-fds-Pixcel1d-Medipix3",
     verbose: bool = True,
-    download_cifs_only: bool = False,
 ) -> List:
     """
     Run DARA phase search on an XRD pattern.
@@ -59,7 +56,7 @@ def phase_search(
     Args:
         xrd_data_path: Path to pattern file (.xy, .xrdml, or .raw).
         chemical_system: Chemical system for COD lookup (e.g. "Ge-O-Zn"). Required if cif_dir not given.
-        cif_dir: Directory of CIF files to search. If given, chemical_system and download are skipped.
+        cif_dir: Directory of CIF files to search. If given, chemical_system and COD download are skipped.
         output_dir: Where to write results. Default: same directory as pattern, under phase_analysis_results/.
         wavelength: "Cu", "Co", "Cr", "Fe", "Mo" or wavelength in nm.
         instrument_profile: BGMN instrument profile name.
@@ -104,15 +101,14 @@ def phase_search(
             try:
                 cod = CODDatabase()
                 cod.get_cifs_by_chemsys(chemical_system, dest_dir=str(cifs_dest))
-            except Exception as e:  # friendly exit on login/compute split
+            except Exception as e:  # friendly exit when COD download fails
                 if verbose:
                     print(
                         "----------------------------------------\n"
                         f"Error downloading CIFs for {chemical_system}: {e}\n"
-                        "This node likely has no internet access.\n"
-                        "Hint: On a login node with internet, run with --download_cifs_only, then\n"
-                        "      rerun on the compute node without --download_cifs_only so it reuses\n"
-                        "      the CIFs in phase_analysis_results/cifs/."
+                        "This can happen if the node has no internet access or the COD service is unavailable.\n"
+                        "Hint: Ensure the node running this script has internet access, or provide an existing\n"
+                        "      CIF directory via --cif_dir so no COD download is needed."
                     )
                 # Exit phase_search gracefully
                 return []
@@ -122,19 +118,11 @@ def phase_search(
             if verbose:
                 print(f"Using {len(all_cifs)} CIFs from {cifs_dest}")
 
-    if download_cifs_only:
-        if verbose:
-            loc = cif_dir_path if cif_dir else cifs_dest
-            print(f"CIFs ready at {loc}. Run without --download_cifs_only on a compute node to perform phase search.")
-        return []
-
-    # Step 2: Search (import here to avoid Ray init on login nodes when --download_cifs_only)
+    # Step 2: Search
     import ray
     from dara import search_phases
 
-    # Init Ray before search_phases; _node_ip_address avoids 8.8.8.8 connectivity check
-    # on compute nodes without internet (avoids "Failed to register worker to Raylet").
-    import ray
+    # Init Ray before search_phases.
     ray.init(
         address="local",
         num_cpus=min(8, os.cpu_count() or 1),
@@ -243,11 +231,6 @@ def main():
         help="BGMN instrument profile (default: Aeris-fds-Pixcel1d-Medipix3)",
     )
     parser.add_argument(
-        "--download_cifs_only",
-        action="store_true",
-        help="Only download CIFs for the given chemical system/cif_dir and exit (no Ray / phase search).",
-    )
-    parser.add_argument(
         "--quiet",
         action="store_true",
         help="Suppress progress output",
@@ -257,21 +240,7 @@ def main():
     if not args.chemical_system and not args.cif_dir:
         parser.error("Provide either --chemical_system (to download CIFs from COD) or --cif_dir (existing CIFs)")
 
-    # Download-only mode (for login nodes with internet; no Ray)
-    if args.download_cifs_only:
-        phase_search(
-            xrd_data_path=args.xrd_data,
-            chemical_system=args.chemical_system,
-            cif_dir=args.cif_dir,
-            output_dir=args.output_dir,
-            wavelength=args.wavelength,
-            instrument_profile=args.instrument_profile,
-            verbose=not args.quiet,
-            download_cifs_only=True,
-        )
-        return
-
-    # Full phase search (for compute nodes; DARA will start Ray when search_phases runs)
+    # Full phase search
     phase_search(
         xrd_data_path=args.xrd_data,
         chemical_system=args.chemical_system,
