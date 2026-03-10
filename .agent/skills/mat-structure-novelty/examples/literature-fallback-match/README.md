@@ -12,8 +12,8 @@ In this case, we use `Li2ZrCl6` (LZC)—a known halide solid-state electrolyte (
 
 ```bash
 # Env: base-agent
-# You can pass an empty or non-existent candidate directory, or the LGPS candidates dir—it doesn't matter because it won't structurally match.
-python ../../scripts/match_structure.py Li2ZrCl6.cif empty_candidates_dir --output fallback_match.json
+# You don't need to pass a second argument. It will automatically query MP. The API will find 0 polymorphs, triggering the literature fallback.
+python ../../scripts/match_structure.py Li2ZrCl6.cif --output fallback_match.json
 ```
 
 3. **Expected Output:**

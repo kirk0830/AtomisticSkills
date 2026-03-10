@@ -13,28 +13,19 @@ To determine whether a user-provided structure (or list of structures) has been 
 
 ## Instructions
 
-### Step 1: Search Materials Project for Candidate Structures
-Before attempting to match a crystal structure, you need to download all known polymorphs for its chemical formula. Use the MP MCP tool `search_materials_project_by_formula` with the `return_all=True` flag to ensure you get *all* matching structures (both theoretical and experimental/ICSD), not just the ground state.
+### Step 1: Execute Direct Novelty Check
+Use the `match_structure.py` script to perform a symmetry-aware structural comparison. The script accepts a single target CIF or an entire **directory** of targets to run in bulk.
 
-```bash
-mcp_search_materials_project_by_formula(
-    formula="Li10GeP2S12", # Formula of the target structure
-    return_all=True, # Critical: Gets all polymorphs
-    save_to_file="candidates" # Directory to save the candidates
-)
-```
-
-**Note on ICSD:** MP ingests a large subset of experimental structures from ICSD, but **it does not contain the entire, up-to-date ICSD database**. MP typically includes older, well-ordered ICSD entries and may exclude recently added or highly disordered structures. Experimental structures will appear as `theoretical=False` in MP and will often contain ICSD IDs in their metadata. If you need to match against the *entire* ICSD, you must provide your own exported ICSD candidate files, as the full ICSD is proprietary and not available via public API.
-
-### Step 2: Match Target Structure Against Candidates
-Use the `match_structure.py` script to perform a symmetry-aware structural comparison between the user's structure and the candidates.
+**Option A: Automatic Materials Project Matching (Default)**
+If you do not pass a second argument, the script will automatically query the Materials Project API for all theoretical and experimental polymorphs corresponding to the target formulas, and match your structures against them:
 
 ```bash
 # Env: base-agent
-python .agent/skills/mat-structure-novelty/scripts/match_structure.py target_structure.cif candidates/ --output match_results.json
+python .agent/skills/mat-structure-novelty/scripts/match_structure.py generated_cifs/ --output batch_results.json
 ```
 
-**Custom Candidate Matching:** If a user provides two distinct structures and simply wants to know if they match each other, you can bypass Step 1 and provide the second structure as the candidate:
+**Option B: Local Candidate Matching**
+If you want to match against a specific subset of structures (like a local ICSD dump) or just compare two specific structures, pass the explicitly downloaded candidates directory or file:
 
 ```bash
 # Env: base-agent
@@ -42,10 +33,14 @@ python .agent/skills/mat-structure-novelty/scripts/match_structure.py target_str
 ```
 
 **Literature Fallback (Novel/Unmatched Structures):** 
-If the script fails to find any *structural* match among the candidates, it will automatically extract the exact symmetry space group of your input structure (e.g., `P-31m`). It then queries the OpenAlex database for the target structure's chemical formula **AND** its crystal system/space group (e.g., `"Li2ZrCl6" AND ("P-31m" OR "trigonal")`). This ensures that even if a material (like the trigonal `Li2ZrCl6` from arXiv:2403.08237) is missing from Materials Project, the script will guarantee the literature reporting it actually matches your specific *polymorph*. It will output `literature_reported: true` and list the recent publications confirming its existence.
+If the script fails to find any *structural* match among the candidates in the Materials Project, you should perform a literature search to see if the material has been synthesized. 
+When searching the literature for the structure, **ONLY use the composition as input** (for example, `"Li3ZrCl6"` or `"Li3InCl6"`). Do not include the space group or crystal system in the search query, as papers often do not index those exact terms in searchable abstracts.
+After finding papers that report the composition, you must read the paper and **compare the structure** described in the literature with your candidate polymorph to determine if they match.
+> [!IMPORTANT]
+> If a literature match is reported but the **full text is not available (Open Access = False)** and you are unable to definitively read the paper to confirm the exact reported structure matches yours, you MUST explicitly tell the user that "literature full text is not available and the structure cannot be conclusively confirmed".
 
-### Step 3: Literature Search (Optional)
-If the user wants to know if the *composition* itself has been heavily studied or synthesized in particular conditions, perform a literature search using the `search_literature` MCP tool. 
+### Step 2: Literature Search (Mandatory)
+If the structure is entirely novel, or just to know if the *composition* itself has been heavily studied or synthesized in particular conditions, you **MUST** perform a literature search using the `search_literature` MCP tool. 
 
 ```bash
 mcp_search_literature(
@@ -60,8 +55,8 @@ mcp_search_literature(
 Checking if a generated structure has been experimentally reported:
 ```bash
 # Env: base-agent
-mcp_search_materials_project_by_formula(formula="LiFePO4", return_all=True, save_to_file="LiFePO4_candidates")
-python .agent/skills/mat-structure-novelty/scripts/match_structure.py generated_LFP.cif LiFePO4_candidates/ --output match_results.json
+# This automatically searches MP for LiFePO4 structures and compares against generated_LFP.cif
+python .agent/skills/mat-structure-novelty/scripts/match_structure.py generated_LFP.cif --output match_results.json
 ```
 
 ## Constraints
