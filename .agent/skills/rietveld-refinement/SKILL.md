@@ -92,6 +92,11 @@ Results: `examples/LiFePO4/refinement_results/LiFePO4/` (refinement_result.json,
 # Env: xrd-agent. Quote the path because of (PO3), (OH), (NH4).
 python .agent/skills/rietveld-refinement/scripts/refine.py \
   --xrd_data ".agent/skills/rietveld-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
+
+# If your shell or conda run still has trouble with parentheses in the path,
+# you can invoke the environment's Python explicitly instead of using `conda run`:
+/home/USER/.conda/envs/xrd-agent/bin/python .agent/skills/rietveld-refinement/scripts/refine.py \
+  --xrd_data ".agent/skills/rietveld-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
 ```
 
 CIFs are taken from `examples/CaNi(PO3)4_.../cifs/` (NiO_225_sym.cif, CaNi(PO3)4_15_sym.cif). Results under that example’s `refinement_results/`.
