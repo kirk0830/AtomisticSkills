@@ -20,6 +20,14 @@ from pymatgen.entries.computed_entries import ComputedEntry
 from pymatgen.analysis.phase_diagram import PhaseDiagram
 from pymatgen.io.ase import AseAtomsAdaptor
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../mat-electrochemical-window/scripts')))
+try:
+    from calculate_ecw import get_electrochemical_window
+except ImportError:
+    get_electrochemical_window = None
+
 
 def load_relaxed_energies(
     hull_manifest: Dict,
@@ -36,7 +44,9 @@ def load_relaxed_energies(
         List of ComputedEntry objects for pymatgen
     """
     entries = []
+    loaded_dirs = set()
     
+    # 1. Load the structures specifically requested from the hull manifest
     for hull_entry in hull_manifest["hull_entries"]:
         material_id = hull_entry["material_id"]
         formula = hull_entry["formula"]
@@ -50,66 +60,81 @@ def load_relaxed_energies(
         
         if not material_dir.exists():
             print(f"⚠️  Warning: No relaxed directory found for {material_id} ({formula})")
-            print(f"   Expected: {relaxed_dir / material_id} or {relaxed_dir / formula}")
             continue
-        
-        # Look for relaxed_structure.cif or similar
-        possible_files = [
-            material_dir / "relaxed_structure.cif",
-            material_dir / "final_structure.cif",
-            material_dir / f"{material_id}.cif"
-        ]
-        
-        structure_file = None
-        for f in possible_files:
-            if f.exists():
-                structure_file = f
-                break
-        
-        if not structure_file:
-            print(f"⚠️  Warning: No structure file found in {material_dir}")
-            continue
-        
-        # Read structure and get energy
-        # Assuming relaxed_energy is stored alongside or can be read from trajectory
-        energy_file = material_dir / "relaxed_energy.txt"
-        
-        if energy_file.exists():
-            with open(energy_file) as f:
-                energy = float(f.read().strip())
-        else:
-            # Try to read from a JSON result file
-            result_file = material_dir / "result.json"
-            if result_file.exists():
-                with open(result_file) as f:
-                    result = json.load(f)
-                    energy = result.get("relaxed_energy", None)
-            else:
-                print(f"⚠️  Warning: No energy file found for {material_id}")
-                print(f"   Expected: {energy_file} or {result_file}")
-                continue
-        
-        # Read structure to get composition
-        atoms = read(structure_file)
-        pmg_structure = AseAtomsAdaptor.get_structure(atoms)
-        composition = pmg_structure.composition
-        
-        # Create ComputedEntry
-        entry = ComputedEntry(
-            composition=composition,
-            energy=energy,
-            entry_id=material_id
-        )
-        
-        entries.append(entry)
-        print(f"✓ Loaded: {material_id:<15} {formula:<20} E = {energy:.4f} eV")
-    
+            
+        entry = _load_single_entry(material_dir, material_id)
+        if entry:
+            entries.append(entry)
+            loaded_dirs.add(material_dir)
+            print(f"✓ Loaded from manifest: {material_id:<15} {formula:<20} E = {entry.energy:.4f} eV")
+            
+    # 2. Load ANY OTHER STRUCTURES present in relaxed_dir for self-competition screening
+    for material_dir in relaxed_dir.iterdir():
+        if material_dir.is_dir() and material_dir not in loaded_dirs:
+            entry_id = material_dir.name
+            entry = _load_single_entry(material_dir, entry_id)
+            if entry:
+                entries.append(entry)
+                loaded_dirs.add(material_dir)
+                formula = entry.composition.reduced_formula
+                print(f"✓ Loaded for self-competition: {entry_id:<15} {formula:<20} E = {entry.energy:.4f} eV")
+                
     return entries
+
+def _load_single_entry(material_dir: Path, entry_id: str) -> ComputedEntry:
+    # Look for relaxed_structure.cif or similar
+    possible_files = [
+        material_dir / "relaxed_structure.cif",
+        material_dir / "final_structure.cif",
+        material_dir / f"{entry_id}.cif"
+    ]
+    
+    structure_file = None
+    for f in possible_files:
+        if f.exists():
+            structure_file = f
+            break
+    
+    if not structure_file:
+        return None
+    
+    # Read structure and get energy
+    # Assuming relaxed_energy is stored alongside or can be read from trajectory
+    energy_file = material_dir / "relaxed_energy.txt"
+    energy = None
+    
+    if energy_file.exists():
+        with open(energy_file) as f:
+            energy = float(f.read().strip())
+    else:
+        # Try to read from a JSON result file
+        result_file = material_dir / "result.json"
+        if result_file.exists():
+            with open(result_file) as f:
+                result = json.load(f)
+                energy = result.get("relaxed_energy", None)
+    
+    if energy is None:
+        return None
+    
+    # Read structure to get composition
+    atoms = read(structure_file)
+    pmg_structure = AseAtomsAdaptor.get_structure(atoms)
+    composition = pmg_structure.composition
+    
+    # Create ComputedEntry
+    return ComputedEntry(
+        composition=composition,
+        energy=energy,
+        entry_id=entry_id
+    )
 
 
 def compute_hull_analysis(
     entries: List[ComputedEntry],
-    target_formula: str
+    target_formula: str,
+    calculate_ecw: bool = False,
+    mobile_ion: str = "Li"
 ) -> Dict:
     """
     Construct phase diagram and compute E_hull for target material.
@@ -117,6 +142,8 @@ def compute_hull_analysis(
     Args:
         entries: List of ComputedEntry objects
         target_formula: Chemical formula of target material
+        calculate_ecw: Whether to calculate electrochemical window
+        mobile_ion: The mobile ion for ECW calculation
         
     Returns:
         Dictionary with stability analysis results
@@ -173,6 +200,23 @@ def compute_hull_analysis(
         "num_phases_on_hull": len(pd.stable_entries)
     }
     
+    # Calculate ECW if requested
+    if calculate_ecw and get_electrochemical_window is not None:
+        print(f"\nCalculating Electrochemical Window vs {mobile_ion}/{mobile_ion}+...")
+        # If metastable, force onto hull for pseudo-stability calculations
+        ecw_entry = target_entry
+        hull_e = pd.get_hull_energy(target_entry.composition)
+        if target_entry.energy > hull_e:
+            ecw_entry = ComputedEntry(target_entry.composition, hull_e - 1e-5)
+            
+        v_red, v_ox = get_electrochemical_window(ecw_entry, pd, mobile_ion)
+        results["v_red"] = v_red
+        results["v_ox"] = v_ox
+        results["ecw"] = f"[{v_red:.2f} V, {v_ox:.2f} V]"
+        print(f"V_red: {v_red:.2f} V")
+        print(f"V_ox:  {v_ox:.2f} V")
+        print(f"ECW:   [{v_red:.2f} V, {v_ox:.2f} V]")
+    
     # Print results
     print(f"Target Material: {target_formula}")
     print(f"E_hull: {e_hull:.2f} meV/atom")
@@ -213,6 +257,16 @@ def main():
         default="stability_analysis.json",
         help="Output JSON file"
     )
+    parser.add_argument(
+        "--calculate_ecw",
+        action="store_true",
+        help="Calculate the intrinsic electrochemical stability window"
+    )
+    parser.add_argument(
+        "--mobile_ion",
+        default="Li",
+        help="Mobile ion for ECW calculation (default: Li)"
+    )
     
     args = parser.parse_args()
     
@@ -237,7 +291,12 @@ def main():
     
     # Compute hull analysis
     try:
-        results = compute_hull_analysis(entries, args.target_material)
+        results = compute_hull_analysis(
+            entries, 
+            args.target_material,
+            calculate_ecw=args.calculate_ecw,
+            mobile_ion=args.mobile_ion
+        )
     except Exception as e:
         print(f"\n⚠️  ERROR: {e}")
         import traceback

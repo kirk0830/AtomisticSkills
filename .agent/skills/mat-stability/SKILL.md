@@ -11,6 +11,8 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 > [!TIP]
 > **Finite Temperature Stability**: While this skill focuses on 0K stability (potential energy), you can construct a finite-temperature phase diagram by replacing potential energies with **Free Energies** ($G = U + F_{\text{vib}}$) calculated from the [mat-qha-thermal-expansion](../../skills/qha-thermal-expansion/SKILL.md) skill.
+> 
+> **Electrochemical Stability**: The phase diagram constructed here can be seamlessly reused to calculate the material's electrochemical window (ECW) against a specific mobile ion (e.g., Li/Li+). See the [mat-electrochemical-window](../mat-electrochemical-window/SKILL.md) skill for detailed methods.
 
 ## Instructions
 
@@ -60,13 +62,15 @@ To determine the thermodynamic stability of a material at 0K by computing the en
     
     **Critical**: Use the **same MLIP and settings** for all relaxations to ensure energy consistency.
 
-4.  **Construct Convex Hull**: Build a pymatgen phase diagram using the relaxed energies.
+4.  **Construct Convex Hull & Calculate Stability**: Build a pymatgen phase diagram using the relaxed energies.
     ```bash
     # Env: base-agent
     python .agent/skills/mat-stability/scripts/compute_ehull.py \
         --hull_manifest hull_entries.json \
         --relaxed_dir relaxed/ \
         --target_material LiFePO4 \
+        --calculate_ecw \
+        --mobile_ion Li \
         --output stability_analysis.json
     ```
     
@@ -75,7 +79,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
     - Create `ComputedEntry` objects for pymatgen
     - Construct the convex hull using `PhaseDiagram`
     - Calculate $E_{hull}$ for the target material
-    - Generate a phase diagram plot (optional)
+    - (Optional) If `--calculate_ecw` is provided, calculate the intrinsic Electrochemical Stability Window ($V_{red}$ and $V_{ox}$) against the specified `--mobile_ion`.
 
 5.  **Interpret Stability**: Assess the thermodynamic stability based on $E_{hull}$ (energy above hull in meV/atom):
     - **$E_{hull} = 0$ meV/atom**: **STABLE** - On the convex hull, thermodynamically stable
@@ -86,43 +90,38 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 ## Examples
 
-### Example 1: Stability Analysis for LiFePO4
+### Example 1: Integrated Stability and ECW Pipeline for Li3PS4
 ```bash
-# Step 1: Query Materials Project hull in Li-Fe-P-O space
+# Step 1: Query Materials Project hull in Li-P-S space
 # Env: base-agent
 python .agent/skills/mat-stability/scripts/query_mp_hull.py \
-    --formula "Li-Fe-P-O" \
-    --target "LiFePO4" \
+    --formula "Li-P-S" \
+    --target "Li3PS4" \
+    --thermo_type "R2SCAN" \
     --output hull_structures/
 
-# Step 2: Batch relax all structures (target + hull phases)
+# Step 2: Batch relax all structures with MatGL r2SCAN
 mcp_matgl_relax_structure(
-    structure_data="hull_structures/",  # Directory with all CIF files
+    structure_data="hull_structures/",
     relax_cell=True,
     model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES",
-    fmax=0.02,
+    fmax=0.05,
+    steps=20,
     output_dir="relaxed/"
 )
 
-# Step 3: Compute E_hull
-# Env: mlip-agent
+# Step 3: Compute Integrated Stability and ECW
+# Env: base-agent
 python .agent/skills/mat-stability/scripts/compute_ehull.py \
     --hull_manifest hull_entries.json \
     --relaxed_dir relaxed/ \
-    --target_material LiFePO4 \
-    --output LiFePO4_stability.json
+    --target_material Li3PS4 \
+    --calculate_ecw \
+    --mobile_ion Li \
+    --output Li3PS4_stability_ecw.json
 ```
 
-### Example 2: Quick Stability Check for LiCoO2
-```bash
-# Query Li-Co-O chemical space
-# Env: mlip-agent
-python .agent/skills/mat-stability/scripts/query_mp_hull.py \
-    --formula "Li-Co-O" \
-    --target "LiCoO2" \
-    --thermo_type "R2SCAN" \
-    --output hull_structures_LiCoO2/
-```
+We also provide a stored record of this example run in `examples/li3ps4_stability/`.
 
 ## Constraints
 
@@ -131,12 +130,14 @@ python .agent/skills/mat-stability/scripts/query_mp_hull.py \
 - **Convergence Criterion**: Use `fmax ≤ 0.02 eV/Å` for all relaxations. Inconsistent convergence criteria will introduce systematic errors.
 - **Chemical Space**: The query must include ALL elements in the target material. For example, for LiFePO4, query "Li-Fe-P-O" not just "Li-Fe-P".
 - **Hull Completeness**: Ensure all competing phases are included. Missing hull phases will lead to underestimated E_hull (false negatives for instability).
+- **Hull Reuse**: If calculating the stability of multiple different structures in the same chemical space, we should reuse the hull instead of relaxing them again.
 - **Stability Thresholds**: 
   - $E_{hull} = 0$ meV/atom: **Stable**
   - $0 < E_{hull} \leq 50$ meV/atom: **Metastable**
   - $E_{hull} > 50$ meV/atom: **Unstable**
 - **Phase Diagram Construction**: For full phase diagram visualization and competing phase analysis, see the separate phase-diagram skill (to be developed).
 - **Energy Input**: Use **TOTAL POTENTIAL ENERGY** for all entries in `pymatgen.analysis.phase_diagram.PhaseDiagram` automatically calculates formation energies by identifying elemental ground states from the provided entries. Do not pass formation energies directly.
+- **High-Throughput Self-Competition**: When computing $E_{hull}$ for multiple generated candidates, place all relaxed structures in `relaxed_dir`. `compute_ehull.py` will automatically load all candidates and include them in the `PhaseDiagram` alongside the Materials Project hull reference. This correctly enables generated candidates to thermodynamically compete against each other.
 - **DFT Validation**: For publication-quality results, validate E_hull with DFT calculations, especially for materials close to the stability threshold.
 ---
 
