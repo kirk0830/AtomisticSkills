@@ -91,12 +91,12 @@ def load_model(model_name: str = "MACE-OMAT-0-small", device: str = "auto", task
         return f"Error loading model: {str(e)}"
 
 @mcp.tool()
-def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+def predict_structure(structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]]) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """
-    Predict energy, forces, and stress for a structure.
+    Predict energy, forces, and stress for a structure or a batch of structures.
     
     Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
     
     Returns:
         Dict: {'energy': eV, 'forces': eV/A, 'stress': eV/A^3}
@@ -115,7 +115,7 @@ def predict_atomic_features(structure_data: Union[Dict[str, Any], str], output_p
     Automatically saves features to the current research directory.
     
     Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
         output_path: Optional custom path for saving features. If not provided, auto-generates
                      based on structure filename (e.g., 'solid.cif' -> 'solid_features.json').
     
@@ -191,11 +191,7 @@ def relax_structure(
     Relax one or multiple structures using the loaded MACE model.
     
     Args:
-        structure_data: Can be:
-            - Single structure (dict, ASE Atoms, pymatgen Structure, or file path)
-            - Directory path containing CIF/POSCAR files (batch mode)
-            - List of file paths (batch mode)
-            - List of structure dicts (batch mode)
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
@@ -224,7 +220,7 @@ def relax_structure(
 
 @mcp.tool()
 def run_md(
-    structure_data: Union[Dict[str, Any], str],
+    structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
     temperature: float = 300.0,
     steps: int = 1000,
     timestep: float = 1.0,
@@ -236,12 +232,13 @@ def run_md(
     monitor: bool = False,
     monitor_type: Optional[Union[str, List[str]]] = None,
     monitor_params: Optional[Dict[str, Any]] = None,
+    supercell_min_length: Optional[float] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
     
     Args:
-        structure_data: Structure data.
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
         temperature: Temperature in Kelvin.
         steps: Number of steps.
         timestep: Timestep in fs.
@@ -256,6 +253,7 @@ def run_md(
                      or a list of types.
         monitor_params: Optional dictionary of parameters for the monitors 
                         (e.g., {"upper_limit_ratio": 4.0}).
+        supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell.
         
     Returns:
         Dictionary with MD results.
@@ -286,7 +284,8 @@ def run_md(
             output_dir=output_dir,
             monitor=monitor,
             monitor_type=monitor_type,
-            monitor_params=monitor_params
+            monitor_params=monitor_params,
+            supercell_min_length=supercell_min_length
         )
         
         if "error" in result:

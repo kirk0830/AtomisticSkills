@@ -81,10 +81,13 @@ def load_model(
         return f"Error loading model: {str(e)}"
 
 @mcp.tool()
-def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+def predict_structure(structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]]) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """
-    Predict energy, forces, and stress for a structure.
+    Predict energy, forces, and stress for a structure or a batch of structures.
     
+    Args:
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
+            
     Returns:
         Dict: {'energy': eV, 'forces': eV/A, 'stress': eV/Å³}
     """
@@ -119,11 +122,7 @@ def relax_structure(
     Relax one or multiple structures using the loaded FAIRCHEM model.
     
     Args:
-        structure_data: Can be:
-            - Single structure (dict, ASE Atoms, pymatgen Structure, or file path)
-            - Directory path containing CIF/POSCAR files (batch mode)
-            - List of file paths (batch mode)
-            - List of structure dicts (batch mode)
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
@@ -150,7 +149,7 @@ def relax_structure(
 
 @mcp.tool()
 def run_md(
-    structure_data: Union[Dict[str, Any], str],
+    structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
     temperature: float = 300,
     steps: int = 1000,
     timestep: float = 1.0,
@@ -161,13 +160,14 @@ def run_md(
     output_dir: Optional[str] = None,
     monitor: bool = False,
     monitor_type: Optional[Union[str, List[str]]] = None,
-    monitor_params: Optional[Dict[str, Any]] = None
+    monitor_params: Optional[Dict[str, Any]] = None,
+    supercell_min_length: Optional[float] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
     
     Args:
-        structure_data: Structure in partial dictionary format.
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
         temperature: Temperature in Kelvin.
         steps: Number of steps.
         timestep: Timestep in fs.
@@ -180,6 +180,7 @@ def run_md(
         monitor: Whether to enable automatic MD monitoring.
         monitor_type: Type of monitor ("melting", "explosion", "overshoot", "volume") or list of types.
         monitor_params: Optional dictionary of parameters for the monitors (e.g., {"upper_limit_ratio": 4.0}).
+        supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell.
         
     Returns:
         Dictionary with MD results (trajectory_path, final_structure).
@@ -207,7 +208,8 @@ def run_md(
             output_dir=output_dir,
             monitor=monitor,
             monitor_type=monitor_type,
-            monitor_params=monitor_params
+            monitor_params=monitor_params,
+            supercell_min_length=supercell_min_length
         )
         
         return recursive_tolist(result)

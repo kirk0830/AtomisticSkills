@@ -497,19 +497,46 @@ class MLIPModel(ABC):
             return {"error": f"Batch relaxation failed: {str(e)}"}
         
 
-    def static_calculation(self, structure_data: Any) -> Dict[str, Any]:
+    def static_calculation(self, structure_data: Any) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """
         Run static calculation (predict energy, forces, stress) for a structure.
-        
-        Args:
-            structure_data: Structure data compatible with check_structure_data.
-            
-        Returns:
-            Dictionary containing 'energy' (eV), 'forces' (eV/A), and 'stress' (eV/Å³) if available.
         """
         if not self.is_loaded:
             return {"error": "Model not loaded. Please call load_model first."}
             
+        from pathlib import Path
+        import os
+        is_batch = isinstance(structure_data, list) or (isinstance(structure_data, str) and Path(structure_data).is_dir())
+        
+        if is_batch:
+            structure_list = []
+            structure_names = []
+            if isinstance(structure_data, str) and Path(structure_data).is_dir():
+                dir_path = Path(structure_data)
+                patterns = ["*.cif", "*.CIF", "*POSCAR*", "*CONTCAR*", "*.vasp"]
+                for pattern in patterns:
+                    for filepath in dir_path.glob(pattern):
+                        structure_list.append(str(filepath))
+                        structure_names.append(filepath.stem)
+            elif isinstance(structure_data, list):
+                for i, struct in enumerate(structure_data):
+                    structure_list.append(struct)
+                    if isinstance(struct, str) and os.path.isfile(struct):
+                        structure_names.append(Path(struct).stem)
+                    else:
+                        structure_names.append(f"structure_{i}")
+            
+            results = []
+            for struct_data, struct_name in zip(structure_list, structure_names):
+                res = self._single_static_calculation(struct_data)
+                res["structure_name"] = struct_name
+                results.append(res)
+            return {"mode": "batch", "total_structures": len(results), "results": results}
+        else:
+            return self._single_static_calculation(structure_data)
+
+    def _single_static_calculation(self, structure_data: Any) -> Dict[str, Any]:
+        """Internal single static calculation."""
         # Validate structure
         atoms = self.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
@@ -537,12 +564,11 @@ class MLIPModel(ABC):
                 result["stress"] = [float(x) for x in stress.tolist()] if hasattr(stress, "tolist") else [float(x) for x in stress]
             except Exception:
                 pass
-                
             return result
         except Exception as e:
             return {"error": f"Prediction failed: {str(e)}"}
 
-    def run_md(
+    def _single_run_md(
         self,
         structure_data: Any,
         temperature: float = 300.0,
@@ -555,13 +581,139 @@ class MLIPModel(ABC):
         output_dir: Optional[str] = None,
         monitor: bool = False,
         monitor_type: Optional[Union[str, List[str]]] = None,
-        monitor_params: Optional[Dict[str, Any]] = None
+        monitor_params: Optional[Dict[str, Any]] = None,
+        supercell_min_length: Optional[float] = None
+    ) -> Dict[str, Any]:
+        """
+        Run molecular dynamics simulation using MatCalc for a single structure/temperature.
+        """
+        if not self.is_loaded:
+            return {"error": "Model not loaded. Please call load_model first."}
+
+        from ase import units
+        from pymatgen.io.ase import AseAtomsAdaptor
+        from src.utils.research_utils import get_current_research_dir
+        from src.utils.mlips.md_runner import CustomMDCalc
+        import os
+        
+        # Check structure data
+        atoms = self.check_structure_data(structure_data)
+        if isinstance(atoms, dict) and "error" in atoms:
+            return atoms
+
+        # Perform supercell expansion if requested
+        if supercell_min_length is not None and supercell_min_length > 0.0:
+            import numpy as np
+            cell_lengths = atoms.cell.lengths()
+            # Calculate required repeats to meet min length
+            repeats = np.ceil(supercell_min_length / cell_lengths).astype(int)
+            # Ensure we don't have 0 repeats just in case
+            repeats = np.maximum(repeats, 1)
+            if any(r > 1 for r in repeats):
+                atoms = atoms.repeat(repeats)
+                logger.info(f"Expanded structure to supercell {repeats.tolist()} to meet minimum length {supercell_min_length}Å")
+
+        if not output_dir:
+            try:
+                output_dir = str(get_current_research_dir() / self.__class__.__name__.lower().replace("wrapper", "") / "md")
+            except Exception:
+                output_dir = "md_results"
+        
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Formulate filenames
+        if hasattr(atoms, "get_chemical_formula"):
+            formula = atoms.get_CHEMICAL_FORMULA() if hasattr(atoms, "get_CHEMICAL_FORMULA") else atoms.get_chemical_formula()
+        else:
+            formula = "unknown"
+        
+        filename_base = f"{formula}_{temperature}K_{ensemble}"
+        traj_path = os.path.join(output_dir, f"{filename_base}.traj")
+        log_path = os.path.join(output_dir, f"{filename_base}.log")
+        
+        # Setup Stability Monitoring callbacks
+        additional_callbacks = []
+        
+        if monitor and monitor_type:
+            # Support single string or list of monitor types
+            monitors = [monitor_type] if isinstance(monitor_type, str) else monitor_type
+            
+            for m_type in monitors:
+                # Delay import to avoid circular dependency
+                from src.utils.mlips.md_utils import get_md_callback
+                callback_info = get_md_callback(
+                    m_type, 
+                    atoms, 
+                    timestep_fs=timestep, 
+                    log_interval=log_interval,
+                    temperature=temperature,
+                    output_dir=output_dir,
+                    **(monitor_params or {})
+                )
+                if callback_info:
+                    additional_callbacks.append(callback_info)
+
+        # Prepare Calculator
+        calc = self.create_calculator()
+        
+        # Convert pressure from bar to eV/A^3 for MatCalc
+        pressure_ev_ang3 = pressure * units.bar if pressure is not None else 0.0
+
+        md_calc = CustomMDCalc(
+            calculator=calc,
+            ensemble=ensemble.lower(),
+            temperature=temperature,
+            steps=steps,
+            timestep=timestep,
+            loginterval=log_interval,
+            pressure=pressure_ev_ang3,
+            mask=pressure_mask,
+            trajfile=traj_path,
+            logfile=log_path,
+            set_zero_rotation=True,
+            set_com_stationary=True,
+            additional_callbacks=additional_callbacks if additional_callbacks else None
+        )
+        
+        # Run simulation
+        try:
+            from src.utils.mlips.md_utils import MDStopIteration
+            md_calc.calc(atoms)
+        except MDStopIteration as e:
+            logger.info(f"MD terminated early by monitor: {e}")
+            
+        # Normal Final struct update
+        final_structure = AseAtomsAdaptor.get_structure(atoms)
+        
+        return {
+            "status": "success",
+            "trajectory_path": traj_path,
+            "log_path": log_path,
+            "final_structure": final_structure.as_dict()
+        }
+
+    def run_md(
+        self,
+        structure_data: Union[Any, str, List[Union[Dict[str, Any], str]]],
+        temperature: float = 300.0,
+        steps: int = 1000,
+        timestep: float = 1.0,
+        ensemble: str = "nvt",
+        log_interval: int = 10,
+        pressure: float = 0.0,
+        pressure_mask: Optional[List[int]] = None,
+        output_dir: Optional[str] = None,
+        monitor: bool = False,
+        monitor_type: Optional[Union[str, List[str]]] = None,
+        monitor_params: Optional[Dict[str, Any]] = None,
+        supercell_min_length: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Run molecular dynamics simulation using MatCalc.
+        Supports batch processing over multiple structures at a single temperature.
         
         Args:
-            structure_data: Structure data compatible with check_structure_data.
+            structure_data: Single structure, directory of structures, or list of structures.
             temperature: Temperature in Kelvin.
             steps: Number of steps.
             timestep: Timestep in fs.
@@ -573,150 +725,124 @@ class MLIPModel(ABC):
             monitor: Whether to monitor stability and stop early.
             monitor_type: Type of monitoring ("melting", "explosion", "overshoot", "volume") or list of types.
             monitor_params: Optional dictionary of parameters for the monitors (e.g., upper_limit_ratio).
+            supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell. Set None to disable.
             
         Returns:
-            Dictionary with MD results.
+            Dictionary with MD results (or batch summary).
         """
-        if not self.is_loaded:
-            return {"error": "Model not loaded. Please call load_model first."}
+        # Check if structure_data is batch
+        from pathlib import Path
+        import os
+        is_batch = False
+        structure_list = []
+        structure_names = []
+        
+        if isinstance(structure_data, str) and os.path.isdir(structure_data):
+            is_batch = True
+            dir_path = Path(structure_data)
+            patterns = ["*.cif", "*.CIF", "*POSCAR*", "*CONTCAR*", "*.vasp"]
+            for pattern in patterns:
+                for filepath in dir_path.glob(pattern):
+                    structure_list.append(str(filepath))
+                    structure_names.append(filepath.stem)
+        elif isinstance(structure_data, list):
+            is_batch = True
+            for i, struct in enumerate(structure_data):
+                structure_list.append(struct)
+                if isinstance(struct, str) and os.path.isfile(struct):
+                    structure_names.append(Path(struct).stem)
+                else:
+                    structure_names.append(f"structure_{i}")
+        else:
+            structure_list = [structure_data]
+            structure_names = ["structure"]
 
-        try:
-            from matcalc import MDCalc
-            from ase import units
-            from pymatgen.io.ase import AseAtomsAdaptor
-            from src.utils.research_utils import get_current_research_dir
-            from src.utils.serialization_utils import recursive_tolist
-
-            # Check structure data
-            atoms = self.check_structure_data(structure_data)
-            if isinstance(atoms, dict) and "error" in atoms:
-                return atoms
-
-            if not output_dir:
-                try:
-                    output_dir = str(get_current_research_dir() / self.__class__.__name__.lower().replace("wrapper", "") / "md")
-                except Exception:
-                    output_dir = "md_results"
-            
-            os.makedirs(output_dir, exist_ok=True)
-            
-            # Formulate filenames
-            if hasattr(atoms, "get_chemical_formula"):
-                formula = atoms.get_CHEMICAL_FORMULA() if hasattr(atoms, "get_CHEMICAL_FORMULA") else atoms.get_chemical_formula()
-            else:
-                formula = "unknown"
-            
-            filename_base = f"{formula}_{temperature}K_{ensemble}"
-            traj_path = os.path.join(output_dir, f"{filename_base}.traj")
-            log_path = os.path.join(output_dir, f"{filename_base}.log")
-            
-            # Setup Stability Monitoring callbacks
-            additional_callbacks = []
-            
-            if monitor and monitor_type:
-                # Support single string or list of monitor types
-                monitors = [monitor_type] if isinstance(monitor_type, str) else monitor_type
-                
-                for m_type in monitors:
-                    callback_info = get_md_callback(
-                        m_type, 
-                        atoms, 
-                        timestep_fs=timestep, 
-                        log_interval=log_interval,
-                        temperature=temperature,
-                        **(monitor_params or {})
-                    )
-                    if callback_info:
-                        additional_callbacks.append(callback_info)
-
-            # Prepare Calculator
-            calc = self.create_calculator()
-            
-            # Convert pressure from bar to eV/A^3 for MatCalc
-            pressure_ev_ang3 = pressure * units.bar if pressure is not None else 0.0
-
-            from src.utils.mlips.md_runner import CustomMDCalc
-
-            # Initialize MDCalc with the calculator and parameters
-            # Note: We use CustomMDCalc to ensure additional_callbacks are supported and passed correctly.
-            md_runner = CustomMDCalc(
-                calculator=calc,
-                ensemble=ensemble.lower(), # Keep .lower() for consistency with matcalc
+        # Special casing for single mode
+        if not is_batch:
+            return self._single_run_md(
+                structure_data=structure_data,
                 temperature=temperature,
-                timestep=timestep,
                 steps=steps,
-                trajfile=traj_path,
-                logfile=log_path,
-                loginterval=log_interval,
-                pressure=pressure_ev_ang3,
-                mask=pressure_mask, # Re-added mask
-                set_zero_rotation=True, # Good practice for MD
-                set_com_stationary=True,
-                additional_callbacks=additional_callbacks if additional_callbacks else None
+                timestep=timestep,
+                ensemble=ensemble,
+                log_interval=log_interval,
+                pressure=pressure,
+                pressure_mask=pressure_mask,
+                output_dir=output_dir,
+                monitor=monitor,
+                monitor_type=monitor_type,
+                monitor_params=monitor_params,
+                supercell_min_length=supercell_min_length
             )
-            
-            # Run MD - Catch the StopIteration
+
+        # Batch Mode Initialization
+        if not output_dir:
+            from src.utils.research_utils import get_current_research_dir
             try:
-                result = md_runner.calc(atoms)
-            except MDStopIteration as e:
-                logger.info(f"MD stopped by monitor: {e}")
-                # We return a result manually since MDCalc.calc was interrupted
-                # Save final structure
-                final_struct = AseAtomsAdaptor.get_structure(atoms)
-                final_struct_path = os.path.join(output_dir, f"{filename_base}_final.cif")
-                try:
-                    final_struct.to(filename=final_struct_path)
-                except Exception as save_err:
-                    logger.warning(f"Failed to save final structure in stopped run: {save_err}")
-                    final_struct_path = None
+                output_dir = str(get_current_research_dir() / self.__class__.__name__.lower().replace("wrapper", "") / "batch_md" / f"{temperature}K")
+            except Exception:
+                output_dir = f"batch_md_{temperature}K"
+        
+        os.makedirs(output_dir, exist_ok=True)
+        results = []
+        logger.info(f"Batch MD on {len(structure_list)} structures at {temperature}K...")
 
-                return {
-                    "status": "stopped",
-                    "stop_reason": str(e),
-                    "final_structure_path": final_struct_path,
-                    "trajectory_path": traj_path,
-                    "log_path": log_path,
-                    "energy": float(atoms.get_potential_energy()),
-                    "final_energy": float(atoms.get_potential_energy()),
-                    "final_temperature": float(atoms.get_temperature())
-                }
-
-            # Clean up result for return (remove heavy objects)
-            safe_result = {
-                "trajectory_path": traj_path,
-                "log_path": log_path,
-                "potential_energy": result.get("potential_energy"),
-                "kinetic_energy": result.get("kinetic_energy"),
-                "total_energy": result.get("total_energy"),
-                "status": "success"
-            }
+        for idx, (struct_data, struct_name) in enumerate(zip(structure_list, structure_names)):
+            struct_output_dir = os.path.join(output_dir, struct_name)
+            os.makedirs(struct_output_dir, exist_ok=True)
             
-            # Save final structure if present
-            if "final_structure" in result:
-                final_struct = result["final_structure"]
-                final_struct_path = os.path.join(output_dir, f"{filename_base}_final.cif")
+            try:
+                logger.info(f"-> Batch MD: Running {struct_name}...")
+                md_res = self._single_run_md(
+                    structure_data=struct_data,
+                    temperature=temperature,
+                    steps=steps,
+                    timestep=timestep,
+                    ensemble=ensemble,
+                    log_interval=log_interval,
+                    pressure=pressure,
+                    pressure_mask=pressure_mask,
+                    output_dir=struct_output_dir,
+                    monitor=monitor,
+                    monitor_type=monitor_type,
+                    monitor_params=monitor_params,
+                    supercell_min_length=supercell_min_length
+                )
                 
-                try:
-                    # Pymatgen Structure
-                    if hasattr(final_struct, "to"):
-                        final_struct.to(filename=final_struct_path)
-                    # ASE Atoms
-                    elif hasattr(final_struct, "write"):
-                        final_struct.write(final_struct_path)
-                        
-                    safe_result["final_structure_path"] = final_struct_path
-                except Exception as e:
-                    logger.warning(f"Failed to save final structure: {e}")
-            
-            return recursive_tolist(safe_result)
-
-        except Exception as e:
-            import traceback
-            logger.error(f"MD failed: {str(e)}\n{traceback.format_exc()}")
-            return {"error": f"MD failed: {str(e)}"}
-            
-
-
+                if "error" in md_res:
+                    results.append({
+                        "structure_name": struct_name,
+                        "status": "failed",
+                        "error": md_res["error"]
+                    })
+                else:
+                    results.append({
+                        "structure_name": struct_name,
+                        "status": md_res.get("status", "success"),
+                        "trajectory_path": md_res.get("trajectory_path"),
+                        "log_path": md_res.get("log_path"),
+                        "output_dir": struct_output_dir
+                    })
+            except Exception as e:
+                results.append({
+                    "structure_name": struct_name,
+                    "status": "failed",
+                    "error": str(e)
+                })
+                    
+        n_success = sum(1 for r in results if r["status"] in ["success", "stopped_early"])
+        n_failed = len(results) - n_success
+        
+        logger.info(f"Batch MD complete: {n_success} successful, {n_failed} failed")
+        
+        return {
+            "mode": "batch",
+            "total_jobs": len(results),
+            "successful": n_success,
+            "failed": n_failed,
+            "output_dir": output_dir,
+            "results": results
+        }
 
     
     def get_supported_elements(self) -> List[str]:

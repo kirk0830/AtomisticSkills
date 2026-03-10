@@ -87,9 +87,13 @@ class EquilibrationMonitor:
             # However, matcalc uses its own loginterval.
             # We can try to guess it or pass it. 
         
-        # Fallback to defaults if still None
-        ts = self.timestep_fs if self.timestep_fs is not None else 1.0
-        li = self.log_interval if self.log_interval is not None else 10
+        if self.timestep_fs is None:
+            raise ValueError("timestep_fs must be provided or auto-detected from dynamics object.")
+        if self.log_interval is None:
+            raise ValueError("log_interval must be provided to correctly evaluate simulation time.")
+            
+        ts = self.timestep_fs
+        li = self.log_interval
         
         if self.window_entries is None:
             self.window_entries = max(2, int(self.window_ps * 1000 / ts / li))
@@ -97,22 +101,9 @@ class EquilibrationMonitor:
             self.stability_entries = max(2, int(self.stability_ps * 1000 / ts / li))
 
     def __call__(self, *args, **kwargs):
-        # find atoms and potentially dyn
         dyn = kwargs.get("dyn")
-        atoms = self.atoms
+        atoms = dyn.atoms if dyn is not None and hasattr(dyn, "atoms") else self.atoms
         
-        for arg in args:
-            if hasattr(arg, "get_temperature"):
-                if hasattr(arg, "atoms"): # Likely a Dynamics object
-                    dyn = arg
-                    atoms = arg.atoms
-                else:
-                    atoms = arg
-                break
-        
-        if atoms is None and dyn is not None and hasattr(dyn, "atoms"):
-            atoms = dyn.atoms
-            
         if atoms is None:
             return
 
@@ -192,19 +183,8 @@ class OvershootMonitor:
             return
             
         dyn = kwargs.get("dyn")
-        atoms = self.atoms
-        for arg in args:
-            if hasattr(arg, "get_temperature"):
-                if hasattr(arg, "atoms"):
-                    dyn = arg
-                    atoms = arg.atoms
-                else:
-                    atoms = arg
-                break
+        atoms = dyn.atoms if dyn is not None and hasattr(dyn, "atoms") else self.atoms
         
-        if atoms is None and dyn is not None and hasattr(dyn, "atoms"):
-            atoms = dyn.atoms
-            
         if atoms is None:
             return
             
@@ -227,19 +207,8 @@ class VolumeMonitor:
 
     def __call__(self, *args, **kwargs):
         dyn = kwargs.get("dyn")
-        atoms = self.atoms
-        for arg in args:
-            if hasattr(arg, "get_volume"):
-                if hasattr(arg, "atoms"):
-                    dyn = arg
-                    atoms = arg.atoms
-                else:
-                    atoms = arg
-                break
+        atoms = dyn.atoms if dyn is not None and hasattr(dyn, "atoms") else self.atoms
         
-        if atoms is None and dyn is not None and hasattr(dyn, "atoms"):
-            atoms = dyn.atoms
-            
         if atoms is None:
             return
         
@@ -270,6 +239,7 @@ class DiffusionMonitor:
         threshold: float = 0.1, 
         check_interval_ps: float = 5.0,
         ignore_ps: float = 5.0,
+        output_dir: str | None = None,
         **kwargs
     ):
         """
@@ -294,9 +264,11 @@ class DiffusionMonitor:
         self.threshold = threshold
         self.check_interval_ps = check_interval_ps
         self.ignore_ps = ignore_ps
+        self.output_dir = output_dir
         
         self.timestep_fs = kwargs.get("timestep_fs")
         self.log_interval = kwargs.get("log_interval")
+        self.temperature = kwargs.get("temperature")
         
         self.structures = []
         self.check_interval_steps = None
@@ -314,8 +286,13 @@ class DiffusionMonitor:
                 elif hasattr(dyn, "get_time_step"):
                     self.timestep_fs = dyn.get_time_step() / units.fs
                     
-        ts = self.timestep_fs if self.timestep_fs is not None else 1.0
-        li = self.log_interval if self.log_interval is not None else 10
+        if self.timestep_fs is None:
+            raise ValueError("timestep_fs must be provided or auto-detected from dynamics object.")
+        if self.log_interval is None:
+            raise ValueError("log_interval must be provided to evaluate diffusion correctly.")
+            
+        ts = self.timestep_fs
+        li = self.log_interval
         
         if self.check_interval_steps is None:
             # How many callback calls per check
@@ -323,21 +300,105 @@ class DiffusionMonitor:
         if self.ignore_entries is None:
             self.ignore_entries = max(0, int(self.ignore_ps * 1000 / ts / li))
 
+    def finalize(self):
+        """Force evaluate and plot diffusion at the end of the simulation."""
+        if not self.output_dir or len(self.structures) < self.ignore_entries + 2:
+            return
+            
+        from pymatgen.analysis.diffusion.analyzer import DiffusionAnalyzer
+        import os, json
+        
+        analysis_structs = self.structures[self.ignore_entries:]
+        if self.temperature is not None:
+            temp = float(self.temperature)
+        else:
+            temp = self.atoms.get_temperature() if self.atoms else 300.0
+            if temp < 1.0: 
+                temp = 300.0
+        
+        ts = self.timestep_fs if self.timestep_fs is not None else 1.0
+        li = self.log_interval if self.log_interval is not None else 10
+        
+        try:
+            # Fit analyzer on equilibrated segment
+            analyzer = DiffusionAnalyzer.from_structures(
+                structures=analysis_structs,
+                specie=self.specie,
+                temperature=temp,
+                time_step=ts * li,
+                step_skip=1,
+                smoothed=False
+            )
+            
+            D = analyzer.diffusivity
+            D_std = analyzer.diffusivity_std_dev
+            rel_err = D_std / D if D > 1e-8 else float('inf')
+            
+            # Full analyzer for complete trajectory plotting
+            analyzer_full = DiffusionAnalyzer.from_structures(
+                structures=self.structures,
+                specie=self.specie,
+                temperature=temp,
+                time_step=ts * li,
+                step_skip=1,
+                smoothed=False
+            )
+            
+            os.makedirs(self.output_dir, exist_ok=True)
+            summary = {
+                "diffusivity": float(D),
+                "diffusivity_std_dev": float(D_std),
+                "rel_err": float(rel_err),
+                "temperature": float(temp),
+                "specie": self.specie,
+                "time_ps": float(len(self.structures) * ts * li / 1000)
+            }
+            with open(os.path.join(self.output_dir, f"diffusion_{self.specie}.json"), "w") as f:
+                json.dump(summary, f, indent=4)
+            
+            import matplotlib
+            matplotlib.use('Agg')
+            import matplotlib.pyplot as plt
+            
+            plt.figure(figsize=(8, 6))
+            times_ps_full = analyzer_full.dt / 1000.0
+            msd_full = analyzer_full.msd
+            
+            plt.plot(times_ps_full, msd_full, 'k-', label=f"{self.specie} MSD (All)")
+            
+            # Overlay fitted line starting from ignore_ps aligned with the actual MSD curve
+            slope_ps = 6 * D * 1e4
+            import numpy as np
+            fit_mask = times_ps_full >= self.ignore_ps
+            if np.any(fit_mask):
+                times_fit = times_ps_full[fit_mask]
+                start_time = times_fit[0]
+                start_msd = msd_full[fit_mask][0]
+                # extrapolate simple line from the join point
+                y_fit = start_msd + slope_ps * (times_fit - start_time)
+                plt.plot(times_fit, y_fit, 'r--', label=f"Fit (D={D:.2e} $\\pm$ {D_std:.2e} cm$^2$/s)")
+                # also mark the ignored region
+                plt.axvline(x=self.ignore_ps, color='gray', linestyle=':', label='Equilibration')
+            else:
+                plt.plot(times_ps_full, slope_ps * times_ps_full, 'r--', label=f"Fit (D={D:.2e} $\\pm$ {D_std:.2e} cm$^2$/s)")
+            
+            plt.xlabel("Time (ps)", fontsize=18)
+            plt.ylabel(r"MSD ($\AA^2$)", fontsize=18)
+            plt.xticks(fontsize=18)
+            plt.yticks(fontsize=18)
+            plt.title(f"{analyzer.temperature}K (skip={self.ignore_ps}ps)", fontsize=18)
+            plt.legend(fontsize=16)
+            
+            plt.savefig(os.path.join(self.output_dir, f"msd_{self.specie}.png"), dpi=300, bbox_inches="tight")
+            plt.close()
+            logger.info(f"Saved finalized diffusion analysis to {self.output_dir}")
+        except Exception as e:
+            logger.warning(f"Failed to export diffusion results during finalization: {e}")
+
     def __call__(self, *args, **kwargs):
         dyn = kwargs.get("dyn")
-        atoms = self.atoms
-        for arg in args:
-            if hasattr(arg, "get_temperature"):
-                if hasattr(arg, "atoms"):
-                    dyn = arg
-                    atoms = arg.atoms
-                else:
-                    atoms = arg
-                break
+        atoms = dyn.atoms if dyn is not None and hasattr(dyn, "atoms") else self.atoms
         
-        if atoms is None and dyn is not None and hasattr(dyn, "atoms"):
-            atoms = dyn.atoms
-            
         if atoms is None:
             return
 
@@ -377,14 +438,17 @@ class DiffusionMonitor:
                     D = analyzer.diffusivity
                     D_std = analyzer.diffusivity_std_dev
                     
-                    if D > 0:
+                    if D > 1e-8 and D_std > 0:
                         rel_err = D_std / D
                         logger.info(f"Diffusion Monitor [{self.specie}]: D={D:.2e}, rel_err={rel_err:.3f} (target < {self.threshold})")
                         
                         if rel_err < self.threshold:
                             msg = f"Diffusion converged for {self.specie}: rel_err={rel_err:.4f} < {self.threshold}"
                             logger.info(msg)
+                            self.finalize()
                             raise MDStopIteration(msg)
+                    else:
+                        logger.info(f"Diffusion Monitor [{self.specie}]: D={D:.2e}, D_std={D_std:.2e} (ignored due to insufficient diffusion or zero variance)")
                 except MDStopIteration:
                     # Propagate the stop signal
                     raise
@@ -490,8 +554,7 @@ def get_md_callback(
     if monitor_type == "explosion":
         threshold = kwargs.get("temp_threshold", 10000.0)
         return ExplosionMonitor(atoms, threshold), log_interval
-    elif monitor_type == "equilibration" or monitor_type == "melting":
-        # 'melting' is kept for backward compatibility and is a specific case of equilibration
+    elif monitor_type == "equilibration":
         return EquilibrationMonitor(
             atoms=atoms, 
             timestep_fs=timestep_fs, 
@@ -516,12 +579,14 @@ def get_md_callback(
         threshold = kwargs.get("threshold", 0.1)
         check_interval = kwargs.get("check_interval_ps", 5.0)
         ignore_ps = kwargs.get("ignore_ps", 5.0)
+        output_dir = kwargs.get("output_dir", None)
         return DiffusionMonitor(
             atoms=atoms,
             specie=specie,
             threshold=threshold,
             check_interval_ps=check_interval,
             ignore_ps=ignore_ps,
+            output_dir=output_dir,
             timestep_fs=timestep_fs,
             log_interval=log_interval
         ), log_interval

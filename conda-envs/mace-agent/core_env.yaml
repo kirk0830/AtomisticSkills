@@ -6,6 +6,7 @@ dependencies:
     - mcp
     - mace-torch>=0.3.15
     - pymatgen
+    - pymatgen-analysis-diffusion
     - ase
     - matcalc
     - setuptools<70

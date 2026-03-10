@@ -72,6 +72,20 @@ def test_run_md(loaded_server, cu_structure):
     if "trajectory_path" in res:
         assert os.path.exists(res["trajectory_path"])
 
+def test_run_md_batch(loaded_server, cu_structure):
+    output_dir = os.path.abspath("./results/mace_test/md_batch")
+    res = loaded_server.run_md(
+        [cu_structure, cu_structure],
+        temperature=300,
+        steps=5,
+        log_interval=1,
+        output_dir=output_dir
+    )
+    assert "error" not in res
+    assert res.get("mode") == "batch"
+    assert res.get("total_jobs") == 2
+    assert res.get("successful") == 2
+
 
 def test_load_model(loaded_server):
     res = loaded_server.load_model("MACE-MP-small", device="cpu")
@@ -81,5 +95,5 @@ def test_load_model(loaded_server):
 def test_predict_atomic_features(loaded_server, cu_structure):
     res = loaded_server.predict_atomic_features(cu_structure)
     assert "error" not in res
-    assert "atomic_features" in res
+    assert "saved_path" in res
     assert "feature_dim" in res

@@ -6,6 +6,7 @@ dependencies:
     - mcp
     - fairchem-core
     - pymatgen
+    - pymatgen-analysis-diffusion
     - matcalc
     - setuptools<70
     - setuptools-scm

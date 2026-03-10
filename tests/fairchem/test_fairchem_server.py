@@ -24,7 +24,7 @@ def loaded_server():
 
 @pytest.fixture
 def cu_structure_dict():
-    atoms = bulk("Cu")
+    atoms = bulk("Cu").repeat((2, 2, 2))
     return AseAtomsAdaptor.get_structure(atoms).as_dict()
 
 def test_predict_structure(loaded_server, cu_structure_dict):
@@ -40,7 +40,7 @@ def test_relax_structure(loaded_server, cu_structure_dict):
         output_dir=output_dir
     )
     assert "error" not in res
-    assert "final_structure" in res
+    assert "cif_path" in res
 
 def test_run_md(loaded_server, cu_structure_dict):
     output_dir = os.path.abspath("./results/fairchem_test/md")
@@ -52,6 +52,20 @@ def test_run_md(loaded_server, cu_structure_dict):
     assert "error" not in res
     assert "trajectory_path" in res
 
+def test_run_md_batch(loaded_server, cu_structure_dict):
+    output_dir = os.path.abspath("./results/fairchem_test/md_batch")
+    res = loaded_server.run_md(
+        [cu_structure_dict, cu_structure_dict],
+        temperature=300,
+        steps=5,
+        log_interval=1,
+        output_dir=output_dir
+    )
+    assert "error" not in res
+    assert res.get("mode") == "batch"
+    assert res.get("total_jobs") == 2
+    assert res.get("successful") == 2
+
 # Phonon and QHA are shared MatCalc, just check one to save time?
 # User said "test all". I'll add them.
-@pytest.mark.xfail(reason="Fairchem fine-tuning configuration issues (AtomicData attribute error)")
+# @pytest.mark.xfail(reason="Fairchem fine-tuning configuration issues (AtomicData attribute error)")

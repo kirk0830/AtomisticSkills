@@ -74,12 +74,12 @@ def load_model(model_name: str = 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', device:
         return f"Error loading model: {str(e)}"
 
 @mcp.tool()
-def predict_structure(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+def predict_structure(structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]]) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """
-    Predict energy and forces for a structure.
+    Predict energy and forces for a structure or a batch of structures.
     
     Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
     
     Returns:
         Dictionary containing:
@@ -101,7 +101,7 @@ def predict_atomic_features(structure_data: Union[Dict[str, Any], str], output_p
     Automatically saves features to the current research directory.
     
     Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
         output_path: Optional custom path for saving features. If not provided, auto-generates
                      based on structure filename (e.g., 'solid.cif' -> 'solid_features.json').
     
@@ -169,7 +169,7 @@ def predict_bandgap(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any
     Uses an isolated model instance to avoid conflicts with PES calculations.
     
     Args:
-        structure_data: Structure data (dict, ASE Atoms, pymatgen Structure, or file path).
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
     
     Returns:
         Dictionary containing "bandgap" in eV.
@@ -209,11 +209,7 @@ def relax_structure(
     Relax one or multiple structures using the loaded MatGL model.
     
     Args:
-        structure_data: Can be:
-            - Single structure (dict, ASE Atoms, pymatgen Structure, or file path)
-            - Directory path containing CIF/POSCAR files (batch mode)
-            - List of file paths (batch mode)
-            - List of structure dicts (batch mode)
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
         fmax: Force convergence criterion (eV/Ang).
         steps: Maximum number of optimization steps.
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
@@ -244,7 +240,7 @@ def relax_structure(
 
 @mcp.tool()
 def run_md(
-    structure_data: Union[Dict[str, Any], str],
+    structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
     temperature: float = 300,
     steps: int = 1000,
     timestep: float = 1.0,
@@ -255,13 +251,14 @@ def run_md(
     output_dir: Optional[str] = None,
     monitor: bool = False,
     monitor_type: Optional[Union[str, List[str]]] = None,
-    monitor_params: Optional[Dict[str, Any]] = None
+    monitor_params: Optional[Dict[str, Any]] = None,
+    supercell_min_length: Optional[float] = None
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
     
     Args:
-        structure_data: Structure in partial dictionary format.
+        structure_data: Single structure or batch (directory path, list of dicts/paths).
         log_interval: Interval for logging to trajectory and logfile.
         pressure: Target pressure in bar (for NPT).
         pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).
@@ -269,6 +266,7 @@ def run_md(
         monitor: Whether to enable automatic MD monitoring.
         monitor_type: Type of monitor ("melting", "explosion", "overshoot", "volume") or list of types.
         monitor_params: Optional dictionary of parameters for the monitors (e.g., {"upper_limit_ratio": 4.0}).
+        supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell.
     Returns:
         Dictionary with MD results (trajectory_path, final_structure).
     """
@@ -296,7 +294,8 @@ def run_md(
             output_dir=output_dir,
             monitor=monitor,
             monitor_type=monitor_type,
-            monitor_params=monitor_params
+            monitor_params=monitor_params,
+            supercell_min_length=supercell_min_length
         )
         
         return recursive_tolist(result)

@@ -15,3 +15,4 @@ dependencies:
     - h5py
     - pymupdf
     - reaction-network
+    - pymatgen-analysis-diffusion

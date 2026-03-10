@@ -493,7 +493,11 @@ def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> D
         return results
     
     # Otherwise, parse all subdirectories
-    all_results = parser.parse_all()
+    try:
+        all_results = parser.parse_all()
+    except Exception as e:
+        return {"error": str(e)}
+        
     if not all_results:
         return {"error": f"No valid VASP results found in {output_dir}"}
         
