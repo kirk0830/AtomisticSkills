@@ -64,3 +64,7 @@ Thumbs.db
 stdout.txt
 stderr.txt
 debug*
+
+# cifs for phase search
+.agent/skills/xrd-phase-analysis/exmples/*/phase_analysis_results/cifs
+dara_downloaded_cifs/

@@ -18,6 +18,7 @@ For detailed installation instructions, please refer to the `README.md` and `ins
 - **fairchem-agent**: `conda-envs/fairchem-agent/` (Core: fairchem-core, pymatgen)
 - **atomate2-agent**: `conda-envs/atomate2-agent/` (Core: atomate2, pymatgen)
 - **smol-agent**: `conda-envs/smol-agent/` (Core: smol, pymatgen)
+- **xrd-agent**:  `conda-envs/xrd-agent/` (Core: DARA, pymatgen)
 
 | MCP Server | Conda Environment | Python Path |
 | :--- | :--- | :--- |
