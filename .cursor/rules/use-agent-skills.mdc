@@ -1,25 +1,25 @@
 ---
-description: When the user asks to perform a task, discover and use skills from .agent/skills/
+description: Discover available AtomisticSkills by scanning .agent/skills/ frontmatter. Use this to find skills relevant to a research task.
 alwaysApply: true
 ---
 
-# Use Agent Skills for Task Requests
+# Skill Discovery
 
-This repo is designed to run as an agent. When the user asks you to perform a task in natural language (e.g. "calculate the XRD of LiFePO4", "run melting point for Al", "compute diffusion for Li"), you must:
+Use the Grep tool to scan all skill descriptions:
 
-1. **Discover the relevant skill**  
-   Look in `.agent/skills/` for a skill whose **name** or **description** matches the request. Each skill has a `SKILL.md` with YAML frontmatter `name` and `description` (and optionally a `## Goal` section). List the skill directories or read those SKILL.md files to find the right one.
+```
+Grep pattern="^description:" glob=".agent/skills/*/SKILL.md" output_mode="content"
+```
 
-2. **Read the skill's SKILL.md**  
-   Open the matching skill's `SKILL.md` (e.g. `.agent/skills/xrd-spectrum/SKILL.md`) and follow its instructions: which script to run, required conda environment, arguments, and examples.
+## Instructions
 
-3. **Execute using the skill's instructions**  
-   - Use paths from the **repository root** (e.g. `.agent/skills/xrd-spectrum/scripts/calculate_xrd.py`, `.agent/skills/xrd-spectrum/examples/LiFePO4/LiFePO4.cif`).  
-   - Activate the conda environment specified in the skill (e.g. `base-agent` for XRD).  
-   - Run the script with the arguments and paths given in the skill's examples or CLI docs.  
-   - Save outputs to the directory indicated (e.g. `--output_dir` into the skill's `examples/` or a path the user requested).
-
-4. **Resolve material names to structure files when needed**  
-   If the user names a material (e.g. "LiFePO4") and the skill expects a structure file, use the skill's `examples/` when available (e.g. `.agent/skills/xrd-spectrum/examples/LiFePO4/LiFePO4.cif`). If no example exists, say so and ask for a structure path or suggest creating one.
-
-Do not guess the workflow: always read the relevant `SKILL.md` and follow it. For project-wide standards (e.g. skill layout, environments), see `.agent/rules/` (e.g. `skill-standards.md`, `mcp-environments.md`).
+1. Run the Grep search above to get all skill descriptions from YAML frontmatter.
+2. If the user provided a search term ($ARGUMENTS), filter to skills whose name or description matches.
+3. If no search term was provided, display the full list organized by category prefix:
+   - `mat-`: Materials science
+   - `ml-`: Machine learning / MLIPs
+   - `drug-`: Drug discovery
+   - `chem-`: Chemistry / molecular
+   - `general-`: General utilities
+4. Present results as a clean table: skill name and description.
+5. If the user wants to run a skill, read its full `SKILL.md` at `.agent/skills/<skill-name>/SKILL.md` and follow the numbered instructions step by step.
