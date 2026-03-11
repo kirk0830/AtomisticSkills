@@ -6,7 +6,7 @@ This example demonstrates how to calculate the XRD pattern for LiFePO4 (Olivine 
 
 - `LiFePO4.cif`: The crystal structure of LiFePO4 obtained from Materials Project.
 - `LiFePO4_xrd.json`: Calculated diffraction data.
-- `LiFePO4_xrd.png`: Plot of the XRD spectrum.
+- `LiFePO4_PV_xrd.png`: Plot of the XRD spectrum.
 
 ## How to run
 
@@ -21,4 +21,4 @@ python .agent/skills/mat-xrd-spectrum/scripts/calculate_xrd.py .agent/skills/mat
 
 The calculated XRD pattern shows the characteristic peaks for the Pnma space group of LiFePO4.
 
-![LiFePO4 XRD Pattern](LiFePO4_xrd.png)
+![LiFePO4 XRD Pattern](LiFePO4_PV_xrd.png)

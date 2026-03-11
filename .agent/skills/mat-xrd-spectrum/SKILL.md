@@ -34,15 +34,17 @@ python .agent/skills/mat-xrd-spectrum/scripts/calculate_xrd.py <structure_file> 
 ## Output Files
 
 1.  `<filename>_xrd.json`: Contains $2\theta$ positions, intensities, d-spacings, and (hkl) indices.
-2.  `<filename>_xrd.png`: A plot of the XRD spectrum.
+2.  `<filename>_PV_xrd.png`: A plot of the simulated XRD spectrum (Pseudo-Voigt model).
 
 ## Example
 
 To calculate the XRD pattern for LiFePO4:
 
 ```bash
+```bash
 conda activate base-agent
-python .agent/skills/mat-xrd-spectrum/scripts/calculate_xrd.py examples/LiFePO4/LiFePO4.cif --output_dir .agent/test/xrd_test
+python .agent/skills/mat-xrd-spectrum/scripts/calculate_xrd.py .agent/skills/mat-xrd-spectrum/examples/LiFePO4/LiFePO4.cif --output_dir .agent/skills/mat-xrd-spectrum/examples/LiFePO4
+```
 ```
 
 ## Foundation Potential Recommendations
