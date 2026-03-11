@@ -1,6 +1,7 @@
 ---
-name: xrd-phase-analysis
+name: mat-xrd-phase-analysis
 description: Phase identification from experimental XRD using DARA's tree search (Ray-based).
+category: [materials]
 ---
 
 # XRD Phase Analysis (DARA Tree Search)
@@ -39,8 +40,8 @@ Use this script when the node where you run it can reach the COD servers (for au
 
 ```bash
 # Env: xrd-agent
-python .agent/skills/xrd-phase-analysis/scripts/phase_search.py \
-  --xrd_data .agent/skills/xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
+python .agent/skills/mat-xrd-phase-analysis/scripts/phase_search.py \
+  --xrd_data .agent/skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
   --chemical_system "Ge-O-Zn"
 ```
 
@@ -65,8 +66,8 @@ Specific example:
 
 ```bash
 python .../phase_search.py \
-  --xrd_data .agent/skills/xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
-  --cif_dir .agent/skills/xrd-phase-analysis/examples/GeO2-ZnO/phase_analysis_results/cifs
+  --xrd_data .agent/skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
+  --cif_dir .agent/skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/phase_analysis_results/cifs
 ```
 
 ## Arguments (`phase_search.py`)
@@ -123,8 +124,8 @@ All outputs go under `<output_dir>` (default: `phase_analysis_results/` under th
 
 ## Related Skills
 
-- **`rietveld-refinement`**:
+- **`mat-xrd-refinement`**:
   - For known-phase Rietveld refinement (given specific CIFs).
-- **`xrd-spectrum`**:
+- **`mat-xrd-calculator`**:
   - For calculating theoretical XRD patterns from crystal structures.
 

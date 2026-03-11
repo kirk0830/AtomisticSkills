@@ -1,6 +1,7 @@
 ---
-name: rietveld-refinement
+name: mat-xrd-refinement
 description: Perform Rietveld refinement from experimental XRD patterns using DARA (BGMN).
+category: [materials]
 ---
 
 # Rietveld Refinement
@@ -34,10 +35,10 @@ Two columns (2θ and intensity), space-separated. Options:
 
 ```bash
 # From JSON (e.g. xrd-spectrum output)
-python .agent/skills/rietveld-refinement/scripts/convert_xrd_to_xy.py --input_file path/to/xrd.json
+python .agent/skills/mat-xrd-refinement/scripts/convert_xrd_to_xy.py --input_file path/to/xrd.json
 
 # From DIF
-python .agent/skills/rietveld-refinement/scripts/convert_xrd_to_xy.py --input_file path/to/scan.txt
+python .agent/skills/mat-xrd-refinement/scripts/convert_xrd_to_xy.py --input_file path/to/scan.txt
 ```
 
 **Convert arguments:**
@@ -80,8 +81,8 @@ Layout: `examples/LiFePO4/LiFePO4_xrd.xy` and `examples/LiFePO4/cifs/LiFePO4.cif
 
 ```bash
 # Env: xrd-agent
-python .agent/skills/rietveld-refinement/scripts/refine.py \
-  --xrd_data .agent/skills/rietveld-refinement/examples/LiFePO4/LiFePO4_xrd.xy
+python .agent/skills/mat-xrd-refinement/scripts/refine.py \
+  --xrd_data .agent/skills/mat-xrd-refinement/examples/LiFePO4/LiFePO4_xrd.xy
 ```
 
 Results: `examples/LiFePO4/refinement_results/LiFePO4/` (refinement_result.json, HTML/PNG, peak_data CSV).
@@ -90,13 +91,13 @@ Results: `examples/LiFePO4/refinement_results/LiFePO4/` (refinement_result.json,
 
 ```bash
 # Env: xrd-agent. Quote the path because of (PO3), (OH), (NH4).
-python .agent/skills/rietveld-refinement/scripts/refine.py \
-  --xrd_data ".agent/skills/rietveld-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
+python .agent/skills/mat-xrd-refinement/scripts/refine.py \
+  --xrd_data ".agent/skills/mat-xrd-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
 
 # If your shell or conda run still has trouble with parentheses in the path,
 # you can invoke the environment's Python explicitly instead of using `conda run`:
-/home/USER/.conda/envs/xrd-agent/bin/python .agent/skills/rietveld-refinement/scripts/refine.py \
-  --xrd_data ".agent/skills/rietveld-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
+/home/USER/.conda/envs/xrd-agent/bin/python .agent/skills/mat-xrd-refinement/scripts/refine.py \
+  --xrd_data ".agent/skills/mat-xrd-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
 ```
 
 CIFs are taken from `examples/CaNi(PO3)4_.../cifs/` (NiO_225_sym.cif, CaNi(PO3)4_15_sym.cif). Results under that example’s `refinement_results/`.
@@ -104,7 +105,7 @@ CIFs are taken from `examples/CaNi(PO3)4_.../cifs/` (NiO_225_sym.cif, CaNi(PO3)4
 ### Example 3: Explicit CIFs and optional parameters
 
 ```bash
-python .agent/skills/rietveld-refinement/scripts/refine.py \
+python .agent/skills/mat-xrd-refinement/scripts/refine.py \
   --xrd_data pattern.xy \
   --cifs phase1.cif phase2.cif \
   --phase_params phase_params.json \
@@ -120,5 +121,5 @@ python .agent/skills/rietveld-refinement/scripts/refine.py \
 
 ## Related skills
 
-- **[xrd-spectrum](../xrd-spectrum/SKILL.md)**: Calculate theoretical XRD patterns from crystal structures.
+- **[mat-xrd-calculator](../mat-xrd-calculator/SKILL.md)**: Calculate theoretical XRD patterns from crystal structures.
 - **[foundation-potentials](../foundation-potentials/SKILL.md)**: Relax structures before XRD for better agreement with experiment.
