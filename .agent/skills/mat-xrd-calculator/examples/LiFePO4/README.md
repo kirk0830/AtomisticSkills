@@ -14,7 +14,7 @@ To reproduce the results, run the following command from the project root:
 
 ```bash
 conda activate base-agent
-python .agent/skills/mat-xrd-spectrum/scripts/calculate_xrd.py .agent/skills/mat-xrd-spectrum/examples/LiFePO4/LiFePO4.cif --output_dir .agent/skills/mat-xrd-spectrum/examples/LiFePO4/
+python .agent/skills/mat-xrd-calculator/scripts/calculate_xrd.py .agent/skills/mat-xrd-calculator/examples/LiFePO4/LiFePO4.cif --output_dir .agent/skills/mat-xrd-calculator/examples/LiFePO4/
 ```
 
 ## Results
