@@ -327,22 +327,12 @@ class DiffusionMonitor:
                 temperature=temp,
                 time_step=ts * li,
                 step_skip=1,
-                smoothed=False
+                smoothed="max"
             )
             
             D = analyzer.diffusivity
             D_std = analyzer.diffusivity_std_dev
             rel_err = D_std / D if D > 1e-8 else float('inf')
-            
-            # Full analyzer for complete trajectory plotting
-            analyzer_full = DiffusionAnalyzer.from_structures(
-                structures=self.structures,
-                specie=self.specie,
-                temperature=temp,
-                time_step=ts * li,
-                step_skip=1,
-                smoothed=False
-            )
             
             os.makedirs(self.output_dir, exist_ok=True)
             summary = {
@@ -354,6 +344,7 @@ class DiffusionMonitor:
                 "time_ps": float(len(self.structures) * ts * li / 1000)
             }
             with open(os.path.join(self.output_dir, f"diffusion_{self.specie}.json"), "w") as f:
+                import json
                 json.dump(summary, f, indent=4)
             
             import matplotlib
@@ -361,28 +352,21 @@ class DiffusionMonitor:
             import matplotlib.pyplot as plt
             
             plt.figure(figsize=(8, 6))
-            times_ps_full = analyzer_full.dt / 1000.0
-            msd_full = analyzer_full.msd
             
-            plt.plot(times_ps_full, msd_full, 'k-', label=f"{self.specie} MSD (All)")
+            # For smoothed MSD, the x-axis is the delay time (dt), not absolute time.
+            # We use the analyzer fitted on the equilibrated segment.
+            times_ps = analyzer.dt / 1000.0
+            msd = analyzer.msd
             
-            # Overlay fitted line starting from ignore_ps aligned with the actual MSD curve
+            plt.plot(times_ps, msd, 'k-', label=f"{self.specie} MSD")
+            
+            # The fit line for time-averaged MSD passes through the origin
             slope_ps = 6 * D * 1e4
-            import numpy as np
-            fit_mask = times_ps_full >= self.ignore_ps
-            if np.any(fit_mask):
-                times_fit = times_ps_full[fit_mask]
-                start_time = times_fit[0]
-                start_msd = msd_full[fit_mask][0]
-                # extrapolate simple line from the join point
-                y_fit = start_msd + slope_ps * (times_fit - start_time)
-                plt.plot(times_fit, y_fit, 'r--', label=f"Fit (D={D:.2e} $\\pm$ {D_std:.2e} cm$^2$/s)")
-                # also mark the ignored region
-                plt.axvline(x=self.ignore_ps, color='gray', linestyle=':', label='Equilibration')
-            else:
-                plt.plot(times_ps_full, slope_ps * times_ps_full, 'r--', label=f"Fit (D={D:.2e} $\\pm$ {D_std:.2e} cm$^2$/s)")
+            y_fit = slope_ps * times_ps
             
-            plt.xlabel("Time (ps)", fontsize=18)
+            plt.plot(times_ps, y_fit, 'r--', label=f"Fit (D={D:.2e} $\\pm$ {D_std:.2e} cm$^2$/s)")
+            
+            plt.xlabel("Delay Time $\Delta t$ (ps)", fontsize=18)
             plt.ylabel(r"MSD ($\AA^2$)", fontsize=18)
             plt.xticks(fontsize=18)
             plt.yticks(fontsize=18)
@@ -432,7 +416,7 @@ class DiffusionMonitor:
                         temperature=temp,
                         time_step=ts * li,
                         step_skip=1,
-                        smoothed=False
+                        smoothed="max"
                     )
                     
                     D = analyzer.diffusivity
