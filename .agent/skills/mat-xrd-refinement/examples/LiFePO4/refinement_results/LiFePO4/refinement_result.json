@@ -55,8 +55,8 @@
     }
   ],
   "plots": {
-    "html": "/home/gridsan/nsegal/AtomisticSkills/.agent/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_refinement.html",
-    "png": "/home/gridsan/nsegal/AtomisticSkills/.agent/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_refinement.png"
+    "html": ".agent/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_refinement.html",
+    "png": ".agent/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_refinement.png"
   },
-  "peak_data": "/home/gridsan/nsegal/AtomisticSkills/.agent/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_peak_data.csv"
+  "peak_data": ".agent/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_peak_data.csv"
 }

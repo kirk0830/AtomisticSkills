@@ -49,6 +49,7 @@ def phase_search(
     wavelength: str = "Cu",
     instrument_profile: str = "Aeris-fds-Pixcel1d-Medipix3",
     verbose: bool = True,
+    save_html: bool = False,
 ) -> List:
     """
     Run DARA phase search on an XRD pattern.
@@ -167,7 +168,8 @@ def phase_search(
         try:
             fig = sr.visualize()
             base = output_path / f"solution_{i}_refinement"
-            fig.write_html(str(base) + ".html")
+            if save_html:
+                fig.write_html(str(base) + ".html")
             try:
                 fig.write_image(str(base) + ".png")
             except Exception:
@@ -235,6 +237,11 @@ def main():
         action="store_true",
         help="Suppress progress output",
     )
+    parser.add_argument(
+        "--save_html",
+        action="store_true",
+        help="Save interactive HTML plots of the phase solutions (can be large)",
+    )
     args = parser.parse_args()
 
     if not args.chemical_system and not args.cif_dir:
@@ -249,6 +256,7 @@ def main():
         wavelength=args.wavelength,
         instrument_profile=args.instrument_profile,
         verbose=not args.quiet,
+        save_html=args.save_html,
     )
 
 

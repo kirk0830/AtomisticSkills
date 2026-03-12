@@ -35,6 +35,7 @@ def refine(
     phase_params: Optional[dict] = None,
     refinement_params: Optional[dict] = None,
     show_progress: bool = True,
+    save_html: bool = False,
 ):
     """
     Perform Rietveld refinement with known phases.
@@ -99,7 +100,8 @@ def refine(
     png_saved: Optional[Path] = None
     try:
         fig = result.visualize()
-        fig.write_html(str(html_path))
+        if save_html:
+            fig.write_html(str(html_path))
         try:
             fig.write_image(str(png_path))
             png_saved = png_path
@@ -154,7 +156,7 @@ def refine(
         "refinement_params": refinement_params,
         "phases": phases_summary,
         "plots": {
-            "html": str(html_path),
+            "html": str(html_path) if save_html else None,
             "png": str(png_saved) if png_saved is not None else None,
         },
         "peak_data": str(peak_data_path) if peak_data_path is not None else None,
@@ -211,6 +213,11 @@ def main():
         action="store_true",
         help="Suppress progress output"
     )
+    parser.add_argument(
+        "--save_html",
+        action="store_true",
+        help="Save interactive HTML plot of the refinement (can be large)"
+    )
     
     args = parser.parse_args()
     
@@ -232,6 +239,7 @@ def main():
         phase_params=phase_params,
         refinement_params=refinement_params,
         show_progress=not args.quiet,
+        save_html=args.save_html,
     )
 
 
