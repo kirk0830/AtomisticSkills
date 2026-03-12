@@ -1,5 +1,5 @@
 ---
-name: mat-amorphorization
+name: mat-amorphization
 description: Generate amorphorized structures from crystalline starting points using a melt-quench MD protocol.
 category: [materials]
 ---
@@ -25,7 +25,7 @@ The standard Computational amorphization protocol involves:
 ### 1. Preparation
 - **Supercell**: Use the `prep_supercell.py` helper script. By default, it generates an orthorhombic conventional supercell with approximately 100 atoms, ensuring a robust starting point for amorphization.
 ```bash
-python .agent/skills/mat-amorphorization/scripts/prep_supercell.py --input crystalline.cif --output supercell.cif
+python .agent/skills/mat-amorphization/scripts/prep_supercell.py --input crystalline.cif --output supercell.cif
 ```
 - **Foundation Potential**: Select a robust model like `MACE-MP-large` or `CHGNet` using the `mcp_mace_load_model` (or similar) tool.
 
@@ -68,7 +68,7 @@ Use the `analyze_amorphous.py` script to verify the results:
 - **MACE-MP-large** or **CHGNet** are recommended for high-temperature MD as they are trained on diverse configurations.
 
 ## Examples
-See `.agent/skills/mat-amorphorization/examples/` for validated amorphous structures.
+See `.agent/skills/mat-amorphization/examples/` for validated amorphous structures.
 ---
 
 **Author:** Bowen Deng  

@@ -111,7 +111,7 @@ Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD
 Materials Project, ChEMBL, PDB, PubChem, and ArXiv search — query structures, properties, bioactivity data, and literature from external databases.
 
 ### 3. Property Evaluation
-Stability ($E_{hull}$), phase diagrams, phonons, QHA thermal expansion, equation of state, elastic tensor, melting point, ionic diffusion, NEB barriers, surface energy & adsorption, intercalation voltage, Pourbaix diagrams, magnetic density, vibrational spectra, and amorphorization.
+Stability ($E_{hull}$), phase diagrams, phonons, QHA thermal expansion, equation of state, elastic tensor, melting point, ionic diffusion, NEB barriers, surface energy & adsorption, intercalation voltage, Pourbaix diagrams, magnetic density, vibrational spectra, and amorphization.
 
 ### 4. Experimental Tools
 Synthesis recommendation from text-mined literature, XRD spectrum calculation, Pourbaix diagrams, protein preparation, molecular docking (AutoDock Vina), ADMET prediction, and molecular fingerprints.
