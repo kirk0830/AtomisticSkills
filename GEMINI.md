@@ -30,9 +30,9 @@ Notes
 Most materials/chemistry simulation workflows involves the following steps:
 1. Create or query the relevent material structures.
 2. Prepare an accurate and efficient machine learning interatomic potential (mlip).
-    - You need to decide which mlip to use based on the rules under `.agent/skills/foundation-potentials/SKILL.md`
+    - You need to decide which mlip to use based on the rules under `.agents/skills/foundation-potentials/SKILL.md`
 3. Conduct multiple steps of simulations.
-    - You can find example workflows for common research tasks under `.agent/workflows/`
+    - You can find example workflows for common research tasks under `.agents/workflows/`
     - For workflows that are not privded, decompose it into sequence of SKILLs and MCP tools.
 
 
@@ -41,20 +41,20 @@ Most materials/chemistry simulation workflows involves the following steps:
 This project decomposes complex research tasks into three levels:
 
 - **Tools** (`src/mcp_server/`): Low-level operations exposed via MCP (relax structure, run MD, query databases). Strict typed I/O.
-- **Skills** (`.agent/skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks (calculate melting point, run docking). Each has a `SKILL.md` with step-by-step instructions.
-- **Workflows** (`.agent/workflows/`): High-level research campaigns that chain multiple skills (e.g., screen for stable Li-ion conductors).
+- **Skills** (`.agents/skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks (calculate melting point, run docking). Each has a `SKILL.md` with step-by-step instructions.
+- **Workflows** (`.agents/workflows/`): High-level research campaigns that chain multiple skills (e.g., screen for stable Li-ion conductors).
 
 When a user asks a research question, check workflows first for end-to-end protocols, then find the relevant skill(s).
 
 ## Skill Discovery
 
-Skills are located at `.agent/skills/`. Every subdirectory in this directory is a skill. 
+Skills are located at `.agents/skills/`. Every subdirectory in this directory is a skill. 
 
 Each skill subdirectory contains a `SKILL.md` with YAML frontmatter (`name`, `description`, `category`) and numbered instructions.
 
 **To find a relevant skill**, scan the frontmatter descriptions:
 ```bash
-grep -r "^description:" .agent/skills/*/SKILL.md
+grep -r "^description:" .agents/skills/*/SKILL.md
 ```
 
 Then read the full `SKILL.md` for any matching skill and follow its numbered instructions.
@@ -65,7 +65,7 @@ Then read the full `SKILL.md` for any matching skill and follow its numbered ins
 Many skills reference helper scripts with environment annotations like:
 ```bash
 # Env: mace-agent
-python .agent/skills/mat-melting-point/scripts/create_interface.py ...
+python .agents/skills/mat-melting-point/scripts/create_interface.py ...
 ```
 
 Activate the specified conda environment before running:
@@ -99,7 +99,7 @@ Skills that reference `mcp_*` functions (e.g., `mcp_mace_run_md()`) require MCP 
 
 ## Project Rules
 
-Development standards are documented in `.agent/rules/`:
+Development standards are documented in `.agents/rules/`:
 
 - `skill-standards.md`: how to create and structure new skills
 - `coding-standards.md`: code style, testing, and dependencies
