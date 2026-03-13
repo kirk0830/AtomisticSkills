@@ -123,3 +123,8 @@ python .agents/skills/mat-xrd-refinement/scripts/refine.py \
 
 - **[mat-xrd-calculator](../mat-xrd-calculator/SKILL.md)**: Calculate theoretical XRD patterns from crystal structures.
 - **[foundation-potentials](../foundation-potentials/SKILL.md)**: Relax structures before XRD for better agreement with experiment.
+
+---
+
+**Author:** Nofit Segal  
+**Contact:** [GitHub @nofitsegal](https://github.com/nofitsegal)

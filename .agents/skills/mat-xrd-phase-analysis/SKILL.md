@@ -129,3 +129,7 @@ All outputs go under `<output_dir>` (default: `phase_analysis_results/` under th
 - **`mat-xrd-calculator`**:
   - For calculating theoretical XRD patterns from crystal structures.
 
+---
+
+**Author:** Nofit Segal  
+**Contact:** [GitHub @nofitsegal](https://github.com/nofitsegal)
