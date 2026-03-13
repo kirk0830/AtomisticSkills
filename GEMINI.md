@@ -1,4 +1,6 @@
-# AtomisticSkills: Claude Code Instructions
+# AtomisticSkills: Gemini CLI Instructions
+
+*This instruction is only for Gemini CLI.*
 
 ## Goal Overview
 
@@ -39,23 +41,23 @@ Most materials/chemistry simulation workflows involves the following steps:
 This project decomposes complex research tasks into three levels:
 
 - **Tools** (`src/mcp_server/`): Low-level operations exposed via MCP (relax structure, run MD, query databases). Strict typed I/O.
-- **Skills** (`.agents/skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks (calculate melting point, run docking). Each has a `SKILL.md` with step-by-step instructions.
-- **Workflows** (`.agents/workflows/`): High-level research campaigns that chain multiple skills (e.g., screen for stable Li-ion conductors).
+- **Skills** (`.agent/skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks (calculate melting point, run docking). Each has a `SKILL.md` with step-by-step instructions.
+- **Workflows** (`.agent/workflows/`): High-level research campaigns that chain multiple skills (e.g., screen for stable Li-ion conductors).
 
 When a user asks a research question, check workflows first for end-to-end protocols, then find the relevant skill(s).
 
 ## Skill Discovery
 
+Skills are located at `.agent/skills/`. Every subdirectory in this directory is a skill. 
+
 Each skill subdirectory contains a `SKILL.md` with YAML frontmatter (`name`, `description`, `category`) and numbered instructions.
 
 **To find a relevant skill**, scan the frontmatter descriptions:
 ```bash
-grep -r "^description:" .agents/skills/*/SKILL.md
+grep -r "^description:" .agent/skills/*/SKILL.md
 ```
 
 Then read the full `SKILL.md` for any matching skill and follow its numbered instructions.
-
-Use the `/skill-search` command for interactive discovery: `/skill-search [search term]`
 
 ## Executing Skills
 
@@ -63,15 +65,23 @@ Use the `/skill-search` command for interactive discovery: `/skill-search [searc
 Many skills reference helper scripts with environment annotations like:
 ```bash
 # Env: mace-agent
-python .agents/skills/mat-melting-point/scripts/create_interface.py ...
+python .agent/skills/mat-melting-point/scripts/create_interface.py ...
 ```
 
 Activate the specified conda environment before running:
+
 ```bash
 mamba activate <env-name>
 ```
 
+Or run by
+
+```bash
+conda run -n <env-name> python <path-to-py> [...]
+```
+
 ### MCP tool calls
+
 Skills that reference `mcp_*` functions (e.g., `mcp_mace_run_md()`) require MCP servers to be configured. If MCP servers are not available, check whether the underlying operation can be performed directly via scripts in the skill's `scripts/` directory or by importing from `src/utils/`.
 
 ## Environment Mapping
@@ -89,7 +99,8 @@ Skills that reference `mcp_*` functions (e.g., `mcp_mace_run_md()`) require MCP 
 
 ## Project Rules
 
-Development standards are documented in `.agents/rules/`:
+Development standards are documented in `.agent/rules/`:
+
 - `skill-standards.md`: how to create and structure new skills
 - `coding-standards.md`: code style, testing, and dependencies
 - `mcp-environments.md`: environment-to-server mapping
@@ -101,12 +112,12 @@ Skills that call `mcp_*` functions need MCP servers configured. You only need th
 
 1. Install the conda environment(s) you need (see `conda-envs/*/install.sh`)
 2. Open `mcp_config.json` for the server definitions
-3. Copy the entries you need into `~/.claude.json` under `"mcpServers"`
+3. Copy the entries you need into `~/.gemini/settings.json` under `"mcpServers"`
 4. Update the `command` path to point to your conda env's Python, e.g.:
    ```
-   "/Users/you/miniforge3/envs/mace-agent/bin/python"
+   "/home/you/miniforge3/envs/mace-agent/bin/python"
    ```
 5. Update the `PYTHONPATH` in `env` to your local clone path
-6. Restart Claude Code
+6. Restart Gemini CLI
 
 See `README.md` for full installation instructions.
