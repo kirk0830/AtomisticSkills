@@ -13,7 +13,7 @@ from src.utils.dft.atomate2_utils import Atomate2Handler
 from pymatgen.core import Structure
 
 def test_remote_submission():
-    output_dir = ".agent/test/remote_test_si"
+    output_dir = ".agents/test/remote_test_si"
     if os.path.exists(output_dir):
         import shutil
         shutil.rmtree(output_dir)

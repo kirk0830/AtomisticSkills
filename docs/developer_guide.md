@@ -58,12 +58,12 @@ Supporting libraries shared across MCP servers:
 | `mlips/md_utils.py` | MD monitors (explosion, volume, melting, equilibration detection) |
 | `config_utils.py` | Global configuration and API key management |
 
-### 3. Skills (`.agent/skills/`)
+### 3. Skills (`.agents/skills/`)
 
 Skills are **modular, self-contained capabilities** that combine multiple tools and scripts to accomplish complex research tasks. Each skill lives in its own directory with a standardized structure:
 
 ```
-.agent/skills/<skill-name>/
+.agents/skills/<skill-name>/
 ├── SKILL.md              # Instructions and documentation
 ├── scripts/              # Python/Bash helper scripts
 ├── examples/             # Reference input/output files
@@ -77,7 +77,7 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 4. Uses resources and examples as templates
 
 > [!TIP]
-> To create a new skill, follow the guidelines in [skill-standards.md](../.agent/rules/skill-standards.md).
+> To create a new skill, follow the guidelines in [skill-standards.md](../.agents/rules/skill-standards.md).
 
 ---
 
@@ -120,8 +120,8 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
 
 ### Implementing a New Skill
 
-1. Create the skill directory: `.agent/skills/<skill-name>/`
-2. Write `SKILL.md` following the [standards](../.agent/rules/skill-standards.md)
+1. Create the skill directory: `.agents/skills/<skill-name>/`
+2. Write `SKILL.md` following the [standards](../.agents/rules/skill-standards.md)
 3. Add helper scripts to `scripts/` (specify required conda environment)
 4. Provide examples and resources as needed
 5. Test the skill end-to-end with Antigravity
@@ -188,7 +188,7 @@ Every research task should:
 - Use absolute imports: `from src.utils.mlips.mace_wrapper import MACEWrapper`
 
 ### Fine-Tuning Fails
-- Verify stress units are in eV/Å³ (see [stress-units.md](../.agent/rules/stress-units.md) for details)
+- Verify stress units are in eV/Å³ (see [stress-units.md](../.agents/rules/stress-units.md) for details)
 - Check training data format matches expected structure
 - For small datasets (<500 structures), use `freeze_backbone=True`
 

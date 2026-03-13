@@ -44,7 +44,7 @@ Tools are **strictly structured, fundamental operations** exposed as Python func
 ---
 
 ### 🔧 Skills (Mid-Level Research Tutorials)
-[**Browse Skills →**](.agent/skills)
+[**Browse Skills →**](.agents/skills)
 
 Skills are **flexible tutorials** that combine multiple tool calls to solve focused research problems. Unlike tools, skills have **no fixed input/output type constraints**—the agent handles all data conversion and orchestration between steps.
 
@@ -60,15 +60,15 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 - Calculate melting temperature via solid-liquid coexistence
 
 **Featured Skills:**
-- [**MLIP Training**](.agent/skills/ml-mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
-- [**Melting Point**](.agent/skills/mat-melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
-- [**Diffusion Analysis**](.agent/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
-- [**Material Stability**](.agent/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
+- [**MLIP Training**](.agents/skills/ml-mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
+- [**Melting Point**](.agents/skills/mat-melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
+- [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
+- [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
 
 ---
 
 ### 🎯 Workflows (High-Level Research Objectives)
-[**Browse Workflows →**](.agent/workflows)
+[**Browse Workflows →**](.agents/workflows)
 
 Workflows represent **complete, high-level research goals** that may span multiple skills and require strategic planning. They provide a research roadmap for the agent to follow. Workflows are not necessarily constrained to the currently available tools and skills. They can be a summary of a research paper, or a research idea generated during a informal chat.
 
@@ -102,7 +102,7 @@ Workflow: "Find stable Li-ion conductors"
 ---
 
 ## Key Features
-[**Browse all skills →**](.agent/skills)
+[**Browse all skills →**](.agents/skills)
 
 ### 1. Simulation Infrastructure
 Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD, and fine-tuning APIs. DFT integration for VASP input/output and electronic structure. HPC job management via Atomate2. Lattice-level cluster expansion and Monte Carlo via SMOL.
@@ -198,7 +198,7 @@ This project runs as a collection of MCP servers. Some require specific setup:
 
 ### 3. MLIP Agents (Mace, MatGL, FairChem)
 *   **Purpose**: Running ML potentials.
-*   **Requirements**: [MLIP Environment Rules](.agent/rules/mcp-environments.md).
+*   **Requirements**: [MLIP Environment Rules](.agents/rules/mcp-environments.md).
     *   These agents run in isolated conda environments.
     *   [MACE Setup](conda-envs/mace-agent/README.md)
     *   [MatGL Setup](conda-envs/matgl-agent/README.md)
@@ -224,10 +224,10 @@ To use these tools within Antigravity, you need to merge the server configuratio
 ## Agent Intelligence & Automation
 This project is optimized for use with coding AI copilots like **Antigravity**. It includes specialized instructions and pre-defined workflows to automate complex research tasks.
 
-### The `.agent/` Directory
-- **Rules (`.agent/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Antigravity automatically parses these to ensure all simulations and code follow best practices.
-- **Workflows (`.agent/workflows/`)**: Defines standardized research procedures (e.g., calculating melting points or fine-tuning alloys). Antigravity can execute these step-by-step, managing the complex transitions between different conda environments and simulation stages.
-- **Skills (`.agent/skills/`)**: Modular, reusable capabilities for complex tasks like melting point calculations, diffusion analysis, and MLIP training. Each skill is self-documented with instructions, scripts, and resources.
+### The `.agents/` Directory
+- **Rules (`.agents/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Antigravity automatically parses these to ensure all simulations and code follow best practices.
+- **Workflows (`.agents/workflows/`)**: Defines standardized research procedures (e.g., calculating melting points or fine-tuning alloys). Antigravity can execute these step-by-step, managing the complex transitions between different conda environments and simulation stages.
+- **Skills (`.agents/skills/`)**: Modular, reusable capabilities for complex tasks like melting point calculations, diffusion analysis, and MLIP training. Each skill is self-documented with instructions, scripts, and resources.
 
 ---
 
@@ -252,7 +252,7 @@ See [docs/developer_guide.md](docs/developer_guide.md) for architecture details,
 
 
 ### Guidelines
-- Follow the coding standards in `.agent/rules/coding-standards.md`
+- Follow the coding standards in `.agents/rules/coding-standards.md`
 - Add tests for new functionality
 - Update documentation (README, SKILL.md files)
 - Ensure all MCP tools return clean JSON (no stdout pollution)

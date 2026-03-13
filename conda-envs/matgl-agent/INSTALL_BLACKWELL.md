@@ -105,7 +105,7 @@ pip install matgl --no-deps
 *Validated Version:* `2.0.4`
 
 ## 5. Benchmarking Results
-Verified using `benchmark_gpu_models.py` (located in `.agent/test/benchmark_gpu/`).
+Verified using `benchmark_gpu_models.py` (located in `.agents/test/benchmark_gpu/`).
 
 | Model | Status | Device | Performance (50 steps MD) |
 |---|---|---|---|
@@ -145,7 +145,7 @@ print(f'  MatGL: {matgl.__version__}')
 
 ## 7. Benchmarking Results
 
-Verified using `benchmark_gpu_models.py` (located in `.agent/test/benchmark_gpu/`).
+Verified using `benchmark_gpu_models.py` (located in `.agents/test/benchmark_gpu/`).
 
 | Model | Status | Device | Performance (50 steps MD) |
 |---|---|---|---|
@@ -158,7 +158,7 @@ All models successfully perform Molecular Dynamics simulation on the GPU.
 ## 8. Maintenance
 
 - **Prevention:** Always use `--no-deps` when installing wrappers around torch/dgl to avoid overwriting the custom build.
-- **Hygiene:** Temporary files should be directed to `.agent/test/`.
+- **Hygiene:** Temporary files should be directed to `.agents/test/`.
 
 ## Quick Reference: Complete Installation Script
 
