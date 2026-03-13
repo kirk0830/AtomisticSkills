@@ -48,5 +48,5 @@ python .agents/skills/general-patent-search/scripts/query_google_patents.py "ass
 
 ---
 
-**Author:** AI Agent  
-**Contact:** System
+**Author:** Sathya Edamadaka  
+**Contact:** [GitHub @snme](https://github.com/snme)
