@@ -121,8 +121,12 @@ python .agents/skills/mat-xrd-refinement/scripts/refine.py \
 
 ## Related skills
 
-- **[mat-xrd-calculator](../mat-xrd-calculator/SKILL.md)**: Calculate theoretical XRD patterns from crystal structures.
-- **[foundation-potentials](../foundation-potentials/SKILL.md)**: Relax structures before XRD for better agreement with experiment.
+- **`mat-xrd-digitizer`**:
+  - Use this skill to digitize an image or screenshot of an XRD plot into an `.xy` file if you do not have raw experimental data.
+- **[mat-xrd-calculator](../mat-xrd-calculator/SKILL.md)**:
+  - Calculate theoretical XRD patterns from crystal structures.
+- **[foundation-potentials](../foundation-potentials/SKILL.md)**:
+  - Relax structures before XRD for better agreement with experiment.
 
 ---
 

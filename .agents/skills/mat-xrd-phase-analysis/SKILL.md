@@ -124,6 +124,8 @@ All outputs go under `<output_dir>` (default: `phase_analysis_results/` under th
 
 ## Related Skills
 
+- **`mat-xrd-digitizer`**:
+  - Use this skill first to convert an image/screenshot of an XRD plot into the `.xy` file required by this phase analysis skill.
 - **`mat-xrd-refinement`**:
   - For known-phase Rietveld refinement (given specific CIFs).
 - **`mat-xrd-calculator`**:
