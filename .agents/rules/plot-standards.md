@@ -1,6 +1,6 @@
 ---
 trigger: model_decision
-description: Rules for plotting scientific figrues, including plot size and fonts
+description: Rules for plotting scientific figures, including plot size and fonts
 ---
 
 # Plotting Standards
