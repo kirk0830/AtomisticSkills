@@ -5,12 +5,7 @@ channels:
 dependencies:
   - python=3.11
   - pip
-  - swig
-  - boost-cpp
-  - c-compiler
-  - cxx-compiler
   - pip:
     - dara-xrd
     - pymatgen
     - "kaleido>=0.2.1,<0.3"  # Plotly PNG export; 0.2.x bundles Chromium (no system Chrome needed)
-    - opxrd
