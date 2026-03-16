@@ -1,3 +1,8 @@
+---
+description: 
+alwaysApply: true
+---
+
 # AtomisticSkills: Claude Code Instructions
 
 ## Goal Overview

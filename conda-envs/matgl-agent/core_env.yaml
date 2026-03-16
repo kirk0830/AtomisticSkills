@@ -3,8 +3,11 @@ dependencies:
   - python=3.10
   - pip
   - pip:
+    - numpy<2
     - mcp
     - matgl
+    - chgnet
+    - cython
     - pymatgen
     - pymatgen-analysis-diffusion
     - dgl
