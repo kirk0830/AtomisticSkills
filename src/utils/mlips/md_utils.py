@@ -49,16 +49,14 @@ class EquilibrationMonitor:
     def __init__(
         self, 
         atoms=None, 
-        timestep_fs: float | None = None, 
-        log_interval: int | None = None, 
         window_ps: float = 1.0, 
         stability_ps: float = 5.0, 
         temp_std_threshold: float = 50.0,
         **kwargs
     ):
         self.atoms = atoms
-        self.timestep_fs = timestep_fs
-        self.log_interval = log_interval
+        self.timestep_fs = None
+        self.log_interval = None
         self.window_ps = window_ps
         self.stability_ps = stability_ps
         self.temp_std_threshold = temp_std_threshold
@@ -67,11 +65,17 @@ class EquilibrationMonitor:
         self.stability_entries = None
         self.history = {"temps": [], "epots": [], "stds": []}
 
-    def _resolve_params(self, atoms, dyn=None):
-        """Resolve simulation parameters from atoms or dynamics object."""
+    def _resolve_params(self, atoms, dyn=None, md_runner=None):
+        """Resolve simulation parameters from atoms, dynamics, or md_runner object."""
         if self.atoms is None:
             self.atoms = atoms
             
+        if md_runner is not None:
+            if self.timestep_fs is None and hasattr(md_runner, "timestep"):
+                self.timestep_fs = md_runner.timestep
+            if self.log_interval is None and hasattr(md_runner, "loginterval"):
+                self.log_interval = md_runner.loginterval
+                
         if dyn is not None:
             # Try to get timestep from Dynamics object (ASE units)
             if self.timestep_fs is None:
@@ -85,7 +89,16 @@ class EquilibrationMonitor:
             # Log interval is usually not in dyn directly for the callback,
             # but we pass it during attach if we want.
             # However, matcalc uses its own loginterval.
-            # We can try to guess it or pass it. 
+            # We can try to guess it or pass it.
+            if self.log_interval is None and hasattr(dyn, "observers"):
+                for obs in dyn.observers:
+                    try:
+                        func = obs[0]
+                        if func is self or (hasattr(func, "__self__") and func.__self__ is self):
+                            self.log_interval = obs[1]
+                            break
+                    except Exception:
+                        pass
         
         if self.timestep_fs is None:
             raise ValueError("timestep_fs must be provided or auto-detected from dynamics object.")
@@ -102,13 +115,14 @@ class EquilibrationMonitor:
 
     def __call__(self, *args, **kwargs):
         dyn = kwargs.get("dyn")
+        md_runner = kwargs.get("md_runner")
         atoms = dyn.atoms if dyn is not None and hasattr(dyn, "atoms") else self.atoms
         
         if atoms is None:
             return
 
         # Resolve parameters on the first call
-        self._resolve_params(atoms, dyn)
+        self._resolve_params(atoms, dyn, md_runner)
         
         curr_temp = atoms.get_temperature()
         curr_epot = atoms.get_potential_energy() / len(atoms)
@@ -256,8 +270,11 @@ class DiffusionMonitor:
                 diffusivity evaluations in picoseconds. Defaults to 5.0 ps.
             ignore_ps (float): Initial simulation time to ignore for equilibration 
                 before starting convergence checks. Defaults to 5.0 ps.
-            **kwargs: Additional parameters like 'timestep_fs' and 'log_interval' 
-                if they cannot be auto-detected from the dynamics object.
+            output_dir (str, optional): Directory to save diffusion results.
+            timestep_fs (float, optional): Simulation time step in fs. 
+            log_interval (int, optional): Steps between logs.
+            temperature (float, optional): Temperature of the simulation.
+            **kwargs: Additional parameters.
         """
         self.atoms = atoms
         self.specie = specie
@@ -266,18 +283,26 @@ class DiffusionMonitor:
         self.ignore_ps = ignore_ps
         self.output_dir = output_dir
         
-        self.timestep_fs = kwargs.get("timestep_fs")
-        self.log_interval = kwargs.get("log_interval")
-        self.temperature = kwargs.get("temperature")
+        self.timestep_fs = None
+        self.log_interval = None
+        self.temperature = None
         
         self.structures = []
         self.check_interval_steps = None
         self.ignore_entries = None
         
-    def _resolve_params(self, atoms, dyn=None):
+    def _resolve_params(self, atoms, dyn=None, md_runner=None):
         if self.atoms is None:
             self.atoms = atoms
             
+        if md_runner is not None:
+            if self.timestep_fs is None and hasattr(md_runner, "timestep"):
+                self.timestep_fs = md_runner.timestep
+            if self.log_interval is None and hasattr(md_runner, "loginterval"):
+                self.log_interval = md_runner.loginterval
+            if self.temperature is None and hasattr(md_runner, "temperature"):
+                self.temperature = md_runner.temperature
+                
         if dyn is not None:
             if self.timestep_fs is None:
                 from ase import units
@@ -286,10 +311,32 @@ class DiffusionMonitor:
                 elif hasattr(dyn, "get_time_step"):
                     self.timestep_fs = dyn.get_time_step() / units.fs
                     
+            if self.log_interval is None and hasattr(dyn, "observers"):
+                for obs in dyn.observers:
+                    try:
+                        func = obs[0]
+                        if func is self or (hasattr(func, "__self__") and func.__self__ is self):
+                            self.log_interval = obs[1]
+                            break
+                    except Exception:
+                        pass
+                        
+            if self.temperature is None:
+                from ase import units
+                if hasattr(dyn, "temperature"):
+                    if dyn.temperature < 10.0:
+                        self.temperature = dyn.temperature / units.kB
+                    else:
+                        self.temperature = dyn.temperature
+                elif hasattr(dyn, "temperature_K"):
+                    self.temperature = dyn.temperature_K
+                    
         if self.timestep_fs is None:
             raise ValueError("timestep_fs must be provided or auto-detected from dynamics object.")
         if self.log_interval is None:
             raise ValueError("log_interval must be provided to evaluate diffusion correctly.")
+        if self.temperature is None:
+            raise ValueError("temperature must be explicitly provided or auto-detected.")
             
         ts = self.timestep_fs
         li = self.log_interval
@@ -312,12 +359,15 @@ class DiffusionMonitor:
         if self.temperature is not None:
             temp = float(self.temperature)
         else:
-            temp = self.atoms.get_temperature() if self.atoms else 300.0
-            if temp < 1.0: 
-                temp = 300.0
+            raise ValueError("temperature must be explicitly provided to DiffusionMonitor.")
         
-        ts = self.timestep_fs if self.timestep_fs is not None else 1.0
-        li = self.log_interval if self.log_interval is not None else 10
+        if self.timestep_fs is None:
+            raise ValueError("timestep_fs must be explicitly provided to DiffusionMonitor.")
+        if self.log_interval is None:
+            raise ValueError("log_interval must be explicitly provided to DiffusionMonitor.")
+            
+        ts = self.timestep_fs
+        li = self.log_interval
         
         try:
             # Fit analyzer on equilibrated segment
@@ -381,12 +431,13 @@ class DiffusionMonitor:
 
     def __call__(self, *args, **kwargs):
         dyn = kwargs.get("dyn")
+        md_runner = kwargs.get("md_runner")
         atoms = dyn.atoms if dyn is not None and hasattr(dyn, "atoms") else self.atoms
         
         if atoms is None:
             return
 
-        self._resolve_params(atoms, dyn)
+        self._resolve_params(atoms, dyn, md_runner)
         
         # Collect current structure
         from pymatgen.io.ase import AseAtomsAdaptor
@@ -402,12 +453,18 @@ class DiffusionMonitor:
                 from pymatgen.analysis.diffusion.analyzer import DiffusionAnalyzer
                 
                 analysis_structs = self.structures[self.ignore_entries:]
-                temp = atoms.get_temperature()
-                if temp < 1.0: # Fallback for T=0 or T not set
-                     temp = 300.0
+                if self.temperature is not None:
+                    temp = float(self.temperature)
+                else:
+                    raise ValueError("temperature must be explicitly provided to DiffusionMonitor.")
                 
-                ts = self.timestep_fs if self.timestep_fs is not None else 1.0
-                li = self.log_interval if self.log_interval is not None else 10
+                if self.timestep_fs is None:
+                    raise ValueError("timestep_fs must be explicitly provided to DiffusionMonitor.")
+                if self.log_interval is None:
+                    raise ValueError("log_interval must be explicitly provided to DiffusionMonitor.")
+                    
+                ts = self.timestep_fs
+                li = self.log_interval
                 
                 try:
                     analyzer = DiffusionAnalyzer.from_structures(
@@ -528,8 +585,6 @@ class QuenchingControl:
 def get_md_callback(
     monitor_type: str, 
     atoms=None, 
-    timestep_fs: Optional[float] = None, 
-    log_interval: Optional[int] = None, 
     **kwargs
 ):
     """Factory function to create MD callbacks."""
@@ -537,22 +592,20 @@ def get_md_callback(
     
     if monitor_type == "explosion":
         threshold = kwargs.get("temp_threshold", 10000.0)
-        return ExplosionMonitor(atoms, threshold), log_interval
+        return ExplosionMonitor(atoms, threshold)
     elif monitor_type == "equilibration":
         return EquilibrationMonitor(
             atoms=atoms, 
-            timestep_fs=timestep_fs, 
-            log_interval=log_interval, 
             **kwargs
-        ), log_interval
+        )
     elif monitor_type == "overshoot":
         target_temp = kwargs.get("temperature", 300.0)
         tolerance = kwargs.get("tolerance", 500.0)
-        return OvershootMonitor(atoms, target_temp, tolerance), log_interval
+        return OvershootMonitor(atoms, target_temp, tolerance)
     elif monitor_type == "volume":
         lower = kwargs.get("lower_limit_ratio", 0.2)
         upper = kwargs.get("upper_limit_ratio", 2.0)
-        return VolumeMonitor(atoms, lower, upper), log_interval
+        return VolumeMonitor(atoms, lower, upper)
     elif monitor_type == "quenching":
         start_temp = kwargs.get("temperature", 3000.0)
         end_temp = kwargs.get("temperature_end", 300.0)
@@ -570,9 +623,7 @@ def get_md_callback(
             threshold=threshold,
             check_interval_ps=check_interval,
             ignore_ps=ignore_ps,
-            output_dir=output_dir,
-            timestep_fs=timestep_fs,
-            log_interval=log_interval
-        ), log_interval
+            output_dir=output_dir
+        )
     
     return None

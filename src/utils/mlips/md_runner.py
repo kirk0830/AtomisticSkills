@@ -299,8 +299,8 @@ class CustomMDCalc(PropCalc):
         # --- KEY ADDITION ---
         if self.additional_callbacks:
             for callback, interval in self.additional_callbacks:
-                # Pass dyn=md to allow monitors to auto-configure
-                md.attach(callback, interval=interval, dyn=md)
+                # Pass dyn=md and md_runner=self to allow monitors to auto-configure
+                md.attach(callback, interval=interval, dyn=md, md_runner=self)
         # --------------------
 
         md.run(self.steps)

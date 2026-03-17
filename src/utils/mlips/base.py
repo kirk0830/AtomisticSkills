@@ -641,17 +641,15 @@ class MLIPModel(ABC):
             for m_type in monitors:
                 # Delay import to avoid circular dependency
                 from src.utils.mlips.md_utils import get_md_callback
-                callback_info = get_md_callback(
+                callback_instance = get_md_callback(
                     m_type, 
                     atoms, 
-                    timestep_fs=timestep, 
-                    log_interval=log_interval,
                     temperature=temperature,
                     output_dir=output_dir,
                     **(monitor_params or {})
                 )
-                if callback_info:
-                    additional_callbacks.append(callback_info)
+                if callback_instance:
+                    additional_callbacks.append((callback_instance, log_interval))
 
         # Prepare Calculator
         calc = self.create_calculator()
