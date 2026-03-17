@@ -269,6 +269,8 @@ See [`.agents/skills/melting-point/`](./../skills/melting-point/) for a comprehe
 
 At the very end of every `SKILL.md` file, include a footer separated by a horizontal rule (`---`).
 
+**CRITICAL NOTE:** The author and contact cannot be an AI agent. It must be the human author who initiated and pushed this change.
+
 **GitHub contact (preferred):**
 ```markdown
 ---
