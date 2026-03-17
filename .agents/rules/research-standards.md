@@ -20,7 +20,10 @@ You job is to utilize a repository of summarized literature, the SKILLs, and Mod
         - Preparation: a section discussing your takeaway from literature, a section on Methodology Abstract built on literature (written like a short "Methods" section in an academic paper), and a section that lists the existing Skills you will utilize alongside a list of any missing/desired Skills that you might need to solve the problem.
         - **Detailed Action Plan:** A concrete, chronological list of steps required to execute the workflow. These are typically sequences of SKILLs or MCP tool calls (e.g., 1. Query material structure, 2. Prepare force field, 3. Fine-tuning, 4. Molecular dynamics simulation, etc.). For each SKILL and MCP tool, you need to clearly list all the proposed hyperparameters that you will use (e.g., lr, scheduler of ml training; timestep, duration, and ensemble for molecular dynamics).
 
-3.  **Request User Review**: use `notify_user` to ask the user to review `research_plan.md`. Do NOT proceed until the user approves or comments. **CRITICAL**: Always set `ShouldAutoProceed: true` in the `notify_user` tool call to ensure the "Proceed" button is visible to the user.
+3.  **Request User Review**: 
+    - use `notify_user` to ask the user to review `research_plan.md`. Do NOT proceed until the user approves or comments. 
+    - **CRITICAL**: Always set `ShouldAutoProceed: true` in the `notify_user` tool call to ensure the "Proceed" button is visible to the user.
+    - After user approved the research plan, copy the research_plan.md into the research directory.
 
 
 
