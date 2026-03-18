@@ -55,7 +55,7 @@
     }
   ],
   "plots": {
-    "html": ".agents/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_refinement.html",
+    "html": null,
     "png": ".agents/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_refinement.png"
   },
   "peak_data": ".agents/skills/mat-xrd-refinement/examples/LiFePO4/refinement_results/LiFePO4/LiFePO4_peak_data.csv"

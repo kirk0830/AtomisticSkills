@@ -100,13 +100,40 @@ def refine(
     png_saved: Optional[Path] = None
     try:
         fig = result.visualize()
+        
+        # Apply standard plotly formatting based on plot-standards.md
+        fig.update_layout(
+            width=600,
+            height=400,
+            font=dict(size=14, color="black"),
+            legend=dict(
+                x=0.99,
+                y=0.99,
+                xanchor="right",
+                yanchor="top",
+                bgcolor="rgba(255, 255, 255, 0.8)",
+                bordercolor="black",
+                borderwidth=1
+            ),
+            margin=dict(l=60, r=20, t=20, b=60),
+        )
+        
+        # Make axes titles bold
+        fig.update_xaxes(title_text="<b>" + str(fig.layout.xaxis.title.text) + "</b>", title_font=dict(size=14, color="black"))
+        fig.update_yaxes(title_text="<b>" + str(fig.layout.yaxis.title.text) + "</b>", title_font=dict(size=14, color="black"))
+
         if save_html:
             fig.write_html(str(html_path))
         try:
-            fig.write_image(str(png_path))
+            fig.write_image(str(png_path), scale=2)
             png_saved = png_path
         except Exception as e:
             print(f"Warning: could not save PNG (install kaleido for PNG: pip install kaleido): {e}")
+        try:
+            svg_path = png_path.with_suffix('.svg')
+            fig.write_image(str(svg_path))
+        except Exception as e:
+            print(f"Warning: could not save SVG: {e}")
     except Exception as e:
         print(f"Warning: failed to create refinement plot: {e}")
 
@@ -116,6 +143,22 @@ def refine(
         result.peak_data.to_csv(peak_data_path, index=False)
     else:
         peak_data_path = None
+        
+    # Export curve_data (x, y_obs, y_calc, background, individual phases) as CSV.
+    curve_data_path = stem_dir / f"{stem}_curve_data.csv"
+    if getattr(result, "plot_data", None) is not None:
+        import pandas as pd
+        curve_dict = {
+            "x": result.plot_data.x,
+            "y_obs": result.plot_data.y_obs,
+            "y_calc": result.plot_data.y_calc,
+            "y_bkg": result.plot_data.y_bkg,
+        }
+        for phase_name, phase_y in result.plot_data.structs.items():
+            curve_dict[f"struct_{phase_name}"] = phase_y
+        pd.DataFrame(curve_dict).to_csv(curve_data_path, index=False)
+    else:
+        curve_data_path = None
 
     # Extract lattice parameters and related phase info from lst_data.
     phases_summary = []

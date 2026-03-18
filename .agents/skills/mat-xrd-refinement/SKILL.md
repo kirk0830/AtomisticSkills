@@ -112,6 +112,19 @@ python .agents/skills/mat-xrd-refinement/scripts/refine.py \
   --refinement_params refinement_params.json
 ```
 
+### Standalone Plotting (`plot.py`)
+
+If you want to adjust the visualization (e.g. dimensions, font sizes, legend position) without re-running the heavy DARA refinement process, you can use the standalone `plot.py` script. This script reads the `*_curve_data.csv` exported by `refine.py`.
+
+```bash
+python .agents/skills/mat-xrd-refinement/scripts/plot.py \
+  --data_dir refinement_results/my_pattern \
+  --output refinement_results/my_pattern/reformatted_plot
+```
+
+You can independently edit `plot.py` directly to adjust any of the `matplotlib`/`plotly` formatting rules.
+
+
 ## Constraints
 
 - **BGMN**: Must be installed and on PATH, or provide `--bgmn_dir` / `DARA_BGMN_DIR` on restricted networks.
