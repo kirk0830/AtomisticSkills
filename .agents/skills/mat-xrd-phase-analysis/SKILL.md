@@ -12,9 +12,15 @@ Identify crystalline phases present in an XRD pattern by using DARA's phase sear
 ([Tutorial 2: Phase analysis with tree search](https://cedergrouphub.github.io/dara/notebooks/phase_search.html)).
 
 This skill:
-- Downloads candidate CIFs from COD for a given chemical system (e.g. `Ge-O-Zn`).
+- Fetches candidate CIFs for a given chemical system (e.g. `Ge-O-Zn`) using either the COD or ICSD database.
 - Runs DARA's `search_phases` to search mixtures of phases.
 - Saves plots and a human-readable report alongside the pattern.
+
+## Database Sources
+
+DARA searches for structures in experimental databases. It supports:
+1. **CODDatabase** (default, `--database cod`): Open-access. DARA will attempt to download CIFs from `crystallography.net`. If the website is offline or unreachable, DARA will automatically look for a local copy at `~/COD_2024` (or the path defined in `~/.dara.yaml`). 
+2. **ICSDDatabase** (`--database icsd`): Commercial database. Requires a local copy, default path `~/ICSD_2024` (or configured in `~/.dara.yaml`). Online download is not supported for ICSD.
 
 ## Requirements
 
@@ -36,18 +42,19 @@ This skill:
 
 ## Usage
 
-Use this script when the node where you run it can reach the COD servers (for automatic CIF download), or when you have a local directory of CIFs you want to search.
+Use this script when the node where you run it can reach the database servers (for automatic COD CIF download), or when you have a local directory of CIFs/local database installed.
 
 ```bash
 # Env: xrd-agent
 python .agents/skills/mat-xrd-phase-analysis/scripts/phase_search.py \
   --xrd_data .agents/skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
-  --chemical_system "Ge-O-Zn"
+  --chemical_system "Ge-O-Zn" \
+  --database icsd
 ```
 
 This will:
 1. Create `phase_analysis_results/` next to the XRD file.
-2. Download and filter CIFs for `Ge-O-Zn` into `phase_analysis_results/cifs/`.
+2. Search and filter CIFs for `Ge-O-Zn` from the ICSD into `phase_analysis_results/cifs/`.
 3. Start a local Ray cluster.
 4. Run `search_phases(...)`.
 5. Write plots and reports into `phase_analysis_results/`.
@@ -60,7 +67,7 @@ python .../phase_search.py \
   --cif_dir /path/to/my_cifs
 ```
 
-In this case no internet / COD download is used; only `--cif_dir` is searched.
+In this case no database lookup is used; only `--cif_dir` is searched.
 
 Specific example:
 
@@ -75,9 +82,11 @@ python .../phase_search.py \
 - `--xrd_data` (required):
   - Path to XRD pattern (`.xy`, `.xrdml`, or `.raw`).
 - `--chemical_system`:
-  - String like `"Ge-O-Zn"`. Used with COD to download CIFs when `--cif_dir` is not given.
+  - String like `"Ge-O-Zn"`. Used with COD or ICSD to fetch CIFs when `--cif_dir` is not given.
 - `--cif_dir`:
-  - Directory containing `.cif` files to search. When set, skips COD download.
+  - Directory containing `.cif` files to search. When set, skips COD/ICSD lookup.
+- `--database` (optional):
+  - `cod` (default) or `icsd`. Specifies which database to use when using `--chemical_system`.
 - `--output_dir`:
   - Custom output directory. Default: `<xrd_dir>/phase_analysis_results/`.
 - `--wavelength` (optional):

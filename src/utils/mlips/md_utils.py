@@ -253,6 +253,7 @@ class DiffusionMonitor:
         threshold: float = 0.1, 
         check_interval_ps: float = 5.0,
         ignore_ps: float = 5.0,
+        min_msd: float = 5.0,
         output_dir: str | None = None,
         **kwargs
     ):
@@ -281,6 +282,7 @@ class DiffusionMonitor:
         self.threshold = threshold
         self.check_interval_ps = check_interval_ps
         self.ignore_ps = ignore_ps
+        self.min_msd = min_msd
         self.output_dir = output_dir
         
         self.timestep_fs = None
@@ -390,10 +392,10 @@ class DiffusionMonitor:
                 "diffusivity_std_dev": float(D_std),
                 "rel_err": float(rel_err),
                 "temperature": float(temp),
-                "specie": self.specie,
+                "species": self.specie,
                 "time_ps": float(len(self.structures) * ts * li / 1000)
             }
-            with open(os.path.join(self.output_dir, f"diffusion_{self.specie}.json"), "w") as f:
+            with open(os.path.join(self.output_dir, "diffusion_results.json"), "w") as f:
                 import json
                 json.dump(summary, f, indent=4)
             
@@ -478,16 +480,22 @@ class DiffusionMonitor:
                     
                     D = analyzer.diffusivity
                     D_std = analyzer.diffusivity_std_dev
+                    # analyzer.msd is already the ensemble average over all diffusing species
+                    # and averaged over different time origins.
+                    # The last element corresponds to the longest time interval.
+                    mean_msd = float(analyzer.msd[-1])
                     
                     if D > 1e-8 and D_std > 0:
                         rel_err = D_std / D
-                        logger.info(f"Diffusion Monitor [{self.specie}]: D={D:.2e}, rel_err={rel_err:.3f} (target < {self.threshold})")
+                        logger.info(f"Diffusion Monitor [{self.specie}]: D={D:.2e}, rel_err={rel_err:.3f} (target < {self.threshold}), mean_msd={mean_msd:.2f} (target >= {self.min_msd})")
                         
-                        if rel_err < self.threshold:
-                            msg = f"Diffusion converged for {self.specie}: rel_err={rel_err:.4f} < {self.threshold}"
+                        if rel_err < self.threshold and mean_msd >= self.min_msd:
+                            msg = f"Diffusion converged for {self.specie}: rel_err={rel_err:.4f} < {self.threshold}, mean_msd={mean_msd:.2f} >= {self.min_msd}"
                             logger.info(msg)
                             self.finalize()
                             raise MDStopIteration(msg)
+                        elif rel_err < self.threshold:
+                            logger.info(f"Diffusion Monitor [{self.specie}]: rel_err met ({rel_err:.3f} < {self.threshold}), but mean_msd ({mean_msd:.2f}) < {self.min_msd}")
                     else:
                         logger.info(f"Diffusion Monitor [{self.specie}]: D={D:.2e}, D_std={D_std:.2e} (ignored due to insufficient diffusion or zero variance)")
                 except MDStopIteration:

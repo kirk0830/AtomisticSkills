@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import List, Optional
 
 try:
-    from dara.structure_db import CODDatabase
+    from dara.structure_db import CODDatabase, ICSDDatabase
 except ImportError:
     raise ImportError(
         "DARA is not installed. Install with: pip install dara-xrd\n"
@@ -45,6 +45,7 @@ def phase_search(
     xrd_data_path: str,
     chemical_system: Optional[str] = None,
     cif_dir: Optional[str] = None,
+    database: str = "cod",
     output_dir: Optional[str] = None,
     wavelength: str = "Cu",
     instrument_profile: str = "Aeris-fds-Pixcel1d-Medipix3",
@@ -56,8 +57,9 @@ def phase_search(
 
     Args:
         xrd_data_path: Path to pattern file (.xy, .xrdml, or .raw).
-        chemical_system: Chemical system for COD lookup (e.g. "Ge-O-Zn"). Required if cif_dir not given.
-        cif_dir: Directory of CIF files to search. If given, chemical_system and COD download are skipped.
+        chemical_system: Chemical system for COD/ICSD lookup (e.g. "Ge-O-Zn"). Required if cif_dir not given.
+        cif_dir: Directory of CIF files to search. If given, chemical_system and COD/ICSD lookup are skipped.
+        database: Source of database ("cod" or "icsd").
         output_dir: Where to write results. Default: same directory as pattern, under phase_analysis_results/.
         wavelength: "Cu", "Co", "Cr", "Fe", "Mo" or wavelength in nm.
         instrument_profile: BGMN instrument profile name.
@@ -98,18 +100,21 @@ def phase_search(
                 raise ValueError("Provide either --chemical_system or --cif_dir")
             cifs_dest.mkdir(parents=True, exist_ok=True)
             if verbose:
-                print(f"Downloading CIFs for chemical system {chemical_system} to {cifs_dest} ...")
+                print(f"Fetching CIFs for chemical system {chemical_system} from {database.upper()} to {cifs_dest} ...")
             try:
-                cod = CODDatabase()
-                cod.get_cifs_by_chemsys(chemical_system, dest_dir=str(cifs_dest))
-            except Exception as e:  # friendly exit when COD download fails
+                if database.lower() == "icsd":
+                    db = ICSDDatabase()
+                else:
+                    db = CODDatabase()
+                db.get_cifs_by_chemsys(chemical_system, dest_dir=str(cifs_dest))
+            except Exception as e:  # friendly exit when database lookup fails
                 if verbose:
                     print(
                         "----------------------------------------\n"
-                        f"Error downloading CIFs for {chemical_system}: {e}\n"
-                        "This can happen if the node has no internet access or the COD service is unavailable.\n"
+                        f"Error fetching CIFs for {chemical_system} via {database.upper()}: {e}\n"
+                        "This can happen if the node has no internet access, the service is unavailable, or local database is missing.\n"
                         "Hint: Ensure the node running this script has internet access, or provide an existing\n"
-                        "      CIF directory via --cif_dir so no COD download is needed."
+                        "      CIF directory via --cif_dir so no database lookup is needed."
                     )
                 # Exit phase_search gracefully
                 return []
@@ -216,7 +221,13 @@ def main():
     )
     parser.add_argument(
         "--cif_dir",
-        help="Directory containing CIF files to search (skips COD download)",
+        help="Directory containing CIF files to search (skips COD/ICSD download/lookup)",
+    )
+    parser.add_argument(
+        "--database",
+        default="cod",
+        choices=["cod", "icsd"],
+        help='Database source to fetch CIFs from when given a chemical system. Default: "cod".',
     )
     parser.add_argument(
         "--output_dir",
@@ -245,13 +256,14 @@ def main():
     args = parser.parse_args()
 
     if not args.chemical_system and not args.cif_dir:
-        parser.error("Provide either --chemical_system (to download CIFs from COD) or --cif_dir (existing CIFs)")
+        parser.error("Provide either --chemical_system (to fetch CIFs from COD/ICSD) or --cif_dir (existing CIFs)")
 
     # Full phase search
     phase_search(
         xrd_data_path=args.xrd_data,
         chemical_system=args.chemical_system,
         cif_dir=args.cif_dir,
+        database=args.database,
         output_dir=args.output_dir,
         wavelength=args.wavelength,
         instrument_profile=args.instrument_profile,

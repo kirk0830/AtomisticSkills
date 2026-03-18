@@ -22,7 +22,7 @@ Provide the agent with an image (e.g., screenshot) of the XRD plot. The agent wi
 If the image contains multiple XRD patterns, the user should specify which curve to digitize by its color, label, or position (e.g., *"digitize the red curve"* or *"digitize the curve labeled 'sample A'"*). The agent will then selectively extract peaks from only that specific curve.
 
 **Agent Action:** The agent should:
-1. Create a JSON file (e.g., `peaks.json`) containing the extracted peaks as an array of objects for the target curve.
+1. Create a JSON file (e.g., `peaks.json`) containing the extracted peaks as an array of objects for the target curve. **CRITICAL: You must ensure every single visible peak, including the tiny minor peaks, is reported and digitized to ensure accurate full-profile refinement downstream.**
 2. Save a copy of the original image (e.g., `original_plot.png`) in the same directory as the JSON file for future reference.
 
 Example `peaks.json` format:
