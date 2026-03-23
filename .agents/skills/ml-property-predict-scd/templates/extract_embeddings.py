@@ -1,86 +1,129 @@
-import os
-import numpy as np
+import argparse
+import sys
+from pathlib import Path
+
 import torch
-from huggingface_hub import hf_hub_download
-from torch_geometric.loader import DataLoader
-
-from models.model_helper import load_model
 
 
-REPO_PREFIX = "Ty-Perez/"
-MODEL_NAME = "ct-scd-pcq"  # switch to "ct-scd-amp" for periodic materials
-CACHE_DIR = "./experiments"
-OUTPUT_PATH = "scd_embeddings.npz"
-BATCH_SIZE = 32
-RETURN_ATOM_EMBS = False
+DEFAULT_HF_PREFIX = "Ty-Perez/"
 
 
-def build_dataset():
-    """
-    Replace this with a real torch_geometric-compatible dataset.
+def resolve_repo_root(user_value):
+    candidates = []
+    if user_value is not None:
+        candidates.append(Path(user_value).expanduser())
 
-    The loader should yield batches with at least:
-    - z
-    - pos
-    - batch
-    Optional labels:
-    - y
-    """
-    raise NotImplementedError
-
-
-def main():
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    ckpt_path = hf_hub_download(
-        repo_id=f"{REPO_PREFIX}{MODEL_NAME}",
-        filename="last.ckpt",
-        cache_dir=CACHE_DIR,
+    cwd = Path.cwd()
+    this_file = Path(__file__).resolve()
+    candidates.extend(
+        [
+            cwd,
+            cwd / "SelfConditionedDenoisingAtoms",
+            this_file.parents[5] / "SelfConditionedDenoisingAtoms",
+            this_file.parents[4].parent / "SelfConditionedDenoisingAtoms",
+        ]
     )
 
-    model, _ema_model, _ckpt = load_model(ckpt_path, device=device)
-    model.eval()
+    for candidate in candidates:
+        if (candidate / "train.py").exists() and (candidate / "models").exists():
+            return candidate.resolve()
 
-    dataset = build_dataset()
-    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+    raise FileNotFoundError(
+        "Could not locate SelfConditionedDenoisingAtoms. Pass --repo-root explicitly."
+    )
 
-    mol_embs = []
-    atom_embs = []
-    targets = []
 
-    with torch.no_grad():
-        for batch in loader:
-            batch = batch.to(device)
-            out = model(
+def bootstrap_repo(repo_root):
+    repo_root = str(repo_root)
+    if repo_root not in sys.path:
+        sys.path.insert(0, repo_root)
+
+
+class FrozenSCDEmbedder:
+    def __init__(
+        self,
+        repo_root,
+        model_name=None,
+        checkpoint_path=None,
+        allow_periodic=False,
+        noise_in_loader=False,
+        device=None,
+    ):
+        from huggingface_hub import hf_hub_download
+        from models.model_helper import load_model
+
+        self.repo_root = Path(repo_root)
+        self.allow_periodic = allow_periodic
+        self.noise_in_loader = noise_in_loader
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+
+        if checkpoint_path is None:
+            if model_name is None:
+                raise ValueError("Provide either model_name or checkpoint_path.")
+            checkpoint_path = hf_hub_download(
+                repo_id=f"{DEFAULT_HF_PREFIX}{model_name}",
+                filename="last.ckpt",
+                cache_dir=str(self.repo_root / "experiments"),
+            )
+
+        self.checkpoint_path = checkpoint_path
+        self.model, _ema_model, _ckpt = load_model(checkpoint_path, device=self.device)
+        self.model.eval()
+        self.model.denoise = False
+
+        for param in self.model.parameters():
+            param.requires_grad = False
+
+        if self.allow_periodic:
+            self.model.rep_model.legacy = False
+        else:
+            self.model.rep_model.legacy = not self.noise_in_loader
+
+    def encode_batch(self, batch, return_atom_embs=False):
+        batch = batch.to(self.device)
+        with torch.no_grad():
+            out = self.model(
                 z=batch.z,
                 pos=batch.pos,
                 batch=batch.batch,
                 graph_batch=batch,
-                return_atom_embs=RETURN_ATOM_EMBS,
+                return_atom_embs=return_atom_embs,
             )
 
-            mol_embs.append(out["mol_emb"].cpu().numpy())
+        payload = {"mol_emb": out["mol_emb"].detach().cpu()}
+        if return_atom_embs:
+            payload["atom_embs"] = out["atom_embs"].detach().cpu()
+        return payload
 
-            if RETURN_ATOM_EMBS:
-                atom_embs.append(out["atom_embs"].cpu().numpy())
 
-            if hasattr(batch, "y"):
-                y = batch.y.detach().cpu().reshape(batch.num_graphs, -1).numpy()
-                targets.append(y)
+def build_parser():
+    parser = argparse.ArgumentParser(description="Load a frozen SCD checkpoint for live embedding inference.")
+    parser.add_argument("--repo-root", default=None, help="Path to SelfConditionedDenoisingAtoms.")
+    parser.add_argument("--model-name", default="ct-scd-pcq", help="Public checkpoint name.")
+    parser.add_argument("--checkpoint-path", default=None, help="Local checkpoint path. Overrides --model-name.")
+    parser.add_argument("--allow-periodic", action="store_true", help="Use periodic/materials graph mode.")
+    parser.add_argument("--noise-in-loader", action="store_true", help="Use loader-side graph mode. Required for periodic data.")
+    parser.add_argument("--device", default=None, help="Torch device, default auto.")
+    return parser
 
-    payload = {
-        "mol_emb": np.concatenate(mol_embs, axis=0),
-    }
 
-    if atom_embs:
-        payload["atom_embs"] = np.array(atom_embs, dtype=object)
+def main():
+    args = build_parser().parse_args()
+    repo_root = resolve_repo_root(args.repo_root)
+    bootstrap_repo(repo_root)
 
-    if targets:
-        payload["y"] = np.concatenate(targets, axis=0)
+    embedder = FrozenSCDEmbedder(
+        repo_root=repo_root,
+        model_name=args.model_name,
+        checkpoint_path=args.checkpoint_path,
+        allow_periodic=args.allow_periodic,
+        noise_in_loader=args.noise_in_loader,
+        device=args.device,
+    )
 
-    np.savez(OUTPUT_PATH, **payload)
-    print(f"Saved embeddings to {OUTPUT_PATH}")
+    print(f"Loaded frozen checkpoint from {embedder.checkpoint_path}")
+    print(f"emb_dim={embedder.model.emb_dim}")
+    print("Import FrozenSCDEmbedder from this template and call encode_batch(batch) inside your downstream ML pipeline.")
 
 
 if __name__ == "__main__":

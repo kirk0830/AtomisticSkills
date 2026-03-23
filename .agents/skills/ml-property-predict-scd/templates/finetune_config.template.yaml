@@ -1,3 +1,5 @@
+# Full-model finetuning only.
+# For a frozen-backbone linear probe, use templates/train_linear_probe_head.py instead.
 log_dir: experiments/
 load_model: null
 load_hf: null

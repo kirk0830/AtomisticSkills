@@ -41,6 +41,29 @@ Expected settings:
 - optional cell augmentation:
   `p_cell_repeat`, `cell_repeat_iters`, `rep_min_atoms`
 
+## Frozen-backbone linear probe
+
+This is a custom-script workflow, not a native `train.py --conf ...` workflow.
+
+Recommended choices:
+
+- load `ct-scd-pcq` for molecules or `ct-scd-amp` for materials
+- freeze the full pretrained checkpoint
+- disable the denoising head during probe training
+- train a fresh `nn.Linear` on top of live `mol_emb`
+- keep `noise_scale: 0.0`, `self_cond: false`, and `pretraining: false` for the dataloading path used by the probe script
+
+Graph mode choice:
+
+- molecules with compiled extension:
+  `noise_in_loader: false`, `allow_periodic: false`
+- molecules without compiled extension:
+  `noise_in_loader: true`, `allow_periodic: false`
+- periodic materials:
+  `noise_in_loader: true`, `allow_periodic: true`
+
+Use `templates/train_linear_probe_head.py` as the base implementation.
+
 ## Molecular full-model finetuning
 
 Closest public baseline:
@@ -109,13 +132,19 @@ Prefer disabling test clipping for strict evaluation comparability.
 python train.py --conf configs/my_pretrain.yaml --job-id smoke_pretrain --num-steps 2000 --val-interval 1
 ```
 
-### New molecular finetuning config from a public checkpoint
+### New frozen-backbone molecular linear probe
+
+```bash
+python templates/train_linear_probe_head.py --model-name ct-scd-pcq --dataset QM9 --dataset-root tmp/qm9 --dataset-arg homo
+```
+
+### New molecular full-model finetuning config from a public checkpoint
 
 ```bash
 python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id smoke_ft --num-steps 2000 --val-interval 1
 ```
 
-### New materials finetuning config from a public checkpoint
+### New materials full-model finetuning config from a public checkpoint
 
 ```bash
 python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-amp --job-id smoke_ft --num-steps 2000 --val-interval 1

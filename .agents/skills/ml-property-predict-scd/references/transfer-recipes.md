@@ -5,7 +5,7 @@ Use the checkpoint that matches the domain first:
 - molecules: `ct-scd-pcq`
 - materials: `ct-scd-amp`
 
-## Frozen embeddings
+## Frozen backbone embeddings
 
 The upstream notebook demonstrates the core pattern:
 
@@ -15,30 +15,38 @@ The upstream notebook demonstrates the core pattern:
 
 Recommended outputs:
 
-- `out["mol_emb"]`: graph-level feature vector for regression or classification
+- `out["mol_emb"]`: graph-level feature vector for downstream ML
 - `out["atom_embs"]`: atom- or site-level feature tensor when `return_atom_embs=True`
+
+Recommended runtime choices:
+
+- keep the checkpoint frozen
+- set `model.eval()`
+- set `model.denoise = False` when the denoising head is not needed
+- configure graph mode to match the task: molecules can use the compiled path, materials require loader-side graphs
 
 Use `templates/extract_embeddings.py` as the starting point.
 
-## Linear probe on frozen embeddings
+## Linear probe with a frozen backbone
 
-For a true linear probe on the published graph embeddings:
+For a true linear probe on top of the pretrained representation:
 
-1. freeze the SCD model by keeping it in inference mode
-2. cache `mol_emb` for every example
-3. train a simple external model on those cached features
+1. load the SCD checkpoint
+2. freeze the entire pretrained model
+3. run each raw batch through the frozen checkpoint to get `mol_emb`
+4. train only a new linear head on top of those live embeddings
 
-Recommended defaults:
+Recommended probe head:
 
-- scalar regression: `sklearn.linear_model.Ridge`
-- binary or multiclass classification: `sklearn.linear_model.LogisticRegression`
+- scalar regression: `torch.nn.Linear(model.emb_dim, out_dim)`
 
-Use `templates/linear_probe_from_embeddings.py` as the starting point.
+Use `templates/train_linear_probe_head.py` as the starting point.
 
-Important caveat:
+Important caveats:
 
-- `train.py` does not expose a native "freeze full backbone and optimize only a linear probe on `mol_emb`" path
-- if you need that exact transfer mode, keep it outside the Lightning trainer
+- do not use cached embedding files as the primary linear-probe workflow
+- do not use the native SCD `scalar_head` as if it were a simple linear probe
+- native `train.py` does not expose a clean freeze-backbone flag, so this probe workflow is better handled by a custom script
 
 ## Full-model finetuning
 
@@ -67,6 +75,6 @@ The recommendation on `reset_head: true` is an inference from the code: the pret
 
 ## Choosing between the three modes
 
-- use frozen embeddings when the dataset is small, labels are scarce, or you need a quick baseline
-- use a linear probe when you want the cleanest test of representation quality
+- use frozen backbone embeddings when you want a pretrained encoder inside a larger downstream pipeline
+- use a frozen-backbone linear probe when you want the cleanest test of representation quality while still training on raw structures end-to-end
 - use full-model finetuning when you have enough labels and want the best task-specific accuracy

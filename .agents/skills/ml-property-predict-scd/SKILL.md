@@ -1,6 +1,6 @@
 ---
 name: ml-property-predict-scd
-description: Use pretrained SelfConditionedDenoisingAtoms checkpoints for atomistic property prediction, frozen embeddings, linear probing, full-model finetuning, new configs, and new dataset adapters.
+description: Use pretrained SelfConditionedDenoisingAtoms checkpoints for live embeddings, frozen-backbone linear probes, full-model finetuning, new configs, and new dataset adapters.
 category: [machine-learning]
 ---
 
@@ -10,8 +10,8 @@ category: [machine-learning]
 
 Use `SelfConditionedDenoisingAtoms` for four related workflows:
 
-- apply frozen SCD embeddings as features for downstream ML
-- fit a simple linear probe on top of frozen SCD embeddings
+- apply a frozen SCD checkpoint as a live atomistic encoder
+- train a simple linear head on top of a frozen SCD backbone
 - fine-tune an entire pretrained SCD checkpoint on a new property task
 - pretrain a new SCD model or add a new dataset adapter
 
@@ -35,27 +35,26 @@ Do not swap these by default. The public checkpoints were pretrained on differen
 
 ## Preferred Workflow
 
-### 1. Frozen embeddings
+### 1. Frozen backbone embeddings
 
-Default to `out["mol_emb"]` for graph-level property prediction.
+Default to `out["mol_emb"]` for graph-level downstream ML.
 
 - Use `return_atom_embs=True` only when the downstream task needs atom- or site-level features.
-- Keep the model in `eval()` mode and use `torch.no_grad()`.
-- Reuse `templates/extract_embeddings.py` as the starting point.
+- Keep the checkpoint frozen and in `eval()` mode.
+- Disable the denoising head for this workflow to avoid wasted compute.
+- Reuse `templates/extract_embeddings.py` as the starting point. It keeps the model live and returns embeddings on demand instead of writing a frozen feature cache.
 
-### 2. Linear probe on frozen embeddings
+### 2. Linear probe with a frozen SCD backbone
 
-The cleanest linear-probe path is external to `train.py`:
+A linear probe here means: keep the pretrained SCD checkpoint frozen, run raw structures through it every batch, and train only a fresh linear prediction head on top of `mol_emb`.
 
-1. Extract `mol_emb` features from a frozen checkpoint.
-2. Fit a simple linear regressor or classifier on those cached embeddings.
+Use `templates/train_linear_probe_head.py` as the starting point.
 
-Use `templates/linear_probe_from_embeddings.py` as the starting point.
+Important caveats:
 
-Important caveat:
-
-- the upstream `train.py` path does not expose a native "freeze full backbone and train only a linear probe on `mol_emb`" switch
-- if you need a true linear probe, train it outside the Lightning trainer on cached embeddings
+- the upstream `train.py` path does not expose a clean freeze-backbone or linear-probe mode
+- the native SCD `scalar_head` is not a simple linear probe, so this workflow should use a custom external `nn.Linear` head
+- do not cache embeddings to disk as the primary probe workflow; keep the frozen backbone live in the training loop
 
 ### 3. Full-model finetuning
 
@@ -112,4 +111,4 @@ When adding a new dataset class under `SelfConditionedDenoisingAtoms/data/datase
 - `noise_in_loader: true` is required for periodic materials and is the fallback when the optional TorchMD CUDA extension is not built.
 - Public repo examples cover `PCQM4MV2`, `AlexMP20`, `QM9`, `MD17`, and `OMOL25` best.
 - The public checkpoints are downloaded as `last.ckpt` files from Hugging Face.
-- The upstream pretraining path freezes the scalar head, so `reset_head: true` is a reasonable downstream default when switching to a new scalar property. That is an inference from the code path, not a documented upstream requirement.
+- The upstream pretraining path freezes the scalar head, so `reset_head: true` is a reasonable downstream default when switching to a new scalar property during full-model finetuning. That is an inference from the code path, not a documented upstream requirement.

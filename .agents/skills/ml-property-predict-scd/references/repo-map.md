@@ -3,11 +3,11 @@
 ## Entry points
 
 - `train.py`
-  The only training entrypoint. It parses YAML from `--conf`, loads public Hugging Face checkpoints through `--load-hf`, builds the datamodule, and launches Lightning training plus final test.
+  The only native training entrypoint. It parses YAML from `--conf`, loads public Hugging Face checkpoints through `--load-hf`, builds the datamodule, and launches Lightning training plus final test.
 - `data/loaders.py`
   Instantiates datasets, applies molecule or periodic transforms, handles splitting, and computes normalization statistics when `standardize: true`.
 - `models/trainer.py`
-  Contains the actual pretraining and finetuning logic, denoising loss, force loss, and batch clipping.
+  Contains the actual pretraining and full-model finetuning logic, denoising loss, force loss, and batch clipping.
 - `models/model_helper.py`
   Loads model configs, resolves checkpoint loading, and applies reset options such as `reset_head`, `reset_embeddings`, and `reset_norms`.
 
@@ -23,6 +23,19 @@
   Energy-plus-force dataset pattern exposing `y` and `dy`.
 - `data/datasets/omol25.py`
   Another energy/force dataset pattern with periodic metadata.
+
+## What the native repo supports cleanly
+
+Native `train.py` is the right tool for:
+
+- SCD pretraining from scratch
+- full-model finetuning from a public or local checkpoint
+
+Native `train.py` is not a clean tool for:
+
+- frozen-backbone linear probing with a fresh external linear head
+
+That workflow is better handled by a small custom script that loads the checkpoint, freezes it, and trains only the new linear head on live `mol_emb` features.
 
 ## Config layering
 
