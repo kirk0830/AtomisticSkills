@@ -1,39 +1,40 @@
 # MatGL Agent Environment
 
-This environment supports the MatGL graph neural network models.
+Minimal setup for MatGL/CHGNet simulations.
 
-## Quick Installation
-Most users should use the simplified installation script, which installs only the necessary core packages:
+## 1) New Machine Setup
 
 ```bash
-bash install.sh
+bash conda-envs/matgl-agent/install.sh
 ```
 
-This installs:
-- python 3.10
-- matgl
-- pymatgen
-- dgl
+This creates `matgl-agent` from `core_env.yaml`.
 
-## Full Reproduction
-If you need to reproduce the exact environment state (including all pinned dependency versions), use the full example configuration:
+## 2) Run Simulations (Recommended)
+
+For the current Cu phase-transition example, no LAMMPS compile is needed:
 
 ```bash
-```bash
-conda env create -f example_full_env.yaml
+conda activate matgl-agent
+bash .agent/skills/mat-lammps-md/examples/model-scripts/run_matgl_cu_phase_transition.sh
 ```
 
-## Blackwell GPU (GB10) Installation
+## 3) Compile LAMMPS (Optional)
 
-**For NVIDIA DGX Spark systems with Blackwell GB10 GPUs (ARM/aarch64, CUDA 13.0)**, see the detailed installation guide:
+If you need a dedicated MatGL-linked LAMMPS binary:
 
-[`INSTALL_BLACKWELL.md`](file:///home/bdeng/projects/AtomisticSkills/conda-envs/matgl-agent/INSTALL_BLACKWELL.md)
+```bash
+KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
+bash conda-envs/matgl-agent/install_lammps.sh
+```
 
-This guide includes:
-- PyTorch 2.9.1+cu130 installation
-- DGL source compilation for compute capability 12.1
-- MatGL installation with GPU acceleration
-- Verification and benchmarking
+Optional reproducible ref:
 
-> **Note**: Users with older x86_64 hardware or earlier GPUs should use the Quick Installation above or follow the standard [MatGL installation guide](https://matgl.ai/installation.html).
+```bash
+KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
+LAMMPS_REF="stable_2Aug2023_update2" \
+bash conda-envs/matgl-agent/install_lammps.sh
+```
 
+Binary path:
+- `lammps/matgl-agent/lmp`

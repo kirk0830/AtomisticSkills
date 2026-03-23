@@ -5,6 +5,7 @@ dependencies:
   - pip:
     - mcp
     - mace-torch>=0.3.15
+    - cython
     - pymatgen
     - pymatgen-analysis-diffusion
     - ase
