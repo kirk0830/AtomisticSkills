@@ -16,7 +16,7 @@ For the current Cu phase-transition example, no LAMMPS compile is needed:
 
 ```bash
 conda activate matgl-agent
-bash .agent/skills/mat-lammps-md/examples/model-scripts/run_matgl_cu_phase_transition.sh
+bash .agents/skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
 ```
 
 ## 3) Compile LAMMPS (Optional)

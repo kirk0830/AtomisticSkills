@@ -82,8 +82,8 @@ conda activate mace-agent
 
 ## Examples
 
-See [examples/three-backends-build-check/README.md](examples/three-backends-build-check/README.md) for a minimal build/verification matrix across MACE, MatGL, and FairChem.
-See [examples/model-scripts/README.md](examples/model-scripts/README.md) for model-specific run scripts (starting with a MatGL Cu phase-transition example).
+See [scripts/three-backends-build-check/README.md](scripts/three-backends-build-check/README.md) for a minimal build/verification matrix across MACE, MatGL, and FairChem.
+See the respective README.md files under [examples/mace/](examples/mace/), [examples/matgl/](examples/matgl/), and [examples/fairchem/](examples/fairchem/) for model-specific run scripts.
 
 ## Constraints
 - **Strict binary-env pairing**: each LAMMPS binary must run only with its own conda env.
@@ -100,5 +100,5 @@ See [examples/model-scripts/README.md](examples/model-scripts/README.md) for mod
 
 ---
 
-**Author:** AtomisticSkills Team  
-**Contact:** [GitHub @cursor](https://github.com/cursor)
+**Author:** Jurģis Ruža  
+**Contact:** [GitHub @JurgisR](https://github.com/JurgisR)
