@@ -41,19 +41,45 @@ Expected settings:
 - optional cell augmentation:
   `p_cell_repeat`, `cell_repeat_iters`, `rep_min_atoms`
 
-## Frozen-backbone linear probe
+## Lightweight frozen-backbone training
 
 This is a custom-script workflow, not a native `train.py --conf ...` workflow.
 
+Use `templates/train_lightweight_head.py` and choose one of three modes.
+
+### 1. `scalar_head`
+
 Recommended choices:
 
+- `--head-mode scalar_head`
 - load `ct-scd-pcq` for molecules or `ct-scd-amp` for materials
-- freeze the full pretrained checkpoint
-- disable the denoising head during probe training
-- train a fresh `nn.Linear` on top of live `mol_emb`
-- keep `noise_scale: 0.0`, `self_cond: false`, and `pretraining: false` for the dataloading path used by the probe script
+- use `--reset-head` for a fresh native scalar head on the new target
+- use `--set-head-agg sum` or `--set-head-agg mean` depending on the target
+- explicitly freeze non-`scalar_head` parameters in the script
+- optionally add `--standardize-targets` for typical scalar regression tasks
 
-Graph mode choice:
+This path is best for invariant scalar regression.
+
+### 2. `atom_emb_mlp`
+
+Recommended choices:
+
+- `--head-mode atom_emb_mlp`
+- choose `--pool sum` or `--pool mean`
+- use `--mlp-layers 1` or `2`
+- keep the backbone frozen and train only the MLP head
+- optionally add `--standardize-targets` for scalar regression
+
+### 3. `mol_emb_mlp`
+
+Recommended choices:
+
+- `--head-mode mol_emb_mlp`
+- use `--mlp-layers 1` or `2`
+- keep the backbone frozen and train only the MLP head
+- optionally add `--standardize-targets` for scalar regression
+
+Graph mode choice for all lightweight modes:
 
 - molecules with compiled extension:
   `noise_in_loader: false`, `allow_periodic: false`
@@ -61,8 +87,6 @@ Graph mode choice:
   `noise_in_loader: true`, `allow_periodic: false`
 - periodic materials:
   `noise_in_loader: true`, `allow_periodic: true`
-
-Use `templates/train_linear_probe_head.py` as the base implementation.
 
 ## Molecular full-model finetuning
 
@@ -132,10 +156,22 @@ Prefer disabling test clipping for strict evaluation comparability.
 python train.py --conf configs/my_pretrain.yaml --job-id smoke_pretrain --num-steps 2000 --val-interval 1
 ```
 
-### New frozen-backbone molecular linear probe
+### Scalar-head-only lightweight adaptation
 
 ```bash
-python templates/train_linear_probe_head.py --model-name ct-scd-pcq --dataset QM9 --dataset-root tmp/qm9 --dataset-arg homo
+python templates/train_lightweight_head.py --head-mode scalar_head --model-name ct-scd-pcq --dataset QM9 --dataset-root tmp/qm9 --dataset-arg homo --reset-head --set-head-agg mean --standardize-targets
+```
+
+### Pooled-atom-embedding MLP adaptation
+
+```bash
+python templates/train_lightweight_head.py --head-mode atom_emb_mlp --model-name ct-scd-pcq --dataset QM9 --dataset-root tmp/qm9 --dataset-arg homo --pool mean --mlp-layers 2 --standardize-targets
+```
+
+### `mol_emb` MLP adaptation
+
+```bash
+python templates/train_lightweight_head.py --head-mode mol_emb_mlp --model-name ct-scd-pcq --dataset QM9 --dataset-root tmp/qm9 --dataset-arg homo --mlp-layers 2 --standardize-targets
 ```
 
 ### New molecular full-model finetuning config from a public checkpoint

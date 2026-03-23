@@ -23,30 +23,43 @@ Recommended runtime choices:
 - keep the checkpoint frozen
 - set `model.eval()`
 - set `model.denoise = False` when the denoising head is not needed
+- only pass `graph_batch=batch` when `allow_periodic` or `noise_in_loader` is active
 - configure graph mode to match the task: molecules can use the compiled path, materials require loader-side graphs
 
 Use `templates/extract_embeddings.py` as the starting point.
 
-## Linear probe with a frozen backbone
+## Lightweight frozen-backbone training
 
-For a true linear probe on top of the pretrained representation:
+Use `templates/train_lightweight_head.py` with one of three modes. All three keep the SCD backbone live in the forward pass.
 
-1. load the SCD checkpoint
-2. freeze the entire pretrained model
-3. run each raw batch through the frozen checkpoint to get `mol_emb`
-4. train only a new linear head on top of those live embeddings
+### 1. `scalar_head`
 
-Recommended probe head:
+- trains only the native `scalar_head`
+- most appropriate for invariant scalar regression targets
+- can use `reset_head()` when switching to a new target
+- supports `set_head_agg` so the scalar-head reduction can be changed between `sum` and `mean`
+- resets the checkpoint's `mean/std` output buffers to identity before downstream training
 
-- scalar regression: `torch.nn.Linear(model.emb_dim, out_dim)`
+Important implementation detail:
 
-Use `templates/train_linear_probe_head.py` as the starting point.
+- `scd_model.finetune()` does not by itself freeze the rest of the network, so head-only training should explicitly freeze non-`scalar_head` parameters
 
-Important caveats:
+### 2. `atom_emb_mlp`
 
-- do not use cached embedding files as the primary linear-probe workflow
-- do not use the native SCD `scalar_head` as if it were a simple linear probe
-- native `train.py` does not expose a clean freeze-backbone flag, so this probe workflow is better handled by a custom script
+- obtains `atom_embs` from the frozen backbone
+- pools them with `sum` or `mean`
+- trains only a 1- or 2-layer MLP head
+- computes features on the fly rather than relying on an offline feature cache
+
+This is often useful when atomwise information matters but full-model finetuning is too expensive.
+
+### 3. `mol_emb_mlp`
+
+- obtains `mol_emb` from the frozen backbone
+- trains only a 1- or 2-layer MLP head
+- computes features on the fly rather than relying on an offline feature cache
+
+This is the cleanest external-head baseline on the pretrained graph representation.
 
 ## Full-model finetuning
 
@@ -73,8 +86,9 @@ Useful switches:
 
 The recommendation on `reset_head: true` is an inference from the code: the pretraining path freezes `scalar_head`, so the public checkpoint head is not a trained downstream property head.
 
-## Choosing between the three modes
+## Choosing between the lightweight and full-model paths
 
-- use frozen backbone embeddings when you want a pretrained encoder inside a larger downstream pipeline
-- use a frozen-backbone linear probe when you want the cleanest test of representation quality while still training on raw structures end-to-end
-- use full-model finetuning when you have enough labels and want the best task-specific accuracy
+- use `scalar_head` when the target is a standard invariant scalar regression property and you want the lightest native-head adaptation
+- use `atom_emb_mlp` when pooled atomwise information is likely more expressive than the native scalar head
+- use `mol_emb_mlp` when you want a simple external graph-level head
+- use full-model finetuning when you want the best downstream accuracy and can afford more GPU memory and training time

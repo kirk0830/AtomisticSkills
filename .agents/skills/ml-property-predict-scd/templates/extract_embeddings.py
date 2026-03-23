@@ -39,6 +39,17 @@ def bootstrap_repo(repo_root):
         sys.path.insert(0, repo_root)
 
 
+def build_model_inputs(batch, use_graph_batch):
+    inputs = {
+        "z": batch.z,
+        "pos": batch.pos,
+        "batch": batch.batch,
+    }
+    if use_graph_batch:
+        inputs["graph_batch"] = batch
+    return inputs
+
+
 class FrozenSCDEmbedder:
     def __init__(
         self,
@@ -55,6 +66,7 @@ class FrozenSCDEmbedder:
         self.repo_root = Path(repo_root)
         self.allow_periodic = allow_periodic
         self.noise_in_loader = noise_in_loader
+        self.use_graph_batch = allow_periodic or noise_in_loader
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         if checkpoint_path is None:
@@ -83,10 +95,7 @@ class FrozenSCDEmbedder:
         batch = batch.to(self.device)
         with torch.no_grad():
             out = self.model(
-                z=batch.z,
-                pos=batch.pos,
-                batch=batch.batch,
-                graph_batch=batch,
+                **build_model_inputs(batch, self.use_graph_batch),
                 return_atom_embs=return_atom_embs,
             )
 

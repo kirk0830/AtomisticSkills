@@ -1,6 +1,6 @@
 ---
 name: ml-property-predict-scd
-description: Use pretrained SelfConditionedDenoisingAtoms checkpoints for live embeddings, frozen-backbone linear probes, full-model finetuning, new configs, and new dataset adapters.
+description: Use pretrained SelfConditionedDenoisingAtoms checkpoints for live embeddings, lightweight frozen-backbone transfer heads, full-model finetuning, new configs, and new dataset adapters.
 category: [machine-learning]
 ---
 
@@ -11,7 +11,7 @@ category: [machine-learning]
 Use `SelfConditionedDenoisingAtoms` for four related workflows:
 
 - apply a frozen SCD checkpoint as a live atomistic encoder
-- train a simple linear head on top of a frozen SCD backbone
+- train a lightweight head on top of a frozen SCD backbone
 - fine-tune an entire pretrained SCD checkpoint on a new property task
 - pretrain a new SCD model or add a new dataset adapter
 
@@ -42,19 +42,30 @@ Default to `out["mol_emb"]` for graph-level downstream ML.
 - Use `return_atom_embs=True` only when the downstream task needs atom- or site-level features.
 - Keep the checkpoint frozen and in `eval()` mode.
 - Disable the denoising head for this workflow to avoid wasted compute.
-- Reuse `templates/extract_embeddings.py` as the starting point. It keeps the model live and returns embeddings on demand instead of writing a frozen feature cache.
+- Pass `graph_batch=batch` only when `allow_periodic` or `noise_in_loader` is enabled. Do not force `graph_batch` on the fast molecular path.
+- Reuse `templates/extract_embeddings.py` as the starting point. It keeps the model live and returns embeddings on demand instead of defaulting to a frozen feature dump.
 
-### 2. Linear probe with a frozen SCD backbone
+### 2. Lightweight training with a frozen SCD backbone
 
-A linear probe here means: keep the pretrained SCD checkpoint frozen, run raw structures through it every batch, and train only a fresh linear prediction head on top of `mol_emb`.
+Use `templates/train_lightweight_head.py` for three lightweight options:
 
-Use `templates/train_linear_probe_head.py` as the starting point.
+1. `scalar_head`
+   Appropriate for invariant scalar regression targets. This path trains only the model's native `scalar_head` using pretrained backbone weights.
+2. `atom_emb_mlp`
+   Pools `atom_embs` with `sum` or `mean`, then trains a 1- or 2-layer MLP head.
+3. `mol_emb_mlp`
+   Uses `mol_emb` directly, then trains a 1- or 2-layer MLP head.
 
-Important caveats:
+Important details:
 
-- the upstream `train.py` path does not expose a clean freeze-backbone or linear-probe mode
-- the native SCD `scalar_head` is not a simple linear probe, so this workflow should use a custom external `nn.Linear` head
-- do not cache embeddings to disk as the primary probe workflow; keep the frozen backbone live in the training loop
+- `scalar_head` is usually the lightest path for standard scalar property prediction.
+- `reset_head()` is a sensible default for `scalar_head` mode when switching to a new target.
+- `set_head_agg` controls the native scalar-head reduction and should be set through the checkpoint-loading path, not by editing tensors after the fact.
+- the upstream model exposes `finetune()` and `reset_head()`, but `finetune()` does not by itself implement scalar-head-only training; explicitly freeze non-`scalar_head` parameters in the lightweight script.
+- the lightweight `scalar_head` path should reset the checkpoint's output affine buffers to identity because pretrained `mean/std` buffers are not downstream target statistics.
+- for `atom_emb_mlp`, either `sum` or `mean` pooling may work better depending on whether the target behaves more like an extensive or intensive quantity.
+- `atom_emb_mlp` and `mol_emb_mlp` should compute frozen-backbone features on the fly, not treat a static embedding cache as the default workflow.
+- `mol_emb_mlp` is the cleanest external-head baseline on the pretrained graph representation.
 
 ### 3. Full-model finetuning
 
@@ -78,6 +89,8 @@ Start from:
 - `configs/finetune_qm9.yaml` for public molecular examples
 
 For public materials finetuning, do not rely on `configs/finetune_matbench.yaml` unless the private `StructureCloud` dependency is available. Copy the template and configure the periodic settings yourself.
+
+Full-model finetuning usually gives better results than the lightweight frozen-backbone options, but it costs more GPU memory and more wall time.
 
 ### 4. Pretraining from scratch
 

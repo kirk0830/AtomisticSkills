@@ -9,7 +9,9 @@
 - `models/trainer.py`
   Contains the actual pretraining and full-model finetuning logic, denoising loss, force loss, and batch clipping.
 - `models/model_helper.py`
-  Loads model configs, resolves checkpoint loading, and applies reset options such as `reset_head`, `reset_embeddings`, and `reset_norms`.
+  Loads model configs, resolves checkpoint loading, and applies reset options such as `reset_head`, `reset_embeddings`, `reset_norms`, and `set_head_agg`.
+- `models/ET_models/scd_model.py`
+  Defines `embedding_head`, `scalar_head`, `reset_head()`, and the base `finetune()` and `pretrain()` helpers.
 
 ## Public dataset patterns already available
 
@@ -31,11 +33,13 @@ Native `train.py` is the right tool for:
 - SCD pretraining from scratch
 - full-model finetuning from a public or local checkpoint
 
-Native `train.py` is not a clean tool for:
+Native `train.py` is not a clean tool for the lightweight frozen-backbone options:
 
-- frozen-backbone linear probing with a fresh external linear head
+- train only `scalar_head`
+- pool `atom_embs` and train a small MLP head
+- use `mol_emb` and train a small MLP head
 
-That workflow is better handled by a small custom script that loads the checkpoint, freezes it, and trains only the new linear head on live `mol_emb` features.
+Those workflows are better handled by a small custom script that loads the checkpoint, freezes it, and trains only the chosen lightweight head.
 
 ## Config layering
 
@@ -53,6 +57,7 @@ There are two config layers:
 - unknown YAML keys fail immediately
 - later CLI arguments override values loaded from YAML
 - overrides placed before `--conf` can be overwritten by the YAML
+- `--set-head-agg` is parsed in `train.py` and then applied inside `models/model_helper.py:create_model()` by overriding `head_agg` before model construction
 
 Use this ordering:
 
@@ -68,6 +73,8 @@ python train.py --conf configs/my_run.yaml --noise_in_loader True --job-id trial
   Uses loader-side graph creation and corruption logic from `data/datasets/transforms.py`.
 - `allow_periodic: true`
   Requires loader-side graph creation for periodic neighbor lists.
+
+The native trainer only passes `graph_batch=batch` when `allow_periodic` or `noise_in_loader` is active. Lightweight embedding and frozen-backbone scripts should mirror that behavior instead of forcing `graph_batch` on the compiled molecular path.
 
 ## Checkpoints
 
@@ -96,3 +103,4 @@ Typical contents:
 - the trainer is configured with `accelerator="gpu"`.
 - `configs/finetune_matbench.yaml` depends on unreleased `StructureCloud` utilities and should not be treated as a public baseline.
 - new datasets are not usable until they are exported from `data/datasets/__init__.py`.
+- `scd_model.finetune()` does not by itself create a head-only training mode; lightweight freezing still needs to be explicit in the custom script.
