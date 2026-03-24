@@ -13,9 +13,9 @@ from src.mcp_server.base_server import search_literature
 class TestOpenAlexTool(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
-        # Create a temporary directory in .agent/test for save_to_file tests
+        # Create a temporary directory in .agents/test for save_to_file tests
         # as per coding standards
-        self.test_dir = Path("../../.agent/test/pytest_openalex")
+        self.test_dir = Path("../../.agents/test/pytest_openalex")
         self.test_dir.mkdir(parents=True, exist_ok=True)
         self.save_file = self.test_dir / "test_results.json"
 

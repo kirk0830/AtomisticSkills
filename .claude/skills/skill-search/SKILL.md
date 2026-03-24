@@ -1,6 +1,6 @@
 ---
 name: skill-search
-description: Discover available AtomisticSkills by scanning .agent/skills/ frontmatter. Use this to find skills relevant to a research task.
+description: Discover available AtomisticSkills by scanning .agents/skills/ frontmatter. Use this to find skills relevant to a research task.
 argument-hint: "[optional search term]"
 ---
 
@@ -9,7 +9,7 @@ argument-hint: "[optional search term]"
 Use the Grep tool to scan all skill descriptions:
 
 ```
-Grep pattern="^description:" glob=".agent/skills/*/SKILL.md" output_mode="content"
+Grep pattern="^description:" glob=".agents/skills/*/SKILL.md" output_mode="content"
 ```
 
 ## Instructions
@@ -23,4 +23,4 @@ Grep pattern="^description:" glob=".agent/skills/*/SKILL.md" output_mode="conten
    - `chem-`: Chemistry / molecular
    - `general-`: General utilities
 4. Present results as a clean table: skill name and description.
-5. If the user wants to run a skill, read its full `SKILL.md` at `.agent/skills/<skill-name>/SKILL.md` and follow the numbered instructions step by step.
+5. If the user wants to run a skill, read its full `SKILL.md` at `.agents/skills/<skill-name>/SKILL.md` and follow the numbered instructions step by step.

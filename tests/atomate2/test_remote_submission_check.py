@@ -9,11 +9,11 @@ from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from src.utils.dft.atomate2_utils import Atomate2Handler
-from src.mcp_server.base_server import run_atomate2_vasp_calculation
+from src.mcp_server.atomate2_server import run_atomate2_vasp_calculation
 
 class TestRemoteSubmissionCheck(unittest.TestCase):
     def setUp(self):
-        self.output_dir = ".agent/test/remote_check_test"
+        self.output_dir = ".agents/test/remote_check_test"
         os.makedirs(self.output_dir, exist_ok=True)
         self.handler = Atomate2Handler(self.output_dir)
 

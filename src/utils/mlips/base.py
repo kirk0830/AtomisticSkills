@@ -621,6 +621,37 @@ class MLIPModel(ABC):
         
         os.makedirs(output_dir, exist_ok=True)
         
+        # Save MD inputs
+        import json
+        # Extract model info
+        m_name = getattr(self, "model_name", None) or getattr(self.model, "model_name", None)
+        
+        m_head = getattr(self, "head", None)
+        if m_head is None:
+            m_head = getattr(self, "task_name", None)
+        if m_head is None and hasattr(self.model, "head"):
+            m_head = getattr(self.model, "head", None)
+        if m_head is None and hasattr(self.model, "task_name"):
+            m_head = getattr(self.model, "task_name", None)
+
+        md_inputs = {
+            "model_name": m_name,
+            "prediction_head": m_head,
+            "temperature": temperature,
+            "steps": steps,
+            "timestep": timestep,
+            "ensemble": ensemble,
+            "log_interval": log_interval,
+            "pressure": pressure,
+            "pressure_mask": pressure_mask,
+            "monitor": monitor,
+            "monitor_type": monitor_type,
+            "monitor_params": monitor_params,
+            "supercell_min_length": supercell_min_length
+        }
+        with open(os.path.join(output_dir, "md_inputs.json"), "w") as f:
+            json.dump(md_inputs, f, indent=4)
+        
         # Formulate filenames
         if hasattr(atoms, "get_chemical_formula"):
             formula = atoms.get_CHEMICAL_FORMULA() if hasattr(atoms, "get_CHEMICAL_FORMULA") else atoms.get_chemical_formula()
@@ -641,17 +672,15 @@ class MLIPModel(ABC):
             for m_type in monitors:
                 # Delay import to avoid circular dependency
                 from src.utils.mlips.md_utils import get_md_callback
-                callback_info = get_md_callback(
+                callback_instance = get_md_callback(
                     m_type, 
                     atoms, 
-                    timestep_fs=timestep, 
-                    log_interval=log_interval,
                     temperature=temperature,
                     output_dir=output_dir,
                     **(monitor_params or {})
                 )
-                if callback_info:
-                    additional_callbacks.append(callback_info)
+                if callback_instance:
+                    additional_callbacks.append((callback_instance, log_interval))
 
         # Prepare Calculator
         calc = self.create_calculator()

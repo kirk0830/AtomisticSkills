@@ -65,8 +65,8 @@ class TestAtomate2Handler(unittest.TestCase):
         assert res["energy"] == -123.456
         assert res["forces"] == [[0.1, -0.2, 0.3]]
         
-        # Verify converted stress from kB to GPa
-        expected_stress = (np.array(MOCK_TASK_DOC["output"]["output"]["stress"]) * 0.1 * ase.units.GPa).tolist()
+        # Verify converted stress from kB to GPa (and sign convention)
+        expected_stress = (-np.array(MOCK_TASK_DOC["output"]["output"]["stress"]) * 0.1 * ase.units.GPa).tolist()
         np.testing.assert_almost_equal(res["stress"], expected_stress)
         
         assert res["structure"] == {"fake_key": "fake_structure"}
