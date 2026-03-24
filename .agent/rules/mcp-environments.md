@@ -21,6 +21,8 @@ For detailed installation instructions, please refer to the `README.md` and `ins
 - **diffcsp-agent**: `conda-envs/diffcsp-agent/` (Core: DiffCSP++, hydra, PyG, pyxtal)
 - **mattergen-agent**: `conda-envs/mattergen-agent/` (Core: MatterGen, PyG, lightning)
 - **xrd-agent**:  `conda-envs/xrd-agent/` (Core: DARA, pymatgen)
+- **orca-agent**: `conda-envs/orca-agent/` (Core: scine_utilities, scine_readuct, ase). Requires `ORCA_BINARY_PATH` environment variable pointing to the ORCA binary. No MCP server, scripts only.
+
 | MCP Server | Conda Environment | Python Path |
 | :--- | :--- | :--- |
 | matgl | `matgl-agent` | `<conda_base>/envs/matgl-agent/bin/python` |

@@ -1,0 +1,14 @@
+name: test-orca-agent
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+    - ase
+    - numpy==1.23.5
+    - scipy
+    - scine-utilities==10.1.0
+    - scine-readuct
+    - pyyaml
+    - pytest
