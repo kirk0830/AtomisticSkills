@@ -217,16 +217,20 @@ def deduplicate_or_cluster_results(results: List[Dict], method: str, rmsd_thresh
     Filter relaxed conformers by RMSD, hierarchical clustering, or kmeans.
     Keeps unique conformers (lowest energy per cluster).
     """
+    if not results:
+        return results
     # Sort by energy first (lowest energy is reference)
     results = sorted(results, key=lambda x: x["energy"])
+    lowest_e = results[0]["energy"]
+    results = [r for r in results if abs(r["energy"] - lowest_e) < 0.5]
+    if len(results) == 1:
+        return results
     
     if method == "rmsd":
         unique_results = []
         for candidate in results:
             is_duplicate = False
             for unique in unique_results:
-                if abs(candidate["energy"] - unique["energy"]) > 0.5:
-                    continue
                 rmsd = align_and_calculate_rmsd(candidate["atoms"], unique["atoms"])
                 if rmsd < rmsd_threshold:
                     is_duplicate = True
@@ -238,8 +242,6 @@ def deduplicate_or_cluster_results(results: List[Dict], method: str, rmsd_thresh
 
     # For clustering methods, compute full pairwise RMSD matrix
     n = len(results)
-    if n == 0:
-        return []
         
     logger.info(f"Computing pairwise RMSD matrix for {n} conformers...")
     dist_matrix = np.zeros((n, n))
@@ -252,8 +254,6 @@ def deduplicate_or_cluster_results(results: List[Dict], method: str, rmsd_thresh
     unique_results = []
     
     if method == "hierarchical":
-        if n == 1:
-            return results
         # Condensed distance matrix required for linkage
         condensed_dist = squareform(dist_matrix)
         Z = linkage(condensed_dist, method='average')
