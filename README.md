@@ -144,6 +144,9 @@ The project uses separate MCP servers running in different conda environments to
 git clone git@github.com:bowen-bd/AtomisticSkills.git
 cd AtomisticSkills
 
+# Patch mcp_config.json with your local paths
+python configure_mcp.py
+
 # Setup environments (run only the ones you need)
 bash conda-envs/base-agent/install.sh
 bash conda-envs/mace-agent/install.sh
@@ -208,6 +211,17 @@ This project runs as a collection of MCP servers. Some require specific setup:
 ### MCP Server Configuration
 The project is configured to run as a set of MCP servers. The base configuration is provided in [mcp_config.json](mcp_config.json).
 
+#### Adapting Paths to Your Machine
+The shipped `mcp_config.json` contains placeholder paths. Run the configure script to rewrite all `command` and `PYTHONPATH` entries to match your local setup:
+
+```bash
+# Auto-detects your conda/mamba base directory
+python configure_mcp.py
+
+# Or provide the conda base path explicitly
+python configure_mcp.py /path/to/miniforge3
+```
+
 #### Integrating with Antigravity
 To use these tools within Antigravity, you need to merge the server configurations into your local Antigravity MCP config:
 
@@ -217,7 +231,7 @@ To use these tools within Antigravity, you need to merge the server configuratio
 4. Restart Antigravity to load the new tools.
 
 > [!TIP]
-> Ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/path/to/AtomisticSkills`).
+> If you skip `configure_mcp.py`, ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/path/to/AtomisticSkills`).
 
 ---
 
