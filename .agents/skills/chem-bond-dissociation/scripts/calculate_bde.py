@@ -406,6 +406,8 @@ def compute_single_bde_homolytic(
     intact_energy: float,
     fmax: float,
     output_dir: str,
+    charge_key: Optional[str] = None,
+    spin_key: Optional[str] = None,
 ) -> Dict:
     """
     Compute homolytic BDE for a single bond (radical + radical).
@@ -448,6 +450,12 @@ def compute_single_bde_homolytic(
     frag2_formula = get_formula_from_atoms(frag2_atoms)
 
     logger.info(f"  Fragments: {frag1_formula}· + {frag2_formula}·")
+
+    # When the model supports charge/spin, annotate fragments as neutral radicals (charge=0, spin=1)
+    # so the model doesn't warn about missing charge/spin keys in atoms.info.
+    if charge_key is not None and spin_key is not None:
+        frag1_atoms = set_charge_spin(frag1_atoms, 0, 1, charge_key, spin_key)
+        frag2_atoms = set_charge_spin(frag2_atoms, 0, 1, charge_key, spin_key)
 
     # Relax fragments
     frag1_atoms, e_frag1 = relax_atoms(
@@ -554,6 +562,28 @@ def compute_single_bde_heterolytic(
 
     logger.info(f"  Fragments: {frag1_formula} / {frag2_formula}")
 
+    # FairChem UMA (and similar models) only have neutral single-atom energies in their
+    # lookup table. A charged single-atom fragment (e.g. H⁻, H⁺) cannot be computed.
+    # Skip heterolytic BDE for bonds that produce any single-atom fragment.
+    if len(frag1_base) == 1 or len(frag2_base) == 1:
+        logger.warning(
+            f"  Skipping heterolytic BDE for bond {bond_label}: one fragment is a single atom "
+            f"({frag1_formula}/{frag2_formula}). The model only stores neutral single-atom energies "
+            "and cannot compute ionic single-atom fragments."
+        )
+        return {
+            **bond_info,
+            "skipped_heterolytic": True,
+            "skip_reason_heterolytic": "single_atom_fragment",
+            "frag1_formula": frag1_formula,
+            "frag2_formula": frag2_formula,
+            "heterolytic_bde_eV": None,
+            "heterolytic_bde_kJ_mol": None,
+            "heterolytic_bde_kcal_mol": None,
+            "heterolytic_best_variant": None,
+            "heterolytic_variants": [],
+        }
+
     variants = []
 
     for variant_label, c1, c2 in [
@@ -654,7 +684,9 @@ def compute_bond_bde(
 
     if cleavage in ("homolytic", "both"):
         homo = compute_single_bde_homolytic(
-            mol, bond_info, wrapper, intact_energy, fmax, output_dir
+            mol, bond_info, wrapper, intact_energy, fmax, output_dir,
+            charge_key=charge_key,
+            spin_key=spin_key,
         )
         result.update(homo)
 

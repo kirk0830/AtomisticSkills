@@ -42,15 +42,29 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 > [!IMPORTANT]
 > **Model requirements by cleavage mode:**
 >
-> | Mode | Recommended model | `supports_charge_spin` |
-> |:---|:---|:---|
-> | `homolytic` | `MACE-OFF23-small/medium/large` | Not required |
-> | `heterolytic` or `both` | `MACE-OMOL-extra-large` | ✅ Required |
-> | `heterolytic` or `both` | FairChem UMA/ESEN with `--task_name omol` | ✅ Required |
+> | Mode | Recommended model | `supports_charge_spin` | Validated? |
+> |:---|:---|:---|:---|
+> | `homolytic` | `MACE-OFF23-small/medium/large` | Not required | ✅ |
+> | `heterolytic` or `both` | **FairChem `uma-s-1p1` with `--task_name omol`** | ✅ Required | ✅ |
+> | `heterolytic` or `both` | ~~MACE-OMOL-extra-large~~ | ✅ (accepts key) | ❌ |
+>
+> **Do NOT use MACE-OMOL for heterolytic BDE.** Although MACE-OMOL accepts
+> `total_charge`/`total_spin` via `atoms.info` (so `supports_charge_spin=True`),
+> it produces **charge-invariant fragment energies** in gas phase: the same total
+> energy is returned regardless of the charge annotation for isolated small fragments.
+> As a result, heterolytic BDE = homolytic BDE when using MACE-OMOL.
+>
+> **Use FairChem UMA with `--task_name omol`** instead — it is the only currently
+> validated model that correctly differentiates ionic fragment energies (demonstrated
+> in `examples/methanol_uma_omol_both/`).
 >
 > If you request `--cleavage both` with a model that does **not** support charge/spin,
 > the skill will log a warning and silently fall back to homolytic-only.
 > Using `--cleavage heterolytic` with an unsupported model raises an error.
+>
+> **Note on single-atom fragments:** When a bond produces a bare H (or other single atom),
+> heterolytic BDE is automatically skipped — UMA's single-atom energy table only has
+> neutral entries. Only heavy-atom bonds (both fragments multi-atom) yield heterolytic BDE.
 
 ## 3. Calculation Workflow
 
