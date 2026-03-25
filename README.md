@@ -105,7 +105,7 @@ Workflow: "Find stable Li-ion conductors"
 [**Browse all skills →**](.agents/skills)
 
 ### 1. Simulation Infrastructure
-Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD, and fine-tuning APIs. DFT integration for VASP input/output and electronic structure. HPC job management via Atomate2. Lattice-level cluster expansion and Monte Carlo via SMOL.
+Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD, and fine-tuning APIs. DFT integration for VASP input/output and electronic structure for periodic systems and ORCA input/output for molecular systems. HPC job management via Atomate2. Lattice-level cluster expansion and Monte Carlo via SMOL.
 
 ### 2. Database APIs
 Materials Project, ChEMBL, PDB, PubChem, and ArXiv search — query structures, properties, bioactivity data, and literature from external databases.
@@ -153,6 +153,7 @@ bash conda-envs/atomate2-agent/install.sh
 bash conda-envs/smol-agent/install.sh
 bash conda-envs/drugdisc-agent/install.sh
 bash conda-envs/mattergen-agent/install.sh
+bash conda-envs/orca-agent/install.sh
 ```
 
 ---
@@ -170,6 +171,9 @@ MP_API_KEY: "your_mp_api_key_here"
 
 # Atomate2 Remote Project (Required for remote job monitoring)
 ATOMATE2_REMOTE_PROJECT: "remote_perlmutter"
+
+#Required for running molecular DFT calculations with ORCA
+ORCA_BINARY_PATH: /path/to/orca_directory/orca
 ```
 
 ### 2. Environment Variables
@@ -177,6 +181,7 @@ Alternatively, set variables in your shell (takes precedence over YAML):
 ```bash
 export MP_API_KEY="your_key"
 export ATOMATE2_REMOTE_PROJECT="remote_perlmutter"
+export ORCA_BINARY_PATH="/path/to/orca_directory/orca"
 ```
 
 ---

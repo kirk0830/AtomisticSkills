@@ -91,6 +91,7 @@ Skills that reference `mcp_*` functions (e.g., `mcp_mace_run_md()`) require MCP 
 | `smol-agent` | Cluster expansion and Monte Carlo |
 | `drugdisc-agent` | RDKit, AutoDock Vina, PDBFixer, Meeko |
 | `mattergen-agent` | MatterGen generative crystal design |
+| `orca-agent` | ORCA DFT via SCINE wrapper |
 
 ## Project Rules
 
