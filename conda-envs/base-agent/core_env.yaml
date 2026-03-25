@@ -6,6 +6,9 @@ dependencies:
   - rdkit
   - packmol
   - pip
+  - opencv # digitizer skills
+  - scikit-image # digitizer skills
+  - scipy # digitizer skills
   - pip:
     - mcp
     - pymatgen
@@ -16,3 +19,6 @@ dependencies:
     - pymupdf
     - reaction-network
     - pymatgen-analysis-diffusion
+    - google-genai # digitizer skills
+    - openai # digitizer skills
+    - python-dotenv # digitizer skills
