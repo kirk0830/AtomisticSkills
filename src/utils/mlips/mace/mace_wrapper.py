@@ -320,6 +320,14 @@ class MACEWrapper(MLIPModel):
             logger.error(f"Failed to load checkpoint: {e}")
             raise RuntimeError(f"Failed to load checkpoint: {e}")
     
+    @property
+    def supports_charge_spin(self) -> bool:
+        """
+        Return True only for MACE-OMOL, which is trained on charged/spin molecules
+        and reads ``total_charge`` / ``total_spin`` from ``atoms.info``.
+        """
+        return "OMOL" in self.model_name.upper()
+
     def get_model_capabilities(self) -> Dict[str, bool]:
         """
         Get model capabilities.
@@ -332,7 +340,8 @@ class MACEWrapper(MLIPModel):
             "forces": True,
             "stress": True,
             "optimization": True,
-            "relaxation": True
+            "relaxation": True,
+            "charge_spin": self.supports_charge_spin,
         }
     
 
