@@ -135,7 +135,7 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
 | `--all_bonds` | `True` | Compute BDE for all single bonds |
 | `--include_h_bonds` | `False` | Include X–H bonds |
 | `--cleavage` | `homolytic` | `homolytic`, `heterolytic`, or `both` |
-| `--model_type` | `mace` | MLIP backend (`mace`, `matgl`, `fairchem`) |
+| `--model_type` | `mace` | MLIP backend (`mace`, `fairchem`) |
 | `--model_name` | auto | Model checkpoint (default: `MACE-OFF23-small` for homolytic; `uma-s-1p1` for hetero/both) |
 | `--task_name` | — | Task head for multi-task models (e.g. `omol` for FairChem UMA) |
 | `--fmax` | `0.01` | Force convergence for relaxation (eV/Å) |
@@ -213,7 +213,6 @@ Experimental BDEs for ethanol (Blanksby & Ellison, 2003):
 - **Accuracy**: Expect ~2–5 kcal/mol error for homolytic BDEs with MACE-OFF23. Heterolytic accuracy is less benchmarked with current MLIPs.
 - **Environments**:
   - `mace-agent` for MACE models
-  - `matgl-agent` for MatGL/CHGNet models (homolytic only)
   - `fairchem-agent` for FairChem/UMA models
 
 ## References
