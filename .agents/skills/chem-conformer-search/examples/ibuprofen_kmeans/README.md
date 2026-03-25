@@ -38,4 +38,4 @@ python .agents/skills/chem-conformer-search/scripts/conformer_search.py \
 
 ## Key Advantage Over RMSD Threshold
 
-The strict 0.1 Å default threshold often discards conformers that look numerically similar but represent genuinely different rotameric states. K-Means always returns exactly `--num_clusters` representatives by construction, ensuring broad exploration of the conformational landscape regardless of molecule size or RMSD scale.
+The strict 0.1 Å default threshold can return an excessive number of conformers that are slightly different, but represent the same conformational state. The simple RMSD deduplication can be sufficient for small, conformationally restricted drug-like molecules, but can struggle with larger molecules. K-Means always returns exactly `--num_clusters` representatives by construction, ensuring broad exploration of the conformational landscape regardless of molecule size or RMSD scale.
