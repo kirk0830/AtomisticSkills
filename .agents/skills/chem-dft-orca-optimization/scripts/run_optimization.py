@@ -153,7 +153,7 @@ def run_optimization(
     logger.info(f"Optimized structure written to {output_dir}/optimized_structure.xyz")
 
     final_results = opt_calculator.get_results()
-    if (final_results.energy or final_results.gradients is None
+    if (final_results.energy is None or final_results.gradients is None
             or (calculate_final_hessian and final_results.hessian is None)):
         if calculate_final_hessian:
             opt_calculator.set_required_properties([su.Property.Energy, su.Property.Gradients, su.Property.Hessian])
