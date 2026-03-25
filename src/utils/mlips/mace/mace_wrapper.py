@@ -323,10 +323,15 @@ class MACEWrapper(MLIPModel):
     @property
     def supports_charge_spin(self) -> bool:
         """
-        Return True only for MACE-OMOL, which is trained on charged/spin molecules
-        and reads ``total_charge`` / ``total_spin`` from ``atoms.info``.
+        Return True for models trained with joint_embedding on charge/spin.
+
+        Supported: MACE-OMOL, MACE-MH (omol head).
+        The calculator reads charge and spin from atoms.info via the default
+        info_keys mapping:  {"total_charge": "charge", "total_spin": "spin"}.
+        i.e. set atoms.info["charge"] and atoms.info["spin"].
         """
-        return "OMOL" in self.model_name.upper()
+        name_upper = self.model_name.upper()
+        return "OMOL" in name_upper or "MACE-MH" in name_upper
 
     def get_model_capabilities(self) -> Dict[str, bool]:
         """

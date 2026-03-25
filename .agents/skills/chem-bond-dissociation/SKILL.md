@@ -45,26 +45,21 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 > | Mode | Recommended model | `supports_charge_spin` | Validated? |
 > |:---|:---|:---|:---|
 > | `homolytic` | `MACE-OFF23-small/medium/large` | Not required | ✅ |
-> | `heterolytic` or `both` | **FairChem `uma-s-1p1` with `--task_name omol`** | ✅ Required | ✅ |
-> | `heterolytic` or `both` | ~~MACE-OMOL-extra-large~~ | ✅ (accepts key) | ❌ |
+> | `heterolytic` or `both` | **`MACE-OMOL-extra-large`** (env: `mace-agent`) | ✅ Required | ✅ |
+> | `heterolytic` or `both` | **`MACE-MH-1`** with omol head (env: `mace-agent`) | ✅ Required | ✅ |
+> | `heterolytic` or `both` | FairChem `uma-s-1p1` with `--task_name omol` (env: `fairchem-agent`) | ✅ Required | ✅ |
 >
-> **Do NOT use MACE-OMOL for heterolytic BDE.** Although MACE-OMOL accepts
-> `total_charge`/`total_spin` via `atoms.info` (so `supports_charge_spin=True`),
-> it produces **charge-invariant fragment energies** in gas phase: the same total
-> energy is returned regardless of the charge annotation for isolated small fragments.
-> As a result, heterolytic BDE = homolytic BDE when using MACE-OMOL.
->
-> **Use FairChem UMA with `--task_name omol`** instead — it is the only currently
-> validated model that correctly differentiates ionic fragment energies (demonstrated
-> in `examples/methanol_uma_omol_both/`).
+> **Setting charge/spin on MACE models:** use `atoms.info["charge"]` and `atoms.info["spin"]`
+> (the calculator's default `info_keys` maps `"charge"` → `total_charge` / `"spin"` → `total_spin`).
+> Both MACE-OMOL and MACE-MH use `joint_embedding` to condition the network on these scalars.
 >
 > If you request `--cleavage both` with a model that does **not** support charge/spin,
 > the skill will log a warning and silently fall back to homolytic-only.
 > Using `--cleavage heterolytic` with an unsupported model raises an error.
 >
 > **Note on single-atom fragments:** When a bond produces a bare H (or other single atom),
-> heterolytic BDE is automatically skipped — UMA's single-atom energy table only has
-> neutral entries. Only heavy-atom bonds (both fragments multi-atom) yield heterolytic BDE.
+> heterolytic BDE is automatically skipped — neither MACE nor FairChem UMA has signed
+> single-atom energies (only neutral H, C, N, O… are in the reference tables).
 
 ## 3. Calculation Workflow
 
@@ -92,7 +87,7 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --output_dir research/my_folder/bde_results
 ```
 
-**Both homolytic and heterolytic** (requires charge/spin-aware model):
+**Both homolytic and heterolytic** (MACE-OMOL):
 ```bash
 # Env: mace-agent
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
@@ -104,7 +99,20 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --output_dir research/my_folder/bde_results_both
 ```
 
-**Heterolytic only** with FairChem:
+**Both homolytic and heterolytic** (FairChem UMA omol):
+```bash
+# Env: fairchem-agent
+python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
+    --smiles CCO \
+    --all_bonds \
+    --cleavage both \
+    --model_type fairchem \
+    --model_name uma-s-1p1 \
+    --task_name omol \
+    --output_dir research/my_folder/bde_results_both
+```
+
+**Heterolytic only** with FairChem UMA:
 ```bash
 # Env: fairchem-agent
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
@@ -128,7 +136,7 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
 | `--include_h_bonds` | `False` | Include X–H bonds |
 | `--cleavage` | `homolytic` | `homolytic`, `heterolytic`, or `both` |
 | `--model_type` | `mace` | MLIP backend (`mace`, `matgl`, `fairchem`) |
-| `--model_name` | auto | Model checkpoint (default: `MACE-OFF23-small` for homolytic, `MACE-OMOL-extra-large` for hetero/both) |
+| `--model_name` | auto | Model checkpoint (default: `MACE-OFF23-small` for homolytic; `uma-s-1p1` for hetero/both) |
 | `--task_name` | — | Task head for multi-task models (e.g. `omol` for FairChem UMA) |
 | `--fmax` | `0.01` | Force convergence for relaxation (eV/Å) |
 | `--output_dir` | required | Output directory |
@@ -153,7 +161,13 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
 
 ## 5. Examples
 
-### Ethanol — Homolytic BDE
+| Example | Model | Cleavage | Notes |
+|:---|:---|:---|:---|
+| [`examples/ethanol_mace_off23_small/`](examples/ethanol_mace_off23_small/) | MACE-OFF23-small | `homolytic` | Standard homolytic BDE for ethanol; includes H bonds |
+| [`examples/methanol_mace_omol_both/`](examples/methanol_mace_omol_both/) | MACE-OMOL-extra-large | `both` | Homo + heterolytic for methanol; C–O hetero = 90 vs homo = 143 kcal/mol |
+| [`examples/methanol_uma_omol_both/`](examples/methanol_uma_omol_both/) | FairChem UMA omol | `both` | Homo + heterolytic for methanol; C–O hetero = 157 vs homo = 126 kcal/mol |
+
+### Ethanol — Homolytic BDE (MACE-OFF23)
 
 ```bash
 # Env: mace-agent
@@ -164,7 +178,22 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --cleavage homolytic \
     --model_type mace \
     --model_name MACE-OFF23-small \
-    --output_dir .agents/skills/chem-bond-dissociation/examples/ethanol
+    --output_dir .agents/skills/chem-bond-dissociation/examples/ethanol_mace_off23_small
+```
+
+### Methanol — Both Homo and Heterolytic BDE (FairChem UMA omol)
+
+```bash
+# Env: fairchem-agent
+python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
+    --smiles CO \
+    --all_bonds \
+    --include_h_bonds \
+    --cleavage both \
+    --model_type fairchem \
+    --model_name uma-s-1p1 \
+    --task_name omol \
+    --output_dir .agents/skills/chem-bond-dissociation/examples/methanol_uma_omol_both
 ```
 
 Experimental BDEs for ethanol (Blanksby & Ellison, 2003):
@@ -179,7 +208,7 @@ Experimental BDEs for ethanol (Blanksby & Ellison, 2003):
 ## 6. Constraints
 
 - **Radical spin states**: For homolytic BDE, MLIPs are generally "electron-agnostic" and treat fragments as neutral regardless of spin state. BDE **ranking** is typically more reliable than absolute values.
-- **Ionic states**: Heterolytic BDE requires MACE-OMOL or FairChem (omol task), which are trained on charged molecules. Other models silently ignore charge/spin (wrapper.supports_charge_spin == False), so they cannot be used for heterolytic BDE.
+- **Ionic states**: Heterolytic BDE requires a charge/spin-aware model (`supports_charge_spin=True`). Validated: **MACE-OMOL**, **MACE-MH** (omol head), and **FairChem UMA omol**. These models use `atoms.info["charge"]` and `atoms.info["spin"]` to condition on the ionic state. Models without this flag raise an error for `--cleavage heterolytic`.
 - **Ring bonds**: Breaking bonds in rings produces a single open-chain diradical. The script will warn and skip ring bonds.
 - **Accuracy**: Expect ~2–5 kcal/mol error for homolytic BDEs with MACE-OFF23. Heterolytic accuracy is less benchmarked with current MLIPs.
 - **Environments**:

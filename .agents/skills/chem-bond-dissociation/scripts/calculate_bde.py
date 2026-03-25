@@ -15,7 +15,7 @@ Heterolytic BDE (minimum over both polarity variants):
 
 Heterolytic calculations require a model that honours charge and spin multiplicity
 (``wrapper.supports_charge_spin == True``).  Supported models:
-    - MACE-OMOL-extra-large  (reads ``total_charge``/``total_spin`` from atoms.info)
+    - MACE-OMOL-extra-large, MACE-MH-1  (reads ``charge``/``spin`` from atoms.info)
     - FairChem UMA/ESEN with task_name="omol"  (reads ``charge``/``spin`` from atoms.info)
 
 Usage:
@@ -122,9 +122,11 @@ def mol_to_atoms(mol: Chem.Mol, conf_id: int = 0) -> Atoms:
 # ---------------------------------------------------------------------------
 
 # Mapping from (model_type, canonical_name_upper) → info key names.
-# For MACE-OMOL the calculator reads:  atoms.info["total_charge"], atoms.info["total_spin"]
-# For FairChem omol the calculator reads: atoms.info["charge"],        atoms.info["spin"]
-_MACE_OMOL_KEYS   = ("total_charge", "total_spin")
+# Confirmed from MACECalculator.__init__ source:
+#   info_keys default = {"total_spin": "spin", "total_charge": "charge"}
+# i.e., the calculator reads atoms.info["charge"] → total_charge, atoms.info["spin"] → total_spin
+# For FairChem omol the calculator reads: atoms.info["charge"], atoms.info["spin"] (same)
+_MACE_CHARGE_KEYS   = ("charge", "spin")    # MACE-OMOL, MACE-MH (omol head)
 _FAIRCHEM_OMOL_KEYS = ("charge", "spin")
 
 
@@ -134,13 +136,13 @@ def _get_info_keys(model_type: str, model_name: str) -> Tuple[str, str]:
 
     Args:
         model_type: One of "mace", "fairchem", "matgl".
-        model_name: Concrete model name (e.g. "MACE-OMOL-extra-large").
+        model_name: Concrete model name (e.g. "MACE-OMOL-extra-large", "MACE-MH-1").
 
     Returns:
         Tuple of (charge_key, spin_key).
     """
-    if model_type == "mace" and "OMOL" in model_name.upper():
-        return _MACE_OMOL_KEYS
+    if model_type == "mace" and wrapper_supports_mace_charge(model_name):
+        return _MACE_CHARGE_KEYS
     if model_type == "fairchem":
         return _FAIRCHEM_OMOL_KEYS
     # Should not be reached for models that don't support charge/spin
@@ -148,6 +150,12 @@ def _get_info_keys(model_type: str, model_name: str) -> Tuple[str, str]:
         f"Model {model_name!r} (type={model_type!r}) does not support charge/spin. "
         "Check wrapper.supports_charge_spin before calling this function."
     )
+
+
+def wrapper_supports_mace_charge(model_name: str) -> bool:
+    """Return True for MACE models that use joint_embedding to condition on charge/spin."""
+    name_upper = model_name.upper()
+    return "OMOL" in name_upper or "MACE-MH" in name_upper
 
 
 def set_charge_spin(
