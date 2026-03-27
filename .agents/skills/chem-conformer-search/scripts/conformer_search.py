@@ -212,17 +212,35 @@ def align_and_calculate_rmsd(atoms1: Atoms, atoms2: Atoms) -> float:
     return rmsd
 
 
-def deduplicate_or_cluster_results(results: List[Dict], method: str, rmsd_threshold: float, num_clusters: int) -> List[Dict]:
+def deduplicate_or_cluster_results(results: List[Dict], method: str, rmsd_threshold: float, num_clusters: int, energy_threshold: float = 0.5) -> List[Dict]:
     """
     Filter relaxed conformers by RMSD, hierarchical clustering, or kmeans.
     Keeps unique conformers (lowest energy per cluster).
+
+    Args:
+        results: List of dicts with 'atoms' (ASE Atoms) and 'energy' (float, eV).
+        method: Clustering method — 'rmsd' (greedy dedup), 'hierarchical'
+                (average-linkage), or 'kmeans' (on RMSD distance matrix).
+        rmsd_threshold: RMSD cutoff (Å). Used as the greedy duplicate threshold
+                        for 'rmsd' or the dendrogram cut distance for 'hierarchical'.
+        num_clusters: Target number of clusters for 'kmeans'. Ignored by other methods.
+        energy_threshold: Maximum energy above the global minimum (eV) to keep.
+                          Conformers above this cutoff are discarded before
+                          building the O(n^2) RMSD matrix. Set to 0 to disable.
+
+    Returns:
+        Filtered list of result dicts, one per unique conformer / cluster.
     """
     if not results:
         return results
     # Sort by energy first (lowest energy is reference)
     results = sorted(results, key=lambda x: x["energy"])
-    lowest_e = results[0]["energy"]
-    results = [r for r in results if abs(r["energy"] - lowest_e) < 0.5]
+    if energy_threshold > 0:
+        lowest_e = results[0]["energy"]
+        before = len(results)
+        results = [r for r in results if (r["energy"] - lowest_e) < energy_threshold]
+        if before != len(results):
+            logger.info(f"Energy pre-filter: {before} -> {len(results)} conformers (threshold {energy_threshold} eV above minimum).")
     if len(results) == 1:
         return results
     
@@ -294,6 +312,7 @@ def main():
     parser.add_argument("--dedup_threshold", type=float, default=0.1, help="Post-relaxation RMSD threshold for deduplication (or hierarchical cut)")
     parser.add_argument("--clustering", type=str, default="rmsd", choices=["rmsd", "hierarchical", "kmeans"], help="Method to deduplicate/cluster conformers")
     parser.add_argument("--num_clusters", type=int, default=5, help="Number of clusters for KMeans option")
+    parser.add_argument("--energy_threshold", type=float, default=0.5, help="Max energy above global min (eV) to keep before RMSD comparison. Set to 0 to disable.")
     parser.add_argument("--fmax", type=float, default=0.01, help="Relaxation fmax (eV/A)")
     parser.add_argument("--temperature", type=float, default=298.15, help="Temperature (K) for Boltzmann weighting")
     
@@ -327,7 +346,7 @@ def main():
     relaxed_data = relax_conformers(initial_atoms, wrapper, args.fmax)
     
     # 4. Deduplicate / Cluster
-    unique_data = deduplicate_or_cluster_results(relaxed_data, args.clustering, args.dedup_threshold, args.num_clusters)
+    unique_data = deduplicate_or_cluster_results(relaxed_data, args.clustering, args.dedup_threshold, args.num_clusters, args.energy_threshold)
     
     # 5. Ranking & Boltzmann Analysis
     # Energies relative to min
@@ -373,7 +392,8 @@ def main():
             "num_unique": len(unique_data),
             "clustering_method": args.clustering,
             "dedup_threshold": args.dedup_threshold,
-            "num_clusters_arg": args.num_clusters
+            "num_clusters_arg": args.num_clusters,
+            "energy_threshold_eV": args.energy_threshold
         },
         "conformers": results_summary
     }

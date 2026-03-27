@@ -77,6 +77,7 @@ python .agents/skills/chem-conformer-search/scripts/conformer_search.py \
 | `--clustering` | `rmsd` | Method to filter conformers: `rmsd`, `hierarchical`, or `kmeans` |
 | `--dedup_threshold` | 0.1 | Post-relaxation RMSD threshold (Å) to merge identical conformers or cut for hierarchical |
 | `--num_clusters` | 5 | Number of clusters if `--clustering kmeans` is used |
+| `--energy_threshold` | 0.5 | Max energy above global minimum (eV) to keep before RMSD comparison. Set to 0 to disable |
 | `--fmax` | 0.01 | Force convergence criterion for relaxation (eV/Å) |
 | `--temperature` | 298.15 | Temperature (K) for Boltzmann weighting |
 | `--model_type` | `mace` | MLIP backend (`mace`, `matgl`, `fairchem`) |
