@@ -1,7 +1,7 @@
 ---
-name: general-plot-digitizer
+name: chem-plot-digitizer
 description: Extract continuous X-Y data from experimental spectrum images (Raman, XRD, UV-Vis, IR, etc.) via hybrid VLM + CV pipeline and agent-in-the-loop workflow.
-category: [general]
+category: [chem]
 ---
 
 # General Plot Digitizer
@@ -22,8 +22,8 @@ Do **not** attempt to generate JSON with the VLM. It acts only as a visual senso
 
 1. **Generate grid overlay**:
 ```bash
-# Env: base-agent
-python .agents/skills/general-plot-digitizer/scripts/plot_utils.py plot.png --draw-grid
+# Env: nmr-agent
+python .agents/skills/chem-plot-digitizer/scripts/plot_utils.py plot.png --draw-grid
 ```
 This produces `plot_grid.png` with a labeled pixel grid for precise coordinate reading.
 
@@ -72,8 +72,8 @@ Read the VLM narrative and construct `metadata.json`. Schema: [resources/metadat
 
 **If the VLM color guess is uncertain**, run:
 ```bash
-# Env: base-agent
-python .agents/skills/general-plot-digitizer/scripts/suggest_colors.py plot.png \
+# Env: nmr-agent
+python .agents/skills/chem-plot-digitizer/scripts/suggest_colors.py plot.png \
   --bounding-box x_min,y_min,x_max,y_max
 ```
 This reports dominant non-background colors in the cropped region. Use the top result as `color_hint`.
@@ -92,8 +92,8 @@ This reports dominant non-background colors in the cropped region. Use the top r
 
 **Run the pipeline:**
 ```bash
-# Env: base-agent
-python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py \
+# Env: nmr-agent
+python .agents/skills/chem-plot-digitizer/scripts/digitize_pipeline.py \
   plot.png \
   --full \
   --metadata metadata.json \
@@ -159,7 +159,7 @@ Append the VLM-dictated flags from the table above. The pipeline also reads `cli
 | `--debug` | Save intermediate crops/masks for diagnosing failures | off |
 | `--json-summary` | Emit machine-readable JSON summary to stdout after completion | off |
 
-Full flag list: `python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py --help`
+Full flag list: `python .agents/skills/chem-plot-digitizer/scripts/digitize_pipeline.py --help`
 
 ## Examples
 
@@ -175,7 +175,7 @@ Full flag list: `python .agents/skills/general-plot-digitizer/scripts/digitize_p
 - **Bounding box** must enclose only the inner data region (inside axis lines, excluding labels/legend/title). VLMs often get this wrong — verify against the grid overlay.
 - **Multi-curve:** Each curve in `curves[]` must have a `color_hint`. Auto-detect is unreliable with multiple traces.
 - **Per-curve regions:** For stacked/offset plots, `curves[].region.y_min/y_max` must include generous padding (10-20px) above tallest peaks and below baseline.
-- **Environments:** All scripts require `base-agent` conda env.
+- **Environments:** All scripts require `nmr-agent` conda env.
 
 ## Resources
 

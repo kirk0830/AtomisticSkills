@@ -278,11 +278,6 @@ def create_overlay_image(
     if img is None:
         return
 
-    meta = json.loads(metadata_path.read_text())
-    bb = meta.get("bounding_box", {})
-    x_min = bb.get("x_min", 0)
-    y_min = bb.get("y_min", 0)
-
     pixels = np.loadtxt(pixels_path, delimiter=",", skiprows=1)
     if len(pixels) < 2:
         return
