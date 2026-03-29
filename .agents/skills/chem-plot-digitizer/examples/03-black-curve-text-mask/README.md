@@ -8,10 +8,10 @@ Same plot as example 02, but focused on high-quality extraction of the black cur
 
 ```bash
 # Env: base-agent
-python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py \
-  .agents/skills/general-plot-digitizer/examples/03-black-curve-text-mask/source.png \
+python .agents/skills/chem-plot-digitizer/scripts/digitize_pipeline.py \
+  .agents/skills/chem-plot-digitizer/examples/03-black-curve-text-mask/source.png \
   --full \
-  --metadata .agents/skills/general-plot-digitizer/examples/03-black-curve-text-mask/metadata.json \
+  --metadata .agents/skills/chem-plot-digitizer/examples/03-black-curve-text-mask/metadata.json \
   --all-curves \
   --allow-black \
   --smooth \

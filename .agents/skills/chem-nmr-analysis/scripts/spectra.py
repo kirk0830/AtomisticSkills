@@ -5,7 +5,7 @@ Usage:
     from spectra import load_spectrum, load_time_series
 
 Requirements:
-    - Environment: mixsense (uv sync)
+    - Environment: nmr-agent (conda)
     - Required packages: numpy
 """
 
@@ -40,7 +40,10 @@ def load_spectrum(path: str, delimiter: Optional[str] = None) -> Tuple[np.ndarra
     """
     if delimiter is None:
         delimiter = detect_delimiter(path)
-    arr = np.loadtxt(path, delimiter=delimiter, usecols=[0, 1])
+    try:
+        arr = np.loadtxt(path, delimiter=delimiter, usecols=[0, 1])
+    except ValueError:
+        arr = np.loadtxt(path, delimiter=delimiter, usecols=[0, 1], skiprows=1)
     if arr.ndim != 2 or arr.shape[1] < 2:
         raise ValueError(f"{path}: expected two numeric columns (ppm, intensity)")
     ppm, intensity = arr[:, 0], arr[:, 1]

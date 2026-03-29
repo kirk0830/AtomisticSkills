@@ -223,7 +223,11 @@ def main():
         if args.labels and len(args.labels) == len(args.spectra)
         else [pathlib.Path(p).stem for p in args.spectra]
     )
-    ppm_range = (args.ppm_min, args.ppm_max) if args.ppm_min or args.ppm_max else None
+    ppm_range = (
+        (args.ppm_min, args.ppm_max)
+        if args.ppm_min is not None and args.ppm_max is not None
+        else None
+    )
     out_path = pathlib.Path(args.output)
 
     if args.stacked:

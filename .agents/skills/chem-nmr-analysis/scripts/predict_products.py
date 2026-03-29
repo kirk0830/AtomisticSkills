@@ -75,8 +75,11 @@ def predict_products(
     seen = set()
     components = []
     for text in texts:
-        prediction = text.split()[0].strip() if text.split() else ""
-        for part in prediction.split("."):
+        # ReactionT5 returns the full input prompt + completion; extract the
+        # product portion that follows the last ">" delimiter.
+        parts_by_arrow = text.split(">")
+        product_str = parts_by_arrow[-1].strip() if len(parts_by_arrow) > 1 else text.strip()
+        for part in product_str.split("."):
             part = part.strip()
             if part and _valid_smiles(part) and part not in seen:
                 seen.add(part)

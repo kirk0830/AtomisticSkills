@@ -52,7 +52,10 @@ def detect_delim(path: str, default: str = ",") -> str:
 def load_xy(path: str, delimiter: Optional[str] = None, mnova: bool = False) -> np.ndarray:
     if delimiter is None:
         delimiter = "\t" if mnova else detect_delim(path)
-    arr = np.loadtxt(path, delimiter=delimiter, usecols=[0, 1])
+    try:
+        arr = np.loadtxt(path, delimiter=delimiter, usecols=[0, 1])
+    except ValueError:
+        arr = np.loadtxt(path, delimiter=delimiter, usecols=[0, 1], skiprows=1)
     if arr.ndim != 2 or arr.shape[1] < 2:
         raise ValueError(f"{path}: expected two numeric columns (ppm, intensity)")
     return arr
