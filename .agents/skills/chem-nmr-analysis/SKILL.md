@@ -21,7 +21,7 @@ For end-to-end workflows that chain this skill with other skills, see: `.agents/
 - **Structure elucidation of unknown compounds** -- this skill requires knowing (or predicting) what compounds are in the mixture. It does not identify unknowns from scratch.
 - **Pure compound characterization** -- if the user has a single pure compound and just wants to assign peaks, this skill is not appropriate. The agent should interpret the spectrum directly.
 - **Mass spectrometry data** -- despite the Wasserstein algorithm's origins in mass spec, this skill operates on NMR chemical shift axes only.
-- **Digitizing spectrum images** -- the agent should use the `chem-plot-digitizer` skill for that step.
+- **Digitizing spectrum images** -- the agent should use the `general-plot-digitizer` skill for that step.
 - **Predicting NMR spectra from SMILES** -- the agent should use the `chem-nmr-predict` skill for that step.
 - **Resolving compound names to SMILES** -- the agent should use the `drug-db-pubchem` skill for that step.
 
@@ -174,3 +174,8 @@ Required packages: `numpy`, `scipy` (>= 1.7), `matplotlib`, `rdkit`, `requests`,
 - Domzal, B. et al., "Magnetstein: Wasserstein-distance NMR mixture analysis", *Anal. Chem.*, 2024.
 - Sagawa, Y. et al., "ReactionT5: a large-scale pretrained model towards chemical reaction prediction", *arXiv*, 2023.
 - Dhawan, N. et al., "Synthesis of Isoborneol", *World J. Chem. Educ.*, 2022.
+
+---
+
+**Author:** Jesus Diaz Sanchez  
+**Contact:** [GitHub @jdsanc](https://github.com/jdsanc)

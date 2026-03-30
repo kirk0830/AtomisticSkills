@@ -126,3 +126,8 @@ Required packages: `numpy`, `rdkit`, `requests`, `nmrsim`.
 - Banfi, D. & Patiny, L., "www.nmrdb.org: Resurrecting and processing NMR spectra on-line", *Chimia*, 2008.
 - Aires-de-Sousa, J. et al., "SPINUS: prediction of 1H NMR spectra by neural networks", *J. Chem. Inf. Model.*, 2002.
 - Sametz, G., "nmrsim: a Python library for NMR simulation", [github.com/sametz/nmrsim](https://github.com/sametz/nmrsim).
+
+---
+
+**Author:** Jesus Diaz Sanchez  
+**Contact:** [GitHub @jdsanc](https://github.com/jdsanc)

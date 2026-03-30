@@ -1,7 +1,7 @@
 ---
-name: chem-plot-digitizer
+name: general-plot-digitizer
 description: Extract continuous X-Y data from experimental spectrum images (Raman, XRD, UV-Vis, IR, etc.) via hybrid VLM + CV pipeline and agent-in-the-loop workflow.
-category: [chem]
+category: [general]
 ---
 
 # General Plot Digitizer
@@ -23,7 +23,7 @@ Do **not** attempt to generate JSON with the VLM. It acts only as a visual senso
 1. **Generate grid overlay**:
 ```bash
 # Env: base-agent
-python .agents/skills/chem-plot-digitizer/scripts/plot_utils.py plot.png --draw-grid
+python .agents/skills/general-plot-digitizer/scripts/plot_utils.py plot.png --draw-grid
 ```
 This produces `plot_grid.png` with a labeled pixel grid for precise coordinate reading.
 
@@ -73,7 +73,7 @@ Read the VLM narrative and construct `metadata.json`. Schema: [resources/metadat
 **If the VLM color guess is uncertain**, run:
 ```bash
 # Env: base-agent
-python .agents/skills/chem-plot-digitizer/scripts/suggest_colors.py plot.png \
+python .agents/skills/general-plot-digitizer/scripts/suggest_colors.py plot.png \
   --bounding-box x_min,y_min,x_max,y_max
 ```
 This reports dominant non-background colors in the cropped region. Use the top result as `color_hint`.
@@ -93,7 +93,7 @@ This reports dominant non-background colors in the cropped region. Use the top r
 **Run the pipeline:**
 ```bash
 # Env: base-agent
-python .agents/skills/chem-plot-digitizer/scripts/digitize_pipeline.py \
+python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py \
   plot.png \
   --full \
   --metadata metadata.json \
@@ -159,7 +159,7 @@ Append the VLM-dictated flags from the table above. The pipeline also reads `cli
 | `--debug` | Save intermediate crops/masks for diagnosing failures | off |
 | `--json-summary` | Emit machine-readable JSON summary to stdout after completion | off |
 
-Full flag list: `python .agents/skills/chem-plot-digitizer/scripts/digitize_pipeline.py --help`
+Full flag list: `python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py --help`
 
 ## Examples
 

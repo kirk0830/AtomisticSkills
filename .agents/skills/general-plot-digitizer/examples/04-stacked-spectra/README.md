@@ -8,10 +8,10 @@ Three Raman spectra (Polyethylene, Polystyrene, Nylon 6,6) plotted with vertical
 
 ```bash
 # Env: base-agent
-python .agents/skills/chem-plot-digitizer/scripts/digitize_pipeline.py \
-  .agents/skills/chem-plot-digitizer/examples/04-stacked-spectra/source.png \
+python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py \
+  .agents/skills/general-plot-digitizer/examples/04-stacked-spectra/source.png \
   --full \
-  --metadata .agents/skills/chem-plot-digitizer/examples/04-stacked-spectra/metadata.json \
+  --metadata .agents/skills/general-plot-digitizer/examples/04-stacked-spectra/metadata.json \
   --all-curves \
   --output-dir ./output \
   --overlay

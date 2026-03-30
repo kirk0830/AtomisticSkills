@@ -14,7 +14,7 @@ After running a synthetic reaction, chemists routinely acquire a crude 1H NMR sp
 ### Optional Step 0: Digitize Spectrum Image
 If the user provides an image of a spectrum rather than a numeric data file.
 
-- **Skill:** Use the `chem-plot-digitizer` skill.
+- **Skill:** Use the `general-plot-digitizer` skill.
 - **Action:** Follow the digitizer's full VLM + CV pipeline to extract a two-column `.csv` (ppm, intensity) from the image.
 - **Output:** A numeric `.csv` or `.xy` spectrum file ready for downstream steps.
 - **Decision:** If the digitized spectrum shows artifacts (axis labels captured as peaks, grid lines), re-run with adjusted parameters before proceeding.

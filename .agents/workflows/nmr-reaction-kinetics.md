@@ -12,7 +12,7 @@ Monitoring reaction progress by NMR is routine in synthetic chemistry, but extra
 ## Step-by-Step Methodology
 
 ### Steps 0–5: Obtain Reference Spectra
-Follow Steps 0–5 of the `reaction-to-nmr-quantification.md` workflow to identify all species, resolve names to SMILES, predict products, generate NMR reference spectra, and verify alignment against a representative crude spectrum. If the user provides images instead of numeric files, digitize each time-point image individually using the `chem-plot-digitizer` skill.
+Follow Steps 0–5 of the `reaction-to-nmr-quantification.md` workflow to identify all species, resolve names to SMILES, predict products, generate NMR reference spectra, and verify alignment against a representative crude spectrum. If the user provides images instead of numeric files, digitize each time-point image individually using the `general-plot-digitizer` skill.
 
 ### Step 6: Run Time-Series Kinetics
 Perform Wasserstein deconvolution at each time point and assemble kinetics curves.
@@ -24,7 +24,7 @@ Perform Wasserstein deconvolution at each time point and assemble kinetics curve
 
 ## Summary Checklist for the Agent
 When tasked with "extract kinetics from NMR time series":
-1. [ ] Digitize spectrum images if needed. (`chem-plot-digitizer`)
+1. [ ] Digitize spectrum images if needed. (`general-plot-digitizer`)
 2. [ ] Identify all NMR-relevant species (reactants, products, solvents, reagents).
 3. [ ] Resolve names to SMILES. (`drug-db-pubchem`)
 4. [ ] Predict products via ReactionT5. (`chem-nmr-analysis` `predict_products.py`)
