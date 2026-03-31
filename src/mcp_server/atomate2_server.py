@@ -55,7 +55,7 @@ def run_atomate2_vasp_calculation(
         structures_path: Path to structure files or directory.
         output_dir: Directory to save results and logs.
         preset_type: VASP input preset ("omat", "mp", "matpes-pbe", "matpes-r2scan").
-        calculation_type: "static", "relaxation", or "band_structure".
+        calculation_type: "static", "relaxation", "band_structure", or "optics".
         config: Optional custom INCAR settings to override preset.
         execution_mode: "local" (blocking) or "remote".
         check_only: If True, only check environment or job status without running.
@@ -102,6 +102,8 @@ def run_atomate2_vasp_calculation(
     if calculation_type == "band_structure":
         config = config or {}
         config["bandstructure_type"] = bandstructure_mode
+    elif calculation_type == "optics":
+        config = config or {}
 
     flow_maker = handler.get_flow_maker(preset_type, calculation_type, config)
     flows = []
