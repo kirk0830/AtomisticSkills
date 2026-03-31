@@ -24,7 +24,7 @@ conda activate mattergen-agent
 
 3. Install MatterGen and dependencies:
 ```bash
-cd /path/to/AtomisticSkills/.agent/tmp/mattergen
+cd /path/to/AtomisticSkills/.agents/tmp/mattergen
 
 # Install mattergen
 uv pip install -e .

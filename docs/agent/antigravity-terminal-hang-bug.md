@@ -42,8 +42,8 @@ Since other users of this repository may still have Shell Integration enabled by
 conda run -n myenv python3 -c "import foo; print(foo.bar)"
 
 # Option B: Write to a script file first (PREFERRED for complex code)
-# Write the Python code to .agent/test/myscript.py using the write_to_file tool, then:
-conda run -n myenv python3 .agent/test/myscript.py
+# Write the Python code to .agents/test/myscript.py using the write_to_file tool, then:
+conda run -n myenv python3 .agents/test/myscript.py
 ```
 
 ---

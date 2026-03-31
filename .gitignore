@@ -5,9 +5,9 @@ fairchem_repo/
 
 # Temporary storage and test results
 scratch/
-.agent/tmp/
-.agent/test/
-tests/.agent/test/
+.agents/tmp/
+.agents/test/
+tests/.agents/test/
 tests/tmp_*/
 tmp/
 papers/
@@ -82,5 +82,5 @@ debug*
 *_help.txt
 
 # cifs for phase search
-.agent/skills/mat-xrd-phase-analysis/exmples/*/phase_analysis_results/cifs
+.agents/skills/mat-xrd-phase-analysis/exmples/*/phase_analysis_results/cifs
 dara_downloaded_cifs/

@@ -56,6 +56,8 @@ def run_atomate2_vasp_calculation(
         output_dir: Directory to save results and logs.
         preset_type: VASP input preset ("omat", "mp", "matpes-pbe", "matpes-r2scan").
         calculation_type: "static", "relaxation", "band_structure", or "optics".
+        preset_type: VASP input preset ("omat", "mp", "matpes-pbe", "matpes-r2scan", "mp-r2scan").
+        calculation_type: "static", "relaxation", or "band_structure".
         config: Optional custom INCAR settings to override preset.
         execution_mode: "local" (blocking) or "remote".
         check_only: If True, only check environment or job status without running.

@@ -5,6 +5,7 @@ dependencies:
   - pip:
     - mcp
     - fairchem-core
+    - cython
     - pymatgen
     - pymatgen-analysis-diffusion
     - matcalc

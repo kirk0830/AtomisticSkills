@@ -150,7 +150,19 @@ class Atomate2Handler:
         preset = preset_type.lower()
         user_incar = config or {}
         
-        if preset == "matpes-r2scan":
+        if preset == "mp-r2scan":
+            from atomate2.vasp.jobs.mp import MPMetaGGARelaxMaker, MPMetaGGAStaticMaker
+            if calculation_type == "relaxation":
+                maker = MPMetaGGARelaxMaker()
+            elif calculation_type == "static":
+                maker = MPMetaGGAStaticMaker()
+            else:
+                raise ValueError(f"Unsupported calculation_type {calculation_type} for mp-r2scan")
+            if user_incar:
+                maker.input_set_generator.user_incar_settings.update(user_incar)
+            return maker
+
+        elif preset == "matpes-r2scan":
             meta_maker = MatPesMetaGGAStaticMaker()
             if user_incar:
                 meta_maker.input_set_generator.user_incar_settings.update(user_incar)
@@ -267,15 +279,7 @@ class Atomate2Handler:
         if "perlmutter" not in worker_name.lower():
             return True, ""
 
-        # Check for NERSC key file
-        nersc_key = Path.home() / ".ssh" / "nersc"
-        if not nersc_key.exists():
-            return False, f"NERSC SSH key not found at {nersc_key}. Please run 'sshproxy -u <username>' to generate keys."
-            
-        # Optional: Check if key is expired (naive check based on file modification time > 24h?)
-        # For now, existence is the primary check requested.
-        
-        return True, "SSHProxy appears configured."
+        return True, ""
 
     def run_remote(self, flow: Any, project_name: Optional[str] = None, worker_name: Optional[str] = None) -> str:
         """Submit a flow remotely using jobflow-remote. If project_name is None, uses default configuration."""
