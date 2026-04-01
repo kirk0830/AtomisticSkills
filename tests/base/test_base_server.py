@@ -24,16 +24,20 @@ def test_visualize_structure(skip_if_wrong_env, tmp_cif_file):
     assert "error" not in res
 
 @pytest.mark.base
-def test_prepare_vasp_inputs(skip_if_wrong_env, tmp_cif_file):
-    res = base_server.prepare_vasp_inputs(str(tmp_cif_file), "dummy_vasp_out")
-    assert isinstance(res, str)
+def test_supercell_expansion(skip_if_wrong_env, tmp_cif_file):
+    res = base_server.supercell_expansion(
+        structure_path=str(tmp_cif_file),
+        scaling_matrix_json="[2, 2, 2]"
+    )
+    assert "Successfully created supercell" in res
 
 @pytest.mark.base
-def test_parse_vasp_results(skip_if_wrong_env, tmp_path):
-    dummy_dir = tmp_path / "dummy_vasp_out"
-    dummy_dir.mkdir()
-    res = base_server.parse_vasp_results(str(dummy_dir))
-    assert "error" in res # No inputs present
+def test_modify_structure(skip_if_wrong_env, tmp_cif_file):
+    res = base_server.modify_structure(
+        structure_path=str(tmp_cif_file),
+        substitution_dict_json='{"Si": "Fe"}'
+    )
+    assert "Successfully modified structure" in res
 
 @pytest.mark.base
 def test_search_literature(skip_if_wrong_env):

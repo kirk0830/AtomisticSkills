@@ -26,8 +26,7 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 logging.getLogger("mp-api").setLevel(logging.ERROR)
 logging.getLogger("pymatgen").setLevel(logging.ERROR)
 
-from src.utils.dft.vasp_writer import write_vasp_input_files
-from src.utils.dft.vasp_parser import VASPParser
+
 from src.utils.structure_utils import (
     load_structure_from_file, 
     get_structure_by_formula, 
@@ -373,142 +372,7 @@ def visualize_structure(
     except Exception as e:
         return f"Error visualizing structure: {str(e)}"
 
-@mcp.tool()
-def prepare_vasp_inputs(
-    structure_path: str,
-    output_dir: str,
-    calculation_type: str = "relaxation",
-    preset_type: str = "omat",
-    config: Optional[Dict[str, Any]] = None,
-    vasp_settings: Optional[Dict[str, Any]] = None
-) -> str:
-    """Prepare VASP input files (POSCAR, INCAR, KPOINTS, POTCAR).
-    
-    Args:
-        structure_path: Path to structure file or directory.
-        output_dir: Output directory for VASP files.
-        calculation_type: "relaxation", "static", or "md".
-        preset_type: "omat", "mp", "matpes-pbe", or "matpes-r2scan" (default: "omat").
-        config: Custom INCAR tags to override preset.
-        vasp_settings: Deprecated, use config instead.
-                        
-    Returns:
-        Summary message.
-    """
-    input_path = Path(structure_path)
-    out_path = Path(output_dir)
-    
-    # Prepare VASP inputs
-    
-    # Check if input is a directory (Batch processing)
-    if input_path.is_dir():
-        structure_files = list(input_path.rglob("*.cif")) + \
-                          list(input_path.rglob("*.xyz")) + \
-                          list(input_path.rglob("POSCAR"))
-        
-        if not structure_files:
-            return f"Error: No structure files found in directory {structure_path}"
-            
-        summary = []
-        for i, struct_file in enumerate(sorted(structure_files)):
-            # Create subdirectory for each structure
-            # Use filename stem or index if generic
-            sub_name = struct_file.stem
-            if sub_name == "POSCAR":
-                sub_name = struct_file.parent.name
-                
-            # If names are generic like "structure_0", preserve them
-            # Otherwise ensure uniqueness
-            sub_dir = out_path / sub_name
-            sub_dir.mkdir(parents=True, exist_ok=True)
-            
-            structure_loaded = load_structure_from_file(str(struct_file))
-            if structure_loaded:
-                from ase import Atoms
-                from pymatgen.io.ase import AseAtomsAdaptor
-                if not isinstance(structure_loaded, Atoms):
-                    structure_loaded = AseAtomsAdaptor.get_atoms(structure_loaded)
-                write_vasp_input_files(
-                    atoms=structure_loaded,
-                    output_dir=str(sub_dir),
-                    preset_type=preset_type,
-                    calculation_type=calculation_type,
-                    config=config or vasp_settings
-                )
-                summary.append(sub_name)
-                
-        return f"Successfully prepared VASP inputs for {len(summary)} structures in {output_dir}. Subdirectories: {summary[:5]}..."
-        
-    else:
-        # Single file processing
-        structure_loaded = load_structure_from_file(structure_path)
-        if structure_loaded is None:
-            return f"Error: Could not load structure from {structure_path}"
-            
-        from ase import Atoms
-        from pymatgen.io.ase import AseAtomsAdaptor
-        if not isinstance(structure_loaded, Atoms):
-            structure_loaded = AseAtomsAdaptor.get_atoms(structure_loaded)
-        
-        # Write files
-        files = write_vasp_input_files(
-            atoms=structure_loaded,
-            output_dir=output_dir,
-            preset_type=preset_type,
-            calculation_type=calculation_type,
-            config=config or vasp_settings
-        )
-        
-        return f"Successfully wrote VASP input files to {output_dir}. Files: {list(files.keys())}"
 
-@mcp.tool()
-def parse_vasp_results(output_dir: str, save_to_file: Optional[str] = None) -> Dict[str, Any]:
-    """Parse VASP outputs (vasprun.xml, OUTCAR).
-    
-    Args:
-        output_dir: Directory with VASP outputs.
-        save_to_file: Optional JSON save path.
-        
-    Returns:
-        Dict with energy, forces, stress, structure (single calc) or list of results (batch).
-    """
-    parser = VASPParser(output_dir)
-    
-    # Check if this is a single calculation directory
-    has_vasprun = (parser.output_dir / "vasprun.xml").exists()
-    
-    if has_vasprun:
-        # Parse single VASP calculation
-        result = parser.parse_vasprun()
-        outcar_result = parser.parse_outcar()
-        result.update(outcar_result)
-        
-        # Serialize for JSON
-        results = parser._prepare_for_json(result)
-        
-        if save_to_file:
-            with open(save_to_file, 'w') as f:
-                json.dump(results, f, indent=2)
-                
-        return results
-    
-    # Otherwise, parse all subdirectories
-    try:
-        all_results = parser.parse_all()
-    except Exception as e:
-        return {"error": str(e)}
-        
-    if not all_results:
-        return {"error": f"No valid VASP results found in {output_dir}"}
-        
-    # Return serialized list
-    results = {"results": parser._prepare_for_json(all_results)}
-    
-    if save_to_file:
-        with open(save_to_file, 'w') as f:
-            json.dump(results, f, indent=2)
-            
-    return results
 
 @mcp.tool()
 def search_literature(query: str, limit: int = 10, download: bool = True, save_to_file: Optional[str] = None) -> str:
@@ -609,6 +473,155 @@ def search_literature(query: str, limit: int = 10, download: bool = True, save_t
         
     except Exception as e:
         return f"Error executing search_literature: {str(e)}"
+
+
+@mcp.tool()
+def supercell_expansion(
+    structure_path: str,
+    scaling_matrix_json: Optional[str] = None,
+    supercell_min_length: Optional[float] = None,
+    save_to_file: Optional[str] = None
+) -> str:
+    """Create a supercell from an existing structure.
+    
+    Args:
+        structure_path: Path to the input structure file (e.g., CIF, POSCAR).
+        scaling_matrix_json: JSON string of a scaling matrix for generating the supercell (integer, list of 3 ints, or 3x3 matrix list).
+        supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell. Ignored if scaling_matrix is set.
+        save_to_file: Optional path to save the generated structure. Optional.
+        
+    Returns:
+        Summary of saved supercell structure with path.
+    """
+    try:
+        import json
+        from pathlib import Path
+        import numpy as np
+        from src.utils.structure_utils import load_structure_from_file, save_structure
+        from src.utils.research_utils import get_current_research_dir
+
+        # Load structure
+        structure_obj = load_structure_from_file(structure_path)
+        if structure_obj is None:
+            return f"Error: Could not load structure from {structure_path}"
+        
+        # Convert to pymatgen Structure if needed
+        from ase import Atoms
+        from pymatgen.io.ase import AseAtomsAdaptor
+        if isinstance(structure_obj, Atoms):
+            structure = AseAtomsAdaptor.get_structure(structure_obj)
+        else:
+            structure = structure_obj
+            
+        if scaling_matrix_json:
+            scaling_matrix = json.loads(scaling_matrix_json)
+            structure.make_supercell(scaling_matrix)
+        elif supercell_min_length is not None and supercell_min_length > 0.0:
+            cell_lengths = structure.lattice.abc
+            repeats = np.ceil(supercell_min_length / np.array(cell_lengths)).astype(int)
+            structure.make_supercell(repeats.tolist())
+        else:
+            return "Error: Provide either scaling_matrix_json or supercell_min_length."
+            
+        # Determine output path
+        input_path = Path(structure_path)
+        if save_to_file:
+            out_p = Path(save_to_file)
+            current_research_dir = str(get_current_research_dir())
+            if not out_p.is_absolute() and len(out_p.parts) == 1 and current_research_dir:
+                output_path = Path(current_research_dir) / out_p
+            else:
+                output_path = out_p
+        else:
+            current_research_dir = str(get_current_research_dir())
+            filename = f"{input_path.stem}_supercell.cif"
+            if current_research_dir:
+                output_path = Path(current_research_dir) / filename
+            else:
+                output_path = Path.cwd() / filename
+                
+        # Ensure parent directory exists
+        if not output_path.parent.exists():
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            
+        save_structure(structure, output_path)
+        
+        dims = getattr(structure.lattice, 'abc', 'unknown')
+        return f"Successfully created supercell. Dimensions: {dims}. Saved to {output_path.absolute()}"
+        
+    except Exception as e:
+        import traceback
+        return f"Error executing supercell_expansion: {str(e)}\n{traceback.format_exc()}"
+
+@mcp.tool()
+def modify_structure(
+    structure_path: str,
+    substitution_dict_json: str,
+    save_to_file: Optional[str] = None
+) -> str:
+    """Modify a structure by substituting elements.
+    
+    Args:
+        structure_path: Path to the input structure file (e.g., CIF, POSCAR).
+        substitution_dict_json: JSON string mapping old elements to new elements or fractions.
+                                Example 1: '{"Li": "Na"}' changes all Li to Na.
+                                Example 2: '{"Li": {"Li": 0.5, "Na": 0.5}}' changes all Li to a 50/50 mixture.
+        save_to_file: Optional path to save the generated structure. Optional.
+        
+    Returns:
+        Summary of saved modified structure with path.
+    """
+    try:
+        import json
+        from pathlib import Path
+        from src.utils.structure_utils import load_structure_from_file, save_structure
+        from src.utils.research_utils import get_current_research_dir
+
+        substitution_map = json.loads(substitution_dict_json)
+
+        # Load structure
+        structure_obj = load_structure_from_file(structure_path)
+        if structure_obj is None:
+            return f"Error: Could not load structure from {structure_path}"
+        
+        # Convert to pymatgen Structure if needed
+        from ase import Atoms
+        from pymatgen.io.ase import AseAtomsAdaptor
+        if isinstance(structure_obj, Atoms):
+            structure = AseAtomsAdaptor.get_structure(structure_obj)
+        else:
+            structure = structure_obj
+            
+        structure.replace_species(substitution_map)
+            
+        # Determine output path
+        input_path = Path(structure_path)
+        if save_to_file:
+            out_p = Path(save_to_file)
+            current_research_dir = str(get_current_research_dir())
+            if not out_p.is_absolute() and len(out_p.parts) == 1 and current_research_dir:
+                output_path = Path(current_research_dir) / out_p
+            else:
+                output_path = out_p
+        else:
+            current_research_dir = str(get_current_research_dir())
+            filename = f"{input_path.stem}_modified.cif"
+            if current_research_dir:
+                output_path = Path(current_research_dir) / filename
+            else:
+                output_path = Path.cwd() / filename
+                
+        # Ensure parent directory exists
+        if not output_path.parent.exists():
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            
+        save_structure(structure, output_path)
+        
+        return f"Successfully modified structure (formula: {structure.composition.reduced_formula}). Saved to {output_path.absolute()}"
+        
+    except Exception as e:
+        import traceback
+        return f"Error executing modify_structure: {str(e)}\n{traceback.format_exc()}"
 
 
 if __name__ == "__main__":
