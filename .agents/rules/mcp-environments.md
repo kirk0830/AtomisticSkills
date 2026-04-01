@@ -22,6 +22,7 @@ For detailed installation instructions, please refer to the `README.md` and `ins
 - **mattergen-agent**: `conda-envs/mattergen-agent/` (Core: MatterGen, PyG, lightning)
 - **xrd-agent**:  `conda-envs/xrd-agent/` (Core: DARA, pymatgen)
 - **orca-agent**: `conda-envs/orca-agent/` (Core: scine_utilities, scine_readuct, ase). Requires `ORCA_BINARY_PATH` environment variable pointing to the ORCA binary. No MCP server, scripts only.
+- **phasefield-agent**: `conda-envs/phasefield-agent/` (Core: fipy, scipy, numpy, imageio). No MCP server, scripts only.
 
 | MCP Server | Conda Environment | Python Path |
 | :--- | :--- | :--- |
