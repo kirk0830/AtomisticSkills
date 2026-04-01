@@ -157,3 +157,7 @@ See [examples/](examples/) for a SiC dielectric-response tutorial and example pl
   - Check sensitivity to `NEDOS`, `CSHIFT`, and k-point density
 - **Band-Gap Limitation**: Semi-local DFT typically underestimates the absorption onset; use hybrid functionals or beyond-DFT methods for quantitative spectra.
 
+---
+
+**Author:** ChazzBM3  
+**Contact:** [musgrave@caltech.edu](mailto:musgrave@caltech.edu)
