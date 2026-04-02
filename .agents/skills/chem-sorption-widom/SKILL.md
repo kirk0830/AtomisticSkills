@@ -59,6 +59,22 @@ python .agents/skills/chem-sorption-widom/scripts/run_widom.py \
     --temperature 298 \
     --output-dir ./results
 ```
+**Example 2: Using UMA-S-1p2 via uma-agent for CO2 adsorption at 298K**
+```bash
+# Env: uma-agent  (fairchem >= 2.18, supports uma-s-1p2.pt)
+PYTHONPATH=/path/to/AtomisticSkills mamba run -n uma-agent \
+    python .agents/skills/chem-sorption-widom/scripts/run_widom.py \
+        --structure ./results/COF-1_supercell.cif \
+        --name COF-1 \
+        --calculator fairchem \
+        --model-name /path/to/uma-s-1p2.pt \
+        --task-name omol \
+        --gas CO2 \
+        --temperature 298 \
+        --num-insertions 50000 \
+        --output-dir ./results
+```
+
 
 
 

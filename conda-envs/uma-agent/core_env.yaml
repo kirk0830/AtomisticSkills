@@ -1,0 +1,17 @@
+name: uma-agent
+channels:
+  - conda-forge
+  - pytorch
+  - nvidia
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+    - torch>=2.3.0
+    - fairchem-core>=2.18.0
+    - ase>=3.23
+    - numpy
+    - scipy
+    - tqdm-loggable
+    - pydantic
+    - pymatgen
