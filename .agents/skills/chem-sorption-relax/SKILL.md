@@ -31,11 +31,15 @@ python .agents/skills/chem-sorption-relax/scripts/build_supercell.py \
 > [!TIP]
 > If the script output indicates a `1x1x1` supercell was created (i.e. no expansion needed), you can just use your original CIF or the output CIF, as they will be identical. 
 
-2. **Relax the Framework**: Two options depending on which model/env you need:
+2. **Relax the Framework**: Relax the output structure using the MCP server environment. Ensure that the correct MLIP is loaded first.
 
-**Option A — MCP Tool (fairchem-agent env, named models: uma-s-1p1, uma-m-1p1)**
 ```python
 # Env: fairchem-agent (via MCP server)
+mcp_fairchem_load_model(
+    model_name="uma-s-1p2",
+    device="auto"
+)
+
 mcp_fairchem_relax_structure(
     structure_data="./out/framework_supercell.cif",
     fmax=0.05,
@@ -46,30 +50,11 @@ mcp_fairchem_relax_structure(
 )
 ```
 
-**Option B — Script (uma-agent env, checkpoint path, e.g. uma-s-1p2.pt)**
-
-Use this when the MCP env does not support the required checkpoint (e.g. uma-s-1p2 requires fairchem ≥ 2.18).
-
-```bash
-# Env: uma-agent  (fairchem >= 2.18, supports uma-s-1p2.pt)
-PYTHONPATH=/path/to/AtomisticSkills mamba run -n uma-agent \
-    python .agents/skills/chem-sorption-relax/scripts/relax_structure.py \
-    --structure ./out/framework_supercell.cif \
-    --name MY_FRAMEWORK \
-    --calculator fairchem \
-    --model-name /path/to/uma-s-1p2.pt \
-    --task-name omol \
-    --fmax 0.05 \
-    --steps 500 \
-    --optimizer LBFGS \
-    --output-dir ./out/relaxed_framework
-```
-
 ### relax_structure.py Parameters
 - `--structure`: Path to input CIF or XYZ.
 - `--name`: Identifier used in output filenames.
 - `--calculator`: Backend MLIP (`fairchem`, `mace`, `matgl`).
-- `--model-name`: Named model (e.g. `uma-s-1p1`) or full path to checkpoint (e.g. `/path/to/uma-s-1p2.pt`).
+- `--model-name`: Named model (e.g. `uma-s-1p2`) or full path to checkpoint.
 - `--task-name`: Multi-task head (`omol`, `omat`, `odac`, `oc20`, `omc`).
 - `--optimizer`: `LBFGS` (default) or `FIRE`.
 - `--fmax`: Force convergence threshold in eV/Å (default: 0.05).
@@ -93,8 +78,13 @@ python .agents/skills/chem-sorption-relax/scripts/build_supercell.py \
     --output-cif ./results/COF-1_supercell.cif
 ```
 
-2a. Relax with UMA-S-1p1 via MCP Tool:
+2. Relax with UMA-S-1p2 via MCP Tool:
 ```python
+mcp_fairchem_load_model(
+    model_name="uma-s-1p2",
+    device="auto"
+)
+
 mcp_fairchem_relax_structure(
     structure_data="./results/COF-1_supercell.cif",
     fmax=0.05,
@@ -102,20 +92,6 @@ mcp_fairchem_relax_structure(
     optimizer="LBFGS",
     output_dir="./results/relaxed"
 )
-```
-
-2b. Relax with UMA-S-1p2 via script (uma-agent env):
-```bash
-# Env: uma
-PYTHONPATH=/home/user/AtomisticSkills mamba run -n uma-agent \
-    python .agents/skills/chem-sorption-relax/scripts/relax_structure.py \
-    --structure ./results/COF-1_supercell.cif \
-    --name COF-1 \
-    --calculator fairchem \
-    --model-name ~/models/checkpoints/uma-s-1p2.pt \
-    --task-name omol \
-    --fmax 0.05 --steps 500 \
-    --output-dir ./results/relaxed/COF-1
 ```
 
 ## Constraints

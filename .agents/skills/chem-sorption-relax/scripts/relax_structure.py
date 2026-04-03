@@ -3,13 +3,12 @@ Relax a porous framework (CIF/XYZ) using any supported MLIP backend via Atomisti
 
 Usage:
     python relax_structure.py --structure path/to/supercell.cif --name MOF-1 \\
-        --calculator fairchem --model-name /path/to/uma-s-1p2.pt --task-name omol \\
+        --calculator fairchem --model-name uma-s-1p2 --task-name omol \\
         --fmax 0.05 --steps 500 --output-dir ./relaxed/MOF-1
 
 Requirements:
     - Env: depends on --calculator
-        fairchem + file path  -> use 'uma' conda env (fairchem 2.18.1)
-        fairchem named model  -> use 'fairchem-agent' conda env
+        fairchem              -> use 'fairchem-agent' conda env
         mace                  -> use 'mace-agent' conda env
         matgl                 -> use 'matgl-agent' conda env
     - PYTHONPATH must include AtomisticSkills project root so src.utils is importable.
