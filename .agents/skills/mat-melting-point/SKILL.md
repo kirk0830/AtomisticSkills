@@ -14,7 +14,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 1.  **Background Research**: 
     - Search for the approximate melting point ($T_m$) and boiling/evaporation point ($T_{vap}$) of the material.
     - Choose a melting temperature $T_{melt}$ where $T_m < T_{melt} \ll T_{vap}$.
-    - **MD Parameters**: Refer to the [general-molecular-dynamics](../general-molecular-dynamics/SKILL.md) skill for best practices on timesteps and monitors. In general, use a 2.0 fs timestep for systems without Hydrogen.
+    - **MD Parameters**: Refer to the [mat-md-monitors](../mat-md-monitors/SKILL.md) skill for best practices on timesteps and monitors. In general, use a 2.0 fs timestep for systems without Hydrogen.
 
 2.  **Phase Preparation**: 
     - **Solid**: Create a supercell using `create_supercell.py`.

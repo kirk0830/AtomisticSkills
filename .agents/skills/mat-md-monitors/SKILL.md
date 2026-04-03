@@ -1,7 +1,7 @@
 ---
-name: general-molecular-dynamics
-description: Best practices and tools for running stable Machine Learning Interatomic Potential (MLIP) molecular dynamics.
-category: [general]
+name: mat-md-monitors
+description: Real-time monitoring tools for stability, equilibration, and diffusion during ASE molecular dynamics simulations.
+category: [materials, chemistry]
 ---
 
 # Molecular Dynamics
