@@ -239,7 +239,7 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
 
 <nav>
   <a class="nav-logo" href="../index.html">
-    <img src="../atomisticskills_logo.svg" alt="AtomisticSkills"/>
+    <img src="../../logo/atomisticskills_logo.svg" alt="AtomisticSkills"/>
   </a>
   <a class="nav-back" href="../index.html">← Back to Skills</a>
   <div class="nav-right">
@@ -430,7 +430,7 @@ def make_generic_page(doc_id: str, meta: dict, body_md: str, out_path: Path):
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="index.html"><img src="atomisticskills_logo.svg" alt="AtomisticSkills"/></a>
+  <a class="nav-logo" href="index.html"><img src="../logo/atomisticskills_logo.svg" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="index.html">← Back Home</a>
 </nav>
 <div class="doc-hero">
@@ -592,14 +592,7 @@ def build_skills():
 def build_all():
     SKILLS_OUT_DIR.mkdir(parents=True, exist_ok=True)
     
-    # 0. Copy assets (logos) to site/
-    logo_dir = PROJECT_ROOT / "logo"
-    if logo_dir.exists():
-        print("\nCopying assets...")
-        for asset in logo_dir.glob("*"):
-            if asset.is_file():
-                shutil.copy(asset, SITE_DIR / asset.name)
-                print(f"  Copied: {asset.name}")
+    # 0. Asset copying removed to avoid duplication. HTML will reference ../logo directly.
 
     # 1. Build skills
     build_skills()
