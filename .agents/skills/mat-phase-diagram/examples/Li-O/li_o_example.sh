@@ -27,7 +27,7 @@ cd li_o_phase_diagram
 
 echo "Step 1: Retrieve Li-O phase diagram with visualization"
 echo "--------------------------------------------------------"
-python ../../scripts/get_phase_diagram.py \
+python ../../../scripts/get_phase_diagram.py \
     --chemsys "Li-O" \
     --output li_o_pd.json \
     --plot li_o_pd.png
@@ -35,7 +35,7 @@ python ../../scripts/get_phase_diagram.py \
 echo
 echo "Step 2: Check specific material stability (Li2O)"
 echo "--------------------------------------------------------"
-python ../../../mat-db-mp/scripts/query_mp.py \
+python ../../../../mat-db-mp/scripts/query_mp.py \
     --formula "Li2O" \
     --properties energy_above_hull formation_energy_per_atom \
     --output li2o_stability.json
