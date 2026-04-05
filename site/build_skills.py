@@ -85,6 +85,67 @@ def process_markdown_images(md: str, base_dir: Path) -> str:
 
     return re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", replace_img, md)
 
+def process_markdown_structures(md: str, base_dir: Path) -> str:
+    """Replace relative .cif and .xyz links with a 3Dmol.js interactive viewer while keeping the link."""
+    import base64
+    import uuid
+    
+    def replace_struct(m):
+        alt = m.group(1)
+        src = m.group(2)
+        
+        # resolve path
+        if src.startswith("http://") or src.startswith("https://"):
+            return m.group(0)  # skip remote
+            
+        struct_path = base_dir / src
+        if not struct_path.exists():
+            # Try from project root, since markdown links might be relative to the root (e.g. examples/...)
+            root_path = Path.cwd() / src
+            # Try from skill root (e.g., if base_dir is examples/foo, parent.parent is the skill root)
+            skill_base_path = base_dir.parent.parent / src
+            # Try just the filename in the current directory
+            filename_path = base_dir / Path(src).name
+            
+            if root_path.exists():
+                struct_path = root_path
+            elif skill_base_path.exists():
+                struct_path = skill_base_path
+            elif filename_path.exists():
+                struct_path = filename_path
+            else:
+                print(f"Skipping {src}: could not find at {struct_path} or {root_path} or {filename_path}")
+                return m.group(0)
+            
+        try:
+            content = read_file(struct_path)
+        except Exception as e:
+            print(f"Failed to read structure file {struct_path}: {e}")
+            return m.group(0)
+            
+        # generate random id for textarea
+        el_id = f"struct_{uuid.uuid4().hex[:8]}"
+        
+        b64_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
+        
+        # Determine format
+        datatype = "cif" if src.lower().endswith(".cif") else "xyz"
+        unitcell_attr = 'data-unitcell="true"' if datatype == "cif" else ''
+        
+        # Create HTML elements manually encoded to prevent markdown escaping issues entirely
+        # We don't inject straight HTML here since marked.js sometimes eats it if it's mixed with links,
+        # but <div> tags usually survive.
+        html = (
+            f"[{alt}]({src})\n\n"
+            f"""<textarea id="{el_id}" style="display:none;">{content}</textarea>"""
+            f"""<div class="viewer_3Dmoljs" data-element="{el_id}" data-datatype="{datatype}" """
+            f"""data-backgroundcolor="#f8f9fc" data-style="stick:radius~0.15;sphere:radius~0.4" """
+            f"""{unitcell_attr} style="position: relative; width: 100%; height: 400px; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 12px; margin-bottom: 24px; box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);"></div>"""
+        )
+        return html
+
+    return re.sub(r"\[([^\]]*)\]\(([^)]+\.(?:cif|xyz))\)", replace_struct, md, flags=re.IGNORECASE)
+
 def strip_carousel_syntax(md: str) -> str:
     """Convert carousel blocks to plain image list."""
     def replace_carousel(m):
@@ -114,7 +175,7 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
         panels_html = ""
         for i, ex in enumerate(examples):
             active = "active" if i == 0 else ""
-            ex_md_json = json.dumps(ex.get("md", ""))
+            ex_md_json = json.dumps(ex.get("md", "")).replace("'", "&#39;")
             tabs_html += f'<button class="ex-tab {active}" onclick="switchTab(this, \'ex-{i}\')">{ex["title"]}</button>\n'
             panels_html += f'<div class="ex-panel {active}" id="ex-{i}"><div class="rendered-md" data-md=\'{ex_md_json}\'></div></div>\n'
 
@@ -140,6 +201,7 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.4/3Dmol-min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" defer></script>
@@ -239,7 +301,7 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
 
 <nav>
   <a class="nav-logo" href="../index.html">
-    <img src="../../logo/atomisticskills_logo.svg" alt="AtomisticSkills"/>
+    <img src="../logo/atomisticskills_logo.png" alt="AtomisticSkills"/>
   </a>
   <a class="nav-back" href="../index.html">← Back to Skills</a>
   <div class="nav-right">
@@ -372,6 +434,7 @@ def make_generic_page(doc_id: str, meta: dict, body_md: str, out_path: Path):
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.4/3Dmol-min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" defer></script>
@@ -430,7 +493,7 @@ def make_generic_page(doc_id: str, meta: dict, body_md: str, out_path: Path):
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="index.html"><img src="../logo/atomisticskills_logo.svg" alt="AtomisticSkills"/></a>
+  <a class="nav-logo" href="index.html"><img src="logo/atomisticskills_logo.png" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="index.html">← Back Home</a>
 </nav>
 <div class="doc-hero">
@@ -501,6 +564,7 @@ def render_example_readme(readme_path: Path) -> str:
     base_dir = readme_path.parent
     # Process images inline
     content = strip_carousel_syntax(content)
+    content = process_markdown_structures(content, base_dir)
     content = process_markdown_images(content, base_dir)
     return content
 
@@ -592,7 +656,15 @@ def build_skills():
 def build_all():
     SKILLS_OUT_DIR.mkdir(parents=True, exist_ok=True)
     
-    # 0. Asset copying removed to avoid duplication. HTML will reference ../logo directly.
+    import shutil
+    
+    # 0. Copy logo assets inside site/ for self-contained deployment
+    logo_src = PROJECT_ROOT / "logo"
+    logo_dst = SITE_DIR / "logo"
+    if logo_src.exists():
+        if logo_dst.exists():
+            shutil.rmtree(logo_dst)
+        shutil.copytree(logo_src, logo_dst)
 
     # 1. Build skills
     build_skills()

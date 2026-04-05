@@ -642,8 +642,8 @@ window.SKILLS_DATA = [
     "category": [
       "materials"
     ],
-    "has_examples": false,
-    "num_examples": 0
+    "has_examples": true,
+    "num_examples": 1
   },
   {
     "id": "mat-mp2020-compatibility",
@@ -662,8 +662,8 @@ window.SKILLS_DATA = [
     "category": [
       "thermodynamics"
     ],
-    "has_examples": false,
-    "num_examples": 0
+    "has_examples": true,
+    "num_examples": 1
   },
   {
     "id": "mat-phase-field-allen-cahn",
@@ -782,8 +782,8 @@ window.SKILLS_DATA = [
     "category": [
       "materials"
     ],
-    "has_examples": false,
-    "num_examples": 0
+    "has_examples": true,
+    "num_examples": 1
   },
   {
     "id": "mat-synthesis-recommendation",
@@ -822,8 +822,8 @@ window.SKILLS_DATA = [
     "category": [
       "materials"
     ],
-    "has_examples": false,
-    "num_examples": 0
+    "has_examples": true,
+    "num_examples": 1
   },
   {
     "id": "mat-xrd-refinement",
@@ -832,8 +832,8 @@ window.SKILLS_DATA = [
     "category": [
       "materials"
     ],
-    "has_examples": false,
-    "num_examples": 0
+    "has_examples": true,
+    "num_examples": 2
   },
   {
     "id": "ml-cluster-expansion",
