@@ -4,7 +4,7 @@ This directory contains a standalone example demonstrating how to leverage the `
 
 ## Example Scenario
 
-We start with a basic crystalline unit cell of Silicon (`Si.cif`) and want to prepare the necessary input files (`INCAR`, `POSCAR`, `KPOINTS`, and `POTCAR`) for a local VASP relaxation calculation, using standard presets.
+We start with a basic crystalline unit cell of Silicon ([Si.cif](Si.cif)) and want to prepare the necessary input files (`INCAR`, `POSCAR`, `KPOINTS`, and `POTCAR`) for a local VASP relaxation calculation, using standard presets.
 
 ### 1. Preparing the Calculation
 
