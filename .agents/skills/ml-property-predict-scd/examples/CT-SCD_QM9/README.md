@@ -26,10 +26,46 @@ Inside `scd-agent`, you can run it directly:
 python run_ct_scd_qm9.py
 ```
 
+For first-run smoke tests, prefer observing live stdout instead of launching through buffered wrappers. This is general guidance for SCD runs, not just this example. A good pattern is:
+
+```bash
+conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
+```
+
+This makes checkpoint downloads, dataset downloads, split creation, and normalization startup visible in the terminal.
+
+Before launching, check GPU availability and current usage:
+
+```bash
+nvidia-smi
+```
+
+On shared machines, prefer a GPU with no active compute job and low memory usage. Do not assume that a low-utilization GPU is free if another process already has memory allocated.
+
+If you want one selected GPU, expose it explicitly:
+
+```bash
+conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
+```
+
+If you want all selected visible GPUs, expose them and tell the wrapper to use them all:
+
+```bash
+conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
+```
+
+The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is requested.
+
 Use `--dry-run` first to verify the resolved command, repo root, and conda environment without launching training:
 
 ```bash
 python run_ct_scd_qm9.py --dry-run --property gap
+```
+
+For smoke tests on a machine where you do not want to log into W&B, pass:
+
+```bash
+python run_ct_scd_qm9.py --wandb-mode offline
 ```
 
 By default this example performs a short smoke test with `--num-steps 100`. To launch the full upstream schedule instead:
@@ -37,6 +73,8 @@ By default this example performs a short smoke test with `--num-steps 100`. To l
 ```bash
 python run_ct_scd_qm9.py --full-run
 ```
+
+For the quickest smoke tests, consider copying `configs/finetune_qm9.yaml` into a task-specific smoke config and setting `parity_plot: false`. The upstream QM9 recipe enables parity plots, which can add noticeable extra runtime even after `max_steps` is reached.
 
 ## Other QM9 Properties
 
@@ -77,7 +115,10 @@ python run_ct_scd_qm9.py --property lumo --config configs/finetune_qm9_lumo.yaml
 
 ## Notes
 
+- Actual training requires a CUDA-visible GPU. On CPU-only hosts the wrapper now exits early with a clear message instead of letting `train.py` fail later inside PyTorch Lightning.
+- If the default Matplotlib config directory is not writable, the wrapper automatically uses a temporary `MPLCONFIGDIR`.
 - If the TorchMD compiled graph kernel is not built, the wrapper automatically adds `--noise_in_loader True`, matching the upstream README guidance.
 - The default target environment is `scd-agent`, matching the environment created in `AtomisticSkills/conda-envs/scd-agent`.
 - Training outputs are written under `SelfConditionedDenoisingAtoms/experiments/<job_id>`.
 - The W&B project for this example is derived by `train.py` from `dataset: QM9`, so it appears as `SCD_bench_QM9`.
+- In practice, QM9 smoke runs can spend substantial startup time computing dataset normalization statistics before the short training loop begins.

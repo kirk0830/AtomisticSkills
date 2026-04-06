@@ -57,6 +57,48 @@ python train.py --conf <config>.yaml --load-hf ct-scd-amp
 
 or direct `hf_hub_download(...)` calls in Python.
 
+## Weights & Biases
+
+`train.py` always creates a `WandbLogger`, so decide before a run whether you want offline logging or online sync.
+
+For online sync inside `scd-agent`, first log in with one of these patterns:
+
+```bash
+conda activate scd-agent
+wandb login
+```
+
+or, without activating the environment:
+
+```bash
+conda run -n scd-agent wandb login
+```
+
+If you prefer non-interactive setup on a remote machine, set an API key explicitly:
+
+```bash
+conda run -n scd-agent env WANDB_API_KEY=your_key_here wandb status
+```
+
+Useful checks:
+
+```bash
+conda run -n scd-agent wandb status
+conda run -n scd-agent python -c "import os; print(bool(os.environ.get('WANDB_API_KEY')))"
+```
+
+`wandb status` may still report `api_key: null` even when credentials are successfully loaded from `~/.netrc`. If you need a definitive online check, run a tiny probe such as:
+
+```bash
+conda run --no-capture-output -n scd-agent python -c "import time, wandb; run = wandb.init(project='scd-agent-smoke', name=f'connectivity-{int(time.time())}', mode='online'); print(run.url); run.finish()"
+```
+
+Typical run modes:
+
+- Offline: set `WANDB_MODE=offline`
+- Online: either leave `WANDB_MODE` unset or set `WANDB_MODE=online` after logging in
+- Disabled: set `WANDB_MODE=disabled` if you want local execution without W&B syncing
+
 ## Notes
 
 - If you do not build the optional TorchMD kernel, set `noise_in_loader: true` for molecular training and inference configs.

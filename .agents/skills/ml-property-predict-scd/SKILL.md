@@ -124,11 +124,26 @@ When adding a new dataset class under `SelfConditionedDenoisingAtoms/data/datase
 
 Before launching a full run:
 
-1. import the dataset class successfully in the target environment
-2. instantiate one dataset split and inspect one sample
-3. build one dataloader batch through `data/loaders.py`
-4. run a short `train.py --conf ... --num-steps 100` or `200` check
-5. confirm checkpoints and W&B logging land in the expected run directory
+1. check `nvidia-smi` first to confirm CUDA-visible GPUs exist on the real machine and to see whether another job is already using them
+2. ask the user whether they want a single GPU or all available GPUs before choosing device placement
+3. if the user wants a single GPU, prefer a GPU with no active compute process and low memory usage instead of one that is already busy
+4. import the dataset class successfully in the target environment
+5. instantiate one dataset split and inspect one sample
+6. build one dataloader batch through `data/loaders.py`
+7. run a short `train.py --conf ... --num-steps 100` or `200` check while actively watching live command-line output
+8. confirm checkpoints and W&B logging land in the expected run directory
+
+Treat live stdout visibility as general guidance for SCD runs, not just these example wrappers. When possible, launch smoke tests and full runs with unbuffered stdout and without command-capture layers so startup messages stay visible.
+
+- Use `nvidia-smi` both before launch and during launch: before launch to choose devices, during launch to verify the intended GPU or GPUs are actually being used.
+- Do not default to grabbing every GPU on a shared workstation. Ask first.
+- Prefer `python -u ...` and a TTY-capable shell session for smoke runs.
+- If using `conda run`, prefer `conda run --no-capture-output ...` so dataset downloads, checkpoint downloads, split generation, and normalization work are visible immediately.
+- Treat an initially quiet terminal as ambiguous until you have checked live stdout. For first-run workflows, several minutes of startup can be legitimate while data or checkpoints are prepared.
+- For the fastest smoke tests, copy the target config and disable expensive reporting such as `parity_plot: true` before launching. Otherwise a `max_steps=2` run can still spend significant extra time on parity-plot generation and repeated evaluation passes.
+- Expect QM9-like runs to spend real wall time computing dataset `mean/std`, sometimes more than once across train and test setup. This is startup work, not necessarily a hang.
+- When launching on one physical GPU, set `CUDA_VISIBLE_DEVICES=<gpu_id>` and pass `--use-devices 0` so the upstream trainer uses only that logical device.
+- When launching on multiple GPUs, set `CUDA_VISIBLE_DEVICES` to the chosen physical ids and pass `--use-devices 0 1 ...` across the visible logical devices.
 
 ## Constraints
 
@@ -148,3 +163,7 @@ Before launching a full run:
 - A dataset is not selectable from `--dataset` until it is exported from `data/datasets/__init__.py`.
 - If the TorchMD extension is not built, prefer `noise_in_loader: true` for molecular runs.
 - The default trainer is GPU-oriented, so verify the intended environment before debugging dataset code.
+- If a run appears to hang at startup, first rerun it with visible live stdout before assuming the trainer is stuck. First-use QM9 or checkpointed runs may still be downloading data, creating splits, or computing dataset statistics.
+- If GPU availability is unclear, rerun `nvidia-smi` outside any restrictive sandbox before concluding that CUDA is unavailable.
+- If the workstation is shared, check `nvidia-smi` memory use and active compute processes before choosing devices. A GPU with near-zero utilization but several GiB already allocated may still belong to another live job.
+- `wandb status` may be inconclusive even when online login works through `~/.netrc`. If you need certainty, run a tiny online `wandb.init(..., mode="online")` probe or observe the live W&B login lines during a real run.

@@ -36,11 +36,49 @@ Use `--dry-run` first to confirm the resolved config, fold, and dataset wrapper 
 python run_ct_scd_matbench.py --dry-run --fold 2
 ```
 
+Before launching, check GPU availability and current usage. As with the QM9 example, preferring live stdout over buffered wrappers is general guidance for SCD runs, not just this script:
+
+```bash
+nvidia-smi
+```
+
+On shared machines, prefer a GPU with no active compute job and low memory usage. Do not assume that a low-utilization GPU is free if another process already has memory allocated.
+
+To run on one selected GPU:
+
+```bash
+conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1
+```
+
+To run on all selected visible GPUs:
+
+```bash
+conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
+```
+
+The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is requested.
+
+For smoke tests without a live W&B session, pass:
+
+```bash
+python run_ct_scd_matbench.py --wandb-mode offline
+```
+
+For W&B online mode, first log in inside `scd-agent`:
+
+```bash
+conda run -n scd-agent wandb login
+```
+
+Then launch without `WANDB_MODE=offline`, or set `WANDB_MODE=online` explicitly.
+
 By default this example performs a short smoke test with `--num-steps 100`. To launch the full upstream schedule instead:
 
 ```bash
 python run_ct_scd_matbench.py --full-run
 ```
+
+For the quickest smoke tests, consider copying `configs/finetune_matbench.yaml` into a task-specific smoke config and disabling expensive reporting such as `parity_plot` if you add it. Short `max_steps` runs can still spend significant time in evaluation or plotting callbacks.
 
 The example uses Matbench fold `0` by default. To change folds:
 
@@ -68,7 +106,11 @@ python run_ct_scd_matbench.py --dataset-class MBdielectric --config configs/fine
 
 ## Notes
 
+- Actual training requires a CUDA-visible GPU. On CPU-only hosts the wrapper now exits early with a clear message instead of letting `train.py` fail later inside PyTorch Lightning.
+- If the default Matplotlib config directory is not writable, the wrapper automatically uses a temporary `MPLCONFIGDIR`.
 - This example follows the upstream material finetuning settings: `noise_in_loader=True`, `allow_periodic=True`, and `set_head_agg: mean`.
 - The default target environment is `scd-agent`, matching the environment created in `AtomisticSkills/conda-envs/scd-agent`.
 - Training outputs are written under `SelfConditionedDenoisingAtoms/experiments/<job_id>`.
 - The W&B project is derived by `train.py` from the dataset class name, so the default `MBgap` run appears under `SCD_bench_MBgap`.
+- On this public checkout, the Matbench dataset path still depends on `StructureCloud`, so W&B login alone is not enough to make the example runnable.
+- As with QM9, live stdout is the best way to distinguish real startup work from a genuine hang.

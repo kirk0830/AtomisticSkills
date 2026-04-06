@@ -153,6 +153,7 @@ bash conda-envs/atomate2-agent/install.sh
 bash conda-envs/smol-agent/install.sh
 bash conda-envs/drugdisc-agent/install.sh
 bash conda-envs/mattergen-agent/install.sh
+bash conda-envs/scd-agent/install.sh
 ```
 
 ---
