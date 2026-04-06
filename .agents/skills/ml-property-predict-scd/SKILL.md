@@ -114,14 +114,37 @@ When adding a new dataset class under `SelfConditionedDenoisingAtoms/data/datase
 1. Start from `templates/dataset_template.py`.
 2. Preserve the constructor signature `__init__(root, dataset_arg=None, transform=None, **kwargs)`.
 3. Return `torch_geometric.data.Data` objects with the required fields for the training mode.
-4. Export the dataset from `data/datasets/__init__.py`, or `train.py --dataset ...` will reject it.
-5. Add a new config file and smoke-test the run with a short `--num-steps` override.
+4. Expose a stable per-sample identifier such as `idx` and optionally a human-readable `identifier` on each `Data` object when practical.
+5. Export the dataset from `data/datasets/__init__.py`, or `train.py --dataset ...` will reject it.
+6. If the task needs dataset-specific config knobs beyond `root`, `dataset_arg`, and `transform`, wire them through `train.py` argparse and `data/loaders.py`.
+7. Prefer creating a new run config YAML instead of editing a shared baseline config in place. This makes experiment tracking and diffs much clearer.
+8. Add the new config file and smoke-test the run with a short `--num-steps` override.
+
+## Smoke Test
+
+Before launching a full run:
+
+1. import the dataset class successfully in the target environment
+2. instantiate one dataset split and inspect one sample
+3. build one dataloader batch through `data/loaders.py`
+4. run a short `train.py --conf ... --num-steps 100` or `200` check
+5. confirm checkpoints and W&B logging land in the expected run directory
 
 ## Constraints
 
 - `train.py` always creates a `WandbLogger`.
+- For finetuning runs, `train.py` derives the W&B project from the config `dataset` field, currently as `SCD_bench_{dataset}`.
+- The W&B run `name` and `id` both come from `job_id`, so set the specific run identifier in the config file or override it on the CLI.
 - `train.py` is configured with `accelerator="gpu"`.
+- Native `train.py` handles standard pretraining and finetuning loops well, but special prediction/export flows or custom evaluation loops may still need a small wrapper script.
 - `noise_in_loader: true` is required for periodic materials and is the fallback when the optional TorchMD CUDA extension is not built.
 - Public repo examples cover `PCQM4MV2`, `AlexMP20`, `QM9`, `MD17`, and `OMOL25` best.
 - The public checkpoints are downloaded as `last.ckpt` files from Hugging Face.
 - The upstream pretraining path freezes the scalar head, so `reset_head: true` is a reasonable downstream default when switching to a new scalar property during full-model finetuning. That is an inference from the code path, not a documented upstream requirement.
+
+## Troubleshooting
+
+- Unknown keys in a run YAML fail fast during `--conf` parsing.
+- A dataset is not selectable from `--dataset` until it is exported from `data/datasets/__init__.py`.
+- If the TorchMD extension is not built, prefer `noise_in_loader: true` for molecular runs.
+- The default trainer is GPU-oriented, so verify the intended environment before debugging dataset code.

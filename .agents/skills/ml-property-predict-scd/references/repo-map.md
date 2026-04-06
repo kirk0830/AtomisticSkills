@@ -38,6 +38,7 @@ Native `train.py` is not a clean tool for the lightweight frozen-backbone option
 - train only `scalar_head`
 - pool `atom_embs` and train a small MLP head
 - use `mol_emb` and train a small MLP head
+- highly customized prediction/export loops or evaluation procedures that do not match the built-in fit-plus-test flow
 
 Those workflows are better handled by a small custom script that loads the checkpoint, freezes it, and trains only the chosen lightweight head.
 
@@ -58,6 +59,7 @@ There are two config layers:
 - later CLI arguments override values loaded from YAML
 - overrides placed before `--conf` can be overwritten by the YAML
 - `--set-head-agg` is parsed in `train.py` and then applied inside `models/model_helper.py:create_model()` by overriding `head_agg` before model construction
+- dataset-specific YAML keys only reach the dataset if `train.py` parses them and `data/loaders.py` forwards them, unless the dataset encodes them inside `dataset_arg`
 
 Use this ordering:
 

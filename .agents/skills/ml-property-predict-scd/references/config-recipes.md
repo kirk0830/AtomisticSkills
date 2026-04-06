@@ -98,6 +98,8 @@ Expected settings:
 - `pretraining: false`
 - `self_cond: false`
 - `dataset: <new_dataset_name>`
+- W&B project naming follows `dataset` through `train.py`, which currently maps this to `SCD_bench_{dataset}` for finetuning runs.
+- Set the specific W&B run identifier with `job_id` in the config or via CLI override; `train.py` uses it for both the W&B `name` and `id`.
 - `standardize: true` for most scalar regression targets
 - choose checkpoint:
   `--load-hf ct-scd-pcq`
@@ -110,6 +112,13 @@ Reasonable downstream defaults:
 - `reset_embeddings: false`
 
 Those reset recommendations are practical defaults inferred from the code path, not explicit upstream documentation.
+
+General practical additions:
+
+- prefer creating a new finetuning config YAML for each new task or experiment family instead of editing a shared baseline in place
+- set `allow_test_clipping: false` when you need the cleanest possible validation/test comparability
+- if evaluation depends on stochastic dataset behavior, decide explicitly whether to keep single-pass evaluation or implement repeated-pass aggregation outside the default recipe
+- for smaller finetuning datasets, especially around 10k samples or fewer, consider stronger regularization such as higher `weight_decay` and/or higher droppath settings than the large-dataset defaults
 
 ## Materials full-model finetuning
 
@@ -187,3 +196,13 @@ python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-amp --job-id sm
 ```
 
 Put overrides after `--conf`.
+
+## Minimal smoke test
+
+For a new public finetuning config, prefer a first run like:
+
+```bash
+python train.py --conf configs/my_finetune.yaml --job-id smoke_ft --num-steps 100 --val-interval 1
+```
+
+Use this before committing to the full schedule.

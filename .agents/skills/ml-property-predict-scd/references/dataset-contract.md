@@ -16,6 +16,8 @@ getattr(datasets, dataset_name)(dataset_root, dataset_arg=dataset_arg, transform
 
 That constructor signature is the compatibility target.
 
+If a new task needs extra dataset-specific options, adding `**kwargs` to the dataset alone is not enough. The relevant arguments must also be parsed in `train.py` and forwarded by `data/loaders.py`, unless you intentionally encode them inside `dataset_arg`.
+
 ## Minimum sample fields
 
 Each `__getitem__` must return a `torch_geometric.data.Data` object.
@@ -67,6 +69,15 @@ Implement these only when needed:
 - `normalize()`
   can return dataset-specific `(mean, std)` to bypass the generic standardization pass
 
+## Recommended metadata fields
+
+These are not strictly required by the trainer, but they are broadly useful:
+
+- `idx`
+  stable integer sample id for evaluation, aggregation, and debugging
+- `identifier`
+  stable string id for export tables, challenge submissions, and human-readable inspection
+
 ## Transform compatibility
 
 The datamodule applies transforms on every access. A dataset should:
@@ -116,5 +127,6 @@ test_size: null
 1. start from `templates/dataset_template.py`
 2. adapt only the raw-data loading section first
 3. export the class from `data/datasets/__init__.py`
-4. add a config using the nearest finetune or pretrain template
-5. run a short smoke test before the full job
+4. wire any extra dataset-specific config arguments through `train.py` and `data/loaders.py`
+5. add a config using the nearest finetune or pretrain template
+6. run a short smoke test before the full job
