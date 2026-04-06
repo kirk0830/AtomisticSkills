@@ -88,6 +88,25 @@ Graph mode choice for all lightweight modes:
 - periodic materials:
   `noise_in_loader: true`, `allow_periodic: true`
 
+## SMILES-based molecular datasets
+
+SMILES-only datasets are not directly ready for SCD. They must first be converted into 3D atomistic structures with `z` and `pos`.
+
+Recommended default:
+
+- use RDKit conformer generation for relatively small, drug-like molecules
+- keep this in the dataset loader only when conformer generation is reliable enough for on-the-fly use
+
+Common failure modes:
+
+- invalid SMILES
+- unsupported or unusual chemistry
+- very large or hard-to-embed molecules
+
+In practice, these datasets may need preprocessing, retry logic, explicit failure logging, and/or filtering before training becomes stable.
+
+See `templates/generate_conformer_rdkit.py` for a simple conformer-generation example.
+
 ## Molecular full-model finetuning
 
 Closest public baseline:

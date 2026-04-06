@@ -78,6 +78,19 @@ These are not strictly required by the trainer, but they are broadly useful:
 - `identifier`
   stable string id for export tables, challenge submissions, and human-readable inspection
 
+## SMILES-only datasets
+
+If a dataset starts from SMILES strings rather than atomistic coordinates, it must be converted into 3D structures before SCD training or finetuning.
+
+Practical guidance:
+
+- for relatively small, drug-like molecules, RDKit conformer generation is a reasonable default
+- this can be done on the fly inside the dataset loader when the failure rate is low enough
+- invalid SMILES, exotic chemistry, and very large molecules can make this path fragile
+- expect some debugging, retry logic, or dataset filtering when conformer generation is part of the data pipeline
+
+Use `templates/generate_conformer_rdkit.py` as a minimal starting point for SMILES-to-3D conversion.
+
 ## Transform compatibility
 
 The datamodule applies transforms on every access. A dataset should:
