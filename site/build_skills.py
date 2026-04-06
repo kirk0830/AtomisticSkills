@@ -17,8 +17,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 SKILLS_SRC_DIR = PROJECT_ROOT / ".agents" / "skills"
 DOCS_SRC_DIR = PROJECT_ROOT / "docs"
+WORKFLOWS_SRC_DIR = PROJECT_ROOT / ".agents" / "workflows"
 SITE_DIR = PROJECT_ROOT / "site"
 SKILLS_OUT_DIR = SITE_DIR / "skills"
+WORKFLOWS_OUT_DIR = SITE_DIR / "workflows"
 
 CAT_COLORS = {
     "materials":        {"bg": "#eff6ff", "border": "#bfdbfe", "text": "#1d4ed8", "dot": "#3b82f6"},
@@ -136,10 +138,8 @@ def process_markdown_structures(md: str, base_dir: Path) -> str:
         # We don't inject straight HTML here since marked.js sometimes eats it if it's mixed with links,
         # but <div> tags usually survive.
         html = (
-            f"[{alt}]({src})\n\n"
-            f"""<textarea id="{el_id}" style="display:none;">{content}</textarea>"""
-            f"""<div class="viewer_3Dmoljs" data-element="{el_id}" data-datatype="{datatype}" """
-            f"""data-backgroundcolor="#f8f9fc" data-style="stick:radius~0.15;sphere:radius~0.4" """
+            f"[{alt}]({src}) "
+            f"""<div class="custom-3dmol" data-b64="{b64_content}" data-datatype="{datatype}" """
             f"""{unitcell_attr} style="position: relative; width: 100%; height: 400px; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 12px; margin-bottom: 24px; box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);"></div>"""
         )
         return html
@@ -303,7 +303,7 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
   <a class="nav-logo" href="../index.html">
     <img src="../logo/atomisticskills_logo.png" alt="AtomisticSkills"/>
   </a>
-  <a class="nav-back" href="../index.html">← Back to Skills</a>
+  <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
     <a class="gh-link" href="https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/skills/{skill_id}/SKILL.md" target="_blank">View on GitHub</a>
   </div>
@@ -325,6 +325,13 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
     <div class="rendered-md" id="skill-body"></div>
   </section>
   {examples_html}
+  <hr style="margin: 3rem 0; border: none; border-top: 1px solid var(--border);">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <a href="https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/skills/{skill_id}/SKILL.md" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; color: var(--text); font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      View this Skill on GitHub
+    </a>
+  </div>
 </div>
 
 <footer>
@@ -392,6 +399,22 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     container.innerHTML = html;
     if (typeof renderMathInElement !== 'undefined') renderMathInElement(container, KATEX_OPTS);
+    if (typeof $3Dmol !== 'undefined') {{
+      container.querySelectorAll('.custom-3dmol').forEach(el => {{
+        if (!el.dataset.b64) return;
+        try {{
+          let content = decodeURIComponent(escape(atob(el.dataset.b64)));
+          let viewer = $3Dmol.createViewer(el, {{backgroundColor: '#f8f9fc'}});
+          viewer.addModel(content, el.dataset.datatype);
+          viewer.setStyle({{}}, {{stick:{{radius:0.15}}, sphere:{{radius:0.4}}}});
+          if(el.dataset.unitcell) viewer.addUnitCell();
+          viewer.zoomTo();
+          viewer.render();
+        }} catch (err) {{
+          console.error("Failed to init 3Dmol viewer", err);
+        }}
+      }});
+    }}
   }}
 
   // Render skill body
@@ -547,6 +570,22 @@ document.addEventListener('DOMContentLoaded', function() {{
 
     container.innerHTML = html;
     if (typeof renderMathInElement !== 'undefined') renderMathInElement(container, KATEX_OPTS);
+    if (typeof $3Dmol !== 'undefined') {{
+      container.querySelectorAll('.custom-3dmol').forEach(el => {{
+        if (!el.dataset.b64) return;
+        try {{
+          let content = decodeURIComponent(escape(atob(el.dataset.b64)));
+          let viewer = $3Dmol.createViewer(el, {{backgroundColor: '#f8f9fc'}});
+          viewer.addModel(content, el.dataset.datatype);
+          viewer.setStyle({{}}, {{stick:{{radius:0.15}}, sphere:{{radius:0.4}}}});
+          if(el.dataset.unitcell) viewer.addUnitCell();
+          viewer.zoomTo();
+          viewer.render();
+        }} catch (err) {{
+          console.error("Failed to init 3Dmol viewer", err);
+        }}
+      }});
+    }}
   }}
   renderMd(DOC_MD, document.getElementById('doc-body'));
 }});
@@ -589,6 +628,143 @@ def build_generic_docs():
         make_generic_page(doc_id, meta, body_md, out_path)
         print(f"  Built: {doc_id}.html")
 
+def extract_workflow_nodes(md_content):
+    nodes = []
+    for match in re.finditer(r'`([A-Za-z0-9_*-]+)`', md_content):
+        val = match.group(1)
+        if val.startswith("mcp_") or val.startswith("create_") or val in ("notify_user", "task_boundary"):
+            if val not in [n["name"] for n in nodes]:
+                nodes.append({"type": "tool", "name": val})
+        elif val.startswith(("mat-", "chem-", "ml-", "drug-", "general-")):
+            if val not in [n["name"] for n in nodes]:
+                nodes.append({"type": "skill", "name": val})
+    return nodes
+
+def make_workflow_page(workflow_id: str, meta: dict, body_md: str, nodes: list, out_path: Path):
+    title_match = re.search(r'^#\s+(.+)$', body_md, re.MULTILINE)
+    page_title = title_match.group(1).strip() if title_match else meta.get('name', workflow_id.replace('-', ' ').title())
+    body_md_no_h1 = re.sub(r'^#\s+.+\n?', '', body_md, count=1, flags=re.MULTILINE).lstrip()
+
+    flowchart_html = ""
+    if nodes:
+        node_elements = []
+        for n in nodes:
+            name_clean = n["name"]
+            if n["type"] == "tool":
+                node_elements.append(f'''
+                <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; font-size: 0.9rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: max-content;">
+                  <span>📎</span> {name_clean}
+                </div>''')
+            else:
+                node_elements.append(f'''
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> {name_clean}</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>''')
+        flowchart_html = f'''
+<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow-x: auto;">
+  <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; color: #1e293b; text-align: center;">Workflow Flowchart</h3>
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
+    ''' + '\n    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>\n    '.join(node_elements) + '''
+  </div>
+</div>
+'''
+
+    github_link = f"https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/workflows/{workflow_id}.md"
+    html = f'''<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{page_title} — AtomisticSkills Workflows</title>
+  <meta name="description" content="{meta.get('description', '')}"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+    :root{{ --bg:#f8f9fc; --bg2:#ffffff; --border:#e2e8f0; --text:#1b1464; --muted:#64748b; --accent:#816cff; }}
+    body{{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}}
+    nav{{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:56px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}}
+    .nav-logo{{display:flex;align-items:center;gap:10px;text-decoration:none}}
+    .nav-back{{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:0.88rem;font-weight:500;transition:color .2s}}
+    .nav-back:hover{{color:var(--accent)}}
+    .nav-right{{display:flex;align-items:center;gap:1rem}}
+    .gh-link{{font-size:0.84rem;font-weight:600;color:var(--accent);text-decoration:none;
+      border:1px solid var(--accent);border-radius:8px;padding:6px 14px;transition:all .2s}}
+    .gh-link:hover{{background:var(--accent);color:#fff}}
+    .workflow-hero{{background:var(--bg2);border-bottom:1px solid var(--border);padding:3rem 2rem 2.5rem}}
+    .workflow-hero-inner{{max-width:900px;margin:0 auto}}
+    .breadcrumb{{font-size:0.82rem;color:var(--muted);margin-bottom:1rem}}
+    .breadcrumb a{{color:var(--accent);text-decoration:none}}
+    h1{{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.15;color:var(--text);margin-bottom:0.75rem}}
+    .workflow-desc{{font-size:1.05rem;color:var(--muted);max-width:720px;line-height:1.6}}
+    .workflow-content{{max-width:900px;margin:0 auto;padding:2.5rem 2rem}}
+    .rendered-md h2{{font-size:1.35rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);border-bottom:2px solid var(--border);padding-bottom:0.5rem}}
+    .rendered-md h3{{font-size:1.15rem;font-weight:700;margin:1.5rem 0 0.5rem;color:var(--text)}}
+    .rendered-md p{{margin:0.8rem 0;color:#374151;line-height:1.7}}
+    .rendered-md ul,.rendered-md ol{{padding-left:1.5rem;margin:0.8rem 0}}
+    .rendered-md li{{margin:0.4rem 0;color:#374151}}
+    .rendered-md code{{font-family:'JetBrains Mono',monospace;font-size:0.85rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 6px;color:#be185d}}
+    .rendered-md a{{color:var(--accent);text-decoration:none}}
+    footer{{border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem}}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.png" height="24" alt="AtomisticSkills"/></a>
+  <a class="nav-back" href="../index.html">← Back to Home</a>
+  <div class="nav-right">
+    <a class="gh-link" href="{github_link}" target="_blank">View on GitHub</a>
+  </div>
+</nav>
+<div class="workflow-hero">
+  <div class="workflow-hero-inner">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / Workflows</div>
+    <h1>{page_title}</h1>
+    <p class="workflow-desc">{meta.get("description", "")}</p>
+  </div>
+</div>
+<div class="workflow-content">
+  {flowchart_html}
+  <div class="rendered-md" id="workflow-body"></div>
+  <hr style="margin: 3rem 0; border: none; border-top: 1px solid var(--border);">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <a href="{github_link}" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 8px; color: #1e293b; font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      View this Workflow on GitHub
+    </a>
+  </div>
+</div>
+<footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {{
+    const MD_DATA = {json.dumps(body_md_no_h1)};
+    marked.setOptions({{ breaks: true, gfm: true }});
+    document.getElementById(\'workflow-body\').innerHTML = marked.parse(MD_DATA);
+  }});
+</script>
+</body>
+</html>'''
+    out_path.write_text(html, encoding="utf-8")
+
+def build_workflows():
+    print("\nBuilding workflow pages...")
+    workflows_index = []
+    if WORKFLOWS_SRC_DIR.exists():
+        for wf_file in sorted(WORKFLOWS_SRC_DIR.glob("*.md")):
+            wf_id = wf_file.stem
+            raw = read_file(wf_file)
+            meta, body_md = parse_frontmatter(raw)
+            nodes = extract_workflow_nodes(body_md)
+            out_path = WORKFLOWS_OUT_DIR / f"{wf_id}.html"
+            make_workflow_page(wf_id, meta, body_md, nodes, out_path)
+            workflows_index.append({
+                "id": wf_id,
+                "title": meta.get("name") or wf_id.replace('-', ' ').title(),
+                "description": meta.get("description", ""),
+            })
+            print(f"  Built: workflows/{wf_id}.html with {len(nodes)} sequential nodes")
+    return workflows_index
 
 def build_skills():
     """Build skill-specific pages."""
@@ -646,15 +822,41 @@ def build_skills():
             "num_examples": len(examples),
         })
 
+    # Add workflows
+    workflows_index = build_workflows()
+
+    # Compute ATOMISTIC_STATS dynamically
+    tools_count = 0
+    servers_count = 0
+    mcp_dir = PROJECT_ROOT / "src" / "mcp_server"
+    if mcp_dir.exists():
+        py_files = list(mcp_dir.glob("*_server.py"))
+        servers_count = len(py_files)
+        for f in py_files:
+            try:
+                content = f.read_text(encoding="utf-8")
+                tools_count += content.count("@mcp.tool") + content.count("@tool")
+            except Exception:
+                pass
+
+    stats = {
+        "skills": len(skill_index),
+        "tools": tools_count,
+        "servers": servers_count
+    }
+
     # Write updated skills index
     index_out = SITE_DIR / "skills_index.js"
     json_data = json.dumps(skill_index, indent=2, ensure_ascii=False)
-    index_out.write_text(f"window.SKILLS_DATA = {json_data};")
+    wf_data = json.dumps(workflows_index, indent=2, ensure_ascii=False)
+    stats_data = json.dumps(stats, indent=2, ensure_ascii=False)
+    index_out.write_text(f"window.SKILLS_DATA = {json_data};\nwindow.WORKFLOWS_DATA = {wf_data};\nwindow.ATOMISTIC_STATS = {stats_data};", encoding="utf-8")
     print(f"\n✅ Index written to site/skills_index.js")
 
 
 def build_all():
     SKILLS_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    WORKFLOWS_OUT_DIR.mkdir(parents=True, exist_ok=True)
     
     import shutil
     

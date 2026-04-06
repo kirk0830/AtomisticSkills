@@ -121,6 +121,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
     container.innerHTML = html;
     if (typeof renderMathInElement !== 'undefined') renderMathInElement(container, KATEX_OPTS);
+    if (typeof $3Dmol !== 'undefined') {
+      container.querySelectorAll('.custom-3dmol').forEach(el => {
+        if (!el.dataset.b64) return;
+        try {
+          let content = decodeURIComponent(escape(atob(el.dataset.b64)));
+          let viewer = $3Dmol.createViewer(el, {backgroundColor: '#f8f9fc'});
+          viewer.addModel(content, el.dataset.datatype);
+          viewer.setStyle({}, {stick:{radius:0.15}, sphere:{radius:0.4}});
+          if(el.dataset.unitcell) viewer.addUnitCell();
+          viewer.zoomTo();
+          viewer.render();
+        } catch (err) {
+          console.error("Failed to init 3Dmol viewer", err);
+        }
+      });
+    }
   }
   renderMd(DOC_MD, document.getElementById('doc-body'));
 });

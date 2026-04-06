@@ -996,3 +996,50 @@ window.SKILLS_DATA = [
     "num_examples": 2
   }
 ];
+window.WORKFLOWS_DATA = [
+  {
+    "id": "benchmark-finetuning",
+    "title": "Benchmark Finetuning",
+    "description": "Workflow for benchmarking, fine-tuning, and distilling Machine Learning Interatomic Potentials (MLIPs)"
+  },
+  {
+    "id": "generative-halide-discovery",
+    "title": "Generative Halide Discovery",
+    "description": "An end-to-end generative AI workflow for discovering novel high-conductivity solid-state electrolytes (SSEs), specifically mapped for halide lithium-ion conductors."
+  },
+  {
+    "id": "image-to-nmr-analysis",
+    "title": "Image To Nmr Analysis",
+    "description": "Digitize an NMR spectrum image and quantify its mixture composition — combines plot digitization with reaction product prediction and Wasserstein deconvolution."
+  },
+  {
+    "id": "image-to-xrd-phase",
+    "title": "Image To Xrd Phase",
+    "description": "End-to-end workflow for digitizing an XRD plot image and identifying its crystalline phases."
+  },
+  {
+    "id": "materials-discovery",
+    "title": "Materials Discovery",
+    "description": "An end-to-end workflow for high-throughput materials discovery, screening, and synthesizability assessment."
+  },
+  {
+    "id": "nmr-reaction-kinetics",
+    "title": "Nmr Reaction Kinetics",
+    "description": "End-to-end workflow for extracting reaction kinetics (mole fraction vs time) from time-series crude 1H NMR spectra via Wasserstein deconvolution."
+  },
+  {
+    "id": "reaction-to-nmr-quantification",
+    "title": "Reaction To Nmr Quantification",
+    "description": "End-to-end workflow for predicting reaction products and quantifying them via Wasserstein deconvolution of a crude 1H NMR spectrum."
+  },
+  {
+    "id": "sorption-discovery",
+    "title": "Sorption Discovery",
+    "description": "High-throughput screening out of promising porous materials for gas sorption"
+  }
+];
+window.ATOMISTIC_STATS = {
+  "skills": 99,
+  "tools": 46,
+  "servers": 10
+};

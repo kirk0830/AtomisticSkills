@@ -19,7 +19,7 @@ The framework integrates state-of-the-art Machine Learning Interatomic Potential
 
 ---
 
-### ⚙️ Tools (Low-Level Research Primitives)
+### 📎 Tools (Low-Level Research Primitives)
 [**View MCP Tools**](src/mcp_server)
 
 Tools are **strictly structured, fundamental operations** exposed as Python functions through MCP servers. They have **fixed input/output types** and must match function call signatures exactly—similar to standard library APIs.
@@ -45,7 +45,7 @@ Tools are **strictly structured, fundamental operations** exposed as Python func
 
 ---
 
-### 🔧 Skills (Mid-Level Research Tutorials)
+### ⚙️ Skills (Mid-Level Research Tutorials)
 [**Browse Skills →**](.agents/skills)
 
 Skills are **flexible tutorials** that combine multiple tool calls to solve focused research problems. Unlike tools, skills have **no fixed input/output type constraints**—the agent handles all data conversion and orchestration between steps.

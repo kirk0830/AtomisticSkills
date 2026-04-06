@@ -11,7 +11,7 @@
     rel="stylesheet" />
   <title>AtomisticSkills — AI-Driven Atomistic Research Framework</title>
   <meta name="description"
-    content="A composable framework for AI-driven atomistic materials research. 95+ modular skills covering materials simulation, drug discovery, ML potentials, and more." />
+    content="A composable framework for AI-driven atomistic materials research. Modular skills covering materials simulation, drug discovery, ML potentials, and more." />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.0.4/3Dmol-min.js"></script>
   <style>
     *,
@@ -985,19 +985,28 @@
   </nav>
 
   <!-- HERO -->
-  <section class="hero">
+  <section class="hero"
+    style="padding: 72px 2.5rem 60px; text-align: center; background: var(--bg2); border-bottom: 1px solid var(--border);">
     <div class="hero-title-block">
-      <div class="hero-logo-line">
-        <img src="logo/atomisticskills_logo.png" alt="AtomisticSkills logo" />
+      <div class="hero-logo-line"
+        style="display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 0.5rem;">
+        <img src="logo/atomisticskills_logo.png" alt="AtomisticSkills logo" style="height: 64px; width: auto;" />
       </div>
-      <div class="hero-typing-line">
+      <div class="hero-typing-line"
+        style="display: flex; align-items: center; justify-content: center; gap: 0.45em; flex-wrap: wrap; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; color: var(--muted); letter-spacing: -0.01em; min-height: 1.3em;">
         <span class="prefix">harnessing</span>
-        <span class="hero-typing-word" id="typing-word"></span><span class="hero-cursor" id="typing-cursor"></span>
+        <span class="hero-typing-word" id="typing-word"
+          style="color: var(--accent); background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></span><span
+          class="hero-cursor" id="typing-cursor"
+          style="display: inline-block; width: 4px; height: 1.1em; background: var(--accent); border-radius: 2px; margin-left: 3px; animation: blink .9s step-end infinite;"></span>
       </div>
-      <div class="hero-ide-line">in your agentic IDEs</div>
+      <div class="hero-ide-line"
+        style="font-size: clamp(1.15rem, 2.5vw, 1.7rem); font-weight: 500; color: var(--muted); margin-top: 0.3rem;">in
+        your agentic IDEs</div>
     </div>
-    <div class="hero-buttons">
-      <a class="btn-primary" href="#skills">Browse 95+ Skills ↓</a>
+    <div class="hero-buttons"
+      style="display: flex; gap: .875rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
+      <a class="btn-primary" href="#skills" id="browse-skills-btn">Browse 99+ Skills ↓</a>
       <a class="btn-secondary" href="https://github.com/bowen-bd/AtomisticSkills" target="_blank">⭐ Star on GitHub</a>
     </div>
   </section>
@@ -1005,25 +1014,28 @@
   <!-- STATS -->
   <div class="stats-row">
     <div class="stat">
-      <div class="stat-num">95+</div>
+      <div class="stat-num" id="stat-skills">95+</div>
       <div class="stat-label">Research Skills</div>
     </div>
     <div class="stat">
-      <div class="stat-num">46</div>
+      <div class="stat-num" id="stat-tools">46</div>
       <div class="stat-label">MCP Tools</div>
     </div>
     <div class="stat">
-      <div class="stat-num">10</div>
+      <div class="stat-num" id="stat-servers">10</div>
       <div class="stat-label">MCP Servers</div>
     </div>
     <div class="stat-arrow">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+        stroke-linecap="round" stroke-linejoin="round">
         <line x1="5" y1="12" x2="19" y2="12"></line>
         <polyline points="12 5 19 12 12 19"></polyline>
       </svg>
     </div>
     <div class="stat">
-      <div class="stat-num" style="font-size: 3.8rem; line-height: 0.6; margin-top: 0.2rem; margin-bottom: 0.2rem; font-weight: 400;">∞</div>
+      <div class="stat-num"
+        style="font-size: 3.8rem; line-height: 0.6; margin-top: 0.2rem; margin-bottom: 0.2rem; font-weight: 400;">∞
+      </div>
       <div class="stat-label">scientific workflows</div>
     </div>
   </div>
@@ -1031,44 +1043,234 @@
   <div class="divider"></div>
 
   <!-- HIERARCHY -->
+  <!-- HIERARCHY -->
   <section class="section" id="overview">
-    <div class="section-header">
-      <div class="section-tag">Framework</div>
-      <h2>Three-Level Research Hierarchy</h2>
-      <p class="section-desc">A composable framework for AI-driven atomistic research. Chain modular skills across
-        MLIPs, DFT, drug discovery, and generative AI — in any coding copilot.</p>
-    </div>
-    <div class="levels">
-      <div class="level-card">
-        <div class="level-icon">⚙️</div>
-        <h3>Tools</h3>
-        <p>Strictly typed, battle-tested operations exposed via MCP servers. Fixed signatures for relax, MD, fine-tune,
-          DFT I/O, and more.</p>
-        <div class="level-chips">
-          <span class="chip">mcp_mace_relax_structure</span>
-          <span class="chip">mcp_matgl_run_md</span>
-          <span class="chip">mcp_atomate2_run_vasp</span>
+    <div style="display:flex; gap:4rem; flex-wrap:wrap; align-items: stretch; max-width: 1400px; margin: 0 auto;">
+
+      <!-- Left side: Text and Cards -->
+      <div style="flex: 1; min-width: 320px;">
+        <div class="section-header" style="text-align: left; margin-bottom: 2rem;">
+          <div class="section-tag" style="justify-content: flex-start;">Framework</div>
+          <h2>Three-Level Research Hierarchy</h2>
+          <p class="section-desc" style="max-width: 100%;">A composable framework for AI-driven atomistic research.
+            Chain modular skills across
+            MLIPs, DFT, drug discovery, and generative AI — in any coding copilot.</p>
+        </div>
+        <div class="levels" style="grid-template-columns: 1fr; gap: 1.5rem;">
+          <div class="level-card">
+            <div class="level-icon">📎</div>
+            <h3>Tools</h3>
+            <p>Strictly typed, battle-tested operations exposed via MCP servers. Fixed signatures for relax, MD,
+              fine-tune,
+              DFT I/O, and more.</p>
+            <div class="level-chips">
+              <span class="chip">mcp_mace_relax_structure</span>
+              <span class="chip">mcp_matgl_run_md</span>
+              <span class="chip">mcp_atomate2_run_vasp</span>
+            </div>
+          </div>
+          <div class="level-card">
+            <div class="level-icon">⚙️</div>
+            <h3>Skills</h3>
+            <p>Mid-level tutorials combining tool calls to solve focused research problems. Each ships with SKILL.md,
+              helper
+              scripts, and runnable examples.</p>
+            <div class="level-chips">
+              <span class="chip">mat-melting-point</span>
+              <span class="chip">mat-stability</span>
+              <span class="chip">ml-mace-finetune</span>
+            </div>
+          </div>
+          <div class="level-card">
+            <div class="level-icon">🎯</div>
+            <h3>Workflows</h3>
+            <p>High-level research campaigns chaining multiple skills. From generative crystal discovery to hierarchical
+              stability screening.</p>
+            <div class="level-chips">
+              <span class="chip">generative-halide-discovery</span>
+              <span class="chip">materials-discovery</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="level-card">
-        <div class="level-icon">🔧</div>
-        <h3>Skills</h3>
-        <p>Mid-level tutorials combining tool calls to solve focused research problems. Each ships with SKILL.md, helper
-          scripts, and runnable examples.</p>
-        <div class="level-chips">
-          <span class="chip">mat-melting-point</span>
-          <span class="chip">mat-stability</span>
-          <span class="chip">ml-mace-finetune</span>
-        </div>
-      </div>
-      <div class="level-card">
-        <div class="level-icon">🎯</div>
-        <h3>Workflows</h3>
-        <p>High-level research campaigns chaining multiple skills. From generative crystal discovery to hierarchical
-          stability screening.</p>
-        <div class="level-chips">
-          <span class="chip">generative-halide-discovery</span>
-          <span class="chip">materials-discovery</span>
+
+      <!-- Right side: Mock Chat Interface -->
+      <div
+        style="flex: 1; min-width: 350px; background: #fbfbfe; border: 2px solid #818cf8; border-radius: 24px; padding: 2rem 1.5rem 1rem; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; align-items: center; box-shadow: 0 10px 30px rgba(129, 140, 248, 0.1);">
+        <h3 style="font-size: 1.6rem; font-weight: 600; color: #000; margin-bottom: 2rem; margin-top: 0;">Your Agentic
+          IDE</h3>
+
+        <div style="width: 100%; display: flex; flex-direction: column; gap: 1.25rem;">
+
+          <!-- User Chat 1 -->
+          <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: flex-start;">
+            <div
+              style="color: #64748b; font-size: 0.95rem; font-weight: 600; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px;">
+              Is Li₃MCl₆ a good Li-ion conductor?</div>
+            <div
+              style="width: 34px; height: 34px; border: 2px solid #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Agent Chat 1 -->
+          <div style="display: flex; gap: 12px; justify-content: flex-start; align-items: flex-start;">
+            <div
+              style="width: 32px; height: 32px; background: #6b6bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 4px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="13" rx="3.5"></rect>
+                <line x1="7" y1="10.5" x2="7" y2="13.5" stroke-width="3"></line>
+                <line x1="11" y1="10.5" x2="11" y2="13.5" stroke-width="3"></line>
+              </svg>
+            </div>
+            <div
+              style="display: flex; flex-direction: column; gap: 8px; flex: 1; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+              <div style="color: #64748b; font-size: 0.95rem; font-weight: 600; line-height: 1.4;">here is the research
+                plan for you to review:</div>
+              <div
+                style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px; padding-left:25px;">
+                <span style="color: #60a5fa;">M↓</span> Analyzed: <span style="color: #000;">SKILL.md</span></div>
+
+              <!-- DAG Diagram -->
+              <div style="display: flex; align-items: center; gap: 10px; margin: 8px 0 8px 10px;">
+                <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                  <div
+                    style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; font-size: 0.75rem; color: #64748b; font-weight: 600; background: white; display: flex; align-items: center; gap: 4px;">
+                    📎 Tool 1</div>
+                  <div style="color: #93c5fd;">↓</div>
+                  <div
+                    style="border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px 10px; font-size: 0.75rem; color: #64748b; font-weight: 600; background: white; display: flex; align-items: center; gap: 4px;">
+                    📎 Tool 2</div>
+                </div>
+                <div style="color: #93c5fd;">→</div>
+                <div style="display: flex; gap: 8px; overflow-x: auto;">
+                  <!-- Skill Block 1 -->
+                  <div
+                    style="background: #f1f5f9; border-radius: 12px; padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <div
+                      style="font-size: 0.8rem; font-weight: 700; color: #000; display: flex; align-items: center; gap: 4px;">
+                      ⚙️ Skill 1</div>
+                    <div style="display: flex; gap: 6px; font-size: 0.75rem; align-items: center;"><span
+                        style="color: #60a5fa;">M↓</span> 📎</div>
+                  </div>
+                  <div style="color: #93c5fd; display: flex; align-items: center;">→</div>
+                  <!-- Skill Block 2 -->
+                  <div
+                    style="background: #f1f5f9; border-radius: 12px; padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <div
+                      style="font-size: 0.8rem; font-weight: 700; color: #000; display: flex; align-items: center; gap: 4px;">
+                      ⚙️ Skill 2</div>
+                    <div style="display: flex; gap: 6px; font-size: 0.75rem; align-items: center;"><span
+                        style="color: #60a5fa;">M↓</span> 📎</div>
+                  </div>
+                  <div style="color: #93c5fd; display: flex; align-items: center;">→</div>
+                  <!-- Skill Block 3 -->
+                  <div
+                    style="background: #f1f5f9; border-radius: 12px; padding: 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <div
+                      style="font-size: 0.8rem; font-weight: 700; color: #000; display: flex; align-items: center; gap: 4px;">
+                      ⚙️ Skill 3</div>
+                    <div style="display: flex; gap: 6px; font-size: 0.75rem; align-items: center;"><span
+                        style="color: #60a5fa;">M↓</span> 💾 💾</div>
+                  </div>
+                </div>
+              </div>
+              <!-- Buttons -->
+              <div style="display: flex; gap: 8px; justify-content: center; width: 100%; margin-top: 0px;">
+                <div
+                  style="background: #94a3b8; color: white; border-radius: 6px; padding: 4px 14px; font-size: 0.75rem; font-weight: 700;">
+                  Proceed</div>
+                <div
+                  style="background: #cbd5e1; color: white; border-radius: 6px; padding: 4px 14px; font-size: 0.75rem; font-weight: 700;">
+                  Open</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Chat 2 -->
+          <div style="display: flex; gap: 12px; justify-content: flex-end; align-items: flex-start; margin-top: 4px;">
+            <div
+              style="color: #64748b; font-size: 0.95rem; font-weight: 600; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px;">
+              Proceed</div>
+            <div
+              style="width: 34px; height: 34px; border: 2px solid #64748b; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Agent Chat 2 -->
+          <div style="display: flex; gap: 12px; justify-content: flex-start; align-items: flex-start; margin-top: 6px;">
+            <div
+              style="width: 32px; height: 32px; background: #6b6bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 4px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="20" height="13" rx="3.5"></rect>
+                <line x1="7" y1="10.5" x2="7" y2="13.5" stroke-width="3"></line>
+                <line x1="11" y1="10.5" x2="11" y2="13.5" stroke-width="3"></line>
+              </svg>
+            </div>
+            <div
+              style="display: flex; flex-direction: column; gap: 8px; flex: 1; background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+              <div
+                style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                📎 MCP tool: <span style="color: #000;">search_literature</span>
+              </div>
+              <div
+                style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                📎 MCP tool: <span style="color: #000;">search_materials_project</span>
+              </div>
+              <div
+                style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                ⚙️ SKILL: <span style="color: #000;">ml-foundation-potentials</span>
+              </div>
+              <div
+                style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px; padding-left: 20px;">
+                <span style="color: #60a5fa;">M↓</span> Analyzed: <span style="color: #000;">SKILL.md</span>
+              </div>
+              <div
+                style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                ⚙️ SKILL: <span style="color: #000;">general-molecular-dynamics</span>
+              </div>
+              <!-- Mock Terminal -->
+              <div
+                style="border: 1px solid #cbd5e1; border-radius: 8px; background: white; margin: 2px 0 2px 20px; overflow: hidden; max-width: 90%;">
+                <div
+                  style="padding: 6px 12px; font-size: 0.70rem; font-weight: 600; border-bottom: 1px solid #cbd5e1; color: #000;">
+                  Ran background command</div>
+                <div
+                  style="padding: 6px 12px; font-size: 0.70rem; font-family: 'JetBrains Mono', monospace; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ~/.../AtomisticSkills $ <span style="color: #000;">conda run -n matgl-agent python ...</span>
+                </div>
+              </div>
+              <div
+                style="color: #94a3b8; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                ⚙️ SKILL: <span style="color: #000;">mat-diffusion-analysis</span>
+              </div>
+              <div style="color: #475569; text-align: center; margin-top: 0px; font-weight: 800; padding-right: 40px;">⋮
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Input field -->
+          <div
+            style="width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <span style="color: #cbd5e1; font-size: 0.95rem; font-weight: 600;">here is a sentence...</span>
+            <div style="display: flex; gap: 6px;">
+              <div style="width: 22px; height: 12px; border-radius: 8px; background: #cbd5e1; margin-right: 4px;"></div>
+              <div style="width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1;"></div>
+              <div style="width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1;"></div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1129,7 +1331,8 @@
       <div class="section-tag">Environments</div>
       <h2>Isolated Tool Environments</h2>
       <p class="section-desc">Each environment is fully isolated to prevent dependency conflicts. Environments marked
-        <span class="env-tag">MCP</span> expose tools directly to your AI agent; others are used via skills scripts.</p>
+        <span class="env-tag">MCP</span> expose tools directly to your AI agent; others are used via skills scripts.
+      </p>
     </div>
     <div class="env-wrap">
       <p
@@ -1317,20 +1520,9 @@
 
   <script src="skills_index.js?1775443833"></script>
   <script>
-    const WORKFLOWS = [
-      { id: "generative-halide-discovery", title: "Generative Halide Discovery", desc: "End-to-end workflow for discovering novel high-conductivity halide SSEs via MatterGen + MLIP screening." },
-      { id: "materials-discovery", title: "Materials Discovery", desc: "High-throughput materials discovery, screening, and synthesizability assessment." },
-      { id: "sorption-discovery", title: "Sorption Discovery", desc: "High-throughput screening of porous materials for gas sorption via GCMC and MLIP-based Widom insertion." },
-      { id: "benchmark-finetuning", title: "MLIP Benchmarking & Fine-tuning", desc: "Benchmark, fine-tune, and distill Machine Learning Interatomic Potentials on custom datasets." },
-      { id: "phase-diagram-free-energy", title: "Phase Diagram & Free Energy", desc: "Construct accurate, first-principles phase diagrams for molecular and elemental systems." },
-      { id: "image-to-xrd-phase", title: "Image → XRD Phase Analysis", desc: "Digitize an XRD plot image and identify crystalline phases using DARA tree search." },
-      { id: "image-to-nmr-analysis", title: "Image → NMR Analysis", desc: "Digitize an NMR spectrum image and quantify mixture composition via Wasserstein deconvolution." },
-      { id: "nmr-reaction-kinetics", title: "NMR Reaction Kinetics", desc: "Extract reaction kinetics (mole fraction vs time) from time-series crude 1H NMR spectra." },
-      { id: "reaction-to-nmr-quantification", title: "Reaction → NMR Quantification", desc: "Predict reaction products and quantify via Wasserstein deconvolution of a crude 1H NMR spectrum." },
-    ];
 
     const GUIDES = [
-      { id: "developer_guide", title: "Developer Guide", desc: "Best practices for implementing modular research skills and VLM-based validation.", icon: "🛠️" },
+      { id: "developer_guide", title: "Developer Guide", desc: "Best practices for implementing modular research skills and tools.", icon: "🛠️" },
       { id: "environment_variables", title: "Environment Setup", desc: "Configuration guide for Materials Project keys and custom MLIP backend paths.", icon: "⚙️" },
       { id: "visualize_structure", title: "Structure Visualization", desc: "How to generate high-quality publications-ready crystal and molecule renders.", icon: "🎨" }
     ];
@@ -1343,14 +1535,17 @@
 
     // Render workflows
     const wg = document.getElementById('workflows-grid');
-    WORKFLOWS.forEach(w => {
-      const a = document.createElement('a');
-      a.className = 'workflow-card';
-      a.href = `https://github.com/bowen-bd/AtomisticSkills/blob/main/.agents/workflows/${w.id}.md`;
-      a.target = '_blank';
-      a.innerHTML = `<div class="workflow-tag">Workflow</div><h3>${w.title}</h3><p>${w.desc}</p><span class="wf-arrow">View on GitHub →</span>`;
-      wg.appendChild(a);
-    });
+    if (window.WORKFLOWS_DATA) {
+      window.WORKFLOWS_DATA.forEach(w => {
+        const a = document.createElement('a');
+        a.className = 'workflow-card';
+        a.href = `workflows/${w.id}.html`;
+        a.innerHTML = `<div class="workflow-tag">Workflow</div><h3>${w.title}</h3><p>${w.description}</p><span class="wf-arrow">View details →</span>`;
+        wg.appendChild(a);
+      });
+    } else {
+      wg.innerHTML = '<p style="color:var(--muted)">Workflows index not found. Run <code>python site/build_skills.py</code> first.</p>';
+    }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
@@ -1359,6 +1554,14 @@
         renderSkills(window.SKILLS_DATA);
       } else {
         document.getElementById('skills-grid').innerHTML = '<p style="color:var(--muted)">Skills index not found. Run <code>python site/build_skills.py</code> first.</p>';
+      }
+
+      if (window.ATOMISTIC_STATS) {
+        document.getElementById('stat-skills').innerText = window.ATOMISTIC_STATS.skills + "+";
+        document.getElementById('stat-tools').innerText = window.ATOMISTIC_STATS.tools;
+        document.getElementById('stat-servers').innerText = window.ATOMISTIC_STATS.servers;
+        // Updating the button as well
+        document.getElementById('browse-skills-btn').innerText = `Browse ${window.ATOMISTIC_STATS.skills}+ Skills ↓`;
       }
     });
 
