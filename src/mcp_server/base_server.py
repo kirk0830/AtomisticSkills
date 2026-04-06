@@ -35,6 +35,13 @@ from src.utils.structure_utils import (
 )
 
 from src.utils.research_utils import create_new_research_dir
+from src.utils.model_registry import (
+    register_model as _registry_register,
+    search_models as _registry_search,
+    get_model as _registry_get,
+    list_models as _registry_list,
+    _format_entry,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -622,6 +629,146 @@ def modify_structure(
     except Exception as e:
         import traceback
         return f"Error executing modify_structure: {str(e)}\n{traceback.format_exc()}"
+
+
+@mcp.tool()
+def search_model_registry(
+    chemical_system: Optional[str] = None,
+    backend: Optional[str] = None,
+    max_energy_mae: Optional[float] = None,
+    max_force_mae: Optional[float] = None,
+    tags_json: Optional[str] = None,
+) -> str:
+    """Search the local MLIP model registry for previously fine-tuned checkpoints.
+
+    Call this tool at the start of any research task that may require a fine-tuned
+    MLIP, BEFORE deciding to train a new one.  If a suitable model already exists
+    in the registry, reuse it to save compute and time.
+
+    Args:
+        chemical_system: Hyphen-separated elements to filter by (e.g. "Li-Fe-P-O").
+            The search uses a **subset match**: a model trained on "Fe-Li-O-P" will
+            match a query for "Li-O".  Case-insensitive.  Omit to list all models.
+        backend: Optional filter: "mace", "matgl", or "fairchem".
+        max_energy_mae: Upper bound on validation energy MAE in meV/atom (optional).
+        max_force_mae:  Upper bound on validation force  MAE in meV/Å  (optional).
+        tags_json: JSON array of required tags, e.g. '["battery", "cathode"]' (optional).
+
+    Returns:
+        Formatted markdown list of matching models, or a message if none found.
+    """
+    try:
+        import json
+        tags = json.loads(tags_json) if tags_json else None
+
+        matches = _registry_search(
+            chemical_system=chemical_system,
+            backend=backend,
+            max_energy_mae=max_energy_mae,
+            max_force_mae=max_force_mae,
+            tags=tags,
+        )
+
+        if not matches:
+            msg = "No models found in the registry"
+            filters = []
+            if chemical_system:
+                filters.append(f"chemical_system ⊇ {chemical_system}")
+            if backend:
+                filters.append(f"backend = {backend}")
+            if max_energy_mae is not None:
+                filters.append(f"energy_mae ≤ {max_energy_mae} meV/atom")
+            if max_force_mae is not None:
+                filters.append(f"force_mae ≤ {max_force_mae} meV/Å")
+            if filters:
+                msg += " matching: " + ", ".join(filters)
+            msg += ".\nConsider fine-tuning a new model and registering it with `register_model`."
+            return msg
+
+        header = f"Found **{len(matches)}** model(s) in the registry:\n\n"
+        return header + "\n".join(_format_entry(m) for m in matches)
+
+    except Exception as e:
+        import traceback
+        return f"Error searching model registry: {str(e)}\n{traceback.format_exc()}"
+
+
+@mcp.tool()
+def register_model(
+    checkpoint_path: str,
+    chemical_system: str,
+    backend: str,
+    base_model: str,
+    description: str = "",
+    energy_mae: Optional[float] = None,
+    force_mae: Optional[float] = None,
+    research_dir: str = "",
+    tags_json: Optional[str] = None,
+    notes: str = "",
+    model_id: Optional[str] = None,
+) -> str:
+    """Register a fine-tuned MLIP checkpoint in the local model registry.
+
+    Call this tool immediately after successfully fine-tuning an MLIP so the
+    model can be discovered and reused by future research tasks.
+
+    Args:
+        checkpoint_path: Absolute path to the saved model checkpoint file
+            (e.g. the .model file for MACE, .pt for MatGL, .pt for FairChem).
+        chemical_system: Hyphen-separated elements the model covers,
+            e.g. "Li-Fe-P-O".  Element order does not matter — it will be
+            normalised (sorted, deduplicated) automatically.
+        backend: MLIP framework: "mace", "matgl", or "fairchem".
+        base_model: Name of the foundation checkpoint that was fine-tuned,
+            e.g. "MACE-MH-1", "CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES".
+        description: One-sentence description of training data and purpose
+            (e.g. "Fine-tuned for Li-Fe-P-O MD at 800-1200K, 1200 structures").
+        energy_mae: Validation energy MAE in meV/atom (optional but recommended).
+        force_mae:  Validation force  MAE in meV/Å  (optional but recommended).
+        research_dir: Relative path to the research directory where training was
+            run (e.g. "research/2024-12-01_LiFePO4_diffusion").  Used for
+            provenance tracking.
+        tags_json: JSON array of keyword tags for filtering,
+            e.g. '["battery", "cathode", "diffusion"]' (optional).
+        notes: Any additional free-text notes about training conditions,
+            convergence, known limitations, etc. (optional).
+        model_id: Explicit registry id (e.g. "mace-LiFePO4-v1").  If omitted,
+            an id is auto-generated from the backend and chemical system.
+
+    Returns:
+        Confirmation message with the assigned model id and registry path.
+    """
+    try:
+        import json
+        tags = json.loads(tags_json) if tags_json else None
+
+        assigned_id = _registry_register(
+            checkpoint_path=checkpoint_path,
+            chemical_system=chemical_system,
+            backend=backend,
+            base_model=base_model,
+            description=description,
+            energy_mae=energy_mae,
+            force_mae=force_mae,
+            research_dir=research_dir,
+            tags=tags,
+            notes=notes,
+            model_id=model_id,
+        )
+
+        from src.utils.model_registry import REGISTRY_PATH
+        entry = _registry_get(assigned_id)
+        summary = _format_entry(entry) if entry else ""
+
+        return (
+            f"Model successfully registered with id **{assigned_id}**.\n"
+            f"Registry location: `{REGISTRY_PATH}`\n\n"
+            f"{summary}"
+        )
+
+    except Exception as e:
+        import traceback
+        return f"Error registering model: {str(e)}\n{traceback.format_exc()}"
 
 
 if __name__ == "__main__":

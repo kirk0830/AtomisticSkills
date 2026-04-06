@@ -63,9 +63,12 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 
 **Featured Skills:**
 - [**MLIP Training**](.agents/skills/ml-mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
+- [**Committee Uncertainty**](.agents/skills/ml-committee-uncertainty/SKILL.md): Quantify MLIP prediction uncertainty with ensemble models; flag structures for DFT
 - [**Melting Point**](.agents/skills/mat-melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
 - [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
 - [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
+- [**Raman Spectra**](.agents/skills/mat-raman-spectra/SKILL.md): Raman-active mode identification and spectrum simulation from MLIP phonons
+- [**Grain Boundary Energy**](.agents/skills/mat-grain-boundary/SKILL.md): Calculate γ_GB for CSL tilt/twist boundaries; plot energy vs. misorientation angle
 
 ---
 
@@ -113,13 +116,13 @@ Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD
 Materials Project, ChEMBL, PDB, PubChem, and ArXiv search — query structures, properties, bioactivity data, and literature from external databases.
 
 ### 3. Property Evaluation
-Stability ($E_{hull}$), phase diagrams, phonons, QHA thermal expansion, equation of state, elastic tensor, melting point, ionic diffusion, NEB barriers, surface energy & adsorption, intercalation voltage, Pourbaix diagrams, magnetic density, vibrational spectra, and amorphization.
+Stability ($E_{hull}$), phase diagrams, phonons, QHA thermal expansion, equation of state, elastic tensor, melting point, ionic diffusion, NEB barriers, surface energy & adsorption, grain boundary energy, intercalation voltage, Pourbaix diagrams, magnetic density, vibrational spectra, Raman spectra, and amorphization.
 
 ### 4. Experimental Tools
 Synthesis recommendation from text-mined literature, XRD spectrum calculation, Pourbaix diagrams, protein preparation, molecular docking (AutoDock Vina), ADMET prediction, and molecular fingerprints.
 
 ### 5. Machine Learning Tools
-MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuning & benchmarking, foundation potential selection guide, cluster expansion training, and atomic feature extraction.
+MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuning & benchmarking, foundation potential selection guide, cluster expansion training, and atomic feature extraction. **MLIP model registry** for cross-project checkpoint discovery and reuse (`search_model_registry` / `register_model` MCP tools). **Committee uncertainty quantification** to flag out-of-distribution structures for DFT verification.
 
 ---
 
