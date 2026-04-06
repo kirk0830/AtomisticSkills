@@ -32,6 +32,16 @@ Frenkel-Ladd switching is an MD-based free-energy method, so both energy and for
 
 Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md) for model selection guidance.
 
+## Preparing Inputs
+
+This skill assumes the input structure is already appropriate for the target thermodynamic state point. For production workflows, the most useful upstream skills are:
+
+- [mat-db-mp](../mat-db-mp/SKILL.md): Retrieve a starting bulk crystal structure from Materials Project.
+- [mat-equation-of-state](../mat-equation-of-state/SKILL.md): Estimate an equilibrium cell volume and generate a better-relaxed starting point before finite-temperature sampling.
+- [mat-lammps-md](../mat-lammps-md/SKILL.md): Equilibrate a larger periodic cell at the target temperature or pressure using the same MLIP family.
+- [mat-md-monitors](../mat-md-monitors/SKILL.md): Check MD stability, thermostat behavior, volume drift, and equilibration while preparing the input trajectory.
+- [mat-phonon](../mat-phonon/SKILL.md): Screen for imaginary modes or other vibrational-instability warnings before running an expensive free-energy workflow.
+
 ## Calculation Workflow
 
 Run the standalone Frenkel-Ladd script:
@@ -110,7 +120,7 @@ python .agents/skills/mat-frenkel-ladd/scripts/run_frenkel_ladd.py \
 ```
 
 > [!NOTE]
-> The example is a smoke-test style demonstration. For real free-energy work, start from a genuinely pre-equilibrated structure and use the heavier default settings or stricter settings appropriate for your system.
+> The example is a smoke-test style demonstration. For production free-energy work, start from a genuinely pre-equilibrated structure and use the heavier default settings or stricter settings appropriate for your system.
 
 ## Constraints
 
