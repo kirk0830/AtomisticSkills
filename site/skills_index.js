@@ -455,6 +455,46 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "mat-dft-electron-phonon",
+    "name": "mat-dft-electron-phonon",
+    "description": "Computes electron-phonon coupling to calculate temperature-dependent bandgap renormalization using atomate2.",
+    "category": [
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "mat-dft-electronic-transport",
+    "name": "mat-dft-electronic-transport",
+    "description": "Compute electronic transport properties (mobility, conductivity, Seebeck coefficient) using DFT and AMSET via atomate2.",
+    "category": [
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "mat-dft-ferroelectric",
+    "name": "mat-dft-ferroelectric",
+    "description": "Calculate the spontaneous ferroelectric polarization across a non-polar to polar structure transition using the Berry Phase method.",
+    "category": [
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "mat-dft-lobster",
+    "name": "mat-dft-lobster",
+    "description": "Construct computational flows for VASP electronic structure projection via LOBSTER to calculate chemical bonding insights (COHP, atomic charges, DOS).",
+    "category": [
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "mat-dft-vasp",
     "name": "mat-dft-vasp",
     "description": "Prepare VASP input files locally and parse VASP output results.",
