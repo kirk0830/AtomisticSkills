@@ -900,7 +900,7 @@ def compute_eq_loading_from_traj_single(
         nmols[i] = count_probe_molecules_by_blocks(atoms, host_natoms, probe)
     eq_nmols = _eq_nmols_from_array(nmols, frac_tail=frac_tail)
     host_mass_kg = _host_mass_kg(host, host_natoms)
-    return _mol_per_kg_from_nmols(eq_nmols, host_mass_kg) * 1000.0  # mol/kg -> mmol/g
+    return _mol_per_kg_from_nmols(eq_nmols, host_mass_kg)  # mol/kg == mmol/g (numerically equal)
 
 
 def _host_mass_kg(host: Atoms, host_natoms: int) -> float:
@@ -1302,7 +1302,7 @@ def compute_eq_loading_from_traj_multicomponent(
     for name in species_names:
         eq_nmols = _eq_nmols_from_array(nmols[name], frac_tail=frac_tail)
         mol_per_kg = _mol_per_kg_from_nmols(eq_nmols, host_mass_kg)
-        q_by_adsorbate[name] = _finite_or_none(mol_per_kg * 1000.0) if np.isfinite(mol_per_kg) else None
+        q_by_adsorbate[name] = _finite_or_none(mol_per_kg) if np.isfinite(mol_per_kg) else None  # mol/kg == mmol/g
     finite_vals = [v for v in q_by_adsorbate.values() if v is not None]
     q_total = float(np.sum(finite_vals)) if finite_vals else None
     return q_by_adsorbate, q_total
