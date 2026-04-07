@@ -1159,5 +1159,5 @@ window.WORKFLOWS_DATA = [
 window.ATOMISTIC_STATS = {
   "skills": 109,
   "tools": 48,
-  "servers": 10
+  "servers": 17
 };

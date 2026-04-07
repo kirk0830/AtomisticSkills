@@ -841,10 +841,15 @@ def build_skills():
     # Compute ATOMISTIC_STATS dynamically
     tools_count = 0
     servers_count = 0
+    
+    # Count conda envs
+    conda_envs_dir = PROJECT_ROOT / "conda-envs"
+    if conda_envs_dir.exists():
+        servers_count = len([d for d in conda_envs_dir.iterdir() if d.is_dir()])
+        
     mcp_dir = PROJECT_ROOT / "src" / "mcp_server"
     if mcp_dir.exists():
         py_files = list(mcp_dir.glob("*_server.py"))
-        servers_count = len(py_files)
         for f in py_files:
             try:
                 content = f.read_text(encoding="utf-8")
