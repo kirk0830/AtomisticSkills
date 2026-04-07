@@ -171,8 +171,7 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
         "chemistry": "CHEM",
         "machine-learning": "ML",
         "drug-discovery": "DRUG",
-        "general": "GENERAL",
-        "thermodynamics": "THERMO",
+        "general": "GENERAL"
     }
     cat_label = CAT_SHORT_LABEL.get(primary_cat, primary_cat.replace("-", " ").upper())
 
