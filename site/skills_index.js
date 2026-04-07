@@ -1116,19 +1116,9 @@ window.SKILLS_DATA = [
 ];
 window.WORKFLOWS_DATA = [
   {
-    "id": "benchmark-finetuning",
-    "title": "Benchmark Finetuning",
-    "description": "Workflow for benchmarking, fine-tuning, and distilling Machine Learning Interatomic Potentials (MLIPs)"
-  },
-  {
     "id": "generative-halide-discovery",
     "title": "Generative Halide Discovery",
     "description": "An end-to-end generative AI workflow for discovering novel high-conductivity solid-state electrolytes (SSEs), specifically mapped for halide lithium-ion conductors."
-  },
-  {
-    "id": "image-to-nmr-analysis",
-    "title": "Image To Nmr Analysis",
-    "description": "Digitize an NMR spectrum image and quantify its mixture composition — combines plot digitization with reaction product prediction and Wasserstein deconvolution."
   },
   {
     "id": "image-to-xrd-phase",
@@ -1139,6 +1129,11 @@ window.WORKFLOWS_DATA = [
     "id": "materials-discovery",
     "title": "Materials Discovery",
     "description": "An end-to-end workflow for high-throughput materials discovery, screening, and synthesizability assessment."
+  },
+  {
+    "id": "mlip-benchmark-finetune",
+    "title": "Mlip Benchmark Finetune",
+    "description": "Workflow for benchmarking, fine-tuning, and distilling Machine Learning Interatomic Potentials (MLIPs)"
   },
   {
     "id": "mof-co2-dac-screening",
