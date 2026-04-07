@@ -8,8 +8,8 @@ dependencies:
   - pip
   - pip:
     - mcp
-    - "numpy<2"
-    - "pymatgen<2024.2.1"
+    - numpy
+    - pymatgen
     - ase
     - mp-api
     - typing-extensions

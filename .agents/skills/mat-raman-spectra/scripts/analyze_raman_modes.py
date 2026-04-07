@@ -84,7 +84,9 @@ def _is_raman_active(label: str, point_group: str) -> bool:
         pass
 
     if point_group in CENTROSYMMETRIC_POINT_GROUPS:
-        # Raman active ↔ gerade (ends with 'g')
+        # Raman active ↔ gerade (ends with 'g'), BUT excluding A2g (rotation, Raman inactive)
+        if clean in {"A2g"}:
+            return False
         return clean.endswith("g") or clean.endswith("g'") or clean.endswith("g\"")
 
     # Non-centrosymmetric: all modes are potentially Raman active.
