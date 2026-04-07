@@ -1171,3 +1171,15 @@ window.ATOMISTIC_STATS = {
   "tools": 48,
   "servers": 17
 };
+window.SERVER_TOOLS_COUNT = {
+  "drugdisc": 5,
+  "diffcsp": 1,
+  "fairchem": 5,
+  "adit": 1,
+  "mace": 6,
+  "smol": 7,
+  "mattergen": 1,
+  "base": 9,
+  "atomate2": 6,
+  "matgl": 7
+};

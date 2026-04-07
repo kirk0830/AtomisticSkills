@@ -1675,6 +1675,16 @@
       });
       document.getElementById('skill-count').textContent = count;
     }
+
+    // Inject server tools count
+    if (window.SERVER_TOOLS_COUNT) {
+      document.querySelectorAll('.env-table-wrap .env-tag').forEach(tag => {
+        const id = tag.textContent.trim();
+        if (window.SERVER_TOOLS_COUNT[id] !== undefined) {
+          tag.innerHTML += ` <span style="font-size:0.75em; opacity:0.8; font-weight:normal">(${window.SERVER_TOOLS_COUNT[id]} tools)</span>`;
+        }
+      });
+    }
   </script>
 </body>
 

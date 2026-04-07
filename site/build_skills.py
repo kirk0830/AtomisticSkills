@@ -843,6 +843,7 @@ def build_skills():
     # Compute ATOMISTIC_STATS dynamically
     tools_count = 0
     servers_count = 0
+    server_tools_count = {}
     
     # Count conda envs
     conda_envs_dir = PROJECT_ROOT / "conda-envs"
@@ -854,8 +855,11 @@ def build_skills():
         py_files = list(mcp_dir.glob("*_server.py"))
         for f in py_files:
             try:
-                content = f.read_text(encoding="utf-8")
-                tools_count += content.count("@mcp.tool") + content.count("@tool")
+                server_id = f.name.replace("_server.py", "")
+                tools = extract_mcp_tools(f)
+                num = len(tools)
+                server_tools_count[server_id] = num
+                tools_count += num
             except Exception:
                 pass
 
@@ -870,7 +874,8 @@ def build_skills():
     json_data = json.dumps(skill_index, indent=2, ensure_ascii=False)
     wf_data = json.dumps(workflows_index, indent=2, ensure_ascii=False)
     stats_data = json.dumps(stats, indent=2, ensure_ascii=False)
-    index_out.write_text(f"window.SKILLS_DATA = {json_data};\nwindow.WORKFLOWS_DATA = {wf_data};\nwindow.ATOMISTIC_STATS = {stats_data};", encoding="utf-8")
+    server_data = json.dumps(server_tools_count, indent=2, ensure_ascii=False)
+    index_out.write_text(f"window.SKILLS_DATA = {json_data};\nwindow.WORKFLOWS_DATA = {wf_data};\nwindow.ATOMISTIC_STATS = {stats_data};\nwindow.SERVER_TOOLS_COUNT = {server_data};", encoding="utf-8")
     print(f"\n✅ Index written to site/skills_index.js")
 
 
