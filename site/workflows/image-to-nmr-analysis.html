@@ -61,6 +61,24 @@
                   <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> general-plot-digitizer</div>
                   <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
                 </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> drug-db-pubchem</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> chem-nmr-analysis</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> chem-nmr-predict</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>
   </div>
 </div>
 
@@ -76,7 +94,7 @@
 <footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const MD_DATA = "This workflow is a specialization of `reaction-to-nmr-quantification.md` where the user's starting point is an **image** of a 1H NMR spectrum rather than a numeric data file.\n\nThe agent should follow `reaction-to-nmr-quantification.md` starting from **Step 0 (Digitize Spectrum Images)**, which invokes the `general-plot-digitizer` skill to convert the image to a two-column `.csv` file before proceeding with the standard quantification pipeline.\n\nSee: [reaction-to-nmr-quantification.md](reaction-to-nmr-quantification.md)";
+    const MD_DATA = "This workflow guides the agent through extracting quantitative composition data from a raw image of a 1H NMR spectrum.\n\n**Scientific Problem:**\nResearchers often only have access to 1H NMR spectra in image formats (e.g., from literature, old reports, or screenshots) rather than raw numeric FID or processed `.xy` text data. To computationally analyze these spectra (e.g., for reaction yield quantification or mixture deconvolution), the image must first be accurately digitized into numeric data, and then deconvoluted to determine the relative concentrations of components. This workflow is a pipeline combining `general-plot-digitizer` with downstream NMR prediction and Wasserstein deconvolution.\n\n## Step-by-Step Methodology\n\n### Step 1: Digitize Spectrum Image\nConvert the provided spectrum image into numeric (ppm, intensity) data.\n\n- **Skill:** Use the `general-plot-digitizer` skill.\n- **Action:** Follow the digitizer's full VLM + CV pipeline to extract a two-column `.csv` (ppm, intensity) from the image.\n- **Output:** A numeric `.csv` or `.xy` spectrum file ready for downstream steps.\n- **Decision:** If the digitized spectrum shows artifacts (axis labels captured as peaks, grid lines), re-run with adjusted parameters before proceeding.\n\n### Step 2: Identify All NMR-Relevant Species\nBased on the reaction description or user input, compile a complete list of compounds whose signals may appear in the crude NMR.\n\n- **Action:** Check reactants, products, solvents, and NMR-visible reagents. Resolve compound names to SMILES using the `drug-db-pubchem` skill.\n\n### Step 3: Predict Reaction Products (If unknown)\nUse ML forward prediction to determine what products formed if the user only provides reactants.\n\n- **Skill:** Use the `chem-nmr-analysis` skill (`predict_products.py`).\n- **Action:** Pass reactant and reagent SMILES to ReactionT5.\n- **Output:** JSON file with predicted product SMILES.\n\n### Step 4: Generate NMR Reference Spectra\nPredict 1H NMR spectra for all identified species.\n\n- **Skill:** Use the `chem-nmr-predict` skill.\n- **Action:** Pass all collected SMILES to `predict_nmr.py`. Match `--field_mhz` to the user's spectrometer if known (often stated in the image or caption).\n- **Output:** Real-valued `.xy` reference spectra and `_signals.csv` signal tables.\n\n### Step 5: Visual Inspection\nOverlay the digitized crude spectrum with all references to verify alignment.\n\n- **Skill:** Use the `chem-nmr-analysis` skill (`plot.py`).\n- **Action:** Generate an overlay plot and inspect it to ensure major peaks in the digitized image align with reference peaks.\n\n### Step 6: Deconvolution\nQuantify component mole fractions via Wasserstein-distance deconvolution.\n\n- **Skill:** Use the `chem-nmr-analysis` skill (`deconvolve.py`).\n- **Action:** Run `deconvolve.py` with the digitized crude spectrum, reference spectra, proton counts, and component names.\n- **Output:** Estimated mole fractions, Wasserstein distance (fit quality), and a multi-panel deconvolution plot.\n\n---\n\n## Summary Checklist\n\n```\n[ ] 1. Digitize NMR image to .csv (`general-plot-digitizer`)\n[ ] 2. Resolve species names to SMILES (`drug-db-pubchem`)\n[ ] 3. Predict reaction products if needed (`chem-nmr-analysis`)\n[ ] 4. Generate reference spectra (`chem-nmr-predict`)\n[ ] 5. Plot overlay and inspect (`chem-nmr-analysis`)\n[ ] 6. Deconvolve signals to mole fractions (`chem-nmr-analysis`)\n```";
     marked.setOptions({ breaks: true, gfm: true });
     document.getElementById('workflow-body').innerHTML = marked.parse(MD_DATA);
   });
