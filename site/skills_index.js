@@ -81,6 +81,17 @@ window.SKILLS_DATA = [
     "num_examples": 0
   },
   {
+    "id": "chem-hazard-toxicity",
+    "name": "chem-hazard-toxicity",
+    "description": "Extract explicit safety warnings, GHS classifications, and LD50 profiles from PubChem PUG VIEW.",
+    "category": [
+      "chemistry",
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "chem-irc-verification",
     "name": "chem-irc-verification",
     "description": "Verify non-periodic molecular TS connectivity with forward/reverse IRC using endpoint connectivity and RMSD checks.",
@@ -127,6 +138,17 @@ window.SKILLS_DATA = [
     "description": "Generate transition state structures for chemical reactions using React-OT.",
     "category": [
       "chemistry"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "chem-similarity-search",
+    "name": "chem-similarity-search",
+    "description": "Find structurally similar chemical compounds using PubChem's 2D fast similarity engine via the PUG-REST API.",
+    "category": [
+      "chemistry",
+      "drug-discovery"
     ],
     "has_examples": true,
     "num_examples": 1
@@ -215,6 +237,16 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "drug-bioactivity-assay",
+    "name": "drug-bioactivity-assay",
+    "description": "Fetch biological assays and target proteins a chemical has been tested against via PubChem.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "drug-db-chembl",
     "name": "drug-db-chembl",
     "description": "Query ChEMBL web services for targets, molecules, and curated bioactivity measurements (IC50, Ki, EC50, etc.).",
@@ -295,6 +327,29 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "general-chemical-literature",
+    "name": "general-chemical-literature",
+    "description": "Retrieve extensive literature (PubMed) and patent associated with a specific chemical compound via PubChem.",
+    "category": [
+      "general",
+      "chemistry",
+      "drug-discovery",
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "general-chemical-pricing",
+    "name": "general-chemical-pricing",
+    "description": "Retrieves averaged elemental prices and provides direct vendor purchase links for elements and precursor compounds.",
+    "category": [
+      "general"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "general-deep-research",
     "name": "general-deep-research",
     "description": "Perform iterative, deep, and comprehensive literature research on a specific materials/chemistry topic.",
@@ -329,7 +384,8 @@ window.SKILLS_DATA = [
     "name": "general-plot-digitizer",
     "description": "Extract continuous X-Y data from experimental spectrum images (Raman, XRD, UV-Vis, IR, etc.) via hybrid VLM + CV pipeline and agent-in-the-loop workflow.",
     "category": [
-      "general"
+      "general",
+      "machine-learning"
     ],
     "has_examples": true,
     "num_examples": 4
@@ -495,6 +551,16 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "mat-dft-mixing-functionals",
+    "name": "mat-dft-mixing-functionals",
+    "description": "Energy corrections needed when using certain MLIPs for phase diagram construction / formation energy calculations.",
+    "category": [
+      "materials"
+    ],
+    "has_examples": false,
+    "num_examples": 0
+  },
+  {
     "id": "mat-dft-vasp",
     "name": "mat-dft-vasp",
     "description": "Prepare VASP input files locally and parse VASP output results.",
@@ -578,6 +644,16 @@ window.SKILLS_DATA = [
     "id": "mat-equation-of-state",
     "name": "mat-equation-of-state",
     "description": "Calculate equation of state (bulk modulus, equilibrium volume) using MLIPs.",
+    "category": [
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "mat-grain-boundary",
+    "name": "mat-grain-boundary",
+    "description": "Calculate grain boundary energies for tilt/twist grain boundaries (Σ-CSL boundaries) using MLIPs; output γ_GB vs. misorientation angle curves and identify low-energy special boundaries.",
     "category": [
       "materials"
     ],
@@ -686,16 +762,6 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
-    "id": "mat-mp2020-compatibility",
-    "name": "mat-mp2020-compatibility",
-    "description": "Energy corrections needed when using certain MLIPs for phase diagram construction / formation energy calculations.",
-    "category": [
-      "materials"
-    ],
-    "has_examples": false,
-    "num_examples": 0
-  },
-  {
     "id": "mat-phase-diagram",
     "name": "mat-phase-diagram",
     "description": "Retrieve and visualize pre-computed phase diagrams from Materials Project for thermodynamic stability analysis.",
@@ -706,24 +772,24 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
-    "id": "mat-phase-field-allen-cahn",
-    "name": "mat-phase-field-allen-cahn",
-    "description": "Simulate non-conservative phase-fields (grain growth and phase transformations) using the Allen-Cahn equation.",
-    "category": [
-      "materials"
-    ],
-    "has_examples": true,
-    "num_examples": 2
-  },
-  {
-    "id": "mat-phase-field-cahn-hilliard",
-    "name": "mat-phase-field-cahn-hilliard",
+    "id": "mat-phase-field-conservative",
+    "name": "mat-phase-field-conservative",
     "description": "Simulate conservative phase-fields (spinodal decomposition and phase separation) using the Cahn-Hilliard equation.",
     "category": [
       "materials"
     ],
     "has_examples": true,
     "num_examples": 1
+  },
+  {
+    "id": "mat-phase-field-non-conservative",
+    "name": "mat-phase-field-non-conservative",
+    "description": "Simulate non-conservative phase-fields (grain growth and phase transformations) using the Allen-Cahn equation.",
+    "category": [
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 2
   },
   {
     "id": "mat-phonon",
@@ -749,6 +815,16 @@ window.SKILLS_DATA = [
     "id": "mat-qha-thermal-expansion",
     "name": "mat-qha-thermal-expansion",
     "description": "Calculate Quasi-Harmonic Approximation (QHA) thermal properties using MLIPs.",
+    "category": [
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "mat-raman-spectra",
+    "name": "mat-raman-spectra",
+    "description": "Calculate Raman-active phonon mode frequencies and simulate Raman spectra from MLIP phonon calculations; optionally compute full Raman intensities with DFT Born charges via atomate2.",
     "category": [
       "materials"
     ],
@@ -784,6 +860,16 @@ window.SKILLS_DATA = [
     ],
     "has_examples": false,
     "num_examples": 0
+  },
+  {
+    "id": "mat-solid-free-energy",
+    "name": "mat-solid-free-energy",
+    "description": "Calculate absolute solid Helmholtz free energy, and optional Gibbs free energy, with Frenkel-Ladd switching using portable MLIP wrappers on a pre-equilibrated periodic structure.",
+    "category": [
+      "materials"
+    ],
+    "has_examples": true,
+    "num_examples": 1
   },
   {
     "id": "mat-stability",
@@ -880,10 +966,23 @@ window.SKILLS_DATA = [
     "name": "ml-cluster-expansion",
     "description": "train a Cluster Expansion (CE) for lattice-based Monte Carlo simulation of disordered materials.",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials"
     ],
     "has_examples": true,
     "num_examples": 3
+  },
+  {
+    "id": "ml-committee-uncertainty",
+    "name": "ml-committee-uncertainty",
+    "description": "Quantify prediction uncertainty of MACE MLIPs using committee (ensemble) models; flag high-uncertainty structures for DFT verification.",
+    "category": [
+      "machine-learning",
+      "materials",
+      "chemistry"
+    ],
+    "has_examples": true,
+    "num_examples": 1
   },
   {
     "id": "ml-fairchem-finetune",
@@ -907,10 +1006,12 @@ window.SKILLS_DATA = [
   },
   {
     "id": "ml-generative-adit",
-    "name": "ml-adit",
+    "name": "ml-generative-adit",
     "description": "Generate novel crystal structures and molecules using ADiT (All-atom Diffusion Transformer), a unified latent diffusion model.",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials",
+      "chemistry"
     ],
     "has_examples": true,
     "num_examples": 1
@@ -920,7 +1021,8 @@ window.SKILLS_DATA = [
     "name": "ml-generative-diffcsp",
     "description": "Generate crystal structures with exact composition control using DiffCSP++ (space group + Wyckoff positions), or unconditionally from trained distributions.",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials"
     ],
     "has_examples": true,
     "num_examples": 3
@@ -930,7 +1032,8 @@ window.SKILLS_DATA = [
     "name": "ml-generative-mattergen",
     "description": "Generate inorganic material structures using MatterGen, a diffusion-based generative model.",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials"
     ],
     "has_examples": true,
     "num_examples": 1
@@ -970,7 +1073,9 @@ window.SKILLS_DATA = [
     "name": "ml-mlip-benchmark",
     "description": "Benchmark MLIP accuracy against a labeled dataset — compute MAE/RMSE for energy/atom and forces, and generate parity plots.",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials",
+      "chemistry"
     ],
     "has_examples": true,
     "num_examples": 1
@@ -980,17 +1085,30 @@ window.SKILLS_DATA = [
     "name": "ml-mlip-speed",
     "description": "Benchmark of inference speed of Machine Learning Interatomic Potentials (MLIPs).",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials"
     ],
     "has_examples": false,
     "num_examples": 0
+  },
+  {
+    "id": "ml-property-predict-scd",
+    "name": "ml-property-predict-scd",
+    "description": "Use pretrained SelfConditionedDenoisingAtoms checkpoints for live embeddings, lightweight frozen-backbone transfer heads, full-model finetuning, new configs, and new dataset adapters.",
+    "category": [
+      "machine-learning"
+    ],
+    "has_examples": true,
+    "num_examples": 2
   },
   {
     "id": "ml-property-predictor",
     "name": "ml-property-predictor",
     "description": "Train a property predictor head on top of a Machine Learning Interatomic Potential (MLIP) backbone (MACE or MatGL) to predict custom intensive or extensive properties from crystal or molecular structures.",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials",
+      "chemistry"
     ],
     "has_examples": true,
     "num_examples": 2
@@ -1023,6 +1141,11 @@ window.WORKFLOWS_DATA = [
     "description": "An end-to-end workflow for high-throughput materials discovery, screening, and synthesizability assessment."
   },
   {
+    "id": "mof-co2-dac-screening",
+    "title": "Mof Co2 Dac Screening",
+    "description": "End-to-end high-throughput screening of MOF databases for CO2 direct air capture (DAC), from database query through Widom insertion ranking to GCMC isotherm validation of top candidates."
+  },
+  {
     "id": "nmr-reaction-kinetics",
     "title": "Nmr Reaction Kinetics",
     "description": "End-to-end workflow for extracting reaction kinetics (mole fraction vs time) from time-series crude 1H NMR spectra via Wasserstein deconvolution."
@@ -1039,7 +1162,7 @@ window.WORKFLOWS_DATA = [
   }
 ];
 window.ATOMISTIC_STATS = {
-  "skills": 99,
-  "tools": 46,
+  "skills": 109,
+  "tools": 48,
   "servers": 10
 };

@@ -116,8 +116,14 @@ def process_markdown_structures(md: str, base_dir: Path) -> str:
             elif filename_path.exists():
                 struct_path = filename_path
             else:
-                print(f"Skipping {src}: could not find at {struct_path} or {root_path} or {filename_path}")
-                return m.group(0)
+                # Try to find it recursively in the skill directory
+                skill_dir = base_dir.parent if base_dir.name == "examples" else base_dir.parent.parent
+                found = list(skill_dir.rglob(Path(src).name))
+                if found:
+                    struct_path = found[0]
+                else:
+                    print(f"Skipping {src}: could not find at {struct_path} or recursively in {skill_dir}")
+                    return m.group(0)
             
         try:
             content = read_file(struct_path)

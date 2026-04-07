@@ -310,7 +310,6 @@
       display: flex;
       gap: 4px;
       flex-wrap: wrap;
-      flex-shrink: 0
     }
 
     /* STATS */
@@ -591,14 +590,16 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: .5rem
+      gap: .5rem;
+      flex-wrap: wrap;
     }
 
     .skill-name {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.8rem;
       font-weight: 500;
-      color: var(--accent)
+      color: var(--accent);
+      word-break: break-word;
     }
 
     .skill-cat {
@@ -688,8 +689,8 @@
       display: flex;
       gap: 4px;
       flex-wrap: wrap;
-      flex-shrink: 0;
-      align-items: center
+      align-items: center;
+      justify-content: flex-end;
     }
 
     /* WORKFLOWS */

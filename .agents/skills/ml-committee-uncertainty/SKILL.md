@@ -1,7 +1,7 @@
 ---
 name: ml-committee-uncertainty
 description: Quantify prediction uncertainty of MACE MLIPs using committee (ensemble) models; flag high-uncertainty structures for DFT verification.
-category: [machine-learning]
+category: [machine-learning, materials, chemistry]
 ---
 
 # MACE Committee Model Uncertainty Quantification
