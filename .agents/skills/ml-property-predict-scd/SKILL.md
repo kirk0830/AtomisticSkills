@@ -1,7 +1,7 @@
 ---
 name: ml-property-predict-scd
 description: Train a model to predict custom properties of molecules or periodic materials using pretrained SelfConditionedDenoisingAtoms (SCD) foundation models.
-category: [machine-learning]
+category: [machine-learning, materials, chemistry]
 ---
 
 # ml-property-predict-scd

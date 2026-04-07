@@ -344,7 +344,9 @@ window.SKILLS_DATA = [
     "name": "general-chemical-pricing",
     "description": "Retrieves averaged elemental prices and provides direct vendor purchase links for elements and precursor compounds.",
     "category": [
-      "general"
+      "general",
+      "materials",
+      "chemistry"
     ],
     "has_examples": true,
     "num_examples": 1
@@ -405,6 +407,7 @@ window.SKILLS_DATA = [
     "name": "general-property-units",
     "description": "Reference guide for energy, force, and stress units across MLIPs, DFT codes, and ASE, including conversion factors.",
     "category": [
+      "general",
       "machine-learning"
     ],
     "has_examples": false,
@@ -766,7 +769,7 @@ window.SKILLS_DATA = [
     "name": "mat-phase-diagram",
     "description": "Retrieve and visualize pre-computed phase diagrams from Materials Project for thermodynamic stability analysis.",
     "category": [
-      "thermodynamics"
+      "materials"
     ],
     "has_examples": true,
     "num_examples": 1
@@ -856,7 +859,9 @@ window.SKILLS_DATA = [
     "name": "mat-sample-pes-by-md",
     "description": "Sample off-equilibrium potential energy surface (PES), used for benchmarking and fine-tuning MLIPs.",
     "category": [
-      "materials"
+      "materials",
+      "chemistry",
+      "machine-learning"
     ],
     "has_examples": false,
     "num_examples": 0
@@ -896,7 +901,8 @@ window.SKILLS_DATA = [
     "name": "mat-surface-adsorption",
     "description": "Calculate surface adsorption energies for adsorbate-surface combinations using MLIPs.",
     "category": [
-      "materials"
+      "materials",
+      "chemistry"
     ],
     "has_examples": true,
     "num_examples": 1
@@ -999,7 +1005,10 @@ window.SKILLS_DATA = [
     "name": "ml-foundation-potentials",
     "description": "Guide for selecting the most appropriate foundation MLIP model based on simulation requirements.",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials",
+      "chemistry",
+      "drug-discovery"
     ],
     "has_examples": false,
     "num_examples": 0
@@ -1085,8 +1094,7 @@ window.SKILLS_DATA = [
     "name": "ml-mlip-speed",
     "description": "Benchmark of inference speed of Machine Learning Interatomic Potentials (MLIPs).",
     "category": [
-      "machine-learning",
-      "materials"
+      "machine-learning"
     ],
     "has_examples": false,
     "num_examples": 0
@@ -1096,7 +1104,9 @@ window.SKILLS_DATA = [
     "name": "ml-property-predict-scd",
     "description": "Train a model to predict custom properties of molecules or periodic materials using pretrained SelfConditionedDenoisingAtoms (SCD) foundation models.",
     "category": [
-      "machine-learning"
+      "machine-learning",
+      "materials",
+      "chemistry"
     ],
     "has_examples": true,
     "num_examples": 2
