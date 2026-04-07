@@ -38,7 +38,7 @@ python .agents/skills/chem-sorption-relax/scripts/relax_structure.py \
     --structure path/to/framework.cif \
     --calculator fairchem \
     --model-name uma-s-1p2 \
-    --task-name odac \
+    --task-name omol \
     --min-interplanar-distance 12.0 \
     --device cuda \
     --output-dir research/<date>_MOF_CO2_DAC_screening/supercells/
@@ -59,7 +59,7 @@ python .agents/skills/chem-sorption-widom/scripts/run_widom.py \
     --name FRAMEWORK_NAME \
     --calculator fairchem \
     --model-name uma-s-1p2 \
-    --task-name odac \
+    --task-name omol \
     --gas CO2 \
     --temperature 298 \
     --num-insertions 5000 \
@@ -73,7 +73,7 @@ python .agents/skills/chem-sorption-widom/scripts/run_widom.py \
 | `--num-insertions` | 5 000 (screening) / 20 000 (validation) | Balance speed vs. statistical noise |
 | `--temperature` | 298 K | Standard DAC operating temperature |
 | `--gas` | CO2 | Primary target sorbate |
-| `--task-name` | `odac` | Correct UMA head for gas–framework non-covalent interactions |
+| `--task-name` | `omol` | Correct UMA head for gas–framework non-covalent interactions |
 | `--cutoff-distance` | 1.0 Å | Reject insertions clashing with framework atoms |
 
 **Henry coefficient computation:** Uses logsumexp (numerically stable) + 100-sample bootstrap for $K_H$ uncertainty. This avoids overflow at large negative energies (important at cryogenic or high-binding conditions).
@@ -131,7 +131,7 @@ for p in "${PRESSURES[@]}"; do
             --output-dir "${BASE_OUT}/${p}_bar" \
             --calculator fairchem \
             --model-name uma-s-1p2 \
-            --task-name odac \
+            --task-name omol \
             --steps 50000 \
             --temperature-K 298 \
             --pressure-bar "$p" \
@@ -144,11 +144,11 @@ done
 | Parameter | Value | Rationale |
 |---|---|---|
 | `--steps` | 50 000 (screening) / 200 000 (publication) | More steps for statistically reliable low-P points |
-| `--task-name` | `odac` | Must match Widom — the same UMA head for host–guest interactions |
+| `--task-name` | `omol` | Must match Widom — the same UMA head for host–guest interactions |
 | `--keep-intermediates` | `true` | Preserves `.npy` trajectories for post-hoc re-analysis |
 | Sequential execution | One pressure at a time | Avoids GPU OOM from multiple calculator instances |
 
-> **Critical:** You are using `--task-name odac` with `uma-s-1p2` for sorption calculations. Make sure this matches exactly with the same task-head used during Widom insertions for internal consistency.
+> **Critical:** Always use `--task-name omol` with `uma-s-1p2` for sorption calculations. The `odac` task exists in older UMA checkpoints but is **not supported** by `uma-s-1p2` and produces incorrect reference energies for gas-phase species.
 
 ### Step 6. Parse and Plot the Isotherm
 
@@ -194,7 +194,7 @@ python .agents/skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
     --output-dir research/.../gcmc/FRAMEWORK_mixture \
     --calculator fairchem \
     --model-name uma-s-1p2 \
-    --task-name odac \
+    --task-name omol \
     --steps 100000 \
     --temperature-K 298 \
     --total-pressure-bar 1.0 \
@@ -208,9 +208,9 @@ python .agents/skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
 
 | Condition | Recommended Model | Task Name |
 |---|---|---|
-| General MOF screening (physisorption) | `uma-s-1p2` (FairChem) | `odac` |
+| General MOF screening (physisorption) | `uma-s-1p2` (FairChem) | `omol` |
 | Chemisorption / reactive systems | `MACE-MH-1` | `matpes_r2scan` |
-| Speed-critical large supercells | `uma-s-1` (smaller) | `odac` |
+| Speed-critical large supercells | `uma-s-1` (smaller) | `omol` |
 
 > **Note:** Always use the same MLIP and the same `task-name` for both Widom and GCMC to ensure internal consistency between the infinite-dilution and finite-pressure results.
 
@@ -238,7 +238,7 @@ Stage 2 — Isotherm Validation
 
 | Pitfall | Symptom | Fix |
 |---|---|---|
-| Wrong `--task-name` for UMA | Zero GCMC insertions; all-zero nmols.npy | Use `--task-name odac` for `uma-s-1p2` |
+| Wrong `--task-name` for UMA | Zero GCMC insertions; all-zero nmols.npy | Use `--task-name omol` for `uma-s-1p2` |
 | Parallel GCMC pressures | CUDA OOM crash | Run pressures **sequentially** in a loop |
 | Too few GCMC steps at low P | NaN or 0 loading at 0.01 bar | Increase `--steps` to 200k for P < 0.05 bar |
 | GCMC stochastic variance | Two identical runs give different loadings | Run ≥ 3 random seeds; report mean ± std |
