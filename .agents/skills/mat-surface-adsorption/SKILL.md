@@ -1,7 +1,7 @@
 ---
 name: mat-surface-adsorption
 description: Calculate surface adsorption energies for adsorbate-surface combinations using MLIPs.
-category: [materials]
+category: [materials, chemistry]
 ---
 
 # Surface Adsorption Skill

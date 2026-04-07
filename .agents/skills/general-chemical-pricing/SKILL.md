@@ -1,7 +1,7 @@
 ---
 name: general-chemical-pricing
 description: Retrieves averaged elemental prices and provides direct vendor purchase links for elements and precursor compounds.
-category: general
+category: [general, materials, chemistry]
 ---
 
 # General Chemical Pricing
