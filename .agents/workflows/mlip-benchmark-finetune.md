@@ -2,6 +2,8 @@
 description: Workflow for benchmarking, fine-tuning, and distilling Machine Learning Interatomic Potentials (MLIPs)
 ---
 
+# MLIP Benchmark Finetune Workflow
+
 This workflow guides you through the process of selecting, evaluating, and improving a Machine Learning Interatomic Potential (MLIP) for a specific target simulation task.
 
 1. **Choose a relevant foundation potential**
