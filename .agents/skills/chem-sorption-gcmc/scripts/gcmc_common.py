@@ -47,7 +47,7 @@ def _default_pr_gas_params() -> dict[str, dict[str, float | str]]:
             mol_name="CO2",
             Tc=304.1282,  # K
             Pc=7.3773e6,  # Pa
-            omega=0.225,  # -
+            omega=0.22394,  # - (NIST/DIPPR value; COFclean reference uses 0.22394)
             M=44.01e-3,  # kg/mol
         ),
         "N2": dict(
