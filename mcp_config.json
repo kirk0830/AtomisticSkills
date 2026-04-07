@@ -1,64 +1,64 @@
 {
   "mcpServers": {
     "matgl": {
-      "command": "/home/nsegal/miniforge3/envs/matgl-agent/bin/python",
+      "command": "/home/bdeng/miniforge3/envs/matgl-agent/bin/python",
       "args": [
         "-m",
         "src.mcp_server.matgl_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/nsegal/projects/AtomisticSkills",
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills",
         "MATGL_BACKEND": "DGL"
       }
     },
     "mace": {
-      "command": "/home/nsegal/miniforge3/envs/mace-agent/bin/python",
+      "command": "/home/bdeng/miniforge3/envs/mace-agent/bin/python",
       "args": [
         "-m",
         "src.mcp_server.mace_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/nsegal/projects/AtomisticSkills"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "fairchem": {
-      "command": "/home/nsegal/miniforge3/envs/fairchem-agent/bin/python",
+      "command": "/home/bdeng/miniforge3/envs/fairchem-agent/bin/python",
       "args": [
         "-m",
         "src.mcp_server.fairchem_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/nsegal/projects/AtomisticSkills"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "base": {
-      "command": "/home/nsegal/miniforge3/envs/base-agent/bin/python",
+      "command": "/home/bdeng/miniforge3/envs/base-agent/bin/python",
       "args": [
         "-m",
         "src.mcp_server.base_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/nsegal/projects/AtomisticSkills"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "atomate2": {
-      "command": "/home/nsegal/miniforge3/envs/atomate2-agent/bin/python",
+      "command": "/home/bdeng/miniforge3/envs/atomate2-agent/bin/python",
       "args": [
         "-m",
         "src.mcp_server.atomate2_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/nsegal/projects/AtomisticSkills"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "smol": {
-      "command": "/home/nsegal/miniforge3/envs/smol-agent/bin/python",
+      "command": "/home/bdeng/miniforge3/envs/smol-agent/bin/python",
       "args": [
         "-m",
         "src.mcp_server.smol_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/nsegal/projects/AtomisticSkills"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
       }
     },
     "drugdisc": {

@@ -43,7 +43,7 @@ python .agents/skills/mat-ionic-substitution/scripts/find_structures_for_composi
 
 ## Output Files
 
-- `*.cif` — 26 substitution-derived candidate structures
+- [*.cif](*.cif) — 26 substitution-derived candidate structures
 - `structure_manifest.json` — full provenance (precursor ID, substitution map, probability)
 
 ## Next Steps

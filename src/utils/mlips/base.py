@@ -87,7 +87,24 @@ class MLIPModel(ABC):
             RuntimeError: If calculator creation fails.
         """
         pass
-    
+
+    @property
+    def supports_charge_spin(self) -> bool:
+        """
+        Whether this model accepts per-calculation charge and spin multiplicity.
+
+        Models that return ``True`` read charge / spin from ``atoms.info`` during
+        each ``calculate()`` call (e.g. MACE-OMOL, FairChem omol task), enabling
+        reliable heterolytic BDE probing.  Models that return ``False`` are
+        electron-agnostic and should only be used for homolytic BDE.
+
+        Subclasses must override this property.  The default is ``False`` so that
+        new wrappers are safe-by-default.
+
+        Returns:
+            bool: True when charge/spin are honoured by the model.
+        """
+        return False
 
     
     @abstractmethod
@@ -143,7 +160,8 @@ class MLIPModel(ABC):
             "model_version": self.model_version,
             "is_loaded": self.is_loaded,
             "is_fine_tuned": self.is_fine_tuned,
-            "model_type": self.__class__.__name__
+            "model_type": self.__class__.__name__,
+            "supports_charge_spin": self.supports_charge_spin,
         }
     
     def validate_structure(self, structure: Any) -> bool:
@@ -184,13 +202,20 @@ class MLIPModel(ABC):
         # Check for file path string
         # Check for file path string
         if isinstance(structure_data, str):
-            from ..structure_utils import load_structure_from_file
-            struct = load_structure_from_file(structure_data)
-            if struct is not None:
-                from pymatgen.io.ase import AseAtomsAdaptor
-                return AseAtomsAdaptor.get_atoms(struct)
+            if str(structure_data).endswith(".traj"):
+                from ase.io import read
+                try:
+                    return read(structure_data, index=-1)
+                except Exception as e:
+                    return {"error": f"Failed to load trajectory from file: {structure_data}, error: {e}"}
             else:
-                return {"error": f"Failed to load structure from file: {structure_data}"}
+                from ..structure_utils import load_structure_from_file
+                struct = load_structure_from_file(structure_data)
+                if struct is not None:
+                    from pymatgen.io.ase import AseAtomsAdaptor
+                    return AseAtomsAdaptor.get_atoms(struct)
+                else:
+                    return {"error": f"Failed to load structure from file: {structure_data}"}
         
         # Check for pymatgen Structure object
         if hasattr(structure_data, "as_dict") and hasattr(structure_data, "lattice"):
@@ -688,6 +713,8 @@ class MLIPModel(ABC):
         # Convert pressure from bar to eV/A^3 for MatCalc
         pressure_ev_ang3 = pressure * units.bar if pressure is not None else 0.0
 
+        has_velocities = hasattr(atoms, "get_velocities") and atoms.get_velocities() is not None
+
         md_calc = CustomMDCalc(
             calculator=calc,
             ensemble=ensemble.lower(),
@@ -701,6 +728,7 @@ class MLIPModel(ABC):
             logfile=log_path,
             set_zero_rotation=True,
             set_com_stationary=True,
+            relax_structure=False if has_velocities else True,
             additional_callbacks=additional_callbacks if additional_callbacks else None
         )
         
@@ -713,11 +741,14 @@ class MLIPModel(ABC):
             
         # Normal Final struct update
         final_structure = AseAtomsAdaptor.get_structure(atoms)
+        cif_path = os.path.join(output_dir, "final_structure.cif")
+        final_structure.to(filename=cif_path)
         
         return {
             "status": "success",
             "trajectory_path": traj_path,
             "log_path": log_path,
+            "cif_path": cif_path,
             "final_structure": final_structure.as_dict()
         }
 

@@ -1,5 +1,7 @@
 # AtomisticSkills
 
+![AtomisticSkills Logo](logo/atomisticskills_logo.png)
+
 ## Overview
 **AtomisticSkills** is a composable framework for AI-driven atomistic materials research. Built on the **hierarchical decomposition** of complex scientific tasks into **Workflows** → **Skills** → **Tools**, it enables coding AI agents to autonomously conduct multi-stage materials simulations by combining modular, reusable capabilities.
 
@@ -17,7 +19,7 @@ The framework integrates state-of-the-art Machine Learning Interatomic Potential
 
 ---
 
-### ⚙️ Tools (Low-Level Research Primitives)
+### 📎 Tools (Low-Level Research Primitives)
 [**View MCP Tools**](src/mcp_server)
 
 Tools are **strictly structured, fundamental operations** exposed as Python functions through MCP servers. They have **fixed input/output types** and must match function call signatures exactly—similar to standard library APIs.
@@ -43,7 +45,7 @@ Tools are **strictly structured, fundamental operations** exposed as Python func
 
 ---
 
-### 🔧 Skills (Mid-Level Research Tutorials)
+### ⚙️ Skills (Mid-Level Research Tutorials)
 [**Browse Skills →**](.agents/skills)
 
 Skills are **flexible tutorials** that combine multiple tool calls to solve focused research problems. Unlike tools, skills have **no fixed input/output type constraints**—the agent handles all data conversion and orchestration between steps.
@@ -61,9 +63,12 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 
 **Featured Skills:**
 - [**MLIP Training**](.agents/skills/ml-mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
+- [**Committee Uncertainty**](.agents/skills/ml-committee-uncertainty/SKILL.md): Quantify MLIP prediction uncertainty with ensemble models; flag structures for DFT
 - [**Melting Point**](.agents/skills/mat-melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
 - [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
 - [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
+- [**Raman Spectra**](.agents/skills/mat-raman-spectra/SKILL.md): Raman-active mode identification and spectrum simulation from MLIP phonons
+- [**Grain Boundary Energy**](.agents/skills/mat-grain-boundary/SKILL.md): Calculate γ_GB for CSL tilt/twist boundaries; plot energy vs. misorientation angle
 
 ---
 
@@ -105,19 +110,19 @@ Workflow: "Find stable Li-ion conductors"
 [**Browse all skills →**](.agents/skills)
 
 ### 1. Simulation Infrastructure
-Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD, and fine-tuning APIs. DFT integration for VASP input/output and electronic structure. HPC job management via Atomate2. Lattice-level cluster expansion and Monte Carlo via SMOL.
+Multi-framework MLIP support (MACE, MatGL, FAIRCHEM) with unified relaxation, MD, and fine-tuning APIs. DFT integration for VASP input/output and electronic structure for periodic systems and ORCA input/output for molecular systems. HPC job management via Atomate2. Lattice-level cluster expansion and Monte Carlo via SMOL.
 
 ### 2. Database APIs
 Materials Project, ChEMBL, PDB, PubChem, and ArXiv search — query structures, properties, bioactivity data, and literature from external databases.
 
 ### 3. Property Evaluation
-Stability ($E_{hull}$), phase diagrams, phonons, QHA thermal expansion, equation of state, elastic tensor, melting point, ionic diffusion, NEB barriers, surface energy & adsorption, intercalation voltage, Pourbaix diagrams, magnetic density, vibrational spectra, and amorphization.
+Stability ($E_{hull}$), phase diagrams, phonons, QHA thermal expansion, equation of state, elastic tensor, melting point, ionic diffusion, NEB barriers, surface energy & adsorption, grain boundary energy, intercalation voltage, Pourbaix diagrams, magnetic density, vibrational spectra, Raman spectra, and amorphization.
 
 ### 4. Experimental Tools
 Synthesis recommendation from text-mined literature, XRD spectrum calculation, Pourbaix diagrams, protein preparation, molecular docking (AutoDock Vina), ADMET prediction, and molecular fingerprints.
 
 ### 5. Machine Learning Tools
-MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuning & benchmarking, foundation potential selection guide, cluster expansion training, and atomic feature extraction.
+MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuning & benchmarking, foundation potential selection guide, cluster expansion training, and atomic feature extraction. **MLIP model registry** for cross-project checkpoint discovery and reuse (`search_model_registry` / `register_model` MCP tools). **Committee uncertainty quantification** to flag out-of-distribution structures for DFT verification.
 
 ---
 
@@ -144,6 +149,9 @@ The project uses separate MCP servers running in different conda environments to
 git clone git@github.com:bowen-bd/AtomisticSkills.git
 cd AtomisticSkills
 
+# Patch mcp_config.json with your local paths
+python configure_mcp.py
+
 # Setup environments (run only the ones you need)
 bash conda-envs/base-agent/install.sh
 bash conda-envs/mace-agent/install.sh
@@ -154,6 +162,7 @@ bash conda-envs/smol-agent/install.sh
 bash conda-envs/drugdisc-agent/install.sh
 bash conda-envs/mattergen-agent/install.sh
 bash conda-envs/scd-agent/install.sh
+bash conda-envs/orca-agent/install.sh
 ```
 
 ---
@@ -171,6 +180,9 @@ MP_API_KEY: "your_mp_api_key_here"
 
 # Atomate2 Remote Project (Required for remote job monitoring)
 ATOMATE2_REMOTE_PROJECT: "remote_perlmutter"
+
+#Required for running molecular DFT calculations with ORCA
+ORCA_BINARY_PATH: /path/to/orca_directory/orca
 ```
 
 ### 2. Environment Variables
@@ -178,6 +190,7 @@ Alternatively, set variables in your shell (takes precedence over YAML):
 ```bash
 export MP_API_KEY="your_key"
 export ATOMATE2_REMOTE_PROJECT="remote_perlmutter"
+export ORCA_BINARY_PATH="/path/to/orca_directory/orca"
 ```
 
 ---
@@ -209,6 +222,17 @@ This project runs as a collection of MCP servers. Some require specific setup:
 ### MCP Server Configuration
 The project is configured to run as a set of MCP servers. The base configuration is provided in [mcp_config.json](mcp_config.json).
 
+#### Adapting Paths to Your Machine
+The shipped `mcp_config.json` contains placeholder paths. Run the configure script to rewrite all `command` and `PYTHONPATH` entries to match your local setup:
+
+```bash
+# Auto-detects your conda/mamba base directory
+python configure_mcp.py
+
+# Or provide the conda base path explicitly
+python configure_mcp.py /path/to/miniforge3
+```
+
 #### Integrating with Antigravity
 To use these tools within Antigravity, you need to merge the server configurations into your local Antigravity MCP config:
 
@@ -218,7 +242,7 @@ To use these tools within Antigravity, you need to merge the server configuratio
 4. Restart Antigravity to load the new tools.
 
 > [!TIP]
-> Ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/path/to/AtomisticSkills`).
+> If you skip `configure_mcp.py`, ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/path/to/AtomisticSkills`).
 
 ---
 

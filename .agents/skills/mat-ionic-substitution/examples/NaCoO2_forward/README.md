@@ -45,5 +45,5 @@ Source structure: NaCoO₂ from Materials Project (mp-1279953).
 
 ## Output Files
 
-- `*.cif` — 47 substituted structure files
+- [*.cif](*.cif) — 47 substituted structure files
 - `substitution_manifest.json` — full metadata (substitution map, probability, multi-swap flag)

@@ -16,3 +16,5 @@ dependencies:
     - pymupdf
     - reaction-network
     - pymatgen-analysis-diffusion
+    - optimade[client]
+    - beautifulsoup4
