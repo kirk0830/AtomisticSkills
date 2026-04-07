@@ -10,6 +10,7 @@ import re
 import json
 import shutil
 import base64
+import ast
 from pathlib import Path
 
 # Fix: Define PROJECT_ROOT relative to this file's location (site/build_skills.py)
@@ -21,6 +22,7 @@ WORKFLOWS_SRC_DIR = PROJECT_ROOT / ".agents" / "workflows"
 SITE_DIR = PROJECT_ROOT / "site"
 SKILLS_OUT_DIR = SITE_DIR / "skills"
 WORKFLOWS_OUT_DIR = SITE_DIR / "workflows"
+SERVERS_OUT_DIR = SITE_DIR / "servers"
 
 CAT_COLORS = {
     "materials":        {"bg": "#eff6ff", "border": "#bfdbfe", "text": "#1d4ed8", "dot": "#3b82f6"},
@@ -872,9 +874,150 @@ def build_skills():
     print(f"\n✅ Index written to site/skills_index.js")
 
 
+def extract_mcp_tools(file_path):
+    source = Path(file_path).read_text(encoding="utf-8")
+    try:
+        tree = ast.parse(source)
+    except Exception:
+        return []
+    
+    tools = []
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            is_tool = False
+            for dec in node.decorator_list:
+                if isinstance(dec, ast.Attribute) and dec.attr == "tool": 
+                    is_tool = True
+                elif isinstance(dec, ast.Name) and dec.id == "tool":
+                    is_tool = True
+                elif isinstance(dec, ast.Call):
+                    if isinstance(dec.func, ast.Attribute) and dec.func.attr == "tool":
+                        is_tool = True
+                    elif isinstance(dec.func, ast.Name) and dec.func.id == "tool":
+                        is_tool = True
+            
+            if is_tool:
+                docstring = ast.get_docstring(node)
+                tools.append({
+                    "name": node.name,
+                    "docstring": docstring or "No description provided."
+                })
+    return tools
+
+def make_server_page(server_id, tools, out_path):
+    tool_cards = ""
+    for t in tools:
+        safe_md = json.dumps(t["docstring"])
+        # Replace unescaped backslashes with double backslashes in JSON so the HTML dataset parser doesn't break
+        safe_md = safe_md.replace("'", "&#39;")
+        tool_cards += f'''
+        <div class="tool-card">
+          <h3 class="tool-name">📎 {t["name"]}</h3>
+          <div class="tool-doc rendered-md" data-md='{safe_md}'></div>
+        </div>
+        '''
+
+    page_title = f"{server_id} Server Tools"
+    github_link = f"https://github.com/bowen-bd/AtomisticSkills/tree/main/src/mcp_server/{server_id}_server.py"
+
+    html = f'''<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{page_title} — AtomisticSkills</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+    :root{{ --bg:#f8f9fc; --bg2:#ffffff; --border:#e2e8f0; --text:#1b1464; --muted:#64748b; --accent:#816cff; }}
+    body{{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}}
+    nav{{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:56px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}}
+    .nav-logo{{display:flex;align-items:center;gap:10px;text-decoration:none}}
+    .nav-back{{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:0.88rem;font-weight:500;transition:color .2s}}
+    .nav-back:hover{{color:var(--accent)}}
+    .nav-right{{display:flex;align-items:center;gap:1rem}}
+    .gh-link{{font-size:0.84rem;font-weight:600;color:var(--accent);text-decoration:none;
+      border:1px solid var(--accent);border-radius:8px;padding:6px 14px;transition:all .2s}}
+    .gh-link:hover{{background:var(--accent);color:#fff}}
+    .hero{{background:var(--bg2);border-bottom:1px solid var(--border);padding:3rem 2rem 2.5rem}}
+    .hero-inner{{max-width:900px;margin:0 auto}}
+    .breadcrumb{{font-size:0.82rem;color:var(--muted);margin-bottom:1rem}}
+    .breadcrumb a{{color:var(--accent);text-decoration:none}}
+    h1{{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.15;color:var(--text);margin-bottom:0.75rem}}
+    .desc{{font-size:1.05rem;color:var(--muted);max-width:720px;line-height:1.6}}
+    .content{{max-width:900px;margin:0 auto;padding:2.5rem 2rem}}
+    .tool-card {{ background: white; border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }}
+    .tool-name {{ font-size: 1.25rem; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); padding-bottom: 0.75rem; margin-bottom: 1rem; font-family: 'JetBrains Mono', monospace; }}
+    .rendered-md h2{{font-size:1.35rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);border-bottom:2px solid var(--border);padding-bottom:0.5rem}}
+    .rendered-md h3{{font-size:1.15rem;font-weight:700;margin:1.5rem 0 0.5rem;color:var(--text)}}
+    .rendered-md p{{margin:0.8rem 0;color:#374151;line-height:1.7}}
+    .rendered-md ul,.rendered-md ol{{padding-left:1.5rem;margin:0.8rem 0}}
+    .rendered-md li{{margin:0.4rem 0;color:#374151}}
+    .rendered-md code{{font-family:'JetBrains Mono',monospace;font-size:0.85rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 6px;color:#be185d}}
+    .rendered-md a{{color:var(--accent);text-decoration:none}}
+    footer{{border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem}}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.png" height="24" alt="AtomisticSkills"/></a>
+  <a class="nav-back" href="../index.html">← Back to Home</a>
+  <div class="nav-right">
+    <a class="gh-link" href="{github_link}" target="_blank">View on GitHub</a>
+  </div>
+</nav>
+<div class="hero">
+  <div class="hero-inner">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / Servers</div>
+    <h1>{server_id} Server</h1>
+    <p class="desc">MCP Tools exposed by the <code>{server_id}_server.py</code></p>
+  </div>
+</div>
+<div class="content">
+  <div class="tools-list">
+    {tool_cards}
+  </div>
+</div>
+<footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {{
+    marked.setOptions({{ breaks: true, gfm: true }});
+    document.querySelectorAll('.tool-doc').forEach(el => {{
+        try {{
+            // We encoded it with json.dumps(), so we parse with JSON.parse.
+            const rawHtmlStr = el.dataset.md;
+            // The unescaped string can be parsed back:
+            const md = JSON.parse(rawHtmlStr.replace(/&#39;/g, "'"));
+            el.innerHTML = marked.parse(md);
+        }} catch(e) {{
+            el.innerText = el.dataset.md;
+        }}
+    }});
+  }});
+</script>
+</body>
+</html>'''
+    out_path.write_text(html, encoding="utf-8")
+
+def build_servers():
+    print("\nBuilding server pages...")
+    mcp_dir = PROJECT_ROOT / "src" / "mcp_server"
+    if not mcp_dir.exists():
+        return
+    for py_file in sorted(mcp_dir.glob("*_server.py")):
+        server_id = py_file.name.replace("_server.py", "")
+        tools = extract_mcp_tools(py_file)
+        if tools:
+            out_path = SERVERS_OUT_DIR / f"{server_id}.html"
+            make_server_page(server_id, tools, out_path)
+            print(f"  Built: servers/{server_id}.html with {len(tools)} tools")
+
+
 def build_all():
     SKILLS_OUT_DIR.mkdir(parents=True, exist_ok=True)
     WORKFLOWS_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    SERVERS_OUT_DIR.mkdir(parents=True, exist_ok=True)
     
     import shutil
     
@@ -891,6 +1034,9 @@ def build_all():
     
     # 2. Build generic docs
     build_generic_docs()
+    
+    # 3. Build servers
+    build_servers()
     
     print("\n✨ Build complete!")
 
