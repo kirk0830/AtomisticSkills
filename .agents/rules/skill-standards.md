@@ -41,7 +41,7 @@ category: category-name
 
 **Guidelines:**
 - `name`: Use lowercase letters, numbers, and hyphens only (kebab-case)
-- `description`: Should be clear enough for the agent to decide if this skill is relevant to a user query
+- `description`: Should be clear enough for the agent to decide if this skill is relevant to a user query. **The description must state what the skill is used for, NOT how the skill works.**
 - `category`: Must be one of the following (use a YAML list like `[materials, chemistry]` if multiple apply):
   - `materials`: Materials science simulation and analysis skills (prefix: `mat-`)
   - `chemistry`: Chemistry and molecular simulation skills (prefix: `chem-`)

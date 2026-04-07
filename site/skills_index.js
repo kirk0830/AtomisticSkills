@@ -1094,7 +1094,7 @@ window.SKILLS_DATA = [
   {
     "id": "ml-property-predict-scd",
     "name": "ml-property-predict-scd",
-    "description": "Use pretrained SelfConditionedDenoisingAtoms checkpoints for live embeddings, lightweight frozen-backbone transfer heads, full-model finetuning, new configs, and new dataset adapters.",
+    "description": "Train a model to predict custom properties of molecules or periodic materials using pretrained SelfConditionedDenoisingAtoms (SCD) foundation models.",
     "category": [
       "machine-learning"
     ],
