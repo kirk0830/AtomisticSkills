@@ -148,7 +148,7 @@ done
 | `--keep-intermediates` | `true` | Preserves `.npy` trajectories for post-hoc re-analysis |
 | Sequential execution | One pressure at a time | Avoids GPU OOM from multiple calculator instances |
 
-> **Critical:** Always use `--task-name omol` with `uma-s-1p2` for sorption calculations. The `odac` task exists in older UMA checkpoints but is **not supported** by `uma-s-1p2` and produces incorrect reference energies for gas-phase species.
+> **Critical:** Always use `--task-name omol` with `uma-s-1p2` for sorption calculations. The `odac` task head was trained exclusively on dense MOF and adsorbate complexes and lacks training on isolated gas-phase molecules. When asked to evaluate the isolated gas reference energy required by GCMC math, `odac` yields wildly unphysical repulsions, resulting in a strict 0% Monte Carlo insertion acceptance rate. The `omol` (OpenMolecules) dataset explicitly contains isolated gases, ensuring accurate absolute gas baseline energies.
 
 ### Step 6. Parse and Plot the Isotherm
 
