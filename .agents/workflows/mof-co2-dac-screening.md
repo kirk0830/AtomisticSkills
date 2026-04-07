@@ -30,7 +30,7 @@ python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
 
 For every framework, check the minimum interplanar distance and build a supercell if needed (≥12 Å threshold to prevent periodic self-interaction of CO2).
 
-- See: [chem-sorption-relax](../skills/chem-sorption-relax/SKILL.md)
+- See: [`chem-sorption-relax`](../skills/chem-sorption-relax/SKILL.md)
 
 ```bash
 # Env: fairchem-agent
@@ -50,7 +50,7 @@ python .agents/skills/chem-sorption-relax/scripts/relax_structure.py \
 
 Run Widom insertion on every prepared supercell to estimate the Henry coefficient $K_H$ (mol/kg/Pa) and isosteric heat of adsorption $Q_{st}$ (kJ/mol) at infinite dilution.
 
-- See: [chem-sorption-widom](../skills/chem-sorption-widom/SKILL.md)
+- See: [`chem-sorption-widom`](../skills/chem-sorption-widom/SKILL.md)
 
 ```bash
 # Env: fairchem-agent
@@ -103,7 +103,7 @@ df.to_csv("widom_ranking.csv", index=False)
 - $Q_{st}$ in 15–60 kJ/mol → not too weak (poor uptake), not too strong (hard regeneration)
 - Select the top-N candidates (e.g., N = 5–10) for Stage 2
 
-**Visualization:** Plot $K_H$ vs. $Q_{st}$ scatter for all candidates, highlighting the top-N (see `mat-md-probability-density` or a simple matplotlib scatter).
+**Visualization:** Plot $K_H$ vs. $Q_{st}$ scatter for all candidates, highlighting the top-N.
 
 ---
 
@@ -113,7 +113,7 @@ df.to_csv("widom_ranking.csv", index=False)
 
 For each top candidate, run Grand Canonical Monte Carlo across a pressure grid spanning DAC-relevant conditions to obtain the full adsorption isotherm.
 
-- See: [chem-sorption-gcmc](../skills/chem-sorption-gcmc/SKILL.md)
+- See: [`chem-sorption-gcmc`](../skills/chem-sorption-gcmc/SKILL.md)
 
 Run pressures **sequentially** (not in parallel) to prevent GPU OOM:
 
@@ -220,14 +220,14 @@ python .agents/skills/chem-sorption-gcmc/scripts/run_gcmc_multi.py \
 
 ```
 Stage 1 — High-Throughput Screening
-[ ] 1. Query MOF database (chem-db-mof)
+[ ] 1. Query MOF database (`chem-db-mof`)
 [ ] 2. Filter by geometric criteria (PLD, void fraction)
-[ ] 3. Build supercells with min interplanar distance ≥ 12 Å (chem-sorption-relax)
-[ ] 4. Run Widom insertion for K_H and Q_st on all candidates (chem-sorption-widom)
+[ ] 3. Build supercells with min interplanar distance ≥ 12 Å (`chem-sorption-relax`)
+[ ] 4. Run Widom insertion for K_H and Q_st on all candidates (`chem-sorption-widom`)
 [ ] 5. Rank by K_H; filter top-N by Q_st threshold
 
 Stage 2 — Isotherm Validation
-[ ] 6. Run sequential GCMC pressure isotherm for top-N (chem-sorption-gcmc)
+[ ] 6. Run sequential GCMC pressure isotherm for top-N (`chem-sorption-gcmc`)
 [ ] 7. Compute working capacity ΔN and selectivity
 [ ] 8. Plot isotherm; compare K_H from Widom vs. GCMC low-P limit for consistency
 ```
