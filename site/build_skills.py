@@ -166,7 +166,15 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
     cats = meta.get("category", [])
     primary_cat = cats[0] if cats else "materials"
     colors = CAT_COLORS.get(primary_cat, CAT_COLORS["materials"])
-    cat_label = primary_cat.replace("-", " ").title()
+    CAT_SHORT_LABEL = {
+        "materials": "MAT",
+        "chemistry": "CHEM",
+        "machine-learning": "ML",
+        "drug-discovery": "DRUG",
+        "general": "GENERAL",
+        "thermodynamics": "THERMO",
+    }
+    cat_label = CAT_SHORT_LABEL.get(primary_cat, primary_cat.replace("-", " ").upper())
 
     # Extract title server-side from first H1 (never show 'Loading...')
     title_match = re.search(r'^#\s+(.+)$', skill_md, re.MULTILINE)

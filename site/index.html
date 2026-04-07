@@ -305,12 +305,7 @@
       color: var(--accent)
     }
 
-    /* Multi-category badges on skill cards */
-    .skill-cats {
-      display: flex;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
+
 
     /* STATS */
     .stats-row {
@@ -588,10 +583,9 @@
 
     .skill-card-top {
       display: flex;
+      flex-direction: column;
       align-items: flex-start;
-      justify-content: space-between;
       gap: .5rem;
-      flex-wrap: wrap;
     }
 
     .skill-name {
@@ -600,6 +594,7 @@
       font-weight: 500;
       color: var(--accent);
       word-break: break-word;
+      width: 100%;
     }
 
     .skill-cat {
@@ -691,6 +686,7 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: flex-end;
+      width: 100%;
     }
 
     /* WORKFLOWS */
@@ -997,7 +993,7 @@
         style="display: flex; align-items: center; justify-content: center; gap: 0.45em; flex-wrap: wrap; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; color: var(--muted); letter-spacing: -0.01em; min-height: 1.3em;">
         <span class="prefix">harnessing</span>
         <span class="hero-typing-word" id="typing-word"
-          style="color: var(--accent); background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></span><span
+          style="color: var(--accent); background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;"></span><span
           class="hero-cursor" id="typing-cursor"
           style="display: inline-block; width: 4px; height: 1.1em; background: var(--accent); border-radius: 2px; margin-left: 3px; animation: blink .9s step-end infinite;"></span>
       </div>
@@ -1297,11 +1293,11 @@
       </div>
       <div class="filters">
         <button class="filter-btn active" data-cat="all">All</button>
-        <button class="filter-btn" data-cat="materials">Materials</button>
-        <button class="filter-btn" data-cat="chemistry">Chemistry</button>
+        <button class="filter-btn" data-cat="materials">MAT</button>
+        <button class="filter-btn" data-cat="chemistry">CHEM</button>
         <button class="filter-btn" data-cat="machine-learning">ML</button>
-        <button class="filter-btn" data-cat="drug-discovery">Drug</button>
-        <button class="filter-btn" data-cat="general">General</button>
+        <button class="filter-btn" data-cat="drug-discovery">DRUG</button>
+        <button class="filter-btn" data-cat="general">GENERAL</button>
       </div>
     </div>
 
@@ -1529,9 +1525,9 @@
     ];
 
     const CAT_LABEL = {
-      materials: "Materials", chemistry: "Chemistry",
-      "machine-learning": "ML", "drug-discovery": "Drug",
-      general: "General", thermodynamics: "Thermo"
+      materials: "MAT", chemistry: "CHEM",
+      "machine-learning": "ML", "drug-discovery": "DRUG",
+      general: "GENERAL", thermodynamics: "THERMO"
     };
 
     // Render workflows

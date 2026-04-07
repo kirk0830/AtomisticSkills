@@ -102,6 +102,9 @@ Provide concrete, runnable examples that demonstrate typical usage.
 > [!WARNING]
 > **Artifact Retention**: Example folders are purely for structural reference and lightweight logging. NEVER commit or retain large execution artifacts such as PyTorch model checkpoints (`.pth`, `.model`), checkpoint snapshots (`.pt`), or uncompressed trajectory aggregations (`.xyz`) inside these example subdirectories.
 
+**3D STRUCTURE RENDERING RULE:** To ensure compatibility with the documentation website's automatic 3D structure viewer (3Dmol.js), any `.cif` or `.xyz` files you want rendered MUST be written as standard markdown links (e.g., `[my_structure.cif](my_structure.cif)`). Do NOT write them merely as backticked code snippets (` `my_structure.cif` `) within tables or lists, as they will not be rendered. It is recommended to add a dedicated "## 3D Structures" section at the end of the `README.md` for these links.
+
+
 ```markdown
 ## Examples
 
@@ -205,6 +208,7 @@ The required environment must be consistent across:
 
 ## Skill Naming Conventions
 
+- **Purpose over Method**: Skill names should be informative of the *function or purpose* of the skill, NOT the specific computational method being used (e.g., `mat-solid-free-energy` is preferred over `mat-frenkel-ladd`).
 - Use **kebab-case** for skill directory names (lowercase with hyphens)
 - **Every skill name must start with a category prefix** matching its `category` field:
   - `mat-` for `materials` skills (e.g., `mat-melting-point`, `mat-diffusion-analysis`, `mat-phonon`)

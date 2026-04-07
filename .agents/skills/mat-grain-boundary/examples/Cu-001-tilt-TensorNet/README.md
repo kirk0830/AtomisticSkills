@@ -127,6 +127,19 @@ TensorNet-r2SCAN values fall between EAM (tends to overestimate) and DFT-PBE (un
 
 ---
 
+## 3D Structures
+
+### Σ5 GB
+[Cu_sigma5_gb_relaxed.cif](Cu_sigma5_gb_relaxed.cif)
+
+### Σ13 GB
+[Cu_sigma13_gb_relaxed.cif](Cu_sigma13_gb_relaxed.cif)
+
+### Σ25 GB
+[Cu_sigma25_gb_relaxed.cif](Cu_sigma25_gb_relaxed.cif)
+
+---
+
 ## References
 
 - Rittner, J.D. & Seidman, D.N., "⟨110⟩ Symmetric tilt grain-boundary structures in FCC metals with low stacking-fault energies", *Phys. Rev. B*, **54**, 6999, 1996. [DOI](https://doi.org/10.1103/PhysRevB.54.6999)
