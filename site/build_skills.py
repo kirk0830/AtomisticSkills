@@ -907,7 +907,8 @@ def extract_mcp_tools(file_path):
 def make_server_page(server_id, tools, out_path):
     tool_cards = ""
     for t in tools:
-        safe_md = json.dumps(t["docstring"])
+        md_text = f"```text\n{str(t['docstring']).strip()}\n```"
+        safe_md = json.dumps(md_text)
         # Replace unescaped backslashes with double backslashes in JSON so the HTML dataset parser doesn't break
         safe_md = safe_md.replace("'", "&#39;")
         tool_cards += f'''
@@ -955,6 +956,8 @@ def make_server_page(server_id, tools, out_path):
     .rendered-md ul,.rendered-md ol{{padding-left:1.5rem;margin:0.8rem 0}}
     .rendered-md li{{margin:0.4rem 0;color:#374151}}
     .rendered-md code{{font-family:'JetBrains Mono',monospace;font-size:0.85rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 6px;color:#be185d}}
+    .rendered-md pre{{background:#f8fafc;padding:1.25rem;border-radius:8px;border:1px solid #e2e8f0;overflow-x:auto;margin:1rem 0}}
+    .rendered-md pre code{{background:transparent;padding:0;border:none;color:#334155;font-size:0.9rem;line-height:1.6}}
     .rendered-md a{{color:var(--accent);text-decoration:none}}
     footer{{border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem}}
   </style>
