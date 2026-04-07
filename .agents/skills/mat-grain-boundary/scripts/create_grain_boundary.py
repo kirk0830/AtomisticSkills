@@ -57,7 +57,12 @@ def generate_gb_structures(
     Returns:
         List of metadata dicts, one per generated GB.
     """
-    from pymatgen.analysis.gb.grain import GrainBoundaryGenerator
+    try:
+        from pymatgen.analysis.gb.grain import GrainBoundaryGenerator
+    except ImportError:
+        # For newer pymatgen versions (2026.3+), it's moved to core.interface
+        from pymatgen.core.interface import GrainBoundaryGenerator
+
     from pymatgen.core import Structure
 
     bulk = Structure.from_file(bulk_path)
@@ -75,6 +80,8 @@ def generate_gb_structures(
     metadata = []
     n_generated = 0
 
+    seen_planes_per_sigma = {}
+
     for sigma in range(1, max_sigma + 1):
         # Get all unique rotation angles for this Σ value along the chosen axis
         try:
@@ -82,54 +89,82 @@ def generate_gb_structures(
         except Exception:
             continue
 
+        seen_planes_per_sigma[sigma] = set()
+
         for angle in angles:
             try:
-                gb = gen.gb_from_parameters(
-                    rotation_axis=rotation_axis,
-                    rotation_angle=angle,
-                    expand_times=4,
-                    vacuum_thickness=vacuum,
-                    ab_shift=[0, 0],
-                    normal=True,
-                    ratio=None,
-                    plane=None,
-                )
-                # Skip if slab is too thin
-                c_length = gb.lattice.c
-                if c_length < 2 * min_slab_size:
-                    logger.debug(
-                        f"  Σ{sigma} angle={angle:.2f}° skipped: c={c_length:.1f} Å < "
-                        f"2×{min_slab_size} Å"
+                # Find symmetric tilt and twist planes up to a logical cutoff
+                possible_planes_dict = GrainBoundaryGenerator.enum_possible_plane_cubic(4, rotation_axis, angle)
+                planes_to_test = []
+                
+                for gb_type in ["Symmetric tilt", "Twist"]:
+                    if gb_type in possible_planes_dict and possible_planes_dict[gb_type]:
+                        for p_pair in possible_planes_dict[gb_type]:
+                            p = tuple(int(x) for x in p_pair[0])
+                            p_canon = tuple(sorted([abs(x) for x in p]))
+                            if p_canon not in seen_planes_per_sigma[sigma]:
+                                planes_to_test.append(p)
+                                seen_planes_per_sigma[sigma].add(p_canon)
+
+                if not planes_to_test and not seen_planes_per_sigma[sigma]:
+                    planes_to_test.append(None)
+                    seen_planes_per_sigma[sigma].add("default")
+
+                for plane in planes_to_test:
+                    gb = gen.gb_from_parameters(
+                        rotation_axis=rotation_axis,
+                        rotation_angle=angle,
+                        expand_times=4,
+                        vacuum_thickness=vacuum,
+                        ab_shift=[0, 0],
+                        normal=True,
+                        ratio=None,
+                        plane=plane,
                     )
-                    continue
+                    # Skip if slab is too thin
+                    c_length = gb.lattice.c
+                    if c_length < 2 * min_slab_size:
+                        logger.debug(
+                            f"  Σ{sigma} plane={plane} skipped: c={c_length:.1f} Å < "
+                            f"2×{min_slab_size} Å"
+                        )
+                        continue
 
-                hkl = "".join(str(x) for x in gb.miller_index) if hasattr(gb, "miller_index") else axis_str
-                filename = f"sigma{sigma:03d}_{angle:.2f}deg_{axis_str}.cif"
-                filepath = output_path / filename
-                with open(filepath, "wt") as fh:
-                    fh.write(gb.to(fmt="cif"))
+                    if plane is not None:
+                        plane_str = "".join(str(abs(x)) for x in plane)
+                        filename = f"sigma{sigma:03d}_{plane_str}_{axis_str}.cif"
+                        label_str = f"({plane[0]},{plane[1]},{plane[2]})"
+                    else:
+                        filename = f"sigma{sigma:03d}_{angle:.2f}deg_{axis_str}.cif"
+                        label_str = f"{angle:.2f}°"
+                        
+                    filepath = output_path / filename
+                    with open(filepath, "wt") as fh:
+                        fh.write(gb.to(fmt="cif"))
 
-                n_atoms = len(gb)
-                area = gb.lattice.a * gb.lattice.b  # Å²
-                entry = {
-                    "sigma": sigma,
-                    "rotation_angle_deg": round(angle, 4),
-                    "rotation_axis": rotation_axis,
-                    "axis_label": axis_label,
-                    "n_atoms": n_atoms,
-                    "interface_area_A2": round(area, 4),
-                    "cell_c_A": round(c_length, 4),
-                    "cif_file": filename,
-                }
-                metadata.append(entry)
-                n_generated += 1
-                logger.info(
-                    f"  Σ{sigma:3d}  {angle:6.2f}°  {n_atoms:4d} atoms  "
-                    f"A={area:.1f} Å²  → {filename}"
-                )
+                    n_atoms = len(gb)
+                    area = gb.lattice.a * gb.lattice.b  # Å²
+                    entry = {
+                        "sigma": sigma,
+                        "rotation_angle_deg": round(angle, 4),
+                        "rotation_axis": rotation_axis,
+                        "axis_label": axis_label,
+                        "plane": list(plane) if plane else None,
+                        "n_atoms": n_atoms,
+                        "interface_area_A2": round(area, 4),
+                        "cell_c_A": round(c_length, 4),
+                        "cif_file": filename,
+                    }
+                    metadata.append(entry)
+                    n_generated += 1
+                    logger.info(
+                        f"  Σ{sigma:3d}  {label_str:8s}  {n_atoms:4d} atoms  "
+                        f"A={area:.1f} Å²  → {filename}"
+                    )
 
             except Exception as exc:
-                logger.warning(f"  Σ{sigma} angle={angle:.2f}° failed: {exc}")
+                p_err = plane if 'plane' in locals() else 'None'
+                logger.warning(f"  Σ{sigma} angle={angle:.2f}° plane={p_err} failed: {exc}")
                 continue
 
     logger.info(f"\nGenerated {n_generated} grain boundary structures in {output_path}")

@@ -1,39 +1,11 @@
 {
-  "bulk_energy_per_atom_eV": -10.8255558,
-  "n_boundaries": 4,
+  "bulk_energy_per_atom_eV": -10.825556,
+  "n_boundaries": 3,
   "n_failed": 0,
   "failed_files": [],
   "results": [
     {
-      "filename": "sigma005_126.87deg_001",
-      "sigma": 5,
-      "rotation_angle_deg": 126.8699,
-      "rotation_axis": [
-        0,
-        0,
-        1
-      ],
-      "n_atoms": 80,
-      "total_energy_eV": -862.707642,
-      "interface_area_A2": 31.8578,
-      "gb_energy_J_m2": 0.8391
-    },
-    {
-      "filename": "sigma005_143.13deg_001",
-      "sigma": 5,
-      "rotation_angle_deg": 143.1301,
-      "rotation_axis": [
-        0,
-        0,
-        1
-      ],
-      "n_atoms": 80,
-      "total_energy_eV": -862.707642,
-      "interface_area_A2": 31.8578,
-      "gb_energy_J_m2": 0.8391
-    },
-    {
-      "filename": "sigma005_36.87deg_001",
+      "filename": "sigma005_210_001",
       "sigma": 5,
       "rotation_angle_deg": 36.8699,
       "rotation_axis": [
@@ -41,24 +13,38 @@
         0,
         1
       ],
-      "n_atoms": 80,
-      "total_energy_eV": -862.707642,
-      "interface_area_A2": 31.8578,
-      "gb_energy_J_m2": 0.8391
+      "n_atoms": 78,
+      "total_energy_eV": -842.490356,
+      "interface_area_A2": 15.607,
+      "gb_energy_J_m2": 0.9768
     },
     {
-      "filename": "sigma005_53.13deg_001",
-      "sigma": 5,
-      "rotation_angle_deg": 53.1301,
+      "filename": "sigma013_320_001",
+      "sigma": 13,
+      "rotation_angle_deg": 22.6199,
       "rotation_axis": [
         0,
         0,
         1
       ],
-      "n_atoms": 80,
-      "total_energy_eV": -862.707642,
-      "interface_area_A2": 31.8578,
-      "gb_energy_J_m2": 0.8391
+      "n_atoms": 206,
+      "total_energy_eV": -2227.755371,
+      "interface_area_A2": 23.8402,
+      "gb_energy_J_m2": 0.7759
+    },
+    {
+      "filename": "sigma025_340_001",
+      "sigma": 25,
+      "rotation_angle_deg": 16.2602,
+      "rotation_axis": [
+        0,
+        0,
+        1
+      ],
+      "n_atoms": 396,
+      "total_energy_eV": -4284.001953,
+      "interface_area_A2": 32.4887,
+      "gb_energy_J_m2": 0.7196
     }
   ]
 }

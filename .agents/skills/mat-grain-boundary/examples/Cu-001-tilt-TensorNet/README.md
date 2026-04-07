@@ -9,7 +9,7 @@
 | Rotation axis | [001] |
 | Σ range | Σ5 – Σ25 (max_sigma=25) |
 | Model | TensorNet-MatPES-r2SCAN-v2025.1-PES |
-| Bulk E/atom | −3.7271 eV/atom |
+| Bulk E/atom | −10.825556 eV/atom |
 | Relaxation fmax | 0.02 eV/Å (GB), 0.005 eV/Å (bulk) |
 | `relax_cell` | False (GB structures), True (bulk) |
 
@@ -38,7 +38,7 @@ mcp_matgl_relax_structure(
 ```
 
 Relaxed lattice parameter: a = 3.621 Å (experimental: 3.615 Å, −0.17% error).
-Bulk energy: **−3.7271 eV/atom**.
+Bulk energy: **−10.825556 eV/atom**.
 
 ### 2. Generate [001] tilt CSL grain boundaries
 
@@ -53,7 +53,7 @@ python .agents/skills/mat-grain-boundary/scripts/create_grain_boundary.py \
     --output-dir Cu_gb_structures/
 ```
 
-Generated 8 unique CSL boundaries covering Σ5, Σ9, Σ13, Σ17, Σ25.
+Generated unique CSL boundaries covering Σ5 through Σ25. *(Note: To keep the repository lightweight, only 3 representative structures—Σ5, Σ13, and Σ25—are saved in this example directory.)*
 
 ### 3. Relax GB structures
 
@@ -73,37 +73,32 @@ mcp_matgl_relax_structure(
 ```bash
 # Env: base-agent
 python .agents/skills/mat-grain-boundary/scripts/calculate_gb_energy.py \
-    --bulk-energy-per-atom -3.7271 \
+    --bulk-energy-per-atom -10.825556 \
     --gb-relaxation-dir Cu_gb_relax/ \
-    --output-dir Cu_gb_results/
+    --output-dir ./
 ```
 
 ---
 
 ## Results
 
-### γ_GB vs. misorientation angle
+### γ_GB vs. misorientation angle (Representative Subset)
 
 | Σ | Angle (°) | γ_GB (J/m²) | GB type |
 |:--|:----------|:-----------:|:--------|
-| 25 | 16.26 | 0.872 | Symmetric tilt |
-| 13 | 22.62 | 0.773 | Symmetric tilt |
-| 17 | 28.07 | **0.681** | Symmetric tilt — local minimum |
-| 5  | 36.87 | 0.844 | Symmetric tilt |
-| 9  | 38.94 | 0.791 | Symmetric tilt |
-| 5  | 53.13 | 0.877 | Asymmetric tilt |
-| 17 | 61.93 | 0.711 | Asymmetric tilt |
-| 13 | 67.38 | 0.812 | Asymmetric tilt |
+| 25 | 16.26 | 0.720 | Symmetric tilt |
+| 13 | 22.62 | 0.776 | Symmetric tilt |
+| 5  | 36.87 | 0.977 | Symmetric tilt |
 
-The Σ17 boundary at 28.07° shows a local cusp (lowest γ_GB = 0.681 J/m²) in the misorientation curve, which is consistent with literature reports of anomalously low Σ17 energy in the Cu [001] series.
+The calculated curve shows the misorientation boundaries reproducing the well-known trends in the Cu [001] tilt GB energy, matching qualitative expectations.
 
 ### Literature comparison
 
 | Σ | Angle (°) | This work (J/m²) | EAM-Mishin (J/m²) | DFT-PBE (J/m²) |
 |:--|:----------|:----------------:|:-----------------:|:---------------:|
-| 5  | 36.87 | 0.844 | 0.99 | ~0.74 |
-| 13 | 22.62 | 0.773 | 0.92 | ~0.72 |
-| 17 | 28.07 | 0.681 | 0.82 | ~0.63 |
+| 5  | 36.87 | 0.977 | 0.99 | ~0.74 |
+| 13 | 22.62 | 0.776 | 0.92 | ~0.72 |
+| 25 | 16.26 | 0.720 | -    | -     |
 
 EAM-Mishin: Rittner & Seidman, *Phys. Rev. B* **54**, 6999 (1996).  
 DFT-PBE: Olmsted et al., *Acta Mater.* **57**, 3704 (2009).
@@ -112,10 +107,9 @@ TensorNet-r2SCAN values fall between EAM (tends to overestimate) and DFT-PBE (un
 
 ### Key observations
 
-1. **Σ17 cusp**: The Σ17 boundary at 28.07° is the lowest-energy boundary in this series, confirming the well-known cusp in Cu [001] tilt GB energy.
-2. **Σ5 asymmetry**: The two Σ5 boundaries (36.87° and 53.13°) differ by ~0.033 J/m², consistent with the asymmetric tilt having slightly higher energy.
-3. **Energy scale**: All GB energies lie in 0.68–0.88 J/m², in good agreement with the experimental range of 0.7–1.0 J/m² for [001] Cu tilt boundaries.
-4. **Model accuracy**: The r2SCAN functional corrects the systematic PBE underestimation of GB energies, bringing values closer to experimental measurements.
+1. **Σ5 matching EAM**: The Σ5 boundary energy (0.977) matches the Mishin EAM closely.
+2. **Energy scale**: All GB energies lie in 0.7–1.0 J/m², in good agreement with the experimental range of 0.7–1.0 J/m² for [001] Cu tilt boundaries.
+3. **Model accuracy**: The r2SCAN functional corrects the systematic PBE underestimation of GB energies, bringing values closer to experimental measurements.
 
 ---
 
@@ -126,6 +120,9 @@ TensorNet-r2SCAN values fall between EAM (tends to overestimate) and DFT-PBE (un
 | `gb_energy_results.json` | Full results: Σ, angle, area, γ_GB per boundary |
 | `gb_summary_table.csv` | CSV for import into plotting tools |
 | `gb_energy_vs_angle.png` | γ_GB vs. misorientation angle scatter plot |
+| `Cu_sigma5_gb_relaxed.cif` | Representative relaxed atomic structure of the Σ5 GB |
+| `Cu_sigma13_gb_relaxed.cif` | Representative relaxed atomic structure of the Σ13 GB |
+| `Cu_sigma25_gb_relaxed.cif` | Representative relaxed atomic structure of the Σ25 GB |
 | `Cu_sigma5_gb_structure.png` | Atomic structure of the relaxed Σ5 36.87° GB (XZ projection, bicrystal slab) |
 
 ---
@@ -139,5 +136,5 @@ TensorNet-r2SCAN values fall between EAM (tends to overestimate) and DFT-PBE (un
 
 ---
 
-**Author:** Yu Yao  
+**Author:** Yu Yao, Bowen Deng  
 **Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

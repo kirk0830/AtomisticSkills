@@ -141,7 +141,7 @@ def plot_gb_energy(records: List[Dict], output_path: str, formula: str = "") -> 
 
     # Group by sigma for colour coding
     sigma_values = sorted(set(r.get("sigma", 0) for r in records))
-    cmap = plt.cm.get_cmap("tab10", len(sigma_values))
+    cmap = plt.colormaps.get_cmap("tab10")
     sigma_to_color = {s: cmap(i) for i, s in enumerate(sigma_values)}
 
     fig, ax = plt.subplots(figsize=(7, 5))
@@ -181,9 +181,12 @@ def plot_gb_energy(records: List[Dict], output_path: str, formula: str = "") -> 
     seen = {}
     unique_handles, unique_labels = [], []
     for h, l in zip(handles, labels):
+        if not l or l.startswith("_"):
+            continue
         if l not in seen:
             seen[l] = True
             unique_handles.append(h)
+            unique_labels.append(l)
     ax.legend(unique_handles, unique_labels, frameon=True, fontsize=11, ncol=2)
 
     plt.tight_layout()
