@@ -639,23 +639,19 @@ def search_model_registry(
     max_force_mae: Optional[float] = None,
     tags_json: Optional[str] = None,
 ) -> str:
-    """Search the local MLIP model registry for previously fine-tuned checkpoints.
+    """Search the local MLIP model registry for fine-tuned checkpoints.
 
-    Call this tool at the start of any research task that may require a fine-tuned
-    MLIP, BEFORE deciding to train a new one.  If a suitable model already exists
-    in the registry, reuse it to save compute and time.
+    Call this before training a new MLIP to reuse existing models if possible.
 
     Args:
-        chemical_system: Hyphen-separated elements to filter by (e.g. "Li-Fe-P-O").
-            The search uses a **subset match**: a model trained on "Fe-Li-O-P" will
-            match a query for "Li-O".  Case-insensitive.  Omit to list all models.
+        chemical_system: Elements to filter by (e.g. "Li-Fe-P-O").
         backend: Optional filter: "mace", "matgl", or "fairchem".
-        max_energy_mae: Upper bound on validation energy MAE in meV/atom (optional).
-        max_force_mae:  Upper bound on validation force  MAE in meV/Å  (optional).
-        tags_json: JSON array of required tags, e.g. '["battery", "cathode"]' (optional).
+        max_energy_mae: Max validation energy MAE in meV/atom (optional).
+        max_force_mae: Max validation force MAE in meV/Å (optional).
+        tags_json: JSON array of required tags, e.g. '["battery"]' (optional).
 
     Returns:
-        Formatted markdown list of matching models, or a message if none found.
+        Markdown list of matching models.
     """
     try:
         import json
@@ -709,34 +705,23 @@ def register_model(
 ) -> str:
     """Register a fine-tuned MLIP checkpoint in the local model registry.
 
-    Call this tool immediately after successfully fine-tuning an MLIP so the
-    model can be discovered and reused by future research tasks.
+    Call this after successfully fine-tuning an MLIP to allow future reuse.
 
     Args:
-        checkpoint_path: Absolute path to the saved model checkpoint file
-            (e.g. the .model file for MACE, .pt for MatGL, .pt for FairChem).
-        chemical_system: Hyphen-separated elements the model covers,
-            e.g. "Li-Fe-P-O".  Element order does not matter — it will be
-            normalised (sorted, deduplicated) automatically.
-        backend: MLIP framework: "mace", "matgl", or "fairchem".
-        base_model: Name of the foundation checkpoint that was fine-tuned,
-            e.g. "MACE-MH-1", "CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES".
-        description: One-sentence description of training data and purpose
-            (e.g. "Fine-tuned for Li-Fe-P-O MD at 800-1200K, 1200 structures").
-        energy_mae: Validation energy MAE in meV/atom (optional but recommended).
-        force_mae:  Validation force  MAE in meV/Å  (optional but recommended).
-        research_dir: Relative path to the research directory where training was
-            run (e.g. "research/2024-12-01_LiFePO4_diffusion").  Used for
-            provenance tracking.
-        tags_json: JSON array of keyword tags for filtering,
-            e.g. '["battery", "cathode", "diffusion"]' (optional).
-        notes: Any additional free-text notes about training conditions,
-            convergence, known limitations, etc. (optional).
-        model_id: Explicit registry id (e.g. "mace-LiFePO4-v1").  If omitted,
-            an id is auto-generated from the backend and chemical system.
+        checkpoint_path: Absolute path to the saved model checkpoint file.
+        chemical_system: Elements covered, e.g. "Li-Fe-P-O".
+        backend: Model framework: "mace", "matgl", or "fairchem".
+        base_model: Name of foundation checkpoint (e.g. "MACE-MH-1").
+        description: Short description of training data and purpose.
+        energy_mae: Validation energy MAE in meV/atom (optional).
+        force_mae: Validation force MAE in meV/Å (optional).
+        research_dir: Relative path to training research directory (optional).
+        tags_json: JSON array of keyword tags, e.g. '["battery"]' (optional).
+        notes: Free-text notes (optional).
+        model_id: Explicit registry id. Auto-generated if omitted.
 
     Returns:
-        Confirmation message with the assigned model id and registry path.
+        Confirmation message with the assigned model id.
     """
     try:
         import json

@@ -43,3 +43,38 @@ def test_modify_structure(skip_if_wrong_env, tmp_cif_file):
 def test_search_literature(skip_if_wrong_env):
     res = base_server.search_literature("battery")
     assert isinstance(res, str)
+
+@pytest.fixture
+def mock_registry_file(tmp_path, monkeypatch):
+    from src.utils import model_registry
+    registry_file = tmp_path / "model_registry.yaml"
+    monkeypatch.setattr(model_registry, "REGISTRY_PATH", registry_file)
+    return registry_file
+
+@pytest.mark.base
+def test_register_and_search_model_registry(skip_if_wrong_env, mock_registry_file, tmp_path):
+    ckpt = tmp_path / "dummy.pt"
+    ckpt.touch()
+    
+    # Test register_model tool
+    res_register = base_server.register_model(
+        checkpoint_path=str(ckpt),
+        chemical_system="Li-O",
+        backend="mace",
+        base_model="MACE-MH-1",
+        tags_json='["test"]'
+    )
+    assert "Model successfully registered" in res_register
+    
+    # Test search_model_registry tool
+    res_search = base_server.search_model_registry(
+        chemical_system="Li",
+        backend="mace"
+    )
+    assert "Found" in res_search
+    assert "mace-LiO-v1" in res_search
+
+    res_empty = base_server.search_model_registry(
+        chemical_system="Fe"
+    )
+    assert "No models found" in res_empty
