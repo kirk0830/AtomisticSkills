@@ -1,90 +1,64 @@
 {
-  "bulk_energy_per_atom_eV": -3.7271,
-  "model": "TensorNet-MatPES-r2SCAN-v2025.1-PES",
-  "rotation_axis": [0, 0, 1],
-  "n_boundaries": 8,
+  "bulk_energy_per_atom_eV": -10.8255558,
+  "n_boundaries": 4,
   "n_failed": 0,
   "failed_files": [],
   "results": [
     {
-      "filename": "sigma005_016.26deg_001_relaxed.json",
-      "sigma": 25,
-      "rotation_angle_deg": 16.26,
-      "rotation_axis": [0, 0, 1],
-      "n_atoms": 200,
-      "total_energy_eV": -742.09,
-      "interface_area_A2": 109.83,
-      "gb_energy_J_m2": 0.872
-    },
-    {
-      "filename": "sigma013_022.62deg_001_relaxed.json",
-      "sigma": 13,
-      "rotation_angle_deg": 22.62,
-      "rotation_axis": [0, 0, 1],
-      "n_atoms": 208,
-      "total_energy_eV": -771.44,
-      "interface_area_A2": 95.41,
-      "gb_energy_J_m2": 0.773
-    },
-    {
-      "filename": "sigma017_028.07deg_001_relaxed.json",
-      "sigma": 17,
-      "rotation_angle_deg": 28.07,
-      "rotation_axis": [0, 0, 1],
-      "n_atoms": 272,
-      "total_energy_eV": -1013.12,
-      "interface_area_A2": 124.67,
-      "gb_energy_J_m2": 0.681
-    },
-    {
-      "filename": "sigma005_036.87deg_001_relaxed.json",
+      "filename": "sigma005_126.87deg_001",
       "sigma": 5,
-      "rotation_angle_deg": 36.87,
-      "rotation_axis": [0, 0, 1],
-      "n_atoms": 160,
-      "total_energy_eV": -594.71,
-      "interface_area_A2": 82.09,
-      "gb_energy_J_m2": 0.844
+      "rotation_angle_deg": 126.8699,
+      "rotation_axis": [
+        0,
+        0,
+        1
+      ],
+      "n_atoms": 80,
+      "total_energy_eV": -862.707642,
+      "interface_area_A2": 31.8578,
+      "gb_energy_J_m2": 0.8391
     },
     {
-      "filename": "sigma009_038.94deg_001_relaxed.json",
-      "sigma": 9,
-      "rotation_angle_deg": 38.94,
-      "rotation_axis": [0, 0, 1],
-      "n_atoms": 288,
-      "total_energy_eV": -1072.87,
-      "interface_area_A2": 148.22,
-      "gb_energy_J_m2": 0.791
-    },
-    {
-      "filename": "sigma005_053.13deg_001_relaxed.json",
+      "filename": "sigma005_143.13deg_001",
       "sigma": 5,
-      "rotation_angle_deg": 53.13,
-      "rotation_axis": [0, 0, 1],
-      "n_atoms": 160,
-      "total_energy_eV": -594.54,
-      "interface_area_A2": 82.09,
-      "gb_energy_J_m2": 0.877
+      "rotation_angle_deg": 143.1301,
+      "rotation_axis": [
+        0,
+        0,
+        1
+      ],
+      "n_atoms": 80,
+      "total_energy_eV": -862.707642,
+      "interface_area_A2": 31.8578,
+      "gb_energy_J_m2": 0.8391
     },
     {
-      "filename": "sigma017_061.93deg_001_relaxed.json",
-      "sigma": 17,
-      "rotation_angle_deg": 61.93,
-      "rotation_axis": [0, 0, 1],
-      "n_atoms": 272,
-      "total_energy_eV": -1012.89,
-      "interface_area_A2": 124.67,
-      "gb_energy_J_m2": 0.711
+      "filename": "sigma005_36.87deg_001",
+      "sigma": 5,
+      "rotation_angle_deg": 36.8699,
+      "rotation_axis": [
+        0,
+        0,
+        1
+      ],
+      "n_atoms": 80,
+      "total_energy_eV": -862.707642,
+      "interface_area_A2": 31.8578,
+      "gb_energy_J_m2": 0.8391
     },
     {
-      "filename": "sigma013_067.38deg_001_relaxed.json",
-      "sigma": 13,
-      "rotation_angle_deg": 67.38,
-      "rotation_axis": [0, 0, 1],
-      "n_atoms": 208,
-      "total_energy_eV": -771.21,
-      "interface_area_A2": 95.41,
-      "gb_energy_J_m2": 0.812
+      "filename": "sigma005_53.13deg_001",
+      "sigma": 5,
+      "rotation_angle_deg": 53.1301,
+      "rotation_axis": [
+        0,
+        0,
+        1
+      ],
+      "n_atoms": 80,
+      "total_energy_eV": -862.707642,
+      "interface_area_A2": 31.8578,
+      "gb_energy_J_m2": 0.8391
     }
   ]
 }

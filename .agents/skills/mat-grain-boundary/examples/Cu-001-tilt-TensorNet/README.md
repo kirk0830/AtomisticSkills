@@ -125,7 +125,8 @@ TensorNet-r2SCAN values fall between EAM (tends to overestimate) and DFT-PBE (un
 |:-----|:------------|
 | `gb_energy_results.json` | Full results: Σ, angle, area, γ_GB per boundary |
 | `gb_summary_table.csv` | CSV for import into plotting tools |
-| `gb_energy_vs_angle.png` | γ_GB vs. misorientation angle plot (not committed — large binary) |
+| `gb_energy_vs_angle.png` | γ_GB vs. misorientation angle scatter plot |
+| `Cu_sigma5_gb_structure.png` | Atomic structure of the relaxed Σ5 36.87° GB (XZ projection, bicrystal slab) |
 
 ---
 
@@ -138,5 +139,5 @@ TensorNet-r2SCAN values fall between EAM (tends to overestimate) and DFT-PBE (un
 
 ---
 
-**Author:** Yao  
-**Contact:** [GitHub @yyao6](https://github.com/yyao6)
+**Author:** Yu Yao  
+**Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

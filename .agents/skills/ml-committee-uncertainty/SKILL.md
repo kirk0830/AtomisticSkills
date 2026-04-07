@@ -66,6 +66,8 @@ python .agents/skills/ml-committee-uncertainty/scripts/run_committee_inference.p
     --output-dir ./uncertainty_results \
     --energy-threshold 10.0 \
     --force-threshold 200.0
+# For MACE-MH foundation models, add:
+#   --head omat_pbe
 ```
 
 **Key parameters:**
@@ -78,6 +80,7 @@ python .agents/skills/ml-committee-uncertainty/scripts/run_committee_inference.p
 | `--force-threshold` | Flag if max force std > this value (meV/Å) | 100–300 meV/Å |
 | `--output-dir` | Directory for results and plots | — |
 | `--device` | `cuda` or `cpu` | `cuda` |
+| `--head` | Head name for multi-head models (e.g. `omat_pbe` for MACE-MH-1) | `None` |
 
 ### 3. Interpret Results
 
@@ -134,5 +137,5 @@ mcp_base_register_model(
 
 ---
 
-**Author:** Yao  
-**Contact:** [GitHub @yyao6](https://github.com/yyao6)
+**Author:** Yu Yao  
+**Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

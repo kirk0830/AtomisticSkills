@@ -82,6 +82,29 @@ def parse_relax_result(json_path: Path) -> Optional[Dict]:
     return {"energy": float(energy), "n_atoms": int(n_atoms), "a": float(a), "b": float(b)}
 
 
+def parse_relax_subdir(subdir: Path) -> Optional[Dict]:
+    """Parse the MCP batch-relax per-structure subdirectory format.
+
+    Expects:
+        <subdir>/relaxed_energy.txt   — single float on first line
+        <subdir>/relaxed_structure.cif — pymatgen-readable CIF
+    Returns dict compatible with parse_relax_result, or None.
+    """
+    energy_file = subdir / "relaxed_energy.txt"
+    cif_file = subdir / "relaxed_structure.cif"
+    if not energy_file.exists() or not cif_file.exists():
+        return None
+
+    from pymatgen.core import Structure
+
+    energy = float(energy_file.read_text().strip().splitlines()[0])
+    struct = Structure.from_file(str(cif_file))
+    n_atoms = len(struct)
+    a = struct.lattice.a
+    b = struct.lattice.b
+    return {"energy": energy, "n_atoms": n_atoms, "a": a, "b": b}
+
+
 def compute_gb_energy(
     e_gb: float,
     n_atoms: int,
@@ -161,8 +184,7 @@ def plot_gb_energy(records: List[Dict], output_path: str, formula: str = "") -> 
         if l not in seen:
             seen[l] = True
             unique_handles.append(h)
-            unique_labels.append(l)
-    ax.legend(unique_handles, unique_labels, frameon=False, fontsize=11, ncol=2)
+    ax.legend(unique_handles, unique_labels, frameon=True, fontsize=11, ncol=2)
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
@@ -215,20 +237,48 @@ def main():
             "gb_structure_metadata.json not found; sigma/angle annotations will be missing."
         )
 
-    # Collect all JSON result files
-    json_files = sorted(relax_dir.glob("*.json"))
+    # Collect result sources: JSON files (flat) OR per-structure subdirs (MCP batch relax)
+    _EXCLUDE = {"gb_structure_metadata.json"}
+    json_files = [
+        p for p in sorted(relax_dir.glob("*.json")) if p.name not in _EXCLUDE
+    ]
     if not json_files:
-        raise FileNotFoundError(f"No JSON files found in {relax_dir}")
-    logger.info(f"Found {len(json_files)} relaxation result files")
+        json_files = sorted(relax_dir.glob("*/relaxation_results.json"))
+
+    subdirs = [
+        d for d in sorted(relax_dir.iterdir())
+        if d.is_dir() and (d / "relaxed_energy.txt").exists()
+    ] if not json_files else []
+
+    if not json_files and not subdirs:
+        raise FileNotFoundError(
+            f"No JSON files or relaxed_energy.txt subdirs found in {relax_dir}"
+        )
+
+    if json_files:
+        logger.info(f"Found {len(json_files)} relaxation result JSON files")
+    else:
+        logger.info(f"Found {len(subdirs)} relaxation result subdirectories")
 
     records = []
     failed = []
 
-    for json_path in json_files:
-        result = parse_relax_result(json_path)
+    def _iter_results():
+        """Yield (stem, result_dict) from whichever source is available."""
+        if json_files:
+            for jp in json_files:
+                res = parse_relax_result(jp)
+                stem = jp.stem.replace("_relaxed", "").replace("_relax", "")
+                yield stem, res, jp.name
+        else:
+            for sd in subdirs:
+                res = parse_relax_subdir(sd)
+                yield sd.name, res, sd.name
+
+    for stem, result, label in _iter_results():
         if result is None:
-            logger.warning(f"Could not parse {json_path.name} — skipping")
-            failed.append(json_path.name)
+            logger.warning(f"Could not parse {label} — skipping")
+            failed.append(label)
             continue
 
         area_A2 = result["a"] * result["b"]
@@ -239,12 +289,11 @@ def main():
             area_A2=area_A2,
         )
 
-        # Match to structure metadata (strip common suffixes)
-        stem = json_path.stem.replace("_relaxed", "").replace("_relax", "")
+        # Match to structure metadata
         meta = meta_by_file.get(stem, {})
 
         rec = {
-            "filename": json_path.name,
+            "filename": label,
             "sigma": meta.get("sigma", None),
             "rotation_angle_deg": meta.get("rotation_angle_deg", None),
             "rotation_axis": meta.get("rotation_axis", None),
@@ -312,9 +361,9 @@ def main():
     print(f"  Boundaries calculated : {len(records)}")
     print(f"  Bulk E/atom (eV)      : {args.bulk_energy_per_atom}")
     print(f"  γ_GB range (J/m²)     : {min(gb_energies):.4f} – {max(gb_energies):.4f}")
-    print(f"  Lowest energy GB      : Σ{min_rec['sigma']} at "
-          f"{min_rec['rotation_angle_deg']:.2f}° → "
-          f"γ = {min_rec['gb_energy_J_m2']:.4f} J/m²")
+    sigma_str = f"Σ{min_rec['sigma']}" if min_rec.get("sigma") is not None else "?"
+    angle_str = f"{min_rec['rotation_angle_deg']:.2f}°" if min_rec.get("rotation_angle_deg") is not None else "?"
+    print(f"  Lowest energy GB      : {sigma_str} at {angle_str} → γ = {min_rec['gb_energy_J_m2']:.4f} J/m²")
     print(f"  Results saved to      : {output_dir}")
     print("=" * 60)
 

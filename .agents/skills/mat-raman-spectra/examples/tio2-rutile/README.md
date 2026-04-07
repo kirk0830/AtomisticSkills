@@ -108,7 +108,7 @@ MACE-MH-1 (trained predominantly on PBEsol/r2SCAN data via MatPES) reproduces fr
 |:-----|:------------|
 | `raman_modes.json` | Full mode table: symmetry labels, frequencies, Raman activity, intensities |
 | `raman_modes_table.csv` | Same data in CSV format for spreadsheet analysis |
-| `raman_spectrum.png` | Simulated Raman spectrum with Lorentzian broadening (not committed — large binary) |
+| `raman_spectrum.png` | Simulated Raman spectrum with Lorentzian broadening (4 modes: B1g, B1g, A1g, Eg) |
 
 ---
 
@@ -121,5 +121,5 @@ MACE-MH-1 (trained predominantly on PBEsol/r2SCAN data via MatPES) reproduces fr
 
 ---
 
-**Author:** Yao  
-**Contact:** [GitHub @yyao6](https://github.com/yyao6)
+**Author:** Yu Yao  
+**Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

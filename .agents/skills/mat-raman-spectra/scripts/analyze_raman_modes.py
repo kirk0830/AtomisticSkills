@@ -132,23 +132,34 @@ def get_point_group(structure_path: str) -> str:
 def run_irreps(phonon, freq_tolerance_cm: float = 0.5) -> Optional[dict]:
     """Run phonopy IrReps analysis at Γ and return a dict of {band_index: label}.
 
+    Supports phonopy 3.x (set_irreps / phonon.irreps) and legacy 2.x (run_irreps).
     Returns None if IrReps fails (e.g., non-symmorphic space groups not supported).
     """
     try:
-        phonon.run_irreps(q_point=np.array([0.0, 0.0, 0.0]))
-        irreps = phonon.get_irreps()
-        ir_labels = irreps.get_ir_labels()      # list of strings, length = n_modes
-        ir_freqs = irreps.get_ir_frequencies()  # THz, length = n_modes
+        # phonopy 3.x API: set_irreps populates phonon.irreps
+        if hasattr(phonon, "set_irreps"):
+            phonon.set_irreps(q=[0.0, 0.0, 0.0])
+            irreps_obj = phonon.irreps
+            ir_labels = irreps_obj._ir_labels        # list, may contain None
+            ir_freqs_thz = list(irreps_obj.frequencies)
+        else:
+            # Legacy phonopy 2.x
+            phonon.run_irreps(q_point=np.array([0.0, 0.0, 0.0]))
+            irreps_obj = phonon.get_irreps()
+            ir_labels = irreps_obj.get_ir_labels()
+            ir_freqs_thz = list(irreps_obj.get_ir_frequencies())
+
         result = {}
-        for i, (label, freq_thz) in enumerate(zip(ir_labels, ir_freqs)):
+        for i, (label, freq_thz) in enumerate(zip(ir_labels, ir_freqs_thz)):
             result[i] = {
-                "label": label,
+                "label": label if label else "Unknown",
                 "freq_cm": float(freq_thz * 33.3564),
             }
         return result
     except Exception as exc:
         logger.warning(f"IrReps analysis failed: {exc}. Will use 'Unknown' labels.")
         return None
+
 
 
 def compute_raman_intensities_from_born(
@@ -380,11 +391,11 @@ def main():
         raman = False if is_acoustic else _is_raman_active(label, point_group)
 
         record = {
-            "mode_index": i,
+            "mode_index": int(i),
             "frequency_cm": round(float(freq), 2),
-            "symmetry_label": label,
-            "is_acoustic": is_acoustic,
-            "raman_active": raman,
+            "symmetry_label": str(label),
+            "is_acoustic": bool(is_acoustic),
+            "raman_active": bool(raman),
         }
         mode_records.append(record)
 

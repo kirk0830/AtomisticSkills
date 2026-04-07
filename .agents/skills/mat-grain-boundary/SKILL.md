@@ -161,5 +161,5 @@ python .agents/skills/mat-grain-boundary/scripts/calculate_gb_energy.py \
 
 ---
 
-**Author:** Yao  
-**Contact:** [GitHub @yyao6](https://github.com/yyao6)
+**Author:** Yu Yao  
+**Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

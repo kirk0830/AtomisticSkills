@@ -8,7 +8,8 @@ dependencies:
   - pip
   - pip:
     - mcp
-    - pymatgen
+    - "numpy<2"
+    - "pymatgen<2024.2.1"
     - ase
     - mp-api
     - typing-extensions
@@ -18,3 +19,4 @@ dependencies:
     - pymatgen-analysis-diffusion
     - optimade[client]
     - beautifulsoup4
+    - phonopy

@@ -174,5 +174,5 @@ Expected: the script should identify B1g, Eg, A1g, and B2g modes (all Raman acti
 
 ---
 
-**Author:** Yao  
-**Contact:** [GitHub @yyao6](https://github.com/yyao6)
+**Author:** Yu Yao  
+**Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

@@ -57,7 +57,7 @@ def generate_gb_structures(
     Returns:
         List of metadata dicts, one per generated GB.
     """
-    from pymatgen.analysis.grain_boundary import GrainBoundaryGenerator
+    from pymatgen.analysis.gb.grain import GrainBoundaryGenerator
     from pymatgen.core import Structure
 
     bulk = Structure.from_file(bulk_path)
@@ -106,7 +106,8 @@ def generate_gb_structures(
                 hkl = "".join(str(x) for x in gb.miller_index) if hasattr(gb, "miller_index") else axis_str
                 filename = f"sigma{sigma:03d}_{angle:.2f}deg_{axis_str}.cif"
                 filepath = output_path / filename
-                gb.to(fmt="cif", filename=str(filepath))
+                with open(filepath, "wt") as fh:
+                    fh.write(gb.to(fmt="cif"))
 
                 n_atoms = len(gb)
                 area = gb.lattice.a * gb.lattice.b  # Å²

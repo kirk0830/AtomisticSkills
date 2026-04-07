@@ -75,12 +75,17 @@ def load_structures(path: str) -> List[Atoms]:
         return loaded
 
 
-def build_committee_calculator(model_paths: List[str], device: str):
+def build_committee_calculator(model_paths: List[str], device: str, head: str = None):
     """Build a MACE committee calculator from a list of checkpoint paths.
 
     When MACECalculator receives multiple model_paths it automatically runs
     each model independently and exposes variance outputs via
     calculator.results['energy_var'] and calculator.results['forces_var'].
+
+    Args:
+        model_paths: List of MACE checkpoint file paths.
+        device: Compute device ("cuda" or "cpu").
+        head: Optional model head name for multi-head models (e.g. "omat_pbe" for MACE-MH).
     """
     from mace.calculators import MACECalculator
 
@@ -88,11 +93,15 @@ def build_committee_calculator(model_paths: List[str], device: str):
         if not Path(p).exists():
             raise FileNotFoundError(f"Model checkpoint not found: {p}")
 
-    calc = MACECalculator(
+    kwargs = dict(
         model_paths=model_paths,
         device=device,
-        default_dtype="float64",
+        default_dtype="float32",
     )
+    if head is not None:
+        kwargs["head"] = head
+
+    calc = MACECalculator(**kwargs)
     return calc
 
 
@@ -194,6 +203,12 @@ def main():
         choices=["cuda", "cpu"],
         help="Device for inference (default: cuda).",
     )
+    parser.add_argument(
+        "--head",
+        default=None,
+        help="Model head name for multi-head MACE models (e.g. 'omat_pbe' for MACE-MH-1). "
+             "Required when using MACE-MH foundation models.",
+    )
     args = parser.parse_args()
 
     if len(args.models) < 2:
@@ -213,7 +228,7 @@ def main():
     logger.info(f"Loaded {len(structures)} structures")
 
     logger.info(f"Building committee calculator from {len(args.models)} models")
-    calc = build_committee_calculator(args.models, device=args.device)
+    calc = build_committee_calculator(args.models, device=args.device, head=args.head)
 
     records = []
     n_flagged = 0
