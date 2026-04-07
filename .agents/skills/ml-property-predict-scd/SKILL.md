@@ -4,7 +4,7 @@ description: Use pretrained SelfConditionedDenoisingAtoms checkpoints for live e
 category: [machine-learning]
 ---
 
-# SCD Property Prediction
+# ml-property-predict-scd
 
 ## Goal
 
@@ -33,7 +33,7 @@ Use `SelfConditionedDenoisingAtoms` for four related workflows:
 
 Do not swap these by default. The public checkpoints were pretrained on different domains.
 
-## Preferred Workflow
+## Instructions
 
 ### 1. Frozen backbone embeddings
 
@@ -72,6 +72,7 @@ Important details:
 Use the native training path when you want all model weights updated:
 
 ```bash
+# Env: scd-agent
 cd ../SelfConditionedDenoisingAtoms
 python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id my_run
 ```
@@ -79,6 +80,7 @@ python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id my
 or
 
 ```bash
+# Env: scd-agent
 cd ../SelfConditionedDenoisingAtoms
 python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-amp --job-id my_run
 ```
@@ -97,6 +99,7 @@ Full-model finetuning usually gives better results than the lightweight frozen-b
 Use the native training path:
 
 ```bash
+# Env: scd-agent
 cd ../SelfConditionedDenoisingAtoms
 python train.py --conf configs/my_pretrain.yaml --job-id my_pretrain
 ```
@@ -145,7 +148,15 @@ Treat live stdout visibility as general guidance for SCD runs, not just these ex
 - When launching on one physical GPU, set `CUDA_VISIBLE_DEVICES=<gpu_id>` and pass `--use-devices 0` so the upstream trainer uses only that logical device.
 - When launching on multiple GPUs, set `CUDA_VISIBLE_DEVICES` to the chosen physical ids and pass `--use-devices 0 1 ...` across the visible logical devices.
 
+## Examples
+
+Check the detailed, reproducible examples in the `examples/` directory:
+- [QM9 Lightweight Tuning](examples/CT-SCD_QM9/README.md): Finetuning example on molecular targets.
+- [Matbench Lightweight Tuning](examples/CT-SCD_matbench/README.md): Finetuning example on periodic materials.
+
 ## Constraints
+
+- **Environments**: Scripts require the `scd-agent` Conda environment. Each code block MUST specify the environment.
 
 - `train.py` always creates a `WandbLogger`.
 - For finetuning runs, `train.py` derives the W&B project from the config `dataset` field, currently as `SCD_bench_{dataset}`.
@@ -167,3 +178,12 @@ Treat live stdout visibility as general guidance for SCD runs, not just these ex
 - If GPU availability is unclear, rerun `nvidia-smi` outside any restrictive sandbox before concluding that CUDA is unavailable.
 - If the workstation is shared, check `nvidia-smi` memory use and active compute processes before choosing devices. A GPU with near-zero utilization but several GiB already allocated may still belong to another live job.
 - `wandb status` may be inconclusive even when online login works through `~/.netrc`. If you need certainty, run a tiny online `wandb.init(..., mode="online")` probe or observe the live W&B login lines during a real run.
+
+## References
+
+- SelfConditionedDenoisingAtoms reference implementation.
+
+---
+
+**Author:** Ty Perez  
+**Contact:** [tyjperez@gmail.com](mailto:tyjperez@gmail.com)
