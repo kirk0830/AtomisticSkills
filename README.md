@@ -115,8 +115,7 @@ Stability ($E_{hull}$), phase diagrams, phonons, QHA thermal expansion, equation
 Synthesis recommendation from text-mined literature, XRD spectrum calculation, Pourbaix diagrams, protein preparation, molecular docking (AutoDock Vina), ADMET prediction, and molecular fingerprints.
 
 ### 5. Machine Learning Tools
-MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuning & benchmarking, foundation potential selection guide, cluster expansion training, and atomic feature extraction. **MLIP model registry** for cross-project checkpoint discovery and reuse (`search_model_registry` / `register_model` MCP tools). **Committee uncertainty quantification** to flag out-of-distribution structures for DFT verification.
-
+MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuning & benchmarking, foundation potential selection guide, cluster expansion training, and atomic feature extraction.
 ---
 
 ## Quick Start & Setup
@@ -130,7 +129,9 @@ AtomisticSkills is designed to be installed and operated by AI agents. For the f
    ```
 2. **Open the repository** as a workspace in your preferred agentic IDE (e.g., Cursor, Claude Code, Roo, Antigravity, VS Code).
 3. **Ask the agent to install AtomisticSkills for you**:
-   > "Install AtomisticSkills according to its `docs/setup.md` guide."
+   ```text
+   Install AtomisticSkills according to its `docs/setup.md` guide.
+   ```
 
 The agent will read the [**Setup Guide (`docs/setup.md`)**](docs/setup.md) and interactively guide you through creating environments, configuring API keys, and registering MCP servers.
 
