@@ -1004,6 +1004,7 @@
     <div class="hero-buttons"
       style="display: flex; gap: .875rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem;">
       <a class="btn-primary" href="#skills" id="browse-skills-btn">Browse 99+ Skills ↓</a>
+      <a class="btn-primary" href="#install" id="install-btn">Install</a>
       <a class="btn-secondary" href="https://github.com/bowen-bd/AtomisticSkills" target="_blank">⭐ Star on GitHub</a>
     </div>
   </section>
@@ -1482,29 +1483,37 @@
 
   <!-- INSTALL -->
   <section class="section" id="install">
-    <div class="section-header">
-      <div class="section-tag">Quick Start</div>
+    <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
+      <div class="section-tag" style="justify-content: center;">Quick Start</div>
       <h2>Get Started in Minutes</h2>
-      <p class="section-desc">Install only the environments you need for your research tasks.</p>
+      <p class="section-desc" style="margin: 0 auto; max-width: 600px;">
+        AtomisticSkills is designed to work directly with agentic IDEs. Follow these simple steps:
+      </p>
     </div>
-    <div class="install-box">
-      <div class="install-header">
-        <span class="dot-r"></span><span class="dot-y"></span><span class="dot-g"></span>
-        <span style="color:#64748b;font-size:0.8rem;margin-left:8px;font-family:'JetBrains Mono',monospace">bash</span>
+    
+    <div class="install-box" style="margin: 0 auto; max-width: 750px; text-align: left; background: var(--bg2); padding: 2.5rem; border-radius: 12px; border: 1px solid var(--border);">
+      <ol style="color: var(--text); padding-left: 1.5rem; line-height: 1.8; font-size: 1.05rem;">
+        <li style="margin-bottom: 1.5rem;">
+          <strong>Clone the repository</strong>:
+          <pre style="position: relative; margin-top: 0.8rem; background: #f8fafc; color: #334155; border: 1px solid var(--border); padding: 1rem; padding-right: 3rem; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;"><span style="color: #10b981; font-weight: 600;">git clone</span> <span style="color: #94a3b8;">git@github.com:bowen-bd/AtomisticSkills.git && cd AtomisticSkills</span><button onclick="navigator.clipboard.writeText('git clone git@github.com:bowen-bd/AtomisticSkills.git && cd AtomisticSkills'); this.innerText = '✅'; setTimeout(() => { this.innerText = '📋' }, 2000)" style="position: absolute; right: 10px; top: 12px; background: transparent; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" title="Copy to clipboard">📋</button></pre>
+        </li>
+        <li style="margin-bottom: 1.5rem;">
+          <strong>Open the repository as a project in an agentic IDE</strong> (e.g., Cursor, Claude Code, Roo, Antigravity, VS Code, etc.).
+        </li>
+        <li>
+          <strong>Ask the agent to install AtomisticSkills for you.</strong>
+          <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 0.8rem; border: 1px solid var(--border);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="background: var(--accent); color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; box-shadow: 0 2px 5px rgba(129, 108, 255, 0.3);">👤</div>
+              <div style="font-family: 'Inter', sans-serif; font-size: 0.95rem; color: var(--text); font-weight: 500;">Install AtomisticSkills according to its docs/setup.md guide</div>
+            </div>
+            <button onclick="navigator.clipboard.writeText('Install AtomisticSkills according to its docs/setup.md guide'); this.innerText = '✅'; setTimeout(() => { this.innerText = '📋' }, 2000)" style="background: transparent; border: none; cursor: pointer; font-size: 1.1rem; opacity: 0.5; transition: opacity 0.2s; flex-shrink: 0;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" title="Copy to clipboard">📋</button>
+          </div>
+        </li>
+      </ol>
+      <div style="margin-top: 2rem; display: flex; justify-content: center;">
+        <a style="font-size: 0.95rem; color: #64748b; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='#64748b'" href="setup.html">Prefer manual installation? View setup guide →</a>
       </div>
-      <pre><span class="c"># Clone the repository</span>
-<span class="k">git clone</span> git@github.com:bowen-bd/AtomisticSkills.git && cd AtomisticSkills
-
-<span class="c"># Auto-patch paths for your machine</span>
-<span class="k">python</span> configure_mcp.py
-
-<span class="c"># Install only the envs you need</span>
-<span class="k">bash</span> conda-envs/base-agent/install.sh
-<span class="k">bash</span> conda-envs/mace-agent/install.sh    <span class="c"># MACE models</span>
-<span class="k">bash</span> conda-envs/matgl-agent/install.sh   <span class="c"># MatGL / CHGNet</span>
-
-<span class="c"># Add credentials to ~/.atomistic_skills.yaml</span>
-<span class="k">echo</span> 'MP_API_KEY: your_key_here' >> ~/.atomistic_skills.yaml</pre>
     </div>
   </section>
 
@@ -1525,8 +1534,9 @@
   <script>
 
     const GUIDES = [
+      { id: "setup", title: "Quick Start & Setup", desc: "Interactive agent-ready setup flow and environment installation guide.", icon: "🚀" },
       { id: "developer_guide", title: "Developer Guide", desc: "Best practices for implementing modular research skills and tools.", icon: "🛠️" },
-      { id: "environment_variables", title: "Environment Setup", desc: "Configuration guide for Materials Project keys and custom MLIP backend paths.", icon: "⚙️" },
+      { id: "environment_variables", title: "Environment Variables", desc: "Configuration guide for Materials Project keys and custom MLIP backend paths.", icon: "⚙️" },
       { id: "visualize_structure", title: "Structure Visualization", desc: "How to generate high-quality publications-ready crystal and molecule renders.", icon: "🎨" }
     ];
 

@@ -126,123 +126,23 @@ MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuni
 
 ---
 
-## Environment Setup
-The project uses separate MCP servers running in different conda environments to manage conflicting MLIP dependencies.
+## Quick Start & Setup
 
-| MCP Server | Conda Environment | Purpose |
-|------------|-------------------|---------|
-| `base` | `base-agent` | Materials Project queries, VASP I/O, structure visualization |
-| `mace` | `mace-agent` | MACE models (MP, OMAT, MATPES, Multi-Head) |
-| `matgl` | `matgl-agent` | MatGL models (CHGNet, M3GNet, TensorNet), bandgap prediction |
-| `fairchem` | `fairchem-agent` | FairChem models (UMA, ESEN) |
-| `atomate2` | `atomate2-agent` | Remote DFT job management via Jobflow-remote |
-| `smol` | `smol-agent` | Cluster expansion training and Monte Carlo |
-| `drugdisc` | `drugdisc-agent` | Drug discovery tools (ADMET, fingerprints, docking prep) |
-| `mattergen` | `mattergen-agent` | MatterGen generative crystal design |
+AtomisticSkills is designed to be installed and operated by AI agents. For the fastest onboarding, follow these steps:
 
-> [!TIP]
-> You only need to install the environments for the MCP servers you plan to use. For example, if you only work with MACE and Materials Project queries, install `base-agent` and `mace-agent` only.
+1. **Clone the repository**:
+   ```bash
+   git clone git@github.com:bowen-bd/AtomisticSkills.git
+   cd AtomisticSkills
+   ```
+2. **Open the repository** as a workspace in your preferred agentic IDE (e.g., Cursor, Claude Code, Roo, Antigravity, VS Code).
+3. **Ask the agent to install AtomisticSkills for you**:
+   > "Install AtomisticSkills according to its `docs/setup.md` guide."
 
-### Installation
-```bash
-# Clone the repository
-git clone git@github.com:bowen-bd/AtomisticSkills.git
-cd AtomisticSkills
-
-# Patch mcp_config.json with your local paths
-python configure_mcp.py
-
-# Setup environments (run only the ones you need)
-bash conda-envs/base-agent/install.sh
-bash conda-envs/mace-agent/install.sh
-bash conda-envs/matgl-agent/install.sh
-bash conda-envs/fairchem-agent/install.sh
-bash conda-envs/atomate2-agent/install.sh
-bash conda-envs/smol-agent/install.sh
-bash conda-envs/drugdisc-agent/install.sh
-bash conda-envs/mattergen-agent/install.sh
-bash conda-envs/scd-agent/install.sh
-bash conda-envs/orca-agent/install.sh
-```
-
----
-
-## Configuration & API Keys
-
-### 1. Global Configuration
-The agent is configured via environment variables or a YAML configuration file.
-Recommended: Create `~/.atomistic_skills.yaml` in your home directory.
-
-**Example `~/.atomistic_skills.yaml`:**
-```yaml
-# Materials Project API Key (Required for base-server)
-MP_API_KEY: "your_mp_api_key_here"
-
-# Atomate2 Remote Project (Required for remote job monitoring)
-ATOMATE2_REMOTE_PROJECT: "remote_perlmutter"
-
-#Required for running molecular DFT calculations with ORCA
-ORCA_BINARY_PATH: /path/to/orca_directory/orca
-```
-
-### 2. Environment Variables
-Alternatively, set variables in your shell (takes precedence over YAML):
-```bash
-export MP_API_KEY="your_key"
-export ATOMATE2_REMOTE_PROJECT="remote_perlmutter"
-export ORCA_BINARY_PATH="/path/to/orca_directory/orca"
-```
-
----
-
-## Server-Specific Setup
-
-This project runs as a collection of MCP servers. Some require specific setup:
-
-### 1. [base-server](src/mcp_server/base_server.py)
-*   **Purpose**: Querying structure databases (Materials Project) and VASP I/O.
-*   **Requirements**: `MP_API_KEY` must be set.
-
-### 2. [atomate2](src/mcp_server/atomate2_server.py)
-*   **Purpose**: Managing remote VASP calculations and workflows.
-*   **Requirements**:
-    *   `ATOMATE2_REMOTE_PROJECT` env var (e.g., `remote_perlmutter`).
-    *   SSH Setup for NERSC (sshproxy).
-    *   **Detailed Setup Guide**: [Remote Worker Setup (NERSC)](conda-envs/atomate2-agent/atomate2_remote_worker_setup.md)
-
-### 3. MLIP Agents (Mace, MatGL, FairChem)
-*   **Purpose**: Running ML potentials.
-*   **Requirements**: [MLIP Environment Rules](.agents/rules/mcp-environments.md).
-    *   These agents run in isolated conda environments.
-    *   [MACE Setup](conda-envs/mace-agent/README.md)
-    *   [MatGL Setup](conda-envs/matgl-agent/README.md)
-    *   [FairChem Setup](conda-envs/fairchem-agent/README.md)
-    *   [Smol Setup](conda-envs/smol-agent/README.md)
-
-### MCP Server Configuration
-The project is configured to run as a set of MCP servers. The base configuration is provided in [mcp_config.json](mcp_config.json).
-
-#### Adapting Paths to Your Machine
-The shipped `mcp_config.json` contains placeholder paths. Run the configure script to rewrite all `command` and `PYTHONPATH` entries to match your local setup:
-
-```bash
-# Auto-detects your conda/mamba base directory
-python configure_mcp.py
-
-# Or provide the conda base path explicitly
-python configure_mcp.py /path/to/miniforge3
-```
-
-#### Integrating with Antigravity
-To use these tools within Antigravity, you need to merge the server configurations into your local Antigravity MCP config:
-
-1. Locate your Antigravity MCP configuration file (typically at `~/.gemini/antigravity/mcp_config.json`).
-2. Copy the `mcpServers` definitions from this project's [mcp_config.json](mcp_config.json).
-3. Paste them into your local configuration file.
-4. Restart Antigravity to load the new tools.
+The agent will read the [**Setup Guide (`docs/setup.md`)**](docs/setup.md) and interactively guide you through creating environments, configuring API keys, and registering MCP servers.
 
 > [!TIP]
-> If you skip `configure_mcp.py`, ensure the `PYTHONPATH` in the `env` section of each server points to your absolute project path (e.g., `/path/to/AtomisticSkills`).
+> **Prefer manual installation?** If you want to configure everything yourself without an agent, read the [**Setup Guide (`docs/setup.md`)**](docs/setup.md) for full manual instructions.
 
 ---
 
@@ -262,13 +162,11 @@ See [docs/developer_guide.md](docs/developer_guide.md) for architecture details,
 
 ---
 
-## Best Practice for Users
+## Best Practices for Users
 
-1. Fork this repo and clone to local (preferable on a machine with local GPU resources so cheap MLIP tasks can be executed locally).
-2. Open this repo through opening a new project in agentic IDEs like Antigravity / Cursor / Claude Code.
-3. Setup conda envs, MCPs, make sure the agentic IDEs have access to the MCP tools, rules and SKILLs.
-4. For customization, add your own SKILL / MCP tool / and Workflow to the project.
-5. If you think your own tool / SKILL is beneficial (this requires the tool and implementation to be clean and open-sourced) to the public, please make a PR to the main branch. We will acknowledge all contributors.
+1. **Leverage Local GPUs**: We highly recommend running the framework on a machine with local GPU resources so MLIP tasks can evaluate quickly without external compute costs.
+2. **Customize**: Add your own specialized SKILLs, MCP tools, and Workflows directly to the project structure to tailor it to your research needs.
+3. **Contribute Back**: If you develop a robust, generalized tool or SKILL, please submit a PR to the main branch! We actively acknowledge all open-source contributors.
 
 ---
 
