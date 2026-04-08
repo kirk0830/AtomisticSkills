@@ -116,6 +116,7 @@ Synthesis recommendation from text-mined literature, XRD spectrum calculation, P
 
 ### 5. Machine Learning Tools
 MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuning & benchmarking, foundation potential selection guide, cluster expansion training, and atomic feature extraction.
+
 ---
 
 ## Quick Start & Setup
