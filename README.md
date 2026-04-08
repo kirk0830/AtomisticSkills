@@ -3,9 +3,9 @@
 ![AtomisticSkills Logo](logo/atomisticskills_logo.png)
 
 ## Overview
-**AtomisticSkills** is a composable framework for AI-driven atomistic materials research. Built on the **hierarchical decomposition** of complex scientific tasks into **Workflows** → **Skills** → **Tools**, it enables coding AI agents to autonomously conduct multi-stage materials simulations by combining modular, reusable capabilities.
+**AtomisticSkills** is a composable framework for AI-driven atomistic materials research. Built on the **hierarchical decomposition** of complex scientific tasks into **Workflows** → **Skills** → **Tools**, it enables coding AI agents to autonomously conduct multi-stage materials, chemistry, and drug discovery research by combining modular, reusable capabilities.
 
-The framework integrates state-of-the-art Machine Learning Interatomic Potentials (MLIPs) with DFT calculations, data augmentation, and property calculations through the Model Context Protocol (MCP), making advanced materials research accessible to AI copilots like Google Antigravity, Cursor, and Claude Code.
+The framework integrates state-of-the-art Machine Learning Interatomic Potentials (MLIPs), DFT calculations, generative AI, database APIs, and advanced simulation methods through the Model Context Protocol (MCP) tools and Skills, making advanced materials research accessible to AI copilots like Google Antigravity, Cursor, and Claude Code.
 
 
 
@@ -35,7 +35,7 @@ Tools are **strictly structured, fundamental operations** exposed as Python func
    - Structure relaxation (geometry optimization)
    - Molecular dynamics (NVT, NPT, NVE ensembles)
    - Monte Carlo simulation (cluster expansion)
-   - MLIP fine-tuning and prediction
+   - MLIP simulation
    - DFT input preparation and output parsing
 
 2. **Skill-Specific Scripts** (Specialized helpers):
@@ -56,19 +56,12 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 - **Self-Documented**: Each skill includes instructions (`SKILL.md`), helper scripts, and examples
 
 **Examples:**
-- Calculate 0K thermodynamic stability of a material
-- Fine-tune a machine learning interatomic potential
-- Compute ionic diffusion coefficients from MD trajectories
-- Calculate melting temperature via solid-liquid coexistence
-
-**Featured Skills:**
 - [**MLIP Training**](.agents/skills/ml-mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
-- [**Committee Uncertainty**](.agents/skills/ml-committee-uncertainty/SKILL.md): Quantify MLIP prediction uncertainty with ensemble models; flag structures for DFT
-- [**Melting Point**](.agents/skills/mat-melting-point/SKILL.md): Calculate melting temperature via solid-liquid coexistence
 - [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
 - [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
-- [**Raman Spectra**](.agents/skills/mat-raman-spectra/SKILL.md): Raman-active mode identification and spectrum simulation from MLIP phonons
-- [**Grain Boundary Energy**](.agents/skills/mat-grain-boundary/SKILL.md): Calculate γ_GB for CSL tilt/twist boundaries; plot energy vs. misorientation angle
+- [**Molecular Docking**](.agents/skills/drug-docking-vina/SKILL.md): Dock small-molecule ligands into a protein receptor using AutoDock Vina
+- [**Gas Sorption**](.agents/skills/chem-sorption-gcmc/SKILL.md): Calculate gas adsorption isotherms via Grand Canonical Monte Carlo (GCMC) simulations
+
 
 ---
 
@@ -150,9 +143,9 @@ The agent will read the [**Setup Guide (`docs/setup.md`)**](docs/setup.md) and i
 This project is optimized for use with coding AI copilots like **Antigravity**. It includes specialized instructions and pre-defined workflows to automate complex research tasks.
 
 ### The `.agents/` Directory
-- **Rules (`.agents/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Antigravity automatically parses these to ensure all simulations and code follow best practices.
-- **Workflows (`.agents/workflows/`)**: Defines standardized research procedures (e.g., calculating melting points or fine-tuning alloys). Antigravity can execute these step-by-step, managing the complex transitions between different conda environments and simulation stages.
-- **Skills (`.agents/skills/`)**: Modular, reusable capabilities for complex tasks like melting point calculations, diffusion analysis, and MLIP training. Each skill is self-documented with instructions, scripts, and resources.
+- **Rules (`.agents/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Coding agents automatically parse these to ensure all simulations and code follow best practices.
+- **Skills (`.agents/skills/`)**: Modular, reusable capabilities, typically at the scale of a single research task (e.g., calculate material's stability). Each skill is self-documented with instructions, scripts, and resources.
+- **Workflows (`.agents/workflows/`)**: Defines high level research procedures (e.g., workflow to design a new material). Coding agents can execute these step-by-step, managing the complex transitions between different conda environments and simulation stages.
 
 ---
 
