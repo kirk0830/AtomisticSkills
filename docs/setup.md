@@ -3,7 +3,7 @@
 Guide the user step-by-step through setting up AtomisticSkills.
 
 ## Step 1: Clone the Repository
-Ask the user to run this in their terminal:
+Ask the user to run this in their terminal *(Optional: Ask them to fork the repository first if they plan to contribute, and clone their fork instead)*:
 
 ```bash
 git clone git@github.com:bowen-bd/AtomisticSkills.git

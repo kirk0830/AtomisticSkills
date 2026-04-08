@@ -124,6 +124,7 @@ MatterGen (generative crystal design), MEGNet bandgap prediction, MLIP fine-tuni
 AtomisticSkills is designed to be installed and operated by AI agents. For the fastest onboarding, follow these steps:
 
 1. **Clone the repository**:
+   *(Optional: Fork the repository on GitHub first if you plan to contribute, then clone your fork instead)*
    ```bash
    git clone git@github.com:bowen-bd/AtomisticSkills.git
    cd AtomisticSkills
