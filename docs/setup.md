@@ -97,6 +97,11 @@ Finally, copy the patched MCP settings into their AI copilot's configuration fil
 
 If they set up a MLIP (e.g., MACE): "Predict the forces and energy for this LiFePO4 structure using the MACE model."
 
+## Best Practices for Users
+- **Leverage Local GPUs**: We highly recommend running the framework on a machine with local GPU resources so MLIP tasks can evaluate quickly without external compute costs.
+- **Customize**: Add your own specialized SKILLs, MCP tools, and Workflows directly to the project structure to tailor it to your research needs.
+- **Contribute Back**: If you develop a robust, generalized tool or SKILL, please submit a PR to the main branch! We actively acknowledge all open-source contributors.
+
 ## Common Issues
 | Issue | Fix |
 |-------|-----|
