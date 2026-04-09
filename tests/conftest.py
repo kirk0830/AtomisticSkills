@@ -64,7 +64,8 @@ def skip_if_wrong_env(request, current_env):
         'diffcsp': 'diffcsp-agent',
         'adit': 'adit-agent',
         'mattergen': 'mattergen-agent',
-        'smol': 'smol-agent'
+        'smol': 'smol-agent',
+        'orca': 'orca-agent-test'
     }
     
     for marker, required_env in env_map.items():

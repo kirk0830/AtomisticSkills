@@ -116,6 +116,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--device", type=str, default="auto", help="Device string (e.g. 'cuda', 'cpu', 'auto').")
     p.add_argument("--model-tag", type=str, default=None, help="Model tag for metadata.")
     p.add_argument("--output", "-o", type=Path, default=None, help="Output JSON path (default: output_dir/gcmc_results.json)")
+    p.add_argument("--keep-intermediates", action="store_true", help="Keep intermediate .log, .traj, and .npy files instead of deleting them.")
     return p.parse_args()
 
 
@@ -339,17 +340,18 @@ def main() -> int:
     LOGGER.info("Wrote %s", gcmc_json_path)
 
     # Remove traj/log and .npy intermediates; keep JSON and PNGs (nmols.png, energy.png)
-    for p in (
-        traj_path,
-        log_path,
-        out_dir / "nmols.npy",
-        out_dir / "energy.npy",
-    ):
-        try:
-            if p is not None and p.exists():
-                p.unlink()
-        except Exception as e:
-            LOGGER.warning("Could not remove %s: %s", p, e)
+    if not args.keep_intermediates:
+        for p in (
+            traj_path,
+            log_path,
+            out_dir / "nmols.npy",
+            out_dir / "energy.npy",
+        ):
+            try:
+                if p is not None and p.exists():
+                    p.unlink()
+            except Exception as e:
+                LOGGER.warning("Could not remove %s: %s", p, e)
 
     return 0
 
