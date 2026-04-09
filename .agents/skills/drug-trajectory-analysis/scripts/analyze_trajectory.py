@@ -29,7 +29,36 @@ import numpy as np
 
 import MDAnalysis as mda
 from MDAnalysis.analysis import align, rms
-import MDAnalysis.transformations as trans
+
+
+def make_ligand_whole_minimum_image(universe: mda.Universe, ligand_sel: str) -> None:
+    """On-the-fly transformation: place ligand near protein using minimum image.
+
+    For each frame, shifts each ligand atom by the box vector that puts it
+    closest to the protein center of mass. This fixes PBC wrapping without
+    needing bond topology (which trans.unwrap requires).
+    """
+    protein_ca = universe.select_atoms("protein and name CA")
+    ligand = universe.select_atoms(ligand_sel)
+
+    class MinImageLigand(object):
+        def __init__(self, protein_ca, ligand):
+            self.protein_ca = protein_ca
+            self.ligand = ligand
+
+        def __call__(self, ts):
+            box = ts.dimensions[:3]
+            if box is None or np.any(box == 0):
+                return ts
+            prot_com = self.protein_ca.center_of_mass()
+            lig_pos = self.ligand.positions.copy()
+            for i in range(3):
+                diff = lig_pos[:, i] - prot_com[i]
+                lig_pos[:, i] -= box[i] * np.round(diff / box[i])
+            self.ligand.positions = lig_pos
+            return ts
+
+    universe.trajectory.add_transformations(MinImageLigand(protein_ca, ligand))
 
 
 def compute_ligand_rmsd(
@@ -60,7 +89,7 @@ def compute_ligand_rmsd(
         results.append({
             "frame": int(row[0]),
             "time_ps": round(float(row[1]), 4),
-            "rmsd_angstrom": round(float(row[3]), 4),  # column 3 = first groupselection
+            "rmsd_angstrom": round(float(row[3]), 4),
         })
 
     return results
@@ -73,16 +102,19 @@ def compute_ligand_com(
 ) -> List[Dict]:
     """Compute ligand COM displacement relative to protein backbone COM.
 
-    Reports the distance between ligand and protein backbone centers of
-    mass each frame, removing the effect of whole-system translation.
+    Uses minimum-image convention so PBC wrapping does not produce
+    spurious large distances.
     """
     ligand = universe.select_atoms(ligand_sel)
     protein_bb = universe.select_atoms("protein and backbone")
     results = []
     for i, ts in enumerate(universe.trajectory[skip:]):
+        box = ts.dimensions[:3]
         lig_com = ligand.center_of_mass()
         prot_com = protein_bb.center_of_mass()
         rel = lig_com - prot_com
+        if box is not None and np.all(box > 0):
+            rel -= box * np.round(rel / box)
         results.append({
             "frame": i + skip,
             "time_ps": ts.time,
@@ -510,16 +542,11 @@ def main() -> None:
     n_frames = len(u.trajectory)
     print(f"Trajectory: {n_frames} frames")
 
-    # Make molecules whole under periodic boundary conditions.
-    # OpenMM DCD wraps coordinates by default, so molecules near box
-    # edges can be split across images. This must be fixed before
-    # RMSD/RMSF analysis.
-    protein_and_ligand = u.select_atoms(f"protein or ({ligand_sel})")
-    workflow = [
-        trans.unwrap(protein_and_ligand),
-    ]
-    u.trajectory.add_transformations(*workflow)
-    print("Applied PBC unwrapping transformation.")
+    # Fix PBC wrapping: place ligand near protein using minimum image convention.
+    # trans.unwrap() requires bond topology which is often missing for ligands
+    # from OpenMM DCD trajectories. The minimum-image approach is more robust.
+    make_ligand_whole_minimum_image(u, ligand_sel)
+    print("Applied minimum-image PBC correction for ligand.")
 
     # Ligand RMSD
     print("Computing ligand RMSD...")
