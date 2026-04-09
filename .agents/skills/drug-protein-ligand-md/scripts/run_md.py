@@ -26,6 +26,20 @@ import openmm.app as app
 import openmm.unit as unit
 
 
+def step_with_progress(simulation, total_steps: int, chunk: int = 10000, label: str = "") -> None:
+    """Run simulation steps with periodic progress to stdout."""
+    done = 0
+    while done < total_steps:
+        n = min(chunk, total_steps - done)
+        simulation.step(n)
+        done += n
+        state = simulation.context.getState(getEnergy=True)
+        temp_k = (2 * state.getKineticEnergy() / (simulation.system.getNumParticles() * 3 * unit.MOLAR_GAS_CONSTANT_R)).value_in_unit(unit.kelvin)
+        pe = state.getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
+        pct = 100 * done / total_steps
+        print(f"  {label} {done}/{total_steps} ({pct:.0f}%) T={temp_k:.1f} K  PE={pe:.0f} kJ/mol", flush=True)
+
+
 def select_platform() -> openmm.Platform:
     """Select the fastest available platform (CUDA > OpenCL > CPU)."""
     for name in ["CUDA", "OpenCL", "CPU"]:
@@ -83,6 +97,7 @@ def add_restraints(
 def run_md(
     system_xml_path: Path,
     input_pdb_path: Path,
+    state_xml_path: Path | None = None,
     temperature: float = 300.0,
     pressure: float = 1.0,
     timestep: float = 4.0,
@@ -111,6 +126,16 @@ def run_md(
     topology = pdb.topology
     positions = pdb.positions
 
+    if state_xml_path is not None and state_xml_path.exists():
+        print(f"Loading full-precision positions from {state_xml_path}...")
+        with open(state_xml_path, "r") as f:
+            state = openmm.XmlSerializer.deserialize(f.read())
+        positions = state.getPositions()
+        box = state.getPeriodicBoxVectors()
+        if box is not None:
+            system.setDefaultPeriodicBoxVectors(*box)
+        print("Using state XML positions (full precision) instead of PDB.")
+
     platform = select_platform()
     dt = timestep * unit.femtosecond
     temp = temperature * unit.kelvin
@@ -132,6 +157,10 @@ def run_md(
                     file=sys.stderr,
                 )
 
+    # Track box vectors across phases
+    box = topology.getPeriodicBoxVectors()
+    velocities = None
+
     # Add restraints for equilibration
     add_restraints(system, topology, positions, restraint_k)
 
@@ -143,10 +172,16 @@ def run_md(
             integrator.setRandomNumberSeed(seed)
         simulation = app.Simulation(topology, system, integrator, platform)
         simulation.context.setPositions(positions)
+        box = topology.getPeriodicBoxVectors()
+        if box is not None:
+            simulation.context.setPeriodicBoxVectors(*box)
         simulation.minimizeEnergy(maxIterations=minimize_steps)
 
-        state = simulation.context.getState(getPositions=True, getEnergy=True)
+        state = simulation.context.getState(
+            getPositions=True, getEnergy=True
+        )
         positions = state.getPositions()
+        box = state.getPeriodicBoxVectors()
         pe = state.getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
         print(f"Minimized PE: {pe:.1f} kJ/mol")
 
@@ -164,6 +199,8 @@ def run_md(
             integrator.setRandomNumberSeed(seed + 1)
         simulation = app.Simulation(topology, system, integrator, platform)
         simulation.context.setPositions(positions)
+        if box is not None:
+            simulation.context.setPeriodicBoxVectors(*box)
         simulation.context.setVelocitiesToTemperature(temp)
 
         nvt_log_path = output_dir / "nvt_equilibration.log"
@@ -179,9 +216,10 @@ def run_md(
             )
         )
 
-        simulation.step(equil_nvt_steps)
+        step_with_progress(simulation, equil_nvt_steps, chunk=5000, label="NVT")
         state = simulation.context.getState(getPositions=True)
         positions = state.getPositions()
+        box = state.getPeriodicBoxVectors()
         print("NVT equilibration complete.")
         del simulation, integrator
 
@@ -198,6 +236,8 @@ def run_md(
             integrator.setRandomNumberSeed(seed + 2)
         simulation = app.Simulation(topology, system, integrator, platform)
         simulation.context.setPositions(positions)
+        if box is not None:
+            simulation.context.setPeriodicBoxVectors(*box)
         simulation.context.setVelocitiesToTemperature(temp)
 
         npt_log_path = output_dir / "npt_equilibration.log"
@@ -215,13 +255,14 @@ def run_md(
 
         # Run half with full restraints, half with reduced restraints
         half = equil_npt_steps // 2
-        simulation.step(half)
+        step_with_progress(simulation, half, chunk=5000, label="NPT-restrained")
         simulation.context.setParameter("k", restraint_k * 0.1)
-        simulation.step(equil_npt_steps - half)
+        step_with_progress(simulation, equil_npt_steps - half, chunk=5000, label="NPT-releasing")
 
         state = simulation.context.getState(getPositions=True, getVelocities=True)
         positions = state.getPositions()
         velocities = state.getVelocities()
+        box = state.getPeriodicBoxVectors()
         print("NPT equilibration complete.")
         del simulation, integrator
 
@@ -241,6 +282,8 @@ def run_md(
             simulation.context.setState(openmm.XmlSerializer.deserialize(f.read()))
     else:
         simulation.context.setPositions(positions)
+        if box is not None:
+            simulation.context.setPeriodicBoxVectors(*box)
         if equil_npt_steps > 0:
             simulation.context.setVelocities(velocities)
         else:
@@ -270,7 +313,7 @@ def run_md(
         app.CheckpointReporter(str(chk_path), checkpoint_interval)
     )
 
-    simulation.step(production_steps)
+    step_with_progress(simulation, production_steps, chunk=25000, label="Production")
 
     final_state_path = output_dir / "final_state.xml"
     state = simulation.context.getState(
@@ -318,6 +361,7 @@ def main() -> None:
     )
     parser.add_argument("--system_xml", required=True, help="Serialized OpenMM System XML.")
     parser.add_argument("--input_pdb", required=True, help="Solvated complex PDB (topology).")
+    parser.add_argument("--state_xml", default=None, help="Initial state XML for full-precision positions and box vectors.")
     parser.add_argument("--temperature", type=float, default=300.0, help="Temperature in K (default: 300).")
     parser.add_argument("--pressure", type=float, default=1.0, help="Pressure in atm (default: 1.0).")
     parser.add_argument("--timestep", type=float, default=4.0, help="Timestep in fs (default: 4.0).")
@@ -344,10 +388,12 @@ def main() -> None:
         sys.exit(1)
 
     restart = Path(args.restart_from) if args.restart_from else None
+    state_xml = Path(args.state_xml) if args.state_xml else None
 
     run_md(
         system_xml_path=system_xml_path,
         input_pdb_path=input_pdb_path,
+        state_xml_path=state_xml,
         temperature=args.temperature,
         pressure=args.pressure,
         timestep=args.timestep,
