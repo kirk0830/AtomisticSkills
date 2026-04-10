@@ -17,3 +17,5 @@ dependencies:
     - dimorphite_dl
     - requests
     - matplotlib
+    - posebusters
+    - MDAnalysis
