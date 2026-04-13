@@ -32,7 +32,7 @@ echo "Installing pip dependencies with uv..."
 uv pip install -r uv_requirements.txt
 
 # Clone VOID library
-VOID_DIR="$HOME/projects/atomistic_skills/VOID"
+VOID_DIR="$HOME/projects/AtomisticSkills/VOID"
 if [ ! -d "$VOID_DIR" ]; then
     echo "Cloning VOID repository to $VOID_DIR ..."
     git clone https://github.com/learningmatter-mit/VOID.git "$VOID_DIR"

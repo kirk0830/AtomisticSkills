@@ -1,10 +1,10 @@
 ---
-name: mat-docking-void
+name: chem-docking-void
 description: Dock small-molecule guests into a porous host material using the VOID library (Voronoi Clustering), generating multiple 3D conformers with RDKit and ranking generated complexes.
-category: [materials, chem-docking]
+category: [materials, chemistry]
 ---
 
-# mat-docking-void
+# chem-docking-void
 
 ## Goal
 To perform molecular docking of a small-molecule ligand into a porous material structure (CIF format) using the **VOID** library. This skill aims to automatically generate a robust sampling of guest conformers using RDKit, optimize them, and then distribute them throughout the host framework using Voronoi-based cluster sampling and physics-informed collision filtering.
@@ -26,7 +26,7 @@ A standard run accepts the chemical inputs and saves outputs to a designated fol
 
 ```bash
 # Env: atomistic-agent
-python .agents/skills/mat-docking-void/scripts/run_docking.py \
+python .agents/skills/chem-docking-void/scripts/run_docking.py \
   --smiles "CC12C3C4C5C6C1C7C2C3C4C5C67" \
   --host_cif /path/to/host/material.cif \
   --output_dir output/docked_poses \
@@ -39,7 +39,7 @@ python .agents/skills/mat-docking-void/scripts/run_docking.py \
 The clustering map and acceptance rates are highly sensitive to VOID's search parameters. Use the advanced arguments for dense loading or strict spatial tolerances:
 
 ```bash
-python .agents/skills/mat-docking-void/scripts/run_docking.py \
+python .agents/skills/chem-docking-void/scripts/run_docking.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --host_cif /path/to/host/MOF.cif \
   --output_dir output/docked_poses \

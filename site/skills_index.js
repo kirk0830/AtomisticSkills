@@ -81,6 +81,17 @@ window.SKILLS_DATA = [
     "num_examples": 0
   },
   {
+    "id": "chem-docking-void",
+    "name": "chem-docking-void",
+    "description": "Dock small-molecule guests into a porous host material using the VOID library (Voronoi Clustering), generating multiple 3D conformers with RDKit and ranking generated complexes.",
+    "category": [
+      "materials",
+      "chemistry"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "chem-hazard-toxicity",
     "name": "chem-hazard-toxicity",
     "description": "Extract explicit safety warnings, GHS classifications, and LD50 profiles from PubChem PUG VIEW.",
@@ -237,9 +248,29 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "drug-binding-site-definition",
+    "name": "drug-binding-site-definition",
+    "description": ">",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "drug-bioactivity-assay",
     "name": "drug-bioactivity-assay",
     "description": "Fetch biological assays and target proteins a chemical has been tested against via PubChem.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "drug-complex-system-builder",
+    "name": "drug-complex-system-builder",
+    "description": ">",
     "category": [
       "drug-discovery"
     ],
@@ -277,6 +308,16 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "drug-docking-analysis",
+    "name": "drug-docking-analysis",
+    "description": "Post-docking analysis of virtual screening results including score distributions, enrichment metrics (ROC AUC, enrichment factors), and ligand efficiency calculations.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "drug-docking-vina",
     "name": "drug-docking-vina",
     "description": "Dock small-molecule ligands into a protein receptor using AutoDock Vina (Python API) and save ranked poses + docking metadata for reproducible virtual screening.",
@@ -297,9 +338,39 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "drug-mmgbsa",
+    "name": "drug-mmgbsa",
+    "description": "Compute single-trajectory MM-GBSA binding free energy estimates from a protein-ligand MD trajectory using OpenMM GBn2 implicit solvent.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "drug-molecular-fingerprints",
     "name": "drug-molecular-fingerprints",
     "description": "Compute Morgan/ECFP fingerprints, Tanimoto similarity, and optional Butina clusters/heatmaps for small-molecule comparison.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "drug-pose-validation",
+    "name": "drug-pose-validation",
+    "description": "Validate docked or generated ligand poses for physical plausibility using PoseBusters, filtering out chemically invalid or clashing poses before downstream refinement.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "drug-protein-ligand-md",
+    "name": "drug-protein-ligand-md",
+    "description": "Run a protein-ligand MD simulation in OpenMM with energy minimization, restrained equilibration, and production NPT, producing trajectory and checkpoint files for downstream analysis.",
     "category": [
       "drug-discovery"
     ],
@@ -317,9 +388,29 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "drug-redocking-rmsd",
+    "name": "drug-redocking-rmsd",
+    "description": "Compute symmetry-corrected heavy-atom RMSD between docked poses and a reference crystal ligand to validate docking protocols.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
     "id": "drug-retrosynthesis",
     "name": "drug-retrosynthesis",
     "description": "Predict synthetic accessibility and retrosynthetic pathways for novel molecules using the IBM RXN API.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "drug-trajectory-analysis",
+    "name": "drug-trajectory-analysis",
+    "description": "Analyze a protein-ligand MD trajectory to compute ligand RMSD, pocket RMSF, hydrogen bonds, contact occupancy, and protein-ligand interaction fingerprints over time.",
     "category": [
       "drug-discovery"
     ],
@@ -1126,6 +1217,11 @@ window.SKILLS_DATA = [
 ];
 window.WORKFLOWS_DATA = [
   {
+    "id": "drug-hit-finding-htvs",
+    "title": "Drug Hit Finding Htvs",
+    "description": "An end-to-end workflow for noncovalent, small-molecule structure-based virtual screening, from target retrieval through docking, pose validation, MD refinement, and ADMET filtering to identify drug-like hits."
+  },
+  {
     "id": "generative-halide-discovery",
     "title": "Generative Halide Discovery",
     "description": "An end-to-end generative AI workflow for discovering novel high-conductivity solid-state electrolytes (SSEs), specifically mapped for halide lithium-ion conductors."
@@ -1167,9 +1263,9 @@ window.WORKFLOWS_DATA = [
   }
 ];
 window.ATOMISTIC_STATS = {
-  "skills": 109,
+  "skills": 118,
   "tools": 48,
-  "servers": 17
+  "servers": 19
 };
 window.SERVER_TOOLS_COUNT = {
   "drugdisc": 5,

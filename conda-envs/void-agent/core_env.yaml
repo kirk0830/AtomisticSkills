@@ -9,8 +9,8 @@ dependencies:
   - numpy
   - scikit-learn
   - networkx
-  - zeopp-lsmo
   - rdkit
   
   - pip:
     - pymatgen
+    - zeopp-lsmo

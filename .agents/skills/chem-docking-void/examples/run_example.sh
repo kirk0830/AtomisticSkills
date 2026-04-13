@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Example script demonstrating how to use the mat-docking-void Skill
+# Example script demonstrating how to use the chem-docking-void Skill
 # This test docks N,N,N-trimethyladamantan-1-aminium (TMAda) into Chabazite (CHA).
 
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." &> /dev/null && pwd)"
 SCRIPT_PATH="$SKILL_DIR/scripts/run_docking.py"
 
 # We use the CHA.cif supplied in the original VOID repository examples
-CHA_CIF="/home/mrx/projects/atomistic_skills/VOID/examples/CHA_TMAda/CHA.cif"
+CHA_CIF="$HOME/projects/AtomisticSkills/VOID/examples/CHA_TMAda/CHA.cif"
 
 # The SMILES string for N,N,N-trimethyladamantan-1-aminium
 TMADA_SMILES="C[N+](C)(C)C12CC3CC(C1)CC(C2)C3"

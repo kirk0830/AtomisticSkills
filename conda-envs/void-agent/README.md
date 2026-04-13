@@ -1,5 +1,5 @@
 # `void-agent`
-This conda environment is specifically built to support the `VOID` library (Voronoi Organic-Inorganic Docker) and the `mat-docking-void` capability.
+This conda environment is specifically built to support the `VOID` library (Voronoi Organic-Inorganic Docker) and the `chem-docking-void` capability.
 
 ## Overview
 - **Python**: 3.10
