@@ -7,7 +7,7 @@ SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." &> /dev/null && pwd)"
 SCRIPT_PATH="$SKILL_DIR/scripts/run_docking.py"
 
 # We use the CHA.cif supplied in the original VOID repository examples
-CHA_CIF="$HOME/projects/AtomisticSkills/VOID/examples/CHA_TMAda/CHA.cif"
+CHA_CIF="./CHA.cif"
 
 # The SMILES string for N,N,N-trimethyladamantan-1-aminium
 TMADA_SMILES="C[N+](C)(C)C12CC3CC(C1)CC(C2)C3"
