@@ -418,6 +418,16 @@ window.SKILLS_DATA = [
     "num_examples": 1
   },
   {
+    "id": "general-arxiv-search",
+    "name": "general-arxiv-search",
+    "description": "Search and retrieve research papers from ArXiv API for scientific research.",
+    "category": [
+      "general"
+    ],
+    "has_examples": false,
+    "num_examples": 0
+  },
+  {
     "id": "general-chemical-literature",
     "name": "general-chemical-literature",
     "description": "Retrieve extensive literature (PubMed) and patent associated with a specific chemical compound via PubChem.",
@@ -1263,7 +1273,7 @@ window.WORKFLOWS_DATA = [
   }
 ];
 window.ATOMISTIC_STATS = {
-  "skills": 118,
+  "skills": 119,
   "tools": 48,
   "servers": 19
 };
