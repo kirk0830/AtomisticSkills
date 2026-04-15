@@ -471,11 +471,16 @@ def main() -> None:
 
     summary_path = args.output_dir / "analysis_summary.json"
     with open(summary_path, "w") as f:
-        summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(summary, f, indent=4)
 
     print(f"\nResults written to {args.output_dir}")
     print(json.dumps(summary, indent=4))
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(Path(args.output_dir) / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

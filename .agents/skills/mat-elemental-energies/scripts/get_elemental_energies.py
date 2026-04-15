@@ -49,11 +49,12 @@ def main():
     if results:
         print(json.dumps(results, indent=2))
 
-    # Save config for reproducibility
-    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
-    _pd = os.path.join(args.resources_dir, "params.json")
-    with open(_pd, "w") as _f:
-        json.dump(_config, _f, indent=2, default=str)
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    os.makedirs(args.resources_dir, exist_ok=True)
+    with open(os.path.join(args.resources_dir, "input_configs.yaml"), "w") as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()

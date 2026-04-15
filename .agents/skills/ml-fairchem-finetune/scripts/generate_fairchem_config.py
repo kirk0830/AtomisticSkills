@@ -221,12 +221,11 @@ def main():
     print(f"  cd {save_dir.absolute()}")
     print(f"  python {run_script_path.name} | tee fairchem_cli_output.log")
 
-    # Save config for reproducibility
-    _config = dict(vars(args))
-    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
-    _pd = output_dir
-    _pd.mkdir(parents=True, exist_ok=True)
-    (_pd / "params.json").write_text(json.dumps(_config, indent=2, default=str))
+    # Save input configs for reproducibility
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with open(output_dir / "input_configs.yaml", 'w') as _f:
+        yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()

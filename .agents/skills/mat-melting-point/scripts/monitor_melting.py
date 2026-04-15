@@ -186,11 +186,10 @@ if __name__ == "__main__":
     
     monitor_melting(args.log_path, analysis_window_ps=args.window, stability_duration_ps=args.stability_duration, stop_file=args.stop_file)
 
-    # Save config for reproducibility
+    # Save input configs for reproducibility
     from pathlib import Path as _P
-    import json as _json
-    _config = dict(vars(args))
-    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
-    _pd = _P('.')
-    _pd.mkdir(parents=True, exist_ok=True)
-    (_pd / "params.json").write_text(_json.dumps(_config, indent=2, default=str))
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    _P('.').mkdir(parents=True, exist_ok=True)
+    with open(_P('.') / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)

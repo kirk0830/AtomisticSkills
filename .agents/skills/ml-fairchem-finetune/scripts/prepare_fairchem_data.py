@@ -273,7 +273,6 @@ def main():
     
     metadata_path = save_dir / "dataset_metadata.json"
     with open(metadata_path, "w") as f:
-        metadata["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(metadata, f, indent=2)
     
     print("\n=======================================================")
@@ -284,6 +283,11 @@ def main():
     print("To generate training configs and start training, run:")
     print(f"  conda activate fairchem-agent")
     print(f"  python generate_fairchem_config.py --data-metadata {metadata_path.absolute()} --output-dir {save_dir.absolute()}")
+
+    # Save input configs for reproducibility
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(Path(args.output_dir) / "input_configs.yaml", 'w') as _f:
+        yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()

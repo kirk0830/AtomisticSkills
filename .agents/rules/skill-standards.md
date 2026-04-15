@@ -205,7 +205,7 @@ The required environment must be consistent across:
 - **Environments**: Always annotate code blocks with `# Env: <env-name>` and specify requirements in the Constraints section.
 - **Integration**: Prioritize existing MCP tools over custom code. If writing custom MLIP scripts, ALWAYS use `src.utils.mlips.loader.load_wrapper`.
 - **Validation & Documentation**: Embed verification steps, document expected outcomes, and use concrete, reproducible parameters in examples.
-- **Parameter Persistence**: Skill scripts that accept input kwargs and hyperparameters **must** save all input parameters to the same output directory where results are written (e.g., as a `config` key inside the results JSON, or as a separate `params.json`). This includes both user-specified values **and** the default values of any parameters that were not explicitly provided. This ensures results can be fully interpreted and reproduced in the future without re-inspecting the source code or command history.
+- **Parameter Persistence**: Skill scripts that accept input kwargs and hyperparameters **must** save all input parameters to a **separate `input_configs.yaml`** file in the same output directory where results are written. This file must capture both user-specified values **and** the default values of any parameters that were not explicitly provided. Do **not** embed configs inside JSON output files (e.g. as a `"config"` key). This ensures results remain clean and can be fully interpreted and reproduced in the future without re-inspecting the source code or command history.
 
 ## Skill Naming Conventions
 

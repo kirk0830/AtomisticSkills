@@ -107,7 +107,6 @@ def save_electronic_structure(data: Dict, output_path: str) -> None:
     output_path = Path(output_path)
     
     with open(output_path, 'w') as f:
-        data["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(data, f, indent=2, cls=MontyEncoder)
     
     print(f"✓ Saved electronic structure data to {output_path}")
@@ -227,6 +226,12 @@ Examples:
     except Exception as e:
         print(f"Error: {str(e)}", file=sys.stderr)
         sys.exit(1)
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(output_dir / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

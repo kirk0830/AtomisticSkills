@@ -163,7 +163,6 @@ def main():
     
     if args.output:
         with open(args.output, 'w', encoding='utf-8') as f:
-            results["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
             json.dump(results, f, indent=2, ensure_ascii=False)
         print(f"Saved {len(results)} results to {args.output}")
     else:
@@ -173,6 +172,12 @@ def main():
             print(f"    Authors: {', '.join(paper['authors'][:3])}{'...' if len(paper['authors']) > 3 else ''}")
             print(f"    ID: {paper['id']} | Published: {paper['published']}")
             print(f"    URL: {paper['url']}")
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(os.path.join(args.output, 'input_configs.yaml'), 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()

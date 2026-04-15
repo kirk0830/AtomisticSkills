@@ -170,14 +170,13 @@ def main():
     if not args.quiet:
         print(f"Kinetics plot  -> {plot_path}.png, {plot_path}.svg")
 
-    # Save config for reproducibility
+    # Save input configs for reproducibility
     from pathlib import Path as _P
-    import json as _json
-    _config = dict(vars(args))
-    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
-    _pd = _P(args.output_dir)
-    _pd.mkdir(parents=True, exist_ok=True)
-    (_pd / "params.json").write_text(_json.dumps(_config, indent=2, default=str))
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    _P(args.output_dir).mkdir(parents=True, exist_ok=True)
+    with open(_P(args.output_dir) / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

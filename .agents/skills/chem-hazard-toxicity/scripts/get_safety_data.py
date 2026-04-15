@@ -125,10 +125,15 @@ def main():
 
     output_path = out_dir / args.output
     with open(output_path, "w", encoding="utf-8") as f:
-        result_dict["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(result_dict, f, indent=4)
         
     print(f"\nResults saved to: {output_path}")
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(out_dir / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()

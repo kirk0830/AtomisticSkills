@@ -187,10 +187,15 @@ def main():
     # Save index
     index_path = output_dir / "defect_index.json"
     with open(index_path, "w") as f:
-        defect_index["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(defect_index, f, indent=2)
 
     print(f"\n✓ Saved {len(all_defects)} structures and index to {output_dir}")
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(output_dir / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

@@ -399,7 +399,6 @@ def main():
     }
     
     with open(summary_path, "w") as f:
-        final_output["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(final_output, f, indent=4)
         
     logger.info("="*60)
@@ -408,6 +407,12 @@ def main():
     logger.info(f"Global minimum energy: {min_energy:.4f} eV")
     logger.info(f"Results saved to: {args.output_dir}")
     logger.info("="*60)
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(os.path.join(args.output_dir, 'input_configs.yaml'), 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

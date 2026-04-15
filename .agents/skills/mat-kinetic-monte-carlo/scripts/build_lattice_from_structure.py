@@ -90,12 +90,12 @@ def main() -> None:
     out_path.write_text(json.dumps(out, indent=4))
     print(f"Wrote lattice with {n_sites} sites to: {out_path}")
 
-    # Save config for reproducibility
-    _config = dict(vars(args))
-    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
-    _pd = Path(args.out).parent
-    _pd.mkdir(parents=True, exist_ok=True)
-    (_pd / "params.json").write_text(json.dumps(_config, indent=2, default=str))
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    with open(Path(args.out).parent / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

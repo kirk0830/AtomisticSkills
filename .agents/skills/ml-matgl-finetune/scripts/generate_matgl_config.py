@@ -59,7 +59,6 @@ def main():
 
     config_file = output_path / "finetune_config.json"
     with open(config_file, "w") as f:
-        config["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(config, f, indent=4)
 
     print("\n=======================================================")
@@ -68,6 +67,12 @@ def main():
     print("To start training, simply run:")
     print(f"  conda activate matgl-agent")
     print(f"  python train_matgl.py --config {config_file.absolute()}")
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(Path(args.output_dir) / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()

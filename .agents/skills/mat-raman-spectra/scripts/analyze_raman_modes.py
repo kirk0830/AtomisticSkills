@@ -456,7 +456,6 @@ def main():
     }
     json_path = output_dir / "raman_modes.json"
     with open(json_path, "w") as f:
-        summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(summary, f, indent=2)
     logger.info(f"Saved mode table to {json_path}")
 
@@ -494,6 +493,12 @@ def main():
         if rec["raman_active"] and not rec["is_acoustic"]:
             print(f"    {rec['symmetry_label']:12s}  {rec['frequency_cm']:8.1f} cm⁻¹")
     print("=" * 60)
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(output_dir / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

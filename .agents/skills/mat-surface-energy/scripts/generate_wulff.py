@@ -60,8 +60,13 @@ def main():
         "weighted_surface_energy": wulff.weighted_surface_energy
     }
     with open(args.output.replace(".png", ".json"), "w") as f:
-        info["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(info, f, indent=2)
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(os.path.join(args.output, 'input_configs.yaml'), 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()

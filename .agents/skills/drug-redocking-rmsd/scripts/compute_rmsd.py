@@ -287,7 +287,6 @@ def compute_all_rmsd(
 
     out_file = output_dir / "rmsd_results.json"
     with open(out_file, "w") as f:
-        summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(summary, f, indent=4)
 
     print(json.dumps(summary, indent=4))
@@ -331,6 +330,12 @@ def main() -> None:
         args.output_dir,
         threshold=args.threshold,
     )
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(Path(args.output_dir) / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

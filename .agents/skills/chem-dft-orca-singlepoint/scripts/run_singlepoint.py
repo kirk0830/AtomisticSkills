@@ -202,9 +202,14 @@ def main():
 
     results_file = os.path.join(args.output_dir, "singlepoint_results.json")
     with open(results_file, "w") as f:
-        result["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(recursive_tolist(result), f, indent=4)
     logger.info(f"Results saved to {results_file}")
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(os.path.join(args.output_dir, 'input_configs.yaml'), 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

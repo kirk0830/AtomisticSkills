@@ -247,7 +247,6 @@ def build_complex(
 
     provenance_path = output_dir / "build_provenance.json"
     with open(provenance_path, "w") as f:
-        provenance["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(provenance, f, indent=4)
     print(f"Wrote provenance: {provenance_path}")
 
@@ -338,6 +337,12 @@ def main() -> None:
         box_shape=args.box_shape,
         output_dir=Path(args.output_dir),
     )
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(output_dir / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

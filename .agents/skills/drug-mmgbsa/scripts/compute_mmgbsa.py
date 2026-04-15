@@ -315,7 +315,6 @@ def compute_mmgbsa(
 
     summary_path = output_dir / "mmgbsa_summary.json"
     with open(summary_path, "w") as f:
-        summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(summary, f, indent=4)
     print(f"Wrote summary: {summary_path}")
 
@@ -398,6 +397,12 @@ def main() -> None:
         solvent_dielectric=args.solvent_dielectric,
         output_dir=Path(args.output_dir),
     )
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(output_dir / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

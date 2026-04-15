@@ -1008,7 +1008,6 @@ def main() -> None:
 
     json_path = os.path.join(args.output_dir, "bde_results.json")
     with open(json_path, "w") as f:
-        output["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(output, f, indent=4)
 
     logger.info(f"\nResults saved to: {json_path}")
@@ -1027,6 +1026,12 @@ def main() -> None:
             f"= {weakest_hetero['heterolytic_bde_kcal_mol']:.1f} kcal/mol "
             f"({weakest_hetero.get('heterolytic_best_variant', '')})"
         )
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(os.path.join(args.output_dir, 'input_configs.yaml'), 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

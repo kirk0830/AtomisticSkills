@@ -142,10 +142,15 @@ def main():
     }
 
     with open(args.output, "w") as f:
-        final_results["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(final_results, f, indent=2)
     
     print(f"\n✓ Saved results for {len(final_results['unique_min_slabs'])} unique planes to {args.output}")
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(Path(args.output) / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()

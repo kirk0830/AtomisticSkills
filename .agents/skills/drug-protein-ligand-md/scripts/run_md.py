@@ -348,7 +348,6 @@ def run_md(
 
     prov_path = output_dir / "md_provenance.json"
     with open(prov_path, "w") as f:
-        provenance["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(provenance, f, indent=4)
     print(f"Wrote provenance: {prov_path}")
     print(f"Total wall time: {wall_time:.1f} s")
@@ -409,6 +408,12 @@ def main() -> None:
         restart_from=restart,
         output_dir=Path(args.output_dir),
     )
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(output_dir / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 
 if __name__ == "__main__":

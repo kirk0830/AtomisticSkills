@@ -138,7 +138,6 @@ def main():
                 history['stress_rmse_train'].append(None)
 
     with open(json_path, 'w') as f:
-        history["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(history, f, indent=4)
         print(f"Saved history to {json_path}")
         
@@ -149,6 +148,13 @@ def main():
             print(f"Generated standardized training plot at {png_path}")
         except Exception as e:
             print(f"Could not generate training plot: {e}")
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    from pathlib import Path as _P
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(_P(_P('.')) / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
 
 if __name__ == "__main__":
     main()
