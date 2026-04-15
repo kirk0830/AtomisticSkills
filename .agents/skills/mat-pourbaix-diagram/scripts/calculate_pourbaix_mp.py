@@ -132,14 +132,14 @@ def main():
     with open(args.output / "stable_entries_mp.json", "w") as f:
         json.dump(stable_data, f, indent=2)
 
-    return 0
-
     # Save input configs for reproducibility
     import yaml as _yaml
     _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
     Path(args.output).mkdir(parents=True, exist_ok=True)
     with open(Path(args.output) / "input_configs.yaml", 'w') as _f:
         _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())

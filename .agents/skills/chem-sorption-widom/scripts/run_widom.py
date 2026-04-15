@@ -123,6 +123,13 @@ def main() -> int:
             "task_name": args.task_name,
         },
     )
+
+    # Save input configs for reproducibility
+    import yaml as _yaml
+    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+    with open(args.output_dir / "input_configs.yaml", 'w') as _f:
+        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+
     return 0
 
 
