@@ -336,6 +336,33 @@ def main() -> int:
     payload["qst_std_kJ_mol"] = qst_std_kJ_mol
     payload["qst_n_blocks"] = qst_n_blocks
     payload["qst_block_size"] = qst_block_size
+    payload["config"] = {
+        "calculator": args.calculator,
+        "model_name": args.model_name,
+        "task_name": args.task_name,
+        "device": args.device,
+        "cif": str(cif_path),
+        "adsorbate": args.adsorbate,
+        "scheme": args.scheme,
+        "steps": args.steps,
+        "temperature_K": args.temperature_K,
+        "pressure_bar": args.pressure_bar,
+        "host_natoms": host_natoms,
+        "rcavity": rcavity,
+        "grid_resolution": grid_resolution,
+        "translate_max": translate_max,
+        "probe_fmax": 0.05,
+        "probe_steps": 200,
+        "loginterval": 20,
+        "keep_intermediates": args.keep_intermediates,
+        "restart_traj": str(args.restart_traj) if args.restart_traj else None,
+        "restart_frame": args.restart_frame,
+        "E_probe_eV": E_probe,
+        "B_parameter": B_val,
+        "beta_mu": beta_mu,
+        "fugacity_coefficient": phi,
+        "V_cell_m3": V_cell_m3,
+    }
     write_gcmc_results_json(gcmc_json_path, payload)
     LOGGER.info("Wrote %s", gcmc_json_path)
 

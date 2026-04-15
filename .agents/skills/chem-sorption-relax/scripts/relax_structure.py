@@ -161,6 +161,7 @@ def main() -> int:
         "calculator": args.calculator,
         "model_name": args.model_name,
         "task_name": args.task_name,
+        "device": device,
         "n_atoms": len(atoms),
         "energy_initial_eV": e_init,
         "energy_final_eV": e_final,
