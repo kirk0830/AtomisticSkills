@@ -49,5 +49,11 @@ def main():
     if results:
         print(json.dumps(results, indent=2))
 
+    # Save config for reproducibility
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
+    _pd = os.path.join(args.resources_dir, "params.json")
+    with open(_pd, "w") as _f:
+        json.dump(_config, _f, indent=2, default=str)
+
 if __name__ == "__main__":
     main()

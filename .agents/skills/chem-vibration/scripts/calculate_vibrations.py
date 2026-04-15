@@ -261,3 +261,11 @@ if __name__ == "__main__":
 
     wrapper = load_wrapper(args.model_type, args.model_name, device=args.device)
     run_vibrations(args, wrapper, atoms)
+
+    # Save config for reproducibility
+    from pathlib import Path as _P
+    _config = dict(vars(args))
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
+    _pd = _P(args.output_dir)
+    _pd.mkdir(parents=True, exist_ok=True)
+    (_pd / "params.json").write_text(json.dumps(_config, indent=2, default=str))

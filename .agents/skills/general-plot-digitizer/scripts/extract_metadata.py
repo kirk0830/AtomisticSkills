@@ -353,6 +353,7 @@ def main() -> None:
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:
+        meta["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(meta, f, indent=2)
 
     print(f"Saved metadata to {args.output}")

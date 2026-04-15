@@ -315,6 +315,7 @@ def compute_mmgbsa(
 
     summary_path = output_dir / "mmgbsa_summary.json"
     with open(summary_path, "w") as f:
+        summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(summary, f, indent=4)
     print(f"Wrote summary: {summary_path}")
 

@@ -59,6 +59,7 @@ def main():
 
     config_file = output_path / "finetune_config.json"
     with open(config_file, "w") as f:
+        config["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(config, f, indent=4)
 
     print("\n=======================================================")

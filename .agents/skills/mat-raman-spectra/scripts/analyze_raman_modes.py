@@ -456,6 +456,7 @@ def main():
     }
     json_path = output_dir / "raman_modes.json"
     with open(json_path, "w") as f:
+        summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(summary, f, indent=2)
     logger.info(f"Saved mode table to {json_path}")
 

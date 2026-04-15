@@ -273,6 +273,7 @@ def main():
     
     metadata_path = save_dir / "dataset_metadata.json"
     with open(metadata_path, "w") as f:
+        metadata["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(metadata, f, indent=2)
     
     print("\n=======================================================")

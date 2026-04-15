@@ -151,3 +151,10 @@ if __name__ == "__main__":
     logger.info(f"Number of atoms: {len(atoms)}")
     
     run_eos(args, wrapper, atoms)
+
+    # Save config for reproducibility
+    _config = dict(vars(args))
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
+    _pd = Path(args.output_dir)
+    _pd.mkdir(parents=True, exist_ok=True)
+    (_pd / "params.json").write_text(json.dumps(_config, indent=2, default=str))

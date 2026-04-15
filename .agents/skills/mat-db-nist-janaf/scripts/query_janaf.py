@@ -114,6 +114,7 @@ def main():
         os.makedirs(output_dir)
         
     with open(args.output, "w") as f:
+        output_data["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(output_data, f, indent=2)
         
     print(f"Saved extracted data to {args.output}")

@@ -36,3 +36,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     create_interface(args.solid, args.liquid, args.axis, args.output)
+
+    # Save config for reproducibility
+    from pathlib import Path as _P
+    import json as _json
+    _config = dict(vars(args))
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
+    _pd = _P(args.output).parent
+    _pd.mkdir(parents=True, exist_ok=True)
+    (_pd / "params.json").write_text(_json.dumps(_config, indent=2, default=str))

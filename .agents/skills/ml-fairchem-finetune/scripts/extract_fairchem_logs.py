@@ -148,6 +148,7 @@ def main():
     
     json_path = out_dir / "training_history.json"
     with open(json_path, "w") as f:
+        history["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(history, f, indent=2)
     logging.info(f"Training history saved to {json_path}")
     

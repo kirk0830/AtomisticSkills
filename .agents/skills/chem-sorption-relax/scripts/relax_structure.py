@@ -174,6 +174,7 @@ def main() -> int:
     }
     json_path = output_dir / "relax_results.json"
     with open(json_path, "w") as f:
+        results["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(results, f, indent=2)
     print(f"Results saved to: {json_path}")
     return 0

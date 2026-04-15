@@ -332,6 +332,14 @@ def main():
         if not args.quiet:
             print(f"\nPlot saved -> {args.plot}")
 
+    # Save config for reproducibility
+    from pathlib import Path as _P
+    _config = dict(vars(args))
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
+    _pd = _P(args.plot).parent if args.plot else _P('.')
+    _pd.mkdir(parents=True, exist_ok=True)
+    (_pd / "params.json").write_text(json.dumps(_config, indent=2, default=str))
+
 
 if __name__ == "__main__":
     main()

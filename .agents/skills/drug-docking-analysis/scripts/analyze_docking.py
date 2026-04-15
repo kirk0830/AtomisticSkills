@@ -471,6 +471,7 @@ def main() -> None:
 
     summary_path = args.output_dir / "analysis_summary.json"
     with open(summary_path, "w") as f:
+        summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(summary, f, indent=4)
 
     print(f"\nResults written to {args.output_dir}")

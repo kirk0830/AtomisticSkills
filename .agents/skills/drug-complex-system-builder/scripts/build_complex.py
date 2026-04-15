@@ -247,6 +247,7 @@ def build_complex(
 
     provenance_path = output_dir / "build_provenance.json"
     with open(provenance_path, "w") as f:
+        provenance["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(provenance, f, indent=4)
     print(f"Wrote provenance: {provenance_path}")
 

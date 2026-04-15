@@ -110,5 +110,12 @@ def main():
     print(f"  conda activate matgl-agent")
     print(f"  python generate_matgl_config.py --train-data {train_path.absolute()} " + (f"--val-data {val_path.absolute()} " if val_data else "") + f"--model {args.model} --output-dir {output_path.absolute()}")
 
+    # Save config for reproducibility
+    _config = dict(vars(args))
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
+    _pd = Path(args.output_dir)
+    _pd.mkdir(parents=True, exist_ok=True)
+    (_pd / "params.json").write_text(json.dumps(_config, indent=2, default=str))
+
 if __name__ == "__main__":
     main()

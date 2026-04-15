@@ -374,6 +374,7 @@ def main() -> None:
         "structures": all_results,
     }
     with open(manifest_path, "w") as f:
+        manifest["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(manifest, f, indent=2)
 
     # ── Print summary ──

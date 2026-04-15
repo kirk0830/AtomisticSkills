@@ -138,6 +138,7 @@ def main():
                 history['stress_rmse_train'].append(None)
 
     with open(json_path, 'w') as f:
+        history["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(history, f, indent=4)
         print(f"Saved history to {json_path}")
         

@@ -90,6 +90,7 @@ def save_phase_diagram(pd: PhaseDiagram, output_path: str) -> None:
     pd_dict = pd.as_dict()
     
     with open(output_path, 'w') as f:
+        pd_dict["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(pd_dict, f, indent=2, cls=MontyEncoder)
     
     print(f"✓ Saved phase diagram to {output_path}")

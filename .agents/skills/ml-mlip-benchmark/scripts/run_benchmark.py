@@ -140,6 +140,7 @@ def main():
     
     os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
     with open(args.output, "w") as f:
+        results["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(results, f, indent=2)
         
     logger.info(f"Benchmark completed successfully. Saved to {args.output}")

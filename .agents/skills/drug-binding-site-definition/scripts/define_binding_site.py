@@ -369,6 +369,12 @@ def main() -> None:
     else:
         print(output_str)
 
+        # Save config for reproducibility
+        _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
+        _params_path = Path(args.output) / "params.json"
+        _params_path.parent.mkdir(parents=True, exist_ok=True)
+        _params_path.write_text(json.dumps(_config, indent=2, default=str))
+
 
 if __name__ == "__main__":
     main()

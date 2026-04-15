@@ -230,6 +230,7 @@ def main():
     print(f"Matched structures: {len(target_structs) - novel_count}")
     
     with open(args.output, 'w') as f:
+        all_results["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(all_results, f, indent=2)
     print(f"Results saved to {args.output}")
 

@@ -524,6 +524,12 @@ def main() -> None:
     with summary_path.open("w", encoding="utf-8") as f:
         json.dump([r.to_dict() for r in results], f, indent=2)
 
+        # Save config for reproducibility
+        _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
+        _params_path = out_dir / "params.json"
+        _params_path.parent.mkdir(parents=True, exist_ok=True)
+        _params_path.write_text(json.dumps(_config, indent=2, default=str))
+
     ok = sum(1 for r in results if r.success)
     LOGGER.info("Done. %d/%d succeeded. Summary: %s", ok, len(results), str(summary_path))
 

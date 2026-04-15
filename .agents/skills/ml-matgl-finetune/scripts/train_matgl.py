@@ -544,6 +544,7 @@ def main():
     }
     
     with open(output_dir / "finetune_record.json", "w") as f:
+        config_record["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(config_record, f, indent=2)
 
 if __name__ == "__main__":

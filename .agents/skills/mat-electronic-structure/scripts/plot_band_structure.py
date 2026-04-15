@@ -100,4 +100,11 @@ if __name__ == "__main__":
     )
     
     args = parser.parse_args()
+
+    # Save config for reproducibility
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
+    import json as _json
+    _params_path = Path(args.output) / "params.json"
+    _params_path.parent.mkdir(parents=True, exist_ok=True)
+    _params_path.write_text(_json.dumps(_config, indent=2, default=str))
     plot_band_structure(args.results_dir, args.output)

@@ -81,6 +81,14 @@ def main():
     ax.legend(loc='upper right')
     
     plt.savefig(args.output, dpi=300, bbox_inches='tight')
+
+    # Save config for reproducibility
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
+    import json as _json
+    from pathlib import Path as _P
+    _params_path = _P(args.output) / "params.json"
+    _params_path.parent.mkdir(parents=True, exist_ok=True)
+    _params_path.write_text(_json.dumps(_config, indent=2, default=str))
     logging.info(f"Phase fractions plot successfully saved to {args.output}")
 
 if __name__ == "__main__":

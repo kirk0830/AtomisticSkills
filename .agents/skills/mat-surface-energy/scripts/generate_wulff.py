@@ -60,6 +60,7 @@ def main():
         "weighted_surface_energy": wulff.weighted_surface_energy
     }
     with open(args.output.replace(".png", ".json"), "w") as f:
+        info["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(info, f, indent=2)
 
 if __name__ == "__main__":

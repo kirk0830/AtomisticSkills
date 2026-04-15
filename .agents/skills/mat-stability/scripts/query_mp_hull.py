@@ -126,6 +126,7 @@ def query_hull_structures(
     
     manifest_file = Path("hull_entries.json")
     with open(manifest_file, 'w') as f:
+        manifest["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(manifest, f, indent=2)
     
     print(f"✓ Saved {len(hull_entries)} structures to {output_dir}")

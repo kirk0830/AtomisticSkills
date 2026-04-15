@@ -178,6 +178,13 @@ def main():
     output_path = Path(args.output)
     visualize_magnetic_structure(structure_path, moments_data, output_path)
 
+    # Save config for reproducibility
+    _config = dict(vars(args))
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
+    _pd = Path(args.output).parent
+    _pd.mkdir(parents=True, exist_ok=True)
+    (_pd / "params.json").write_text(json.dumps(_config, indent=2, default=str))
+
 
 if __name__ == "__main__":
     main()

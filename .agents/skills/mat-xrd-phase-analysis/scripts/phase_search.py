@@ -156,6 +156,7 @@ def phase_search(
         }
         summary_path = output_path / "results_summary.json"
         with open(summary_path, "w") as f:
+            summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
             json.dump(summary, f, indent=2)
         return []
 

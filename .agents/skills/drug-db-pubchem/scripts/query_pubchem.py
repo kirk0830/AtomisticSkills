@@ -621,6 +621,13 @@ def main() -> None:
         print(f"Wrote: {output_path}", file=sys.stderr)
         print(f"Found {len(cids)} CID(s): {cids}", file=sys.stderr)
 
+    # Save config for reproducibility
+    _config = dict(vars(args))
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
+    _pd = Path(args.output)
+    _pd.mkdir(parents=True, exist_ok=True)
+    (_pd / "params.json").write_text(json.dumps(_config, indent=2, default=str))
+
 
 if __name__ == "__main__":
     main()

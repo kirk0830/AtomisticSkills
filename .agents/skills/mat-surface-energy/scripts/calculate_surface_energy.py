@@ -142,6 +142,7 @@ def main():
     }
 
     with open(args.output, "w") as f:
+        final_results["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(final_results, f, indent=2)
     
     print(f"\n✓ Saved results for {len(final_results['unique_min_slabs'])} unique planes to {args.output}")

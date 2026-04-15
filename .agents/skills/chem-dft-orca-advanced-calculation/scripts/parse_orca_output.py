@@ -222,6 +222,7 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
     results_file = os.path.join(args.output_dir, "parsed_results.json")
     with open(results_file, "w") as f:
+        result["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(result, f, indent=4)
     logger.info(f"Parsed results saved to {results_file}")
 

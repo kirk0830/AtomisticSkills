@@ -323,6 +323,7 @@ def main():
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
         with open(output_path, 'w') as f:
+            output_data["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
             json.dump(output_data, f, indent=2, default=str)
         
         print(f"\nResults saved to {output_path}")

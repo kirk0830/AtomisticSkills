@@ -278,6 +278,7 @@ def main():
 
     results_file = os.path.join(args.output_dir, "optimization_results.json")
     with open(results_file, "w") as f:
+        result["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(recursive_tolist(result), f, indent=4)
     logger.info(f"Results saved to {results_file}")
 

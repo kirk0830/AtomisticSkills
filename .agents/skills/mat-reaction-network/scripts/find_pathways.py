@@ -190,6 +190,7 @@ def main():
             output_data["pathways"].append(path_dict)
             
         with open(args.output, "w") as f:
+            output_data["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
             json.dump(output_data, f, indent=4)
         print(f"Saved clean pathway data to {args.output}")
 

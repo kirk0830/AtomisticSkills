@@ -187,6 +187,7 @@ def main():
     # Save index
     index_path = output_dir / "defect_index.json"
     with open(index_path, "w") as f:
+        defect_index["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(defect_index, f, indent=2)
 
     print(f"\n✓ Saved {len(all_defects)} structures and index to {output_dir}")

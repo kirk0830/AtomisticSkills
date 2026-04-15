@@ -95,6 +95,7 @@ def main():
         
     output_path = out_dir / args.output
     with open(output_path, "w", encoding="utf-8") as f:
+        results["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(results, f, indent=4)
         
     print(f"\nResults saved to: {output_path}")

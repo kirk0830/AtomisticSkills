@@ -201,6 +201,7 @@ def main():
     if args.output:
         output_path = Path(args.output)
         with open(output_path, 'w') as f:
+            analysis["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
             json.dump(analysis, f, indent=2)
         print(f"\nAnalysis saved to: {output_path}")
 

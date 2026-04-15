@@ -58,6 +58,14 @@ def main():
     parser.add_argument("--output_dir", default="../resources/structures", help="Directory to save CIF files")
     args = parser.parse_args()
 
+    # Save config for reproducibility
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
+    import json as _json
+    from pathlib import Path as _P
+    _params_path = _P(args.output_dir) / "params.json"
+    _params_path.parent.mkdir(parents=True, exist_ok=True)
+    _params_path.write_text(_json.dumps(_config, indent=2, default=str))
+
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
 

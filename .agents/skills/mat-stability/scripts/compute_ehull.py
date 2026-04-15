@@ -306,6 +306,7 @@ def main():
     # Save results
     output_file = Path(args.output)
     with open(output_file, 'w') as f:
+        results["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(results, f, indent=2)
     
     print(f"✓ Results saved to {output_file}")

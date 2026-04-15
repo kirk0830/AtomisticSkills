@@ -133,6 +133,7 @@ def main():
 
     if args.output:
         with open(args.output, "w") as f:
+            result["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
             json.dump(result, f, indent=2)
         if not args.quiet:
             print(f"Output -> {args.output}")

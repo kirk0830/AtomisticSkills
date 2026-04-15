@@ -84,3 +84,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main(args)
+
+    # Save config for reproducibility
+    import json as _json
+    _config = dict(vars(args))
+    _config = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in _config.items()}
+    _pd = Path(args.output_dir)
+    _pd.mkdir(parents=True, exist_ok=True)
+    (_pd / "params.json").write_text(_json.dumps(_config, indent=2, default=str))

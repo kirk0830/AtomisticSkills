@@ -399,6 +399,7 @@ def main():
     }
     
     with open(summary_path, "w") as f:
+        final_output["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(final_output, f, indent=4)
         
     logger.info("="*60)

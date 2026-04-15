@@ -107,6 +107,7 @@ def save_electronic_structure(data: Dict, output_path: str) -> None:
     output_path = Path(output_path)
     
     with open(output_path, 'w') as f:
+        data["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(data, f, indent=2, cls=MontyEncoder)
     
     print(f"✓ Saved electronic structure data to {output_path}")

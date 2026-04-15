@@ -123,6 +123,7 @@ def main():
             
     # Save info json
     with open(os.path.join(args.output_dir, "extracted_structures.json"), "w") as f:
+        extracted_info["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(extracted_info, f, indent=2)
         
     print(f"Done. Extracted {len(extracted_info)} structures to {args.output_dir}")

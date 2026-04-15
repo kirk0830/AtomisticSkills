@@ -348,6 +348,7 @@ def run_md(
 
     prov_path = output_dir / "md_provenance.json"
     with open(prov_path, "w") as f:
+        provenance["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(provenance, f, indent=4)
     print(f"Wrote provenance: {prov_path}")
     print(f"Total wall time: {wall_time:.1f} s")

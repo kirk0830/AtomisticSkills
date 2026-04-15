@@ -287,6 +287,7 @@ def compute_all_rmsd(
 
     out_file = output_dir / "rmsd_results.json"
     with open(out_file, "w") as f:
+        summary["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(summary, f, indent=4)
 
     print(json.dumps(summary, indent=4))

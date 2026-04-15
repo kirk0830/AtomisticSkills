@@ -1008,6 +1008,7 @@ def main() -> None:
 
     json_path = os.path.join(args.output_dir, "bde_results.json")
     with open(json_path, "w") as f:
+        output["config"] = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
         json.dump(output, f, indent=4)
 
     logger.info(f"\nResults saved to: {json_path}")
