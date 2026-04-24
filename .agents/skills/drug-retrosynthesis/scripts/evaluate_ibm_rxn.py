@@ -102,6 +102,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate synthetic accessibility using IBM RXN")
     parser.add_argument("smiles", help="Target molecule SMILES string")
     parser.add_argument("--steps", type=int, default=3, help="Maximum number of synthesis steps to explore")
+    parser.add_argument("--output_dir", type=str, default=".", help="Directory to save input_configs.yaml")
     
     args = parser.parse_args()
+    
+    try:
+        import yaml as _yaml
+        from pathlib import Path as _Path
+        _out_dir = _Path(args.output_dir)
+        _out_dir.mkdir(parents=True, exist_ok=True)
+        _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+        with open(_out_dir / "input_configs.yaml", 'w') as _f:
+            _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    except Exception as _e:
+        print(f"Warning: Failed to save input_configs.yaml: {_e}")
+
     evaluate_retrosynthesis(args.smiles, max_steps=args.steps)
