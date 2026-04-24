@@ -1223,6 +1223,18 @@ window.SKILLS_DATA = [
     ],
     "has_examples": true,
     "num_examples": 2
+  },
+  {
+    "id": "private-mit-literature-qa",
+    "name": "private-mit-literature-qa",
+    "description": "Query a private literature QA API to synthesize answers and retrieve statistics from a custom document database based on a user question.",
+    "category": [
+      "materials",
+      "chemistry",
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
   }
 ];
 window.WORKFLOWS_DATA = [
@@ -1273,7 +1285,7 @@ window.WORKFLOWS_DATA = [
   }
 ];
 window.ATOMISTIC_STATS = {
-  "skills": 119,
+  "skills": 120,
   "tools": 48,
   "servers": 19
 };

@@ -221,6 +221,7 @@ The required environment must be consistent across:
   - Avoid: `mat-mp`, `ml-train`, `drug-d`
 - Use **noun forms** for result-oriented skills: `mat-phase-diagram`, `mat-surface-energy`
 - Use **action/process names** for workflow skills: `mat-diffusion-analysis`, `ml-mlip-training`
+- **Private Skills**: To create a proprietary or private skill that should not be tracked by version control, prefix the entire name with `private-` (e.g., `private-mat-proprietary-workflow`). The repository's `.gitignore` is configured to ignore all directories matching `.agents/skills/private-*/`, ensuring they remain local while still being automatically discovered by the agent.
 
 ## Example Skill Structure
 
