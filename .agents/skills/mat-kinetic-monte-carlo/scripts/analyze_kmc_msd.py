@@ -95,15 +95,9 @@ def main() -> None:
         out_path.write_text(json.dumps(result, indent=4))
         print(f"Wrote: {out_path}")
 
-    try:
-        # Save input configs for reproducibility
-        import yaml as _yaml
-        _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
-        Path(args.out).parent if args.out else Path('.').mkdir(parents=True, exist_ok=True)
-        with open(Path(args.out).parent if args.out else Path('.') / "input_configs.yaml", 'w') as _f:
-            _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
-    except Exception as _e:
-        print(f"Warning: Failed to save input_configs.yaml: {_e}")
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.out)
 
 
 if __name__ == "__main__":
