@@ -284,10 +284,13 @@ def main():
     print(f"  conda activate fairchem-agent")
     print(f"  python generate_fairchem_config.py --data-metadata {metadata_path.absolute()} --output-dir {save_dir.absolute()}")
 
-    # Save input configs for reproducibility
-    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
-    with open(Path(args.output_dir) / "input_configs.yaml", 'w') as _f:
-        yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    try:
+        # Save input configs for reproducibility
+        _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+        with open(Path(args.output_dir) / "input_configs.yaml", 'w') as _f:
+            yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    except Exception as _e:
+        print(f"Warning: Failed to save input_configs.yaml: {_e}")
 
 if __name__ == "__main__":
     main()

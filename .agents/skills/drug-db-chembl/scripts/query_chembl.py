@@ -582,13 +582,16 @@ def main() -> None:
         _write_output(results, args.output)
         print(f"Saved output to: {args.output}")
 
-        # Save input configs for reproducibility
-        from pathlib import Path as _P
-        import yaml as _yaml
-        _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
-        _P('.').mkdir(parents=True, exist_ok=True)
-        with open(_P('.') / "input_configs.yaml", 'w') as _f:
-            _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+        try:
+            # Save input configs for reproducibility
+            from pathlib import Path as _P
+            import yaml as _yaml
+            _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+            _P('.').mkdir(parents=True, exist_ok=True)
+            with open(_P('.') / "input_configs.yaml", 'w') as _f:
+                _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+        except Exception as _e:
+            print(f"Warning: Failed to save input_configs.yaml: {_e}")
         _params_path.parent.mkdir(parents=True, exist_ok=True)
         _params_path.write_text(json.dumps(_config, indent=2, default=str))
 

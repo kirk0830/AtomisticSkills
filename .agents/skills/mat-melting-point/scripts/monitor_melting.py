@@ -186,10 +186,13 @@ if __name__ == "__main__":
     
     monitor_melting(args.log_path, analysis_window_ps=args.window, stability_duration_ps=args.stability_duration, stop_file=args.stop_file)
 
-    # Save input configs for reproducibility
-    from pathlib import Path as _P
-    import yaml as _yaml
-    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
-    _P('.').mkdir(parents=True, exist_ok=True)
-    with open(_P('.') / "input_configs.yaml", 'w') as _f:
-        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    try:
+        # Save input configs for reproducibility
+        from pathlib import Path as _P
+        import yaml as _yaml
+        _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+        _P('.').mkdir(parents=True, exist_ok=True)
+        with open(_P('.') / "input_configs.yaml", 'w') as _f:
+            _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    except Exception as _e:
+        print(f"Warning: Failed to save input_configs.yaml: {_e}")

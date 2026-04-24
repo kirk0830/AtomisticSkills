@@ -367,12 +367,15 @@ def main():
     
     print(f"\n✓ Analysis complete! Plots saved to: {output_dir}\n")
 
-    # Save input configs for reproducibility
-    import yaml as _yaml
-    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
-    output_dir.mkdir(parents=True, exist_ok=True)
-    with open(output_dir / "input_configs.yaml", 'w') as _f:
-        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    try:
+        # Save input configs for reproducibility
+        import yaml as _yaml
+        _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+        output_dir.mkdir(parents=True, exist_ok=True)
+        with open(output_dir / "input_configs.yaml", 'w') as _f:
+            _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    except Exception as _e:
+        print(f"Warning: Failed to save input_configs.yaml: {_e}")
 
 
 if __name__ == "__main__":

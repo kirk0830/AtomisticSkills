@@ -221,11 +221,14 @@ def main():
     print(f"  cd {save_dir.absolute()}")
     print(f"  python {run_script_path.name} | tee fairchem_cli_output.log")
 
-    # Save input configs for reproducibility
-    _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
-    output_dir.mkdir(parents=True, exist_ok=True)
-    with open(output_dir / "input_configs.yaml", 'w') as _f:
-        yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    try:
+        # Save input configs for reproducibility
+        _cfg = {k: str(v) if hasattr(v, '__fspath__') else v for k, v in vars(args).items()}
+        output_dir.mkdir(parents=True, exist_ok=True)
+        with open(output_dir / "input_configs.yaml", 'w') as _f:
+            yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    except Exception as _e:
+        print(f"Warning: Failed to save input_configs.yaml: {_e}")
 
 if __name__ == "__main__":
     main()

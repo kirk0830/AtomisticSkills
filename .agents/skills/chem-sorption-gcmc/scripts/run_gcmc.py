@@ -339,11 +339,14 @@ def main() -> int:
     write_gcmc_results_json(gcmc_json_path, payload)
     LOGGER.info("Wrote %s", gcmc_json_path)
 
-    # Save input configs for reproducibility
-    import yaml as _yaml
-    _cfg = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
-    with open(out_dir / "input_configs.yaml", "w") as _f:
-        _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    try:
+        # Save input configs for reproducibility
+        import yaml as _yaml
+        _cfg = {k: str(v) if hasattr(v, "__fspath__") else v for k, v in vars(args).items()}
+        with open(out_dir / "input_configs.yaml", "w") as _f:
+            _yaml.dump(_cfg, _f, default_flow_style=False, sort_keys=False)
+    except Exception as _e:
+        print(f"Warning: Failed to save input_configs.yaml: {_e}")
 
     # Remove traj/log and .npy intermediates; keep JSON and PNGs (nmols.png, energy.png)
     if not args.keep_intermediates:
