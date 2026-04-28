@@ -165,7 +165,7 @@ For the validated top hits, run short MD to assess pose stability. This is the m
   - Use `--snapshots` to generate PyMOL binding pocket visualizations for manual inspection of top hits.
 
 - **Rescore with MM-GBSA**: For compounds that pass the stability criteria, compute single-trajectory MM-GBSA binding free energies as a re-ranking signal before hard ADMET filtering. **If you ran the MD, run this.** The trajectories already exist, so the marginal cost is small relative to the MD itself, and it provides an orthogonal signal to docking scores and geometric stability metrics.
-  - *Skill Reference*: `drug-mmgbsa`
+  - *Skill Reference*: `drug-mmpbsa-gbsa`
   - Single-trajectory MM-GBSA strips explicit solvent and evaluates complex/receptor/ligand energies in GBn2 implicit solvent; ensemble-average rescoring has been shown to improve rank-ordering correlation with experimental affinities over docking scores alone.
   - **How to use the signal**: Treat MM-GBSA as a **relative ranking tool**, not an absolute binding affinity predictor. The entropy term is omitted, so absolute dG values are not physically meaningful, but rank-ordering across a congeneric or chemically similar series is informative. Skip the first ~0.5-1 ns of each trajectory as equilibration and stride through frames (e.g., every 5th) to reduce correlation.
   - **Caveats**: If the MD replicates disagree strongly on pose stability, MM-GBSA will be noisy and should not be used as a tiebreaker. Resolve the stability question first. For chemically diverse ligand sets (very different scaffolds, charge states, or sizes), MM-GBSA rank-ordering is less reliable than within a congeneric series.

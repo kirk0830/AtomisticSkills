@@ -1,4 +1,4 @@
-# drug-mmgbsa example: CDK2 HTVS MD refinement
+# drug-mmpbsa-gbsa example: CDK2 HTVS MD refinement
 
 Real MM-GBSA outputs from the [HTVS workflow](../../../workflows/drug-hit-finding-htvs.md) applied to CDK2, showing what a healthy rescoring campaign looks like and, more importantly, what a broken one looks like. The three compounds here were chosen to span the full convergence spectrum that an agent will encounter on real data.
 
@@ -88,7 +88,7 @@ If you have a trajectory, produce an equivalent result with:
 
 ```bash
 # Env: drugmd-agent
-python .agents/skills/drug-mmgbsa/scripts/compute_mmgbsa.py \
+python .agents/skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology examples/drug-discovery/cdk2-htvs/07_md_refinement/complexes/CHEMBL388978/complex_solvated.pdb \
   --trajectory examples/drug-discovery/cdk2-htvs/07_md_refinement/results/CHEMBL388978/rep1/production.dcd \
   --ligand_sdf examples/drug-discovery/cdk2-htvs/05_pose_validation/poses_sdf/CHEMBL388978.sdf \
