@@ -189,6 +189,10 @@ def main() -> None:
     output_dir = Path(args.output_dir)
     run_validation(poses_path, receptor_path, output_dir)
 
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.output_dir)
+
 
 if __name__ == "__main__":
     main()

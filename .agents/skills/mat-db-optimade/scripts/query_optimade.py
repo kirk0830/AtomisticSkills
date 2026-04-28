@@ -54,5 +54,9 @@ def main():
         
     print(f"Saved {len(all_structures)} structures to {args.output}")
 
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.output)
+
 if __name__ == "__main__":
     main()

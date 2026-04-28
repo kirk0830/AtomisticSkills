@@ -976,6 +976,7 @@
       <li><a href="#skills">Skills</a></li>
       <li><a href="#workflows">Workflows</a></li>
       <li><a href="#environments">Environments</a></li>
+      <li><a href="#guides">Docs</a></li>
       <li><a href="#install">Install</a></li>
     </ul>
     <a class="nav-cta" href="https://github.com/bowen-bd/AtomisticSkills" target="_blank">GitHub →</a>
@@ -1342,6 +1343,7 @@
           <thead>
             <tr>
               <th>MCP Server</th>
+              <th style="text-align:center">Tools</th>
               <th>Conda Env</th>
               <th>Core Libraries</th>
               <th>Purpose</th>
@@ -1350,18 +1352,21 @@
           <tbody>
             <tr>
               <td><a href="servers/base.html" style="text-decoration:none"><span class="env-tag">base</span></a></td>
+              <td style="text-align:center"></td>
               <td>base-agent</td>
               <td>pymatgen, ase, rdkit, packmol</td>
               <td>MP queries, VASP I/O, structure tools</td>
             </tr>
             <tr>
               <td><a href="servers/mace.html" style="text-decoration:none"><span class="env-tag">mace</span></a></td>
+              <td style="text-align:center"></td>
               <td>mace-agent</td>
               <td>mace-torch</td>
               <td>MACE models (MP, OMAT, MATPES, MH)</td>
             </tr>
             <tr>
               <td><a href="servers/matgl.html" style="text-decoration:none"><span class="env-tag">matgl</span></a></td>
+              <td style="text-align:center"></td>
               <td>matgl-agent</td>
               <td>matgl, dgl</td>
               <td>CHGNet, M3GNet, TensorNet</td>
@@ -1369,6 +1374,7 @@
             <tr>
               <td><a href="servers/fairchem.html" style="text-decoration:none"><span class="env-tag">fairchem</span></a>
               </td>
+              <td style="text-align:center"></td>
               <td>fairchem-agent</td>
               <td>fairchem-core</td>
               <td>UMA, ESEN models (OMAT, OMol, OC20)</td>
@@ -1376,12 +1382,14 @@
             <tr>
               <td><a href="servers/atomate2.html" style="text-decoration:none"><span class="env-tag">atomate2</span></a>
               </td>
+              <td style="text-align:center"></td>
               <td>atomate2-agent</td>
               <td>atomate2, jobflow-remote</td>
               <td>Remote DFT workflows via NERSC/HPC</td>
             </tr>
             <tr>
               <td><a href="servers/smol.html" style="text-decoration:none"><span class="env-tag">smol</span></a></td>
+              <td style="text-align:center"></td>
               <td>smol-agent</td>
               <td>smol</td>
               <td>Cluster expansion + Monte Carlo</td>
@@ -1389,6 +1397,7 @@
             <tr>
               <td><a href="servers/drugdisc.html" style="text-decoration:none"><span class="env-tag">drugdisc</span></a>
               </td>
+              <td style="text-align:center"></td>
               <td>drugdisc-agent</td>
               <td>rdkit, autodock-vina, meeko</td>
               <td>Docking, ADMET, fingerprints</td>
@@ -1396,12 +1405,14 @@
             <tr>
               <td><a href="servers/mattergen.html" style="text-decoration:none"><span
                     class="env-tag">mattergen</span></a></td>
+              <td style="text-align:center"></td>
               <td>mattergen-agent</td>
               <td>MatterGen, PyG, lightning</td>
               <td>Generative crystal design</td>
             </tr>
             <tr>
               <td><a href="servers/adit.html" style="text-decoration:none"><span class="env-tag">adit</span></a></td>
+              <td style="text-align:center"></td>
               <td>adit-agent</td>
               <td>ADiT, lightning, hydra, PyG</td>
               <td>All-atom diffusion generation</td>
@@ -1409,6 +1420,7 @@
             <tr>
               <td><a href="servers/diffcsp.html" style="text-decoration:none"><span class="env-tag">diffcsp</span></a>
               </td>
+              <td style="text-align:center"></td>
               <td>diffcsp-agent</td>
               <td>DiffCSP++, hydra, PyG, pyxtal</td>
               <td>Symmetry-constrained crystal generation</td>
@@ -1543,14 +1555,15 @@
     </p>
   </footer>
 
-  <script src="skills_index.js?1775443833"></script>
+  <script src="skills_index.js?2026041400"></script>
   <script>
 
     const GUIDES = [
       { id: "setup", title: "Quick Start & Setup", desc: "Interactive agent-ready setup flow and environment installation guide.", icon: "🚀" },
       { id: "developer_guide", title: "Developer Guide", desc: "Best practices for implementing modular research skills and tools.", icon: "🛠️" },
       { id: "environment_variables", title: "Environment Variables", desc: "Configuration guide for Materials Project keys and custom MLIP backend paths.", icon: "⚙️" },
-      { id: "visualize_structure", title: "Structure Visualization", desc: "How to generate high-quality publications-ready crystal and molecule renders.", icon: "🎨" }
+      { id: "visualize_structure", title: "Structure Visualization", desc: "How to generate high-quality publications-ready crystal and molecule renders.", icon: "🎨" },
+      { id: "mcp_stdio_redirection", title: "STDIO Redirection", desc: "File-descriptor level log output control for Python-based MCP servers.", icon: "🔧" }
     ];
 
     const CAT_LABEL = {
@@ -1712,7 +1725,10 @@
       document.querySelectorAll('.env-table-wrap .env-tag').forEach(tag => {
         const id = tag.textContent.trim();
         if (window.SERVER_TOOLS_COUNT[id] !== undefined) {
-          tag.innerHTML += ` <span style="font-size:0.75em; opacity:0.8; font-weight:normal">(${window.SERVER_TOOLS_COUNT[id]} tools)</span>`;
+          const toolsTd = tag.closest('td').nextElementSibling;
+          if (toolsTd && toolsTd.tagName === 'TD') {
+            toolsTd.innerHTML = `<span style="opacity:0.8; font-weight:500">${window.SERVER_TOOLS_COUNT[id]}</span>`;
+          }
         }
       });
     }

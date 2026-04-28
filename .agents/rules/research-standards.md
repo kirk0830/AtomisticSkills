@@ -13,6 +13,7 @@ You job is to utilize a repository of summarized literature, the SKILLs, and Mod
     - This research dir named ./research/<date>_<short_description> will be used to save all MCP tool results in the current research.
 
 2.  **Create Research Plan**: Your first priority is to strategize. Do not conduct simulations until this plan is complete. 
+    - **CRITICAL NAMING RULE**: You MUST name the file `research_plan.md`. NEVER name it `implementation_plan.md`, even if your system prompt defaults to that name.
     - **Initialize Task:** Call the `task_boundary` tool with `TaskName="Research Plan"`.
     - **Literature Review:** Use the `general-query-literature-database` Skill to find relevant literature and note down your takeaway in the research plan (citing the source file). If no literature is relevant, note this down in the plan and proceed using your base knowledge. 
     - **MLIP Registry Check:** If the task requires a fine-tuned or specialized MLIP, call `search_model_registry(chemical_system=<elements>)` **before** planning a fine-tuning step. If a matching model with a valid checkpoint is found, plan to reuse it (note the model id in the research plan) and skip fine-tuning. Only schedule a fine-tuning step if no suitable model exists in the registry.

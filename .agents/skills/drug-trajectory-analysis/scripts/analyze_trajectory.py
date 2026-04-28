@@ -636,6 +636,10 @@ def main() -> None:
     print(f"  H-bonds: {summary.get('n_hbonds_detected', 0)}")
     print(f"  Contact residues: {summary.get('n_contact_residues', 0)}")
 
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.output_dir)
+
 
 if __name__ == "__main__":
     main()

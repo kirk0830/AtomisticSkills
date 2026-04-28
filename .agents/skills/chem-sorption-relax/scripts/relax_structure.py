@@ -161,6 +161,7 @@ def main() -> int:
         "calculator": args.calculator,
         "model_name": args.model_name,
         "task_name": args.task_name,
+        "device": device,
         "n_atoms": len(atoms),
         "energy_initial_eV": e_init,
         "energy_final_eV": e_final,
@@ -175,6 +176,11 @@ def main() -> int:
     with open(json_path, "w") as f:
         json.dump(results, f, indent=2)
     print(f"Results saved to: {json_path}")
+
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.output_dir)
+
     return 0
 
 

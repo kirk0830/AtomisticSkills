@@ -254,6 +254,10 @@ def main():
     print(f"Metadata: {meta_path}")
     print("Next step: relax with MLIP using relax_cell=False, then run calculate_gb_energy.py")
 
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.output_dir)
+
 
 if __name__ == "__main__":
     main()

@@ -476,6 +476,10 @@ def main() -> None:
     print(f"\nResults written to {args.output_dir}")
     print(json.dumps(summary, indent=4))
 
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.output_dir)
+
 
 if __name__ == "__main__":
     main()

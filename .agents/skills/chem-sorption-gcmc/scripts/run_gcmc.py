@@ -339,6 +339,10 @@ def main() -> int:
     write_gcmc_results_json(gcmc_json_path, payload)
     LOGGER.info("Wrote %s", gcmc_json_path)
 
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.output_dir)
+
     # Remove traj/log and .npy intermediates; keep JSON and PNGs (nmols.png, energy.png)
     if not args.keep_intermediates:
         for p in (

@@ -1,6 +1,6 @@
 ---
 name: mat-dft-vasp
-description: Prepare VASP input files locally and parse VASP output results.
+description: Prepare VASP input files, run DFT calculations (locally or remotely via atomate2), and parse VASP output results.
 category: materials
 ---
 
