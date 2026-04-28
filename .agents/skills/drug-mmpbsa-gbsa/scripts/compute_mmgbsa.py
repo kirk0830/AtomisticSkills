@@ -42,6 +42,39 @@ import openmm.unit as unit
 import MDAnalysis as mda
 
 
+def _apply_minimum_image_ligand(universe: mda.Universe, ligand_sel: str) -> None:
+    """Shift ligand atoms to minimum-image positions relative to the protein.
+
+    Each frame, translate every ligand atom by the box vector that puts it
+    closest to the protein center of mass. Without this, a ligand that wraps
+    across a periodic boundary appears spatially separated from the protein
+    in subsequent energy evaluations, yielding spurious near-zero interaction
+    energies. Avoids `trans.unwrap()` which requires bond topology that
+    OpenMM-written DCDs typically lack.
+    """
+    protein_ca = universe.select_atoms("protein and name CA")
+    ligand = universe.select_atoms(ligand_sel)
+
+    class _MinImageLigand:
+        def __init__(self, protein_ca, ligand):
+            self.protein_ca = protein_ca
+            self.ligand = ligand
+
+        def __call__(self, ts):
+            box = ts.dimensions[:3] if ts.dimensions is not None else None
+            if box is None or np.any(box == 0):
+                return ts
+            prot_com = self.protein_ca.center_of_mass()
+            lig_pos = self.ligand.positions.copy()
+            for i in range(3):
+                diff = lig_pos[:, i] - prot_com[i]
+                lig_pos[:, i] -= box[i] * np.round(diff / box[i])
+            self.ligand.positions = lig_pos
+            return ts
+
+    universe.trajectory.add_transformations(_MinImageLigand(protein_ca, ligand))
+
+
 def load_openff_molecule(sdf_path: Path):
     """Load an OpenFF Molecule from SDF and assign AM1-BCC charges."""
     from openff.toolkit import Molecule
@@ -199,6 +232,12 @@ def compute_mmgbsa(
     # Step 5: Load trajectory and determine frame range
     print("\n--- Loading trajectory for energy evaluation ---")
     u = mda.Universe(str(topology_path), str(trajectory_path))
+
+    # PBC correction: shift ligand to its minimum-image position relative to
+    # the protein each frame. Without this, ligand atoms that wrap to a
+    # different periodic image appear far from the protein and produce
+    # spurious zero (non-interacting) per-frame energies.
+    _apply_minimum_image_ligand(u, ligand_sel_str)
 
     # Determine timestep from trajectory
     if len(u.trajectory) > 1:
