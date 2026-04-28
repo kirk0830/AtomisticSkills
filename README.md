@@ -1,6 +1,6 @@
 # AtomisticSkills
 
-![AtomisticSkills Logo](logo/atomisticskills_logo.png)
+![AtomisticSkills Logo](site/logo/atomisticskills_logo.svg)
 
 ## Overview
 **AtomisticSkills** is a composable framework for AI-driven atomistic materials research. Built on the **hierarchical decomposition** of complex scientific tasks into **Workflows** → **Skills** → **Tools**, it enables coding AI agents to autonomously conduct multi-stage materials, chemistry, and drug discovery research by combining modular, reusable capabilities.

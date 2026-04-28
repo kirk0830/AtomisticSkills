@@ -316,7 +316,7 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
 
 <nav>
   <a class="nav-logo" href="../index.html">
-    <img src="../logo/atomisticskills_logo.png" alt="AtomisticSkills"/>
+    <img src="../logo/atomisticskills_logo.svg" alt="AtomisticSkills"/>
   </a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
@@ -531,7 +531,7 @@ def make_generic_page(doc_id: str, meta: dict, body_md: str, out_path: Path):
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="index.html"><img src="logo/atomisticskills_logo.png" alt="AtomisticSkills"/></a>
+  <a class="nav-logo" href="index.html"><img src="logo/atomisticskills_logo.svg" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="index.html">← Back Home</a>
 </nav>
 <div class="doc-hero">
@@ -726,7 +726,7 @@ def make_workflow_page(workflow_id: str, meta: dict, body_md: str, nodes: list, 
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.png" height="24" alt="AtomisticSkills"/></a>
+  <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.svg" height="24" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
     <a class="gh-link" href="{github_link}" target="_blank">View on GitHub</a>
@@ -969,7 +969,7 @@ def make_server_page(server_id, tools, out_path):
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.png" height="24" alt="AtomisticSkills"/></a>
+  <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.svg" height="24" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
     <a class="gh-link" href="{github_link}" target="_blank">View on GitHub</a>
