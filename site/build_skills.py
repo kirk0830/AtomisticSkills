@@ -789,6 +789,8 @@ def build_skills():
         if not skill_dir.is_dir():
             continue
         skill_id = skill_dir.name
+        if skill_id.startswith('private-'):
+            continue
         skill_md_path = skill_dir / "SKILL.md"
         if not skill_md_path.exists():
             continue
