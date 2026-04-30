@@ -166,7 +166,7 @@ def run_optimization(
     logger.info(f"Optimized structure written to {output_dir}/optimized_structure.xyz")
 
     final_results = opt_calculator.get_results()
-    if (final_results.energy or final_results.gradients is None
+    if (final_results.energy is None or final_results.gradients is None
             or (calculate_final_hessian and final_results.hessian is None)):
         if calculate_final_hessian:
             opt_calculator.set_required_properties([su.Property.Energy, su.Property.Gradients, su.Property.Hessian])
@@ -293,6 +293,10 @@ def main():
     with open(results_file, "w") as f:
         json.dump(recursive_tolist(result), f, indent=4)
     logger.info(f"Results saved to {results_file}")
+
+    # Save input configs for reproducibility
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, args.output_dir)
 
 
 if __name__ == "__main__":

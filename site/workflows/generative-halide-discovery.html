@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Generative Discovery of Halide Solid-State Electrolytes — AtomisticSkills Workflows</title>
+  <meta name="description" content="An end-to-end generative AI workflow for discovering novel high-conductivity solid-state electrolytes (SSEs), specifically mapped for halide lithium-ion conductors."/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{ --bg:#f8f9fc; --bg2:#ffffff; --border:#e2e8f0; --text:#1b1464; --muted:#64748b; --accent:#816cff; }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:56px;background:rgba(255,255,255,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .nav-back{display:flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:0.88rem;font-weight:500;transition:color .2s}
+    .nav-back:hover{color:var(--accent)}
+    .nav-right{display:flex;align-items:center;gap:1rem}
+    .gh-link{font-size:0.84rem;font-weight:600;color:var(--accent);text-decoration:none;
+      border:1px solid var(--accent);border-radius:8px;padding:6px 14px;transition:all .2s}
+    .gh-link:hover{background:var(--accent);color:#fff}
+    .workflow-hero{background:var(--bg2);border-bottom:1px solid var(--border);padding:3rem 2rem 2.5rem}
+    .workflow-hero-inner{max-width:900px;margin:0 auto}
+    .breadcrumb{font-size:0.82rem;color:var(--muted);margin-bottom:1rem}
+    .breadcrumb a{color:var(--accent);text-decoration:none}
+    h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;line-height:1.15;color:var(--text);margin-bottom:0.75rem}
+    .workflow-desc{font-size:1.05rem;color:var(--muted);max-width:720px;line-height:1.6}
+    .workflow-content{max-width:900px;margin:0 auto;padding:2.5rem 2rem}
+    .rendered-md h2{font-size:1.35rem;font-weight:700;margin:2rem 0 1rem;color:var(--text);border-bottom:2px solid var(--border);padding-bottom:0.5rem}
+    .rendered-md h3{font-size:1.15rem;font-weight:700;margin:1.5rem 0 0.5rem;color:var(--text)}
+    .rendered-md p{margin:0.8rem 0;color:#374151;line-height:1.7}
+    .rendered-md ul,.rendered-md ol{padding-left:1.5rem;margin:0.8rem 0}
+    .rendered-md li{margin:0.4rem 0;color:#374151}
+    .rendered-md code{font-family:'JetBrains Mono',monospace;font-size:0.85rem;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;padding:2px 6px;color:#be185d}
+    .rendered-md a{color:var(--accent);text-decoration:none}
+    footer{border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem}
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.svg" height="24" alt="AtomisticSkills"/></a>
+  <a class="nav-back" href="../index.html">← Back to Home</a>
+  <div class="nav-right">
+    <a class="gh-link" href="https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/workflows/generative-halide-discovery.md" target="_blank">View on GitHub</a>
+  </div>
+</nav>
+<div class="workflow-hero">
+  <div class="workflow-hero-inner">
+    <div class="breadcrumb"><a href="../index.html">Home</a> / Workflows</div>
+    <h1>Generative Discovery of Halide Solid-State Electrolytes</h1>
+    <p class="workflow-desc">An end-to-end generative AI workflow for discovering novel high-conductivity solid-state electrolytes (SSEs), specifically mapped for halide lithium-ion conductors.</p>
+  </div>
+</div>
+<div class="workflow-content">
+  
+<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow-x: auto;">
+  <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; color: #1e293b; text-align: center;">Workflow Flowchart</h3>
+  <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
+    
+                <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; font-size: 0.9rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: max-content;">
+                  <span>📎</span> create_research_dir
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> ml-generative-mattergen</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; font-size: 0.9rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: max-content;">
+                  <span>📎</span> mcp_fairchem_relax_structure
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> mat-db-mp</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> mat-stability</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; font-size: 0.9rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: max-content;">
+                  <span>📎</span> mcp_matgl_run_md
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> mat-diffusion-analysis</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
+                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> mat-structure-novelty</div>
+                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
+                </div>
+    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>
+    
+                <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; font-size: 0.9rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: max-content;">
+                  <span>📎</span> mcp_base_search_literature
+                </div>
+  </div>
+</div>
+
+  <div class="rendered-md" id="workflow-body"></div>
+  <hr style="margin: 3rem 0; border: none; border-top: 1px solid var(--border);">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <a href="https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/workflows/generative-halide-discovery.md" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 8px; color: #1e293b; font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      View this Workflow on GitHub
+    </a>
+  </div>
+</div>
+<footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const MD_DATA = "This workflow documents the explicit steps required to transition from a conceptual material class (e.g., Li-M-X halides) to highly verified, novel superionic solid-state electrolytes (SSEs) using generative AI, ML interatomic potentials (MLIPs), and literature checks.\n\n## 1. Initial Research & Target Framing\n- **Goal**: Discover fast-ion conducting Solid-State Electrolytes (SSEs).\n- **Setup**: Create an active task directory via the `create_research_dir` MCP tool (e.g., `research/YYYY-MM-DD_halide_sse_generative_search`).\n- **Chemical Spaces**: Focus on ternary systems (e.g., `Li-Y-Cl`, `Li-Sc-Br`, `Li-In-Cl`, `Li-Hf-Cl`, `Li-Zr-Cl`, `Li-Er-Br`). The spaces should be selected to ensure varied polyhedral configurations and lattice volumes conducive to high Li-ion mobility.\n\n## 2. Generative Candidate Creation (MatterGen)\nGenerate purely hypothetical, chemically plausible structures using a diffusion-based generative model.\n- **Skill Reference**: `ml-generative-mattergen`\n- **Execution**: Apply MatterGen's `chemical_system` conditioning to generate structures containing exactly the elements requested. \n- *Crucial Note*: MatterGen does not strictly fix formula proportions under chemical system conditioning; generate large batches (e.g., 50 structures per system) and post-process to strip out un-desired binaries/elementals. \n- Keep all valid CIF outputs in a `mattergen_candidates/` subdirectory.\n\n## 3. Thermodynamic Stability Pre-Screening ($E_{hull}$)\nSince generative models output varying levels of stability, rigorously filter out candidates that decompose exothermically.\n- **Relaxation**: Relax all generated CIFs fully using an MLIP (e.g., `mcp_fairchem_relax_structure` with `uma-s-1p1` or MatGL). Save the relaxed CIFs to `candidate_relaxations/`.\n- **Competitor Sourcing**: Query the Materials Project (`mat-db-mp`) to download CIFs of all known stable phases associated within the targeted chemical spaces.\n- **Unified MLIP Energy Scale**: Relax the known MP competitors using the exact same MLIP used for the novel candidates to ensure apples-to-apples energy comparisons.\n- **Phase Diagram Construction**: Use `mat-stability` and `pymatgen.analysis.phase_diagram` to compute $E_{hull}$ for all generated candidates against the newly constructed MLIP convex hull.\n- *Filter Rule*: Discard candidates with $E_{hull} > 50$ meV/atom. Highly stable candidates ($E_{hull} \\le 10$ meV/atom) proceed to dynamical validation.\n\n## 4. High-Throughput Diffusion Molecular Dynamics (MD)\nUse Molecular Dynamics to evaluate and predict the ionic conductivity of the top structurally stable candidates.\n- **Execution**: Run NVT ensemble MD through the MLIP server (e.g., `mcp_matgl_run_md`).\n- **Temperatures**: Run a temperature ladder (e.g., 400K, 500K, 600K, 700K, 800K, 900K).\n- **MD Parameters**: \n  - Ensure supercells are sufficiently expanded (min 10\u00c5 side length).\n  - Use a timestep of 2fs (`timestep: 2.0`).\n  - Progressively scale the number of steps to ensure statistical convergence at lower temperatures (e.g., 10,000 steps at 900K up to 320,000 steps at 400K).\n- **Auto-Monitoring**: Enable diffusion and explosion tracking monitors (via `src/utils/mlips/md_utils.py`) to automatically snapshot Mean Square Displacement (`diffusion_Li.json` & `msd_Li.png`) after equilibration passes.\n\n## 5. Arrhenius Extrapolation & Ranking\n- Use the PyMatgen `DiffusionAnalyzer` workflow (as seen in `mat-diffusion-analysis`) to ingest the aggregated multi-temperature `diffusion_Li.json` files for each structure.\n- **Metrics**: \n  - Fit the exact activation energy ($E_a$).\n  - Calculate extrapolated room temperature (300K) isotropic ionic conductivity ($\\sigma_{RT}$) in mS/cm using cell volumes from the parent candidate CIF.\n- *Filter Rule*: Highlight materials exhibiting superionic conductivities ($> 1$ mS/cm) and realistic barriers ($E_a \\approx 0.1 - 0.5$ eV).\n\n## 6. Structural & Chemical Literature Novelty Verification\nValidate whether the generated and highly conductive structures are true discoveries.\n- **Structural Duplication check**: Pass the highly stable generated formulas through `mat-structure-novelty` (`pymatgen.analysis.structure_matcher`) against identical formulas found on the Materials Project.\n- **Experimental Verification**: Execute the OpenAlex literature database query (`mcp_base_search_literature`) for the formulas alongside keywords (e.g., `[\"Li3ErCl6\", \"solid electrolyte\"]`).\n  - If identical papers return matches, verify if the computational structural predictions accurately hit the experimental bounds.\n  - If no matches exist, it constitutes a fully novel AI-driven material discovery ready for experimental synthesis.\n\n## 7. Comprehensive Result Amalgamation\nFinally, merge all properties (Generation source, Space Group, $E_{hull}$, Formation Energy, $E_a$, Conductivity $\\sigma_{RT}$, and Literature Citations) into a master CSV DataFrame to deliver the holistic dataset for publication or lab transition.";
+    marked.setOptions({ breaks: true, gfm: true });
+    document.getElementById('workflow-body').innerHTML = marked.parse(MD_DATA);
+  });
+</script>
+</body>
+</html>

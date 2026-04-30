@@ -2,6 +2,8 @@
 
 This environment provides the tools for carrying out molecular DFT calculations given that ORCA is already installed on the system and specified with `ORCA_BINARY_PATH`.
 
+> **Platform**: Requires **x86_64** (linux-64 or osx-64). SCINE packages are not available as pre-built binaries for aarch64/ARM. On ARM systems, build SCINE from source: https://github.com/qcscine/utilities
+
 ## Quick Installation
 Most users should use the simplified installation script, which installs only the necessary core packages:
 

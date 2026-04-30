@@ -54,11 +54,11 @@ def add_common_widom_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--num-insertions", type=int, default=5000, help="Number of Widom insertion attempts")
     parser.add_argument("--optimize-structures", action="store_true", help="Optimize framework and gas before insertion (default: use structure as-is)")
     parser.add_argument("--cutoff-distance", type=float, default=1.0, help="Minimum framework-gas distance (Å)")
-    parser.add_argument("--cutoff-to-com", action="store_false", help="Use gas center-of-mass for cutoff checks")
+    parser.add_argument("--cutoff-to-com", action="store_true", help="Use gas center-of-mass for cutoff checks")
     parser.add_argument("--min-interplanar-distance", type=float, default=12.0, help="Min interplanar distance before supercell (Å)")
     parser.add_argument("--random-seed", type=int, default=0, help="Random seed for sampling and bootstrap")
     parser.add_argument("--min-interaction-energy", type=float, default=-1.25, help="Minimum valid interaction energy (eV)")
-    parser.add_argument("--model-outputs-interaction-energy", action="store_false", help="Treat model energies as interaction energies")
+    parser.add_argument("--model-outputs-interaction-energy", action="store_true", help="Treat model energies as interaction energies")
     parser.add_argument("--output-dir", type=Path, default=Path("."), help="Directory for output JSON")
 
 
