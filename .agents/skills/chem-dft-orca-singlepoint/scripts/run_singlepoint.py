@@ -97,6 +97,7 @@ def run_singlepoint(
         special_option=special_option,
         nprocs=nprocs,
         extra_calculator_settings=extra_calculator_settings,
+        output_dir=output_dir
     )
 
     props = [su.Property.Energy]
