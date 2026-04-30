@@ -22,5 +22,5 @@ python .agents/skills/chem-dft-orca-advanced-calculation/scripts/run_orca_input.
 
 ## Expected Results
 
-- **`calculation_results.json`**: Summary of some standard quantities that are automatically parsed. More exotic quantities might have to be parsed from `orca_calc.property.txt` or `orca_calc.out`
-- **`orca_calc.*`**: Various ORCA input and output files for each calculation
+- **calculation_results.json**: Summary of some standard quantities that are automatically parsed. More exotic quantities might have to be parsed from `orca_calc.property.txt` or `orca_calc.out`
+- **orca_calc.***: Various ORCA input and output files for each calculation

@@ -27,10 +27,11 @@ python .agents/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
 
 ## Expected Results
 
-- **`optimization_results.json`**: Summary of the optimization.
-- **`input_structure.xyz`**: XYZ file for guess structure.
-- **`optimized_structure.xyz`**: XYZ file for optimized structure.
-- **`*-*-*-*/orca_calc.*`**: Directory with ORCA input and output files.
+- **optimization_results.json**: Summary of the optimization.
+- **input_structure.xyz**: XYZ file for guess structure.
+- **optimized_structure.xyz**: XYZ file for optimized structure.
+- **opt/opt.opt.trj.xyz**: Multi XYZ file of the optimization trajectory.
+- ***-*-*-*/orca_calc.***: Directory with ORCA input and output files.
 
 # TS Optimization
 
@@ -54,4 +55,9 @@ python .agents/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
 
 ## Expected Results
 
+- **optimization_results.json**: Summary of the optimization.
+- **input_structure.xyz**: XYZ file for guess structure.
+- **optimized_structure.xyz**: XYZ file for optimized structure.
+- **tsopt/tsopt.tsopt.trj.xyz**: Multi XYZ file of the optimization trajectory.
+- ***-*-*-*/orca_calc.***: Directory with ORCA input and output files.
 

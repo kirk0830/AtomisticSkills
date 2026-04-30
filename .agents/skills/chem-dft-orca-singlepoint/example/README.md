@@ -27,6 +27,6 @@ python .agents/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
 
 ## Expected Results
 
-- **`singlepoint_results.json`**: Summary of the calculated quantities
-- **`input_structure.xyz`**: XYZ files of the calculated structure
-- **`*-*-*-*/orca_calc.*`**: Directory with ORCA input and output files for each calculation
+- **singlepoint_results.json**: Summary of the calculated quantities
+- **input_structure.xyz**: XYZ files of the calculated structure
+- ***-*-*-*/orca_calc.***: Directory with ORCA input and output files for each calculation
