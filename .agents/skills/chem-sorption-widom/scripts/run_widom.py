@@ -30,7 +30,17 @@ from widom_common import (
 )
 
 
-def normalize_charge_spin(atoms) -> None:
+def normalize_charge_spin(atoms, task_name: str) -> None:
+    """Write charge/spin into atoms.info only for the omol head.
+
+    For odac/omat/omc/oc20, leave atoms.info untouched so fairchem's
+    AtomicData.from_ase falls back to spin=0 (the trained default for
+    those heads). Forcing spin=1 on non-omol systems perturbs the
+    shared-backbone csd_embedding and biases energies.
+    """
+    if task_name != "omol":
+        return
+
     info = atoms.info if isinstance(atoms.info, dict) else {}
     if atoms.info is not info:
         atoms.info = info
@@ -47,6 +57,7 @@ def normalize_charge_spin(atoms) -> None:
     atoms.info["charge"] = charge
     atoms.info["spin_multiplicity"] = spin_mult
     atoms.info["spin"] = spin_mult
+
 
 
 def parse_args() -> argparse.Namespace:
