@@ -94,7 +94,7 @@ def main() -> int:
 
     device = select_device(args.device)
     atoms = read_structure(args.structure)
-    normalize_charge_spin(atoms)
+    normalize_charge_spin(atoms, args.task_name)
 
     model_tag = args.model_tag or f"{args.calculator}_{args.model_name}"
     
