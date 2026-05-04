@@ -23,6 +23,8 @@ from ase.io import read
 from ase.io.trajectory import Trajectory
 from ase_mc import Moveset
 
+from src.utils.serialization_utils import format_temperature_key, finite_or_none
+
 # Energy/temperature conversion constants for Qst calculations
 EV_TO_KJMOL = 96.4853321233  # 1 eV per molecule = 96.485... kJ/mol
 KB_EVK = 8.617333262145e-5   # Boltzmann constant in eV/K
@@ -779,13 +781,6 @@ def analyze_and_plot_multicomponent(
 # -----------------------------------------------------------------------------
 
 
-def _format_temperature_key(temperature: float) -> str:
-    rounded = round(temperature)
-    if abs(temperature - rounded) < 1e-6:
-        return f"{int(rounded)}K"
-    return f"{temperature:g}K"
-
-
 def _load_properties_json(properties_path: Path, cof_name: str) -> dict:
     properties_path = Path(properties_path)
     properties_path.parent.mkdir(parents=True, exist_ok=True)
@@ -808,14 +803,6 @@ def _write_properties_json(properties_path: Path, data: dict) -> None:
     Path(properties_path).write_text(json.dumps(data, indent=2, allow_nan=False) + "\n")
 
 
-def _finite_or_none(x: float) -> float | None:
-    try:
-        xf = float(x)
-    except Exception:
-        return None
-    return xf if np.isfinite(xf) else None
-
-
 def _same_partial_pressure(a: dict | None, b: dict | None) -> bool:
     if a is None and b is None:
         return True
@@ -824,8 +811,8 @@ def _same_partial_pressure(a: dict | None, b: dict | None) -> bool:
     if set(a.keys()) != set(b.keys()):
         return False
     for k in a.keys():
-        av = _finite_or_none(a.get(k))
-        bv = _finite_or_none(b.get(k))
+        av = finite_or_none(a.get(k))
+        bv = finite_or_none(b.get(k))
         if av != bv:
             return False
     return True
@@ -836,7 +823,7 @@ def _upsert_isotherm_point(points: list, new_point: dict) -> list:
 
     Matching rule: same p_total and same p_partial (per-adsorbate partials).
     """
-    p_new = _finite_or_none(new_point.get("p_total"))
+    p_new = finite_or_none(new_point.get("p_total"))
     pp_new = new_point.get("p_partial")
     if p_new is None:
         return list(points) + [new_point]
@@ -845,7 +832,7 @@ def _upsert_isotherm_point(points: list, new_point: dict) -> list:
     for i, pt in enumerate(out):
         if not isinstance(pt, dict):
             continue
-        p_old = _finite_or_none(pt.get("p_total"))
+        p_old = finite_or_none(pt.get("p_total"))
         if p_old != p_new:
             continue
         if not _same_partial_pressure(pt.get("p_partial"), pp_new):
