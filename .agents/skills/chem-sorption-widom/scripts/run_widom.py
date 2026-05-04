@@ -22,42 +22,13 @@ if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
 from src.utils.mlips.loader import load_wrapper
+from src.utils.structure_utils import normalize_charge_spin
 from widom_common import (
     add_common_widom_args,
     read_structure,
     run_widom_job,
     select_device,
 )
-
-
-def normalize_charge_spin(atoms, task_name: str) -> None:
-    """Write charge/spin into atoms.info only for the omol head.
-
-    For odac/omat/omc/oc20, leave atoms.info untouched so fairchem's
-    AtomicData.from_ase falls back to spin=0 (the trained default for
-    those heads). Forcing spin=1 on non-omol systems perturbs the
-    shared-backbone csd_embedding and biases energies.
-    """
-    if task_name != "omol":
-        return
-
-    info = atoms.info if isinstance(atoms.info, dict) else {}
-    if atoms.info is not info:
-        atoms.info = info
-    try:
-        charge = int(info.get("charge", info.get("chg", 0)))
-    except Exception:
-        charge = 0
-    try:
-        spin_mult = int(
-            info.get("spin_multiplicity", info.get("multiplicity", info.get("spin", 1)))
-        )
-    except Exception:
-        spin_mult = 1
-    atoms.info["charge"] = charge
-    atoms.info["spin_multiplicity"] = spin_mult
-    atoms.info["spin"] = spin_mult
-
 
 
 def parse_args() -> argparse.Namespace:

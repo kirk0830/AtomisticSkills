@@ -48,28 +48,12 @@ from gcmc_common import (
     qst_single_fluctuation_from_series,
 )
 from src.utils.mlips.loader import load_wrapper
-
+from src.utils.structure_utils import normalize_charge_spin
 
 LOGGER = logging.getLogger(__name__)
 
 
-def normalize_charge_spin(atoms) -> None:
-    info = atoms.info if isinstance(atoms.info, dict) else {}
-    if atoms.info is not info:
-        atoms.info = info
-    try:
-        charge = int(info.get("charge", info.get("chg", 0)))
-    except Exception:
-        charge = 0
-    try:
-        spin_mult = int(
-            info.get("spin_multiplicity", info.get("multiplicity", info.get("spin", 1)))
-        )
-    except Exception:
-        spin_mult = 1
-    atoms.info["charge"] = charge
-    atoms.info["spin_multiplicity"] = spin_mult
-    atoms.info["spin"] = spin_mult
+
 
 
 def retag_all_guests_single_species(atoms: Atoms, host_natoms: int) -> int | None:
