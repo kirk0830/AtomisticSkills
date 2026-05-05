@@ -923,7 +923,7 @@ def update_properties_json_gcmc_single(
     host_mass_kg = _host_mass_kg(host, host_natoms)
     mol_per_kg = _mol_per_kg_from_nmols(eq_nmols, host_mass_kg)
     # Numerically, 1 mol/kg == 1 mmol/g
-    mmol_per_g = _finite_or_none(mol_per_kg)
+    mmol_per_g = finite_or_none(mol_per_kg)
 
     props = data.setdefault("properties", {})
     adsorption = props.setdefault("adsorption", {})
@@ -1011,7 +1011,7 @@ def update_properties_json_gcmc_multicomponent(
             continue
         eq_nmols = _compute_eq_nmols(nmols_path, frac_tail=frac_tail)
         mol_per_kg = _mol_per_kg_from_nmols(eq_nmols, host_mass_kg)
-        q_by_adsorbate[name] = _finite_or_none(mol_per_kg)
+        q_by_adsorbate[name] = finite_or_none(mol_per_kg)
 
     finite_vals = [v for v in q_by_adsorbate.values() if v is not None]
     q_total = float(np.sum(finite_vals)) if finite_vals else None
@@ -1178,7 +1178,7 @@ def qst_single_fluctuation_from_series(
 
     mean = float(np.mean(good))
     std = float(np.std(good, ddof=1)) if good.size >= 2 else float("nan")
-    return _finite_or_none(mean), _finite_or_none(std), int(n_blocks), int(block_size)
+    return finite_or_none(mean), finite_or_none(std), int(n_blocks), int(block_size)
 
 
 def qst_multicomponent_fluctuation_from_series(
@@ -1259,8 +1259,8 @@ def qst_multicomponent_fluctuation_from_series(
             q_mean[nm] = None
             q_std[nm] = None
         else:
-            q_mean[nm] = _finite_or_none(float(np.mean(vals)))
-            q_std[nm] = _finite_or_none(float(np.std(vals, ddof=1))) if vals.size >= 2 else None
+            q_mean[nm] = finite_or_none(float(np.mean(vals)))
+            q_std[nm] = finite_or_none(float(np.std(vals, ddof=1))) if vals.size >= 2 else None
 
     return q_mean, q_std, int(n_blocks), int(block_size)
 
@@ -1289,7 +1289,7 @@ def compute_eq_loading_from_traj_multicomponent(
     for name in species_names:
         eq_nmols = _eq_nmols_from_array(nmols[name], frac_tail=frac_tail)
         mol_per_kg = _mol_per_kg_from_nmols(eq_nmols, host_mass_kg)
-        q_by_adsorbate[name] = _finite_or_none(mol_per_kg) if np.isfinite(mol_per_kg) else None  # mol/kg == mmol/g
+        q_by_adsorbate[name] = finite_or_none(mol_per_kg) if np.isfinite(mol_per_kg) else None  # mol/kg == mmol/g
     finite_vals = [v for v in q_by_adsorbate.values() if v is not None]
     q_total = float(np.sum(finite_vals)) if finite_vals else None
     return q_by_adsorbate, q_total
@@ -1340,8 +1340,8 @@ def gcmc_standalone_payload_single(
     point = {
         "p_total": float(pressure_bar),
         "p_partial": {adsorbate: float(pressure_bar)},
-        "q_total": _finite_or_none(q_total_mmol_g) if q_total_mmol_g is not None else None,
-        "q_by_adsorbate": {adsorbate: _finite_or_none(q_total_mmol_g) if q_total_mmol_g is not None else None},
+        "q_total": finite_or_none(q_total_mmol_g) if q_total_mmol_g is not None else None,
+        "q_by_adsorbate": {adsorbate: finite_or_none(q_total_mmol_g) if q_total_mmol_g is not None else None},
     }
     return {
         "adsorbates": [adsorbate],
