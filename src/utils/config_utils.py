@@ -89,8 +89,8 @@ def save_skill_inputs(args, output_path: str):
             return
             
         base_path = Path(output_path)
-        # If the path looks like a file (has an extension), use its parent directory
-        if base_path.suffix:
+        # If the path looks like a file (has a common config extension), use its parent directory
+        if base_path.suffix.lower() in [".yaml", ".yml", ".json", ".txt"]:
             yaml_dir = base_path.parent
         else:
             yaml_dir = base_path

@@ -126,6 +126,10 @@ def main() -> int:
     LOGGER.info("Adsorbate    : %s", args.adsorbate)
     LOGGER.info("Output dir   : %s", out_dir)
 
+    out_dir.mkdir(parents=True, exist_ok=True)
+    from src.utils.config_utils import save_skill_inputs
+    save_skill_inputs(args, out_dir / "input_configs.yaml")
+
     t0 = time.perf_counter()
     wrapper = load_wrapper(
         args.calculator,
@@ -323,9 +327,6 @@ def main() -> int:
     write_gcmc_results_json(gcmc_json_path, payload)
     LOGGER.info("Wrote %s", gcmc_json_path)
 
-    # Save input configs for reproducibility
-    from src.utils.config_utils import save_skill_inputs
-    save_skill_inputs(args, args.output_dir)
 
     # Remove traj/log and .npy intermediates; keep JSON and PNGs (nmols.png, energy.png)
     if not args.keep_intermediates:
