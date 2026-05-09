@@ -72,6 +72,33 @@ def create_research_dir(research_topic: str) -> str:
         return f"Error creating research directory: {str(e)}"
 
 @mcp.tool()
+def task_boundary(TaskName: str) -> str:
+    """Initialize a task boundary for research phases.
+    
+    Args:
+        TaskName: Name of the task phase (e.g. "Research Plan", "Literature Review").
+        
+    Returns:
+        Status message.
+    """
+    logger.info(f"Task Boundary Initiated: {TaskName}")
+    return f"Task boundary '{TaskName}' initiated."
+
+@mcp.tool()
+def notify_user(message: str, ShouldAutoProceed: bool = True) -> str:
+    """Ask the user to review a document or wait for feedback.
+    
+    Args:
+        message: Notification message for the user.
+        ShouldAutoProceed: Set to true to ensure the 'Proceed' button is visible to the user.
+        
+    Returns:
+        Status message.
+    """
+    logger.info(f"Notification to User: {message}")
+    return f"Notification sent: {message}"
+
+@mcp.tool()
 def search_materials_project_by_formula(
 
     formula: str,
