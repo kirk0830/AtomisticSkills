@@ -63,6 +63,16 @@
         </div>
         
         <div class="tool-card">
+          <h3 class="tool-name">📎 task_boundary</h3>
+          <div class="tool-doc rendered-md" data-md='"```text\nInitialize a task boundary for research phases.\n\nArgs:\n    TaskName: Name of the task phase (e.g. \"Research Plan\", \"Literature Review\").\n    \nReturns:\n    Status message.\n```"'></div>
+        </div>
+        
+        <div class="tool-card">
+          <h3 class="tool-name">📎 notify_user</h3>
+          <div class="tool-doc rendered-md" data-md='"```text\nAsk the user to review a document or wait for feedback.\n\nArgs:\n    message: Notification message for the user.\n    ShouldAutoProceed: Set to true to ensure the &#39;Proceed&#39; button is visible to the user.\n    \nReturns:\n    Status message.\n```"'></div>
+        </div>
+        
+        <div class="tool-card">
           <h3 class="tool-name">📎 search_materials_project_by_formula</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nSearch Materials Project by formula. Supports wildcards.\n\nArgs:\n    formula: Chemical formula (e.g., \"Si\", \"Fe2O3\", \"Si*\").\n    api_key: Optional MP API key (defaults to environment).\n    save_to_file: Optional save path (or directory if return_all=True).\n    return_all: If True, returns all matching structures instead of just the ground state.\n    \nReturns:\n    Path to saved CIF file(s).\n```"'></div>
         </div>

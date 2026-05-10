@@ -23,9 +23,7 @@ window.SKILLS_DATA = [
     "id": "chem-db-mof",
     "name": "chem-db-mof",
     "description": "Query multiple MOF databases (QMOF via MPContribs; ARC-MOF DB7/Majumdar et al. via Zenodo) and download CIF structures with optional element or identifier filters.",
-    "category": [
-      "chemistry"
-    ],
+    "category": "chemistry",
     "has_examples": false,
     "num_examples": 0
   },
@@ -44,9 +42,7 @@ window.SKILLS_DATA = [
     "id": "chem-db-spectra",
     "name": "chem-db-spectra",
     "description": "Search and download experimental InfraRed (IR), Mass spectra, and UV-Vis spectra data (JCAMP-DX format) for molecules.",
-    "category": [
-      "chemistry"
-    ],
+    "category": "chemistry",
     "has_examples": true,
     "num_examples": 1
   },
@@ -127,9 +123,7 @@ window.SKILLS_DATA = [
     "id": "chem-nmr-analysis",
     "name": "chem-nmr-analysis",
     "description": "Scripts for Wasserstein deconvolution of 1H NMR mixture spectra against reference spectra, reaction product prediction, time-series kinetics, and spectral plotting.",
-    "category": [
-      "chemistry"
-    ],
+    "category": "chemistry",
     "has_examples": false,
     "num_examples": 0
   },
@@ -137,9 +131,7 @@ window.SKILLS_DATA = [
     "id": "chem-nmr-predict",
     "name": "chem-nmr-predict",
     "description": "Predict 1H NMR spectra from SMILES strings via NMRdb.org SPINUS neural network prediction and nmrsim quantum mechanical spin simulation.",
-    "category": [
-      "chemistry"
-    ],
+    "category": "chemistry",
     "has_examples": false,
     "num_examples": 0
   },
@@ -250,7 +242,7 @@ window.SKILLS_DATA = [
   {
     "id": "drug-binding-site-definition",
     "name": "drug-binding-site-definition",
-    "description": ">",
+    "description": "Define a docking search box (center coordinates + box dimensions in Angstroms) from a co-crystal ligand, binding-site residues, or a saved JSON specification. Use this skill whenever the user mentions binding site, docking box, search box, grid box, active site definition, or pocket definition, or needs to specify where to dock ligands on a protein. Also use when the user has a protein target but needs help figuring out where to dock before running a docking skill.\n",
     "category": [
       "drug-discovery"
     ],
@@ -270,7 +262,7 @@ window.SKILLS_DATA = [
   {
     "id": "drug-complex-system-builder",
     "name": "drug-complex-system-builder",
-    "description": ">",
+    "description": "Build a solvated, charge-neutralized protein-ligand complex for OpenMM molecular dynamics simulation. Combines a prepared receptor PDB and ligand SDF, parameterizes the ligand with OpenFF Sage or GAFF (AM1-BCC charges), applies Amber ff14SB to the protein, solvates with explicit water, and adds counterions. Use this skill when the user wants to solvate a complex, set up a system for MD, prepare for simulation, add water and ions, or build a simulation box from a protein-ligand structure.\n",
     "category": [
       "drug-discovery"
     ],
@@ -330,27 +322,35 @@ window.SKILLS_DATA = [
   {
     "id": "drug-ligand-prep",
     "name": "drug-ligand-prep",
-    "description": "Prepare small-molecule ligands for docking/analysis: optional state enumeration, 3D conformer generation, MMFF/UFF minimization, and export to SDF + AutoDock PDBQT.",
-    "category": [
-      "drug-discovery"
-    ],
+    "description": "",
+    "category": [],
     "has_examples": true,
     "num_examples": 1
   },
   {
-    "id": "drug-mmgbsa",
-    "name": "drug-mmgbsa",
-    "description": "Compute single-trajectory MM-GBSA binding free energy estimates from a protein-ligand MD trajectory using OpenMM GBn2 implicit solvent.",
+    "id": "drug-mmpbsa-gbsa",
+    "name": "drug-mmpbsa-gbsa",
+    "description": "Compute single-trajectory MM-GBSA and / or MM-PBSA binding free energy estimates from a protein-ligand MD trajectory. Two backends: a fast OpenMM GBn2 path (no extra dependencies) and an AmberTools MMPBSA.py path that supports both GB (multiple igb models) and Poisson-Boltzmann PB on the same trajectory.\n",
     "category": [
       "drug-discovery"
     ],
     "has_examples": true,
-    "num_examples": 1
+    "num_examples": 2
   },
   {
     "id": "drug-molecular-fingerprints",
     "name": "drug-molecular-fingerprints",
     "description": "Compute Morgan/ECFP fingerprints, Tanimoto similarity, and optional Butina clusters/heatmaps for small-molecule comparison.",
+    "category": [
+      "drug-discovery"
+    ],
+    "has_examples": true,
+    "num_examples": 1
+  },
+  {
+    "id": "drug-pocket-detection",
+    "name": "drug-pocket-detection",
+    "description": "Identify and rank ligandable pockets on a protein structure or model using geometry (fpocket) or an ML predictor (P2Rank). Returns ranked pockets with lining residues, geometric center, volume, and a druggability score per pocket. Excludes docking; pair with drug-binding-site-definition or drug-docking-vina downstream. Use whenever the user has a protein but no binding-site information, asks about cryptic / allosteric / orphan pockets, needs to assess druggability, or wants to choose where to dock.\n",
     "category": [
       "drug-discovery"
     ],
@@ -401,9 +401,7 @@ window.SKILLS_DATA = [
     "id": "drug-retrosynthesis",
     "name": "drug-retrosynthesis",
     "description": "Predict synthetic accessibility and retrosynthetic pathways for novel molecules using the IBM RXN API.",
-    "category": [
-      "drug-discovery"
-    ],
+    "category": "drug-discovery",
     "has_examples": true,
     "num_examples": 1
   },
@@ -421,9 +419,7 @@ window.SKILLS_DATA = [
     "id": "general-arxiv-search",
     "name": "general-arxiv-search",
     "description": "Search and retrieve research papers from ArXiv API for scientific research.",
-    "category": [
-      "general"
-    ],
+    "category": "general",
     "has_examples": false,
     "num_examples": 0
   },
@@ -456,9 +452,7 @@ window.SKILLS_DATA = [
     "id": "general-deep-research",
     "name": "general-deep-research",
     "description": "Perform iterative, deep, and comprehensive literature research on a specific materials/chemistry topic.",
-    "category": [
-      "general"
-    ],
+    "category": "general",
     "has_examples": false,
     "num_examples": 0
   },
@@ -466,9 +460,7 @@ window.SKILLS_DATA = [
     "id": "general-patent-search",
     "name": "general-patent-search",
     "description": "Search for patents by keyword, material name, or assignee using free data sources (Google Patents).",
-    "category": [
-      "general"
-    ],
+    "category": "general",
     "has_examples": true,
     "num_examples": 1
   },
@@ -518,9 +510,7 @@ window.SKILLS_DATA = [
     "id": "general-query-literature-database",
     "name": "general-query-literature-database",
     "description": "Find relevant simulation workflows in the in-house literature database.",
-    "category": [
-      "general"
-    ],
+    "category": "general",
     "has_examples": false,
     "num_examples": 0
   },
@@ -548,9 +538,7 @@ window.SKILLS_DATA = [
     "id": "mat-calphad-phase-diagram",
     "name": "mat-calphad-phase-diagram",
     "description": "Calculate and plot multi-component temperature-composition phase diagrams from Thermodynamic Database (.tdb) files using CALPHAD methods.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -558,9 +546,7 @@ window.SKILLS_DATA = [
     "id": "mat-calphad-property-diagram",
     "name": "mat-calphad-property-diagram",
     "description": "Calculate temperature-dependent thermodynamic properties like Equilibrium Phase Fractions for a specific alloy composition using CALPHAD models.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -578,9 +564,7 @@ window.SKILLS_DATA = [
     "id": "mat-db-nist-janaf",
     "name": "mat-db-nist-janaf",
     "description": "Query the NIST Chemistry WebBook (which includes JANAF thermochemical tables) for standard experimental thermochemistry properties.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -588,9 +572,7 @@ window.SKILLS_DATA = [
     "id": "mat-db-optimade",
     "name": "mat-db-optimade",
     "description": "Query the Crystallography Open Database (COD) and other OPTIMADE-compliant databases for experimental crystal structures.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 3
   },
@@ -618,9 +600,7 @@ window.SKILLS_DATA = [
     "id": "mat-dft-electron-phonon",
     "name": "mat-dft-electron-phonon",
     "description": "Computes electron-phonon coupling to calculate temperature-dependent bandgap renormalization using atomate2.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -628,9 +608,7 @@ window.SKILLS_DATA = [
     "id": "mat-dft-electronic-transport",
     "name": "mat-dft-electronic-transport",
     "description": "Compute electronic transport properties (mobility, conductivity, Seebeck coefficient) using DFT and AMSET via atomate2.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -638,9 +616,7 @@ window.SKILLS_DATA = [
     "id": "mat-dft-ferroelectric",
     "name": "mat-dft-ferroelectric",
     "description": "Calculate the spontaneous ferroelectric polarization across a non-polar to polar structure transition using the Berry Phase method.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -648,9 +624,7 @@ window.SKILLS_DATA = [
     "id": "mat-dft-lobster",
     "name": "mat-dft-lobster",
     "description": "Construct computational flows for VASP electronic structure projection via LOBSTER to calculate chemical bonding insights (COHP, atomic charges, DOS).",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -668,9 +642,7 @@ window.SKILLS_DATA = [
     "id": "mat-dft-vasp",
     "name": "mat-dft-vasp",
     "description": "Prepare VASP input files, run DFT calculations (locally or remotely via atomate2), and parse VASP output results.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -797,10 +769,8 @@ window.SKILLS_DATA = [
   {
     "id": "mat-kinetic-monte-carlo",
     "name": "mat-kinetic-monte-carlo",
-    "description": "Simulate long-time kinetics using rejection-free kinetic Monte Carlo (KMC): event catalog construction, rate assignment (TST/Arrhenius), detailed-balance validation, superbasin handling, and analysis of transport.",
-    "category": [
-      "materials"
-    ],
+    "description": "",
+    "category": [],
     "has_examples": true,
     "num_examples": 2
   },
@@ -879,9 +849,7 @@ window.SKILLS_DATA = [
     "id": "mat-phase-field-conservative",
     "name": "mat-phase-field-conservative",
     "description": "Simulate conservative phase-fields (spinodal decomposition and phase separation) using the Cahn-Hilliard equation.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 1
   },
@@ -889,9 +857,7 @@ window.SKILLS_DATA = [
     "id": "mat-phase-field-non-conservative",
     "name": "mat-phase-field-non-conservative",
     "description": "Simulate non-conservative phase-fields (grain growth and phase transformations) using the Allen-Cahn equation.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 2
   },
@@ -991,9 +957,7 @@ window.SKILLS_DATA = [
     "id": "mat-structure-novelty",
     "name": "mat-structure-novelty",
     "description": "Determine if a given structure matches known experimental or theoretical structures, or compare two user-provided structures.",
-    "category": [
-      "materials"
-    ],
+    "category": "materials",
     "has_examples": true,
     "num_examples": 2
   },
@@ -1273,8 +1237,8 @@ window.WORKFLOWS_DATA = [
   }
 ];
 window.ATOMISTIC_STATS = {
-  "skills": 119,
-  "tools": 48,
+  "skills": 120,
+  "tools": 50,
   "servers": 19
 };
 window.SERVER_TOOLS_COUNT = {
@@ -1285,7 +1249,7 @@ window.SERVER_TOOLS_COUNT = {
   "mace": 6,
   "smol": 7,
   "mattergen": 1,
-  "base": 9,
+  "base": 11,
   "atomate2": 6,
   "matgl": 7
 };

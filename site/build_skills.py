@@ -12,6 +12,7 @@ import shutil
 import base64
 import ast
 from pathlib import Path
+import yaml
 
 # Fix: Define PROJECT_ROOT relative to this file's location (site/build_skills.py)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -44,17 +45,13 @@ def parse_frontmatter(content):
     if content.startswith("---"):
         end = content.find("---", 3)
         if end != -1:
-            fm = content[3:end].strip()
-            for line in fm.splitlines():
-                if line.startswith("name:"):
-                    meta["name"] = line.split(":", 1)[1].strip()
-                elif line.startswith("description:"):
-                    meta["description"] = line.split(":", 1)[1].strip()
-                elif line.startswith("category:"):
-                    raw = line.split(":", 1)[1].strip()
-                    # handle [a, b] or single value
-                    raw = raw.strip("[]")
-                    meta["category"] = [c.strip() for c in raw.split(",")]
+            fm_text = content[3:end].strip()
+            try:
+                fm = yaml.safe_load(fm_text)
+                if fm:
+                    meta.update(fm)
+            except Exception as e:
+                print(f"Error parsing frontmatter: {e}")
             content = content[end+3:].strip()
     return meta, content
 
@@ -643,47 +640,10 @@ def build_generic_docs():
         make_generic_page(doc_id, meta, body_md, out_path)
         print(f"  Built: {doc_id}.html")
 
-def extract_workflow_nodes(md_content):
-    nodes = []
-    for match in re.finditer(r'`([A-Za-z0-9_*-]+)`', md_content):
-        val = match.group(1)
-        if val.startswith("mcp_") or val.startswith("create_") or val in ("notify_user", "task_boundary"):
-            if val not in [n["name"] for n in nodes]:
-                nodes.append({"type": "tool", "name": val})
-        elif val.startswith(("mat-", "chem-", "ml-", "drug-", "general-")):
-            if val not in [n["name"] for n in nodes]:
-                nodes.append({"type": "skill", "name": val})
-    return nodes
-
-def make_workflow_page(workflow_id: str, meta: dict, body_md: str, nodes: list, out_path: Path):
+def make_workflow_page(workflow_id: str, meta: dict, body_md: str, out_path: Path):
     title_match = re.search(r'^#\s+(.+)$', body_md, re.MULTILINE)
     page_title = title_match.group(1).strip() if title_match else meta.get('name', workflow_id.replace('-', ' ').title())
     body_md_no_h1 = re.sub(r'^#\s+.+\n?', '', body_md, count=1, flags=re.MULTILINE).lstrip()
-
-    flowchart_html = ""
-    if nodes:
-        node_elements = []
-        for n in nodes:
-            name_clean = n["name"]
-            if n["type"] == "tool":
-                node_elements.append(f'''
-                <div style="background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 14px; font-size: 0.9rem; font-weight: 600; color: #334155; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: max-content;">
-                  <span>📎</span> {name_clean}
-                </div>''')
-            else:
-                node_elements.append(f'''
-                <div style="background: #f1f5f9; border-radius: 12px; padding: 12px 16px; font-size: 0.95rem; font-weight: 700; color: #0f172a; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 1px solid #e2e8f0; min-width: max-content;">
-                  <div style="display: flex; align-items: center; gap: 6px;"><span>⚙️</span> {name_clean}</div>
-                  <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">M↓ 📎</div>
-                </div>''')
-        flowchart_html = f'''
-<div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); overflow-x: auto;">
-  <h3 style="margin-bottom: 1.5rem; font-size: 1.1rem; color: #1e293b; text-align: center;">Workflow Flowchart</h3>
-  <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%;">
-    ''' + '\n    <div style="color: #93c5fd; font-weight: bold; font-size: 1.2rem;">↓</div>\n    '.join(node_elements) + '''
-  </div>
-</div>
-'''
 
     github_link = f"https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/workflows/{workflow_id}.md"
     html = f'''<!doctype html>
@@ -740,7 +700,6 @@ def make_workflow_page(workflow_id: str, meta: dict, body_md: str, nodes: list, 
   </div>
 </div>
 <div class="workflow-content">
-  {flowchart_html}
   <div class="rendered-md" id="workflow-body"></div>
   <hr style="margin: 3rem 0; border: none; border-top: 1px solid var(--border);">
   <div style="text-align: center; margin-bottom: 2rem;">
@@ -750,13 +709,11 @@ def make_workflow_page(workflow_id: str, meta: dict, body_md: str, nodes: list, 
     </a>
   </div>
 </div>
-<footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>
+<footer>
+  &copy; 2026 AtomisticSkills. Generated by build_skills.py.
+</footer>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {{
-    const MD_DATA = {json.dumps(body_md_no_h1)};
-    marked.setOptions({{ breaks: true, gfm: true }});
-    document.getElementById(\'workflow-body\').innerHTML = marked.parse(MD_DATA);
-  }});
+  document.getElementById('workflow-body').innerHTML = marked.parse({json.dumps(body_md_no_h1)});
 </script>
 </body>
 </html>'''
@@ -770,15 +727,15 @@ def build_workflows():
             wf_id = wf_file.stem
             raw = read_file(wf_file)
             meta, body_md = parse_frontmatter(raw)
-            nodes = extract_workflow_nodes(body_md)
+            
             out_path = WORKFLOWS_OUT_DIR / f"{wf_id}.html"
-            make_workflow_page(wf_id, meta, body_md, nodes, out_path)
+            make_workflow_page(wf_id, meta, body_md, out_path)
             workflows_index.append({
                 "id": wf_id,
                 "title": meta.get("name") or wf_id.replace('-', ' ').title(),
                 "description": meta.get("description", ""),
             })
-            print(f"  Built: workflows/{wf_id}.html with {len(nodes)} sequential nodes")
+            print(f"  Built: workflows/{wf_id}.html")
     return workflows_index
 
 def build_skills():
