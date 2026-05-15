@@ -150,5 +150,5 @@ python .agents/skills/drug-db-pubchem/scripts/query_pubchem.py \
 ---
 ---
 
-**Author:** Matthew Cox  
+**Author:** Matthew Cox
 **Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

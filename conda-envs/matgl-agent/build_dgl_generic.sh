@@ -21,14 +21,14 @@ fi
 
 cd dgl_source
 # Ensure we are on master or compatible tag (master usually fine for latest torch)
-# git checkout master 
+# git checkout master
 
 # Create build dir
 mkdir -p build
 cd build
 
 # CMake with CUDA
-# Using the same MATH_LIBS path 
+# Using the same MATH_LIBS path
 export MATH_LIBS="/opt/nvidia/hpc_sdk/Linux_aarch64/25.9/math_libs/13.0/targets/sbsa-linux"
 export CMAKE_PREFIX_PATH=$MATH_LIBS:$CMAKE_PREFIX_PATH
 export LD_LIBRARY_PATH=$MATH_LIBS/lib:$LD_LIBRARY_PATH
@@ -76,7 +76,7 @@ pip install .
 # 2. OVERWRITE libdgl.so with our successfully built one.
 
 echo "Re-installing python bindings..."
-pip install . 
+pip install .
 
 echo "Overwriting libdgl.so with custom built version..."
 cp ../build/libdgl.so "$SITE_PACKAGES/dgl/libdgl.so"

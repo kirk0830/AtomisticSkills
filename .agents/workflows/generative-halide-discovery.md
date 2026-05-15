@@ -14,7 +14,7 @@ This workflow documents the explicit steps required to transition from a concept
 ## 2. Generative Candidate Creation (MatterGen)
 Generate hypothetical, chemically plausible structures using a diffusion-based generative model.
 - **Skill Reference**: `ml-generative-mattergen`
-- **Execution**: Apply MatterGen's `chemical_system` conditioning to generate structures containing exactly the elements requested. 
+- **Execution**: Apply MatterGen's `chemical_system` conditioning to generate structures containing exactly the elements requested.
 - **Filtering**: Generate large batches (e.g., 500 structures) and post-process to strip out un-desired binaries/elementals or invalid compositions (e.g., resulting in ~350 unique candidates).
 
 ## 3. Tier 1: Fast MLIP Stability Screening ($E_{hull}$)

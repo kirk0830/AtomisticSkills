@@ -10,35 +10,35 @@ examples/
 ├── test_gcmc.sh                          # The main test script
 ├── test_structure_supercell.relaxed.cif  # Pre-relaxed framework input
 ├── single_gas/                           # Outputs for single-component GCMC
-│   ├── gcmc_results.json                 
+│   ├── gcmc_results.json
 │   ├── input_configs.yaml
-│   ├── nmols.png                         
-│   └── energy.png                        
+│   ├── nmols.png
+│   └── energy.png
 └── multi_gas/                            # Outputs for multi-component competitive GCMC
-    ├── multi_gcmc.json                   
+    ├── multi_gcmc.json
     ├── input_configs.yaml
-    ├── nmols_CO2.png                     
-    ├── nmols_N2.png                      
-    └── energy.png                        
+    ├── nmols_CO2.png
+    ├── nmols_N2.png
+    └── energy.png
 ```
 
 ## Examples by Category
 
 ### 1. Single-Component GCMC (`single_gas/`)
-**Script**: `test_gcmc.sh` (Line 4)  
+**Script**: `test_gcmc.sh` (Line 4)
 **Function**: Simulates pure-gas uptake (CO2) at 1.0 bar and 298 K using UMA-S-1p1.
 
-**Input**: `test_structure_supercell.relaxed.cif`  
+**Input**: `test_structure_supercell.relaxed.cif`
 **Outputs**:
 - `gcmc_results.json` (Uptake capacity, Qst, and convergence metrics)
 - `input_configs.yaml` (Simulation hyperparameters)
 - `nmols.png`, `energy.png` (Trace plots)
 
 ### 2. Multi-Component GCMC (`multi_gas/`)
-**Script**: `test_gcmc.sh` (Line 17)  
+**Script**: `test_gcmc.sh` (Line 17)
 **Function**: Simulates competitive mixture uptake (15% CO2, 85% N2) at 1.0 bar and 298 K.
 
-**Input**: `test_structure_supercell.relaxed.cif`  
+**Input**: `test_structure_supercell.relaxed.cif`
 **Outputs**:
 - `multi_gcmc.json` (Molar uptake for each species and selectivity traces)
 - `input_configs.yaml`

@@ -78,7 +78,7 @@ def check_clashes(
     lig = np.array(ligand_positions.value_in_unit(unit.angstrom))
 
     diff = prot[:, np.newaxis, :] - lig[np.newaxis, :, :]
-    dists = np.sqrt((diff ** 2).sum(axis=2))
+    dists = np.sqrt((diff**2).sum(axis=2))
     min_dist = float(dists.min())
 
     if min_dist < clash_threshold:
@@ -178,7 +178,9 @@ def build_complex(
         )
     else:
         constraints = app.HBonds
-        print("Creating OpenMM system (no HMR: HBonds constraints, use 2 fs timestep)...")
+        print(
+            "Creating OpenMM system (no HMR: HBonds constraints, use 2 fs timestep)..."
+        )
 
     create_kwargs = {
         "nonbondedMethod": app.PME,
@@ -209,7 +211,9 @@ def build_complex(
 
     # Write full-precision state (positions + box vectors) for simulation restart
     state_xml_path = output_dir / "state_initial.xml"
-    integrator = openmm.LangevinMiddleIntegrator(300 * unit.kelvin, 1.0 / unit.picosecond, 0.004 * unit.picosecond)
+    integrator = openmm.LangevinMiddleIntegrator(
+        300 * unit.kelvin, 1.0 / unit.picosecond, 0.004 * unit.picosecond
+    )
     context = openmm.Context(system, integrator)
     context.setPositions(modeller.positions)
     context.setPeriodicBoxVectors(*box_vectors)
@@ -258,7 +262,9 @@ def main() -> None:
         description="Build a solvated protein-ligand complex for OpenMM MD."
     )
     parser.add_argument("--receptor", required=True, help="Prepared receptor PDB file.")
-    parser.add_argument("--ligand", required=True, help="Ligand SDF file with 3D pose(s).")
+    parser.add_argument(
+        "--ligand", required=True, help="Ligand SDF file with 3D pose(s)."
+    )
     parser.add_argument(
         "--ligand_ff",
         default="openff-2.2.0",
@@ -311,7 +317,9 @@ def main() -> None:
             "Set to 1.008 to disable HMR (uses HBonds constraints, requires 2 fs timestep)."
         ),
     )
-    parser.add_argument("--output_dir", required=True, help="Output directory for system files.")
+    parser.add_argument(
+        "--output_dir", required=True, help="Output directory for system files."
+    )
     args = parser.parse_args()
 
     receptor_path = Path(args.receptor)
@@ -340,6 +348,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

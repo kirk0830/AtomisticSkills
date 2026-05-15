@@ -64,5 +64,5 @@ python .agents/skills/general-arxiv-search/scripts/arxiv_search.py --authors "Bo
 - **Metadata**: Results include ID, URL, Title, Authors, Summary, Publication Date, and DOI (if available).
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

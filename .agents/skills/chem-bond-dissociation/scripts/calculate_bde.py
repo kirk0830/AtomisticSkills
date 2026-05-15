@@ -33,7 +33,6 @@ import json
 import logging
 import os
 import sys
-from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple
 
 # Import torch early to avoid OpenMP conflicts with RDKit
@@ -44,12 +43,11 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-import numpy as np
 from ase import Atoms
 from ase.io import write
 from ase.optimize import FIRE
 from rdkit import Chem
-from rdkit.Chem import AllChem, rdMolDescriptors, rdmolops
+from rdkit.Chem import AllChem, rdMolDescriptors
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -66,6 +64,7 @@ from src.utils.mlips.loader import load_wrapper
 # ---------------------------------------------------------------------------
 # Molecule helpers
 # ---------------------------------------------------------------------------
+
 
 def smiles_to_mol(smiles: str) -> Chem.Mol:
     """
@@ -91,7 +90,9 @@ def smiles_to_mol(smiles: str) -> Chem.Mol:
         params.useRandomCoords = True
         status = AllChem.EmbedMolecule(mol, params)
         if status == -1:
-            raise RuntimeError(f"Failed to generate 3D coordinates for SMILES: {smiles}")
+            raise RuntimeError(
+                f"Failed to generate 3D coordinates for SMILES: {smiles}"
+            )
 
     # Quick MMFF optimization for a reasonable starting geometry
     AllChem.MMFFOptimizeMolecule(mol, maxIters=200)
@@ -126,7 +127,7 @@ def mol_to_atoms(mol: Chem.Mol, conf_id: int = 0) -> Atoms:
 #   info_keys default = {"total_spin": "spin", "total_charge": "charge"}
 # i.e., the calculator reads atoms.info["charge"] → total_charge, atoms.info["spin"] → total_spin
 # For FairChem omol the calculator reads: atoms.info["charge"], atoms.info["spin"] (same)
-_MACE_CHARGE_KEYS   = ("charge", "spin")    # MACE-OMOL, MACE-MH (omol head)
+_MACE_CHARGE_KEYS = ("charge", "spin")  # MACE-OMOL, MACE-MH (omol head)
 _FAIRCHEM_OMOL_KEYS = ("charge", "spin")
 
 
@@ -190,6 +191,7 @@ def set_charge_spin(
 # Relaxation
 # ---------------------------------------------------------------------------
 
+
 def relax_atoms(
     atoms: Atoms,
     wrapper: Any,
@@ -227,6 +229,7 @@ def relax_atoms(
 # Bond enumeration / fragmentation
 # ---------------------------------------------------------------------------
 
+
 def enumerate_bonds(mol: Chem.Mol, include_h_bonds: bool = False) -> List[Dict]:
     """
     Enumerate all single bonds in a molecule that can be cleaved.
@@ -257,13 +260,15 @@ def enumerate_bonds(mol: Chem.Mol, include_h_bonds: bool = False) -> List[Dict]:
 
         in_ring = bond.IsInRing()
 
-        bonds.append({
-            "bond_idx": bond.GetIdx(),
-            "atom_indices": [idx_i, idx_j],
-            "atom_symbols": [sym_i, sym_j],
-            "in_ring": in_ring,
-            "bond_type": str(bond.GetBondType()),
-        })
+        bonds.append(
+            {
+                "bond_idx": bond.GetIdx(),
+                "atom_indices": [idx_i, idx_j],
+                "atom_symbols": [sym_i, sym_j],
+                "in_ring": in_ring,
+                "bond_type": str(bond.GetBondType()),
+            }
+        )
 
     return bonds
 
@@ -394,18 +399,22 @@ def get_formula_from_atoms(atoms: Atoms) -> str:
 # File saving helper
 # ---------------------------------------------------------------------------
 
+
 def _save_fragment(atoms: Atoms, path: str) -> None:
     """Write a fragment to an XYZ file, stripping calculator and non-essential arrays."""
     clean = atoms.copy()
     clean.calc = None
     clean.info = {}
-    clean.arrays = {k: v for k, v in clean.arrays.items() if k in ("numbers", "positions")}
+    clean.arrays = {
+        k: v for k, v in clean.arrays.items() if k in ("numbers", "positions")
+    }
     write(path, clean)
 
 
 # ---------------------------------------------------------------------------
 # BDE computation: homolytic
 # ---------------------------------------------------------------------------
+
 
 def compute_single_bde_homolytic(
     mol: Chem.Mol,
@@ -481,8 +490,12 @@ def compute_single_bde_homolytic(
     logger.info(f"  Homolytic BDE = {bde_kcal_mol:.1f} kcal/mol ({bde_eV:.4f} eV)")
 
     # Save fragment structures
-    _save_fragment(frag1_atoms, os.path.join(output_dir, f"frag_bond{bond_idx}_homo_1.xyz"))
-    _save_fragment(frag2_atoms, os.path.join(output_dir, f"frag_bond{bond_idx}_homo_2.xyz"))
+    _save_fragment(
+        frag1_atoms, os.path.join(output_dir, f"frag_bond{bond_idx}_homo_1.xyz")
+    )
+    _save_fragment(
+        frag2_atoms, os.path.join(output_dir, f"frag_bond{bond_idx}_homo_2.xyz")
+    )
 
     return {
         **bond_info,
@@ -502,6 +515,7 @@ def compute_single_bde_homolytic(
 # ---------------------------------------------------------------------------
 # BDE computation: heterolytic
 # ---------------------------------------------------------------------------
+
 
 def compute_single_bde_heterolytic(
     mol: Chem.Mol,
@@ -601,10 +615,20 @@ def compute_single_bde_heterolytic(
         logger.info(f"  Variant: {variant_label}")
 
         # Annotate charge/spin on fresh copies
-        f1 = set_charge_spin(frag1_base, charge=c1, spin_multiplicity=1,
-                             charge_key=charge_key, spin_key=spin_key)
-        f2 = set_charge_spin(frag2_base, charge=c2, spin_multiplicity=1,
-                             charge_key=charge_key, spin_key=spin_key)
+        f1 = set_charge_spin(
+            frag1_base,
+            charge=c1,
+            spin_multiplicity=1,
+            charge_key=charge_key,
+            spin_key=spin_key,
+        )
+        f2 = set_charge_spin(
+            frag2_base,
+            charge=c2,
+            spin_multiplicity=1,
+            charge_key=charge_key,
+            spin_key=spin_key,
+        )
 
         f1_lbl = f"Frag1 ({frag1_formula}, q={c1:+d})"
         f2_lbl = f"Frag2 ({frag2_formula}, q={c2:+d})"
@@ -619,21 +643,27 @@ def compute_single_bde_heterolytic(
 
         # Save fragment structures
         polarity = "pos_neg" if c1 == +1 else "neg_pos"
-        _save_fragment(f1, os.path.join(output_dir, f"frag_bond{bond_idx}_hetero_{polarity}_1.xyz"))
-        _save_fragment(f2, os.path.join(output_dir, f"frag_bond{bond_idx}_hetero_{polarity}_2.xyz"))
+        _save_fragment(
+            f1, os.path.join(output_dir, f"frag_bond{bond_idx}_hetero_{polarity}_1.xyz")
+        )
+        _save_fragment(
+            f2, os.path.join(output_dir, f"frag_bond{bond_idx}_hetero_{polarity}_2.xyz")
+        )
 
-        variants.append({
-            "variant": variant_label,
-            "frag1_charge": c1,
-            "frag2_charge": c2,
-            "frag1_energy_eV": float(e1),
-            "frag2_energy_eV": float(e2),
-            "bde_eV": float(bde_eV),
-            "bde_kJ_mol": float(bde_eV * EV_TO_KJ_MOL),
-            "bde_kcal_mol": float(bde_kcal_mol),
-            "frag1_file": f"frag_bond{bond_idx}_hetero_{polarity}_1.xyz",
-            "frag2_file": f"frag_bond{bond_idx}_hetero_{polarity}_2.xyz",
-        })
+        variants.append(
+            {
+                "variant": variant_label,
+                "frag1_charge": c1,
+                "frag2_charge": c2,
+                "frag1_energy_eV": float(e1),
+                "frag2_energy_eV": float(e2),
+                "bde_eV": float(bde_eV),
+                "bde_kJ_mol": float(bde_eV * EV_TO_KJ_MOL),
+                "bde_kcal_mol": float(bde_kcal_mol),
+                "frag1_file": f"frag_bond{bond_idx}_hetero_{polarity}_1.xyz",
+                "frag2_file": f"frag_bond{bond_idx}_hetero_{polarity}_2.xyz",
+            }
+        )
 
     # Best (lowest) heterolytic BDE
     best = min(variants, key=lambda v: v["bde_eV"])
@@ -659,6 +689,7 @@ def compute_single_bde_heterolytic(
 # ---------------------------------------------------------------------------
 # Unified dispatcher
 # ---------------------------------------------------------------------------
+
 
 def compute_bond_bde(
     mol: Chem.Mol,
@@ -692,7 +723,12 @@ def compute_bond_bde(
 
     if cleavage in ("homolytic", "both"):
         homo = compute_single_bde_homolytic(
-            mol, bond_info, wrapper, intact_energy, fmax, output_dir,
+            mol,
+            bond_info,
+            wrapper,
+            intact_energy,
+            fmax,
+            output_dir,
             charge_key=charge_key,
             spin_key=spin_key,
         )
@@ -700,7 +736,12 @@ def compute_bond_bde(
 
     if cleavage in ("heterolytic", "both"):
         hetero = compute_single_bde_heterolytic(
-            mol, bond_info, wrapper, intact_energy, fmax, output_dir,
+            mol,
+            bond_info,
+            wrapper,
+            intact_energy,
+            fmax,
+            output_dir,
             charge_key=charge_key,
             spin_key=spin_key,
         )
@@ -718,6 +759,7 @@ def compute_bond_bde(
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
@@ -729,13 +771,25 @@ def main() -> None:
 
     input_group = parser.add_mutually_exclusive_group(required=True)
     input_group.add_argument("--smiles", help="SMILES string of the molecule")
-    input_group.add_argument("--structure", help="Path to a structure file (.xyz, .sdf, .mol2)")
+    input_group.add_argument(
+        "--structure", help="Path to a structure file (.xyz, .sdf, .mol2)"
+    )
 
-    parser.add_argument("--bond", help="Specific bond as atom indices, e.g. 0-1 (0-indexed, includes H)")
-    parser.add_argument("--all_bonds", action="store_true", default=True,
-                        help="Compute BDE for all single bonds (default: True)")
-    parser.add_argument("--include_h_bonds", action="store_true", default=False,
-                        help="Include X-H bonds (by default only heavy-atom bonds)")
+    parser.add_argument(
+        "--bond", help="Specific bond as atom indices, e.g. 0-1 (0-indexed, includes H)"
+    )
+    parser.add_argument(
+        "--all_bonds",
+        action="store_true",
+        default=True,
+        help="Compute BDE for all single bonds (default: True)",
+    )
+    parser.add_argument(
+        "--include_h_bonds",
+        action="store_true",
+        default=False,
+        help="Include X-H bonds (by default only heavy-atom bonds)",
+    )
 
     parser.add_argument(
         "--cleavage",
@@ -749,17 +803,31 @@ def main() -> None:
         ),
     )
 
-    parser.add_argument("--model_type", default="mace", choices=["mace", "matgl", "fairchem"],
-                        help="MLIP backend (default: mace)")
-    parser.add_argument("--model_name", default=None,
-                        help="Specific model name (default: MACE-OFF23-small for homolytic, "
-                             "MACE-OMOL-extra-large for heterolytic/both)")
+    parser.add_argument(
+        "--model_type",
+        default="mace",
+        choices=["mace", "matgl", "fairchem"],
+        help="MLIP backend (default: mace)",
+    )
+    parser.add_argument(
+        "--model_name",
+        default=None,
+        help="Specific model name (default: MACE-OFF23-small for homolytic, "
+        "MACE-OMOL-extra-large for heterolytic/both)",
+    )
     parser.add_argument("--device", default="auto", help="Device (cpu, cuda, auto)")
-    parser.add_argument("--task_name", default=None,
-                        help="Task head for multi-task models (e.g. omol for FairChem UMA)")
+    parser.add_argument(
+        "--task_name",
+        default=None,
+        help="Task head for multi-task models (e.g. omol for FairChem UMA)",
+    )
 
-    parser.add_argument("--fmax", type=float, default=0.01,
-                        help="Force convergence for relaxation (eV/Å, default: 0.01)")
+    parser.add_argument(
+        "--fmax",
+        type=float,
+        default=0.01,
+        help="Force convergence for relaxation (eV/Å, default: 0.01)",
+    )
     parser.add_argument("--output_dir", required=True, help="Output directory")
 
     args = parser.parse_args()
@@ -811,7 +879,9 @@ def main() -> None:
     logger.info("=" * 60)
     logger.info("Step 2: Loading MLIP")
     logger.info("=" * 60)
-    wrapper = load_wrapper(args.model_type, args.model_name, args.device, task_name=args.task_name)
+    wrapper = load_wrapper(
+        args.model_type, args.model_name, args.device, task_name=args.task_name
+    )
 
     # ── Step 2b: Validate charge/spin capability ──
     if needs_charge_spin and not wrapper.supports_charge_spin:
@@ -863,14 +933,18 @@ def main() -> None:
         bond_obj = mol.GetBondBetweenAtoms(idx_i, idx_j)
         if bond_obj is None:
             raise ValueError(f"No bond found between atoms {idx_i} and {idx_j}")
-        bonds = [{
-            "bond_idx": bond_obj.GetIdx(),
-            "atom_indices": [idx_i, idx_j],
-            "atom_symbols": [mol.GetAtomWithIdx(idx_i).GetSymbol(),
-                             mol.GetAtomWithIdx(idx_j).GetSymbol()],
-            "in_ring": bond_obj.IsInRing(),
-            "bond_type": str(bond_obj.GetBondType()),
-        }]
+        bonds = [
+            {
+                "bond_idx": bond_obj.GetIdx(),
+                "atom_indices": [idx_i, idx_j],
+                "atom_symbols": [
+                    mol.GetAtomWithIdx(idx_i).GetSymbol(),
+                    mol.GetAtomWithIdx(idx_j).GetSymbol(),
+                ],
+                "in_ring": bond_obj.IsInRing(),
+                "bond_type": str(bond_obj.GetBondType()),
+            }
+        ]
     else:
         bonds = enumerate_bonds(mol, include_h_bonds=args.include_h_bonds)
 
@@ -928,7 +1002,9 @@ def main() -> None:
     # --- Heterolytic ranking ---
     weakest_hetero = None
     if args.cleavage in ("heterolytic", "both"):
-        hetero_results = [r for r in computed if r.get("heterolytic_bde_kcal_mol") is not None]
+        hetero_results = [
+            r for r in computed if r.get("heterolytic_bde_kcal_mol") is not None
+        ]
         hetero_results.sort(key=lambda x: x["heterolytic_bde_kcal_mol"])
         weakest_hetero = hetero_results[0] if hetero_results else None
 
@@ -964,27 +1040,31 @@ def main() -> None:
         output["bonds_ranked_by_homolytic_bde"] = [
             {
                 "bond_label": f"{r['atom_symbols'][0]}({r['atom_indices'][0]})"
-                              f"-{r['atom_symbols'][1]}({r['atom_indices'][1]})",
+                f"-{r['atom_symbols'][1]}({r['atom_indices'][1]})",
                 "bde_kcal_mol": r["bde_kcal_mol"],
                 "bde_kJ_mol": r["bde_kJ_mol"],
                 "bde_eV": r["bde_eV"],
             }
             for r in (homo_results if weakest_homo else [])
         ]
-        output["weakest_bond_homolytic"] = {
-            "bond_label": (
-                f"{weakest_homo['atom_symbols'][0]}({weakest_homo['atom_indices'][0]})"
-                f"-{weakest_homo['atom_symbols'][1]}({weakest_homo['atom_indices'][1]})"
-            ),
-            "bde_kcal_mol": weakest_homo["bde_kcal_mol"],
-        } if weakest_homo else None
+        output["weakest_bond_homolytic"] = (
+            {
+                "bond_label": (
+                    f"{weakest_homo['atom_symbols'][0]}({weakest_homo['atom_indices'][0]})"
+                    f"-{weakest_homo['atom_symbols'][1]}({weakest_homo['atom_indices'][1]})"
+                ),
+                "bde_kcal_mol": weakest_homo["bde_kcal_mol"],
+            }
+            if weakest_homo
+            else None
+        )
 
     # Heterolytic ranking table
     if args.cleavage in ("heterolytic", "both"):
         output["bonds_ranked_by_heterolytic_bde"] = [
             {
                 "bond_label": f"{r['atom_symbols'][0]}({r['atom_indices'][0]})"
-                              f"-{r['atom_symbols'][1]}({r['atom_indices'][1]})",
+                f"-{r['atom_symbols'][1]}({r['atom_indices'][1]})",
                 "heterolytic_bde_kcal_mol": r["heterolytic_bde_kcal_mol"],
                 "heterolytic_bde_kJ_mol": r["heterolytic_bde_kJ_mol"],
                 "heterolytic_bde_eV": r["heterolytic_bde_eV"],
@@ -992,14 +1072,18 @@ def main() -> None:
             }
             for r in (hetero_results if weakest_hetero else [])
         ]
-        output["weakest_bond_heterolytic"] = {
-            "bond_label": (
-                f"{weakest_hetero['atom_symbols'][0]}({weakest_hetero['atom_indices'][0]})"
-                f"-{weakest_hetero['atom_symbols'][1]}({weakest_hetero['atom_indices'][1]})"
-            ),
-            "heterolytic_bde_kcal_mol": weakest_hetero["heterolytic_bde_kcal_mol"],
-            "best_variant": weakest_hetero.get("heterolytic_best_variant"),
-        } if weakest_hetero else None
+        output["weakest_bond_heterolytic"] = (
+            {
+                "bond_label": (
+                    f"{weakest_hetero['atom_symbols'][0]}({weakest_hetero['atom_indices'][0]})"
+                    f"-{weakest_hetero['atom_symbols'][1]}({weakest_hetero['atom_indices'][1]})"
+                ),
+                "heterolytic_bde_kcal_mol": weakest_hetero["heterolytic_bde_kcal_mol"],
+                "best_variant": weakest_hetero.get("heterolytic_best_variant"),
+            }
+            if weakest_hetero
+            else None
+        )
 
     # Backward-compat alias used by the homolytic-only API
     if args.cleavage == "homolytic":
@@ -1029,6 +1113,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

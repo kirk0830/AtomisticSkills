@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Optional
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -116,7 +117,7 @@ def compute_rdf(
     else:
         rho = n2 / volume
 
-    shell_volumes = 4.0 * np.pi * r_centers ** 2 * dr
+    shell_volumes = 4.0 * np.pi * r_centers**2 * dr
     ideal_count = n1 * rho * shell_volumes * n_frames_used
     g_r = np.divide(hist, ideal_count, out=np.zeros_like(hist), where=ideal_count > 0)
 
@@ -201,7 +202,7 @@ def compute_density_vs_time(
     for i in range(n_frames):
         atoms = traj[i]
         volume_ang3 = atoms.get_volume()
-        volume_cm3 = volume_ang3 * (angstrom_to_cm ** 3)
+        volume_cm3 = volume_ang3 * (angstrom_to_cm**3)
         mass_g = total_mass_amu * amu_to_gram
         density = mass_g / volume_cm3
         densities.append(density)
@@ -273,7 +274,7 @@ def compute_msd(
             unwrapped += delta
 
         displacement = unwrapped - ref_positions
-        msd = np.mean(np.sum(displacement ** 2, axis=1))
+        msd = np.mean(np.sum(displacement**2, axis=1))
         msd_values.append(msd)
         times.append(fidx * stride * log_interval_fs / 1000.0)
 
@@ -336,8 +337,9 @@ def analyze_solution_md(
 
     # --- RDFs ---
     print("Computing RDFs...")
-    fig_rdf, axes = plt.subplots(len(rdf_pairs), 1, figsize=(8, 4 * len(rdf_pairs)),
-                                  squeeze=False)
+    fig_rdf, axes = plt.subplots(
+        len(rdf_pairs), 1, figsize=(8, 4 * len(rdf_pairs)), squeeze=False
+    )
 
     atoms_last = ase_read(trajectory_path, index=-1)
     symbols = atoms_last.get_chemical_symbols()
@@ -346,8 +348,12 @@ def analyze_solution_md(
     for idx, (el1, el2) in enumerate(rdf_pairs):
         print(f"  Computing g({el1}-{el2})...")
         r, g_r = compute_rdf(
-            trajectory_path, (el1, el2), rmax=rmax, nbins=nbins,
-            start_frame=start_frame, stride=stride,
+            trajectory_path,
+            (el1, el2),
+            rmax=rmax,
+            nbins=nbins,
+            start_frame=start_frame,
+            stride=stride,
         )
 
         # Find first peak
@@ -383,8 +389,13 @@ def analyze_solution_md(
         ax.plot(r, g_r, "b-", linewidth=1.5)
         ax.axhline(y=1.0, color="gray", linestyle="--", alpha=0.5)
         if peak_r is not None:
-            ax.axvline(x=peak_r, color="red", linestyle=":", alpha=0.5,
-                       label=f"Peak: {peak_r:.2f} Å")
+            ax.axvline(
+                x=peak_r,
+                color="red",
+                linestyle=":",
+                alpha=0.5,
+                label=f"Peak: {peak_r:.2f} Å",
+            )
         ax.set_xlabel("r (Å)", fontsize=12)
         ax.set_ylabel(f"g({el1}-{el2})(r)", fontsize=12)
         ax.set_title(f"{el1}-{el2} RDF (CN={cn:.1f})", fontsize=13)
@@ -405,17 +416,21 @@ def analyze_solution_md(
     )
 
     if len(density) > 0:
-        avg_density = float(np.mean(density[-len(density) // 4:]))  # Last 25%
+        avg_density = float(np.mean(density[-len(density) // 4 :]))  # Last 25%
         results["density"] = {
             "average_g_cm3": round(avg_density, 4),
-            "std_g_cm3": round(float(np.std(density[-len(density) // 4:])), 4),
+            "std_g_cm3": round(float(np.std(density[-len(density) // 4 :])), 4),
         }
         print(f"  Average density (last 25%): {avg_density:.4f} g/cm³")
 
         fig_dens, ax_dens = plt.subplots(figsize=(8, 4))
         ax_dens.plot(time_ps, density, "b-", linewidth=0.8)
-        ax_dens.axhline(y=avg_density, color="red", linestyle="--",
-                        label=f"Avg: {avg_density:.4f} g/cm³")
+        ax_dens.axhline(
+            y=avg_density,
+            color="red",
+            linestyle="--",
+            label=f"Avg: {avg_density:.4f} g/cm³",
+        )
         ax_dens.set_xlabel("Time (ps)", fontsize=12)
         ax_dens.set_ylabel("Density (g/cm³)", fontsize=12)
         ax_dens.set_title("Density Convergence", fontsize=13)
@@ -434,8 +449,11 @@ def analyze_solution_md(
         for el in msd_elements:
             print(f"  Computing MSD for {el}...")
             time_msd, msd_vals = compute_msd(
-                trajectory_path, el, start_frame=start_frame,
-                stride=stride, log_interval_fs=log_interval_fs,
+                trajectory_path,
+                el,
+                start_frame=start_frame,
+                stride=stride,
+                log_interval_fs=log_interval_fs,
             )
             if len(msd_vals) > 0:
                 results["msd"][el] = {
@@ -470,40 +488,52 @@ def main() -> None:
         description="Analyze solution-phase MD trajectories (RDFs, coordination, density, MSD)."
     )
     parser.add_argument(
-        "--trajectory", type=str, required=True,
-        help="Path to ASE .traj trajectory file"
+        "--trajectory",
+        type=str,
+        required=True,
+        help="Path to ASE .traj trajectory file",
     )
     parser.add_argument(
-        "--rdf_pairs", type=str, required=True,
-        help="Comma-separated element pairs for RDF, e.g. 'Na-O,Cl-O'"
+        "--rdf_pairs",
+        type=str,
+        required=True,
+        help="Comma-separated element pairs for RDF, e.g. 'Na-O,Cl-O'",
     )
     parser.add_argument(
-        "--output_dir", type=str, required=True,
-        help="Output directory for analysis results"
+        "--output_dir",
+        type=str,
+        required=True,
+        help="Output directory for analysis results",
     )
     parser.add_argument(
-        "--rmax", type=float, default=8.0,
-        help="Maximum distance for RDF in Å (default: 8.0)"
+        "--rmax",
+        type=float,
+        default=8.0,
+        help="Maximum distance for RDF in Å (default: 8.0)",
     )
     parser.add_argument(
-        "--nbins", type=int, default=200,
-        help="Number of RDF bins (default: 200)"
+        "--nbins", type=int, default=200, help="Number of RDF bins (default: 200)"
     )
     parser.add_argument(
-        "--start_frame", type=int, default=0,
-        help="First trajectory frame to analyze (default: 0)"
+        "--start_frame",
+        type=int,
+        default=0,
+        help="First trajectory frame to analyze (default: 0)",
     )
     parser.add_argument(
-        "--stride", type=int, default=1,
-        help="Frame stride for analysis (default: 1)"
+        "--stride", type=int, default=1, help="Frame stride for analysis (default: 1)"
     )
     parser.add_argument(
-        "--log_interval_fs", type=float, default=10.0,
-        help="Time interval between trajectory frames in fs (default: 10.0)"
+        "--log_interval_fs",
+        type=float,
+        default=10.0,
+        help="Time interval between trajectory frames in fs (default: 10.0)",
     )
     parser.add_argument(
-        "--msd_elements", type=str, default=None,
-        help="Comma-separated elements for MSD calculation (e.g. 'Na,Cl')"
+        "--msd_elements",
+        type=str,
+        default=None,
+        help="Comma-separated elements for MSD calculation (e.g. 'Na,Cl')",
     )
 
     args = parser.parse_args()
@@ -533,6 +563,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

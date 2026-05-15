@@ -56,12 +56,12 @@
 </div>
 <div class="content">
   <div class="tools-list">
-    
+
         <div class="tool-card">
           <h3 class="tool-name">📎 generate_structures_with_symmetry</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nGenerate crystal structures with exact composition control using DiffCSP++.\n\nDiffCSP++ (ICLR 2024) uses space group + Wyckoff positions to constrain generation,\nproviding exact control over stoichiometry. For example, to generate Li2ZrCl6:\nspecify the appropriate space group, Wyckoff positions, and atom types.\n\nArgs:\n    spacegroup: Space group number (1-230).\n    wyckoff_letters: Comma-separated Wyckoff position labels (e.g., \"2a,4g,4h,4i,4i\").\n                    Or single-char shorthand (e.g., \"adf\").\n    atom_types: Comma-separated element symbols for each Wyckoff position\n               (e.g., \"Zr,Li,Cl,Cl,Cl\"). Must have same length as wyckoff_letters.\n    model_name: Pre-trained model name. Options:\n               \"mp_csp\" (default) - Materials Project CSP model\n               \"perov_csp\" - Perovskite CSP model\n               \"mpts_csp\" - MPTS-52 CSP model\n    num_samples: Number of structure samples to generate (default: 1).\n    step_lr: Langevin dynamics step size (default: 1e-5).\n    batch_size: Batch size for parallel generation (default: 128).\n    device: Device to use (\"auto\", \"cpu\", \"cuda\"). Default: \"auto\".\n    output_dir: Directory to save CIF files. If not provided, saves to research_dir.\n\nReturns:\n    Dictionary with &#39;num_generated&#39; and &#39;output_dir&#39;.\n```"'></div>
         </div>
-        
+
   </div>
 </div>
 <footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>

@@ -78,32 +78,39 @@ if __name__ == "__main__":
         description="Batch generate crystal structures from JSON symmetry specs using DiffCSP++"
     )
     parser.add_argument(
-        "--json_file", required=True,
-        help="Path to JSON file with symmetry specifications"
+        "--json_file",
+        required=True,
+        help="Path to JSON file with symmetry specifications",
     )
     parser.add_argument(
-        "--model", default="mp_csp",
-        help="Model name: mp_csp, perov_csp, mpts_csp (default: mp_csp)"
+        "--model",
+        default="mp_csp",
+        help="Model name: mp_csp, perov_csp, mpts_csp (default: mp_csp)",
     )
     parser.add_argument(
-        "--output_dir", default="diffcsp_batch_output",
-        help="Output directory for CIF files"
+        "--output_dir",
+        default="diffcsp_batch_output",
+        help="Output directory for CIF files",
     )
     parser.add_argument(
-        "--step_lr", default=1e-5, type=float,
-        help="Langevin dynamics step size (default: 1e-5)"
+        "--step_lr",
+        default=1e-5,
+        type=float,
+        help="Langevin dynamics step size (default: 1e-5)",
     )
     parser.add_argument(
-        "--batch_size", default=128, type=int,
-        help="Batch size for parallel generation (default: 128)"
+        "--batch_size",
+        default=128,
+        type=int,
+        help="Batch size for parallel generation (default: 128)",
     )
     parser.add_argument(
-        "--device", default="auto",
-        help="Device: auto, cpu, cuda (default: auto)"
+        "--device", default="auto", help="Device: auto, cpu, cuda (default: auto)"
     )
     args = parser.parse_args()
     main(args)
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)

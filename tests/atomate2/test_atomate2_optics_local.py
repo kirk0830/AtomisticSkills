@@ -66,7 +66,9 @@ def test_atomate2_local_si_optics():
 
         vasprun_files = list((test_dir / "run").rglob("vasprun.xml"))
         vasprun_files += list((test_dir / "run").rglob("vasprun.xml.gz"))
-        assert len(vasprun_files) > 0, "Optics workflow should create vasprun.xml output"
+        assert (
+            len(vasprun_files) > 0
+        ), "Optics workflow should create vasprun.xml output"
 
         outcar_files = list((test_dir / "run").rglob("OUTCAR"))
         assert len(outcar_files) > 0, "Optics workflow should create OUTCAR output"
@@ -83,7 +85,9 @@ def test_atomate2_local_si_optics():
             except Exception:
                 continue
 
-        assert dielectric_vaspruns, "At least one vasprun.xml should contain dielectric data"
+        assert (
+            dielectric_vaspruns
+        ), "At least one vasprun.xml should contain dielectric data"
 
         job_id = "test_si_optics_job"
         all_responses = {

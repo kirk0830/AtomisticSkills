@@ -121,5 +121,5 @@ MACE-MH-1 (trained predominantly on PBEsol/r2SCAN data via MatPES) reproduces fr
 
 ---
 
-**Author:** Yu Yao  
+**Author:** Yu Yao
 **Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

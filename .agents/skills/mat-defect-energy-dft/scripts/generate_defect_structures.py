@@ -52,10 +52,14 @@ def generate_defect_supercells(
         defects = list(gen.generate(bulk, rm_species=None))
     elif defect_type == "substitution":
         gen = SubstitutionGenerator()
-        defects = list(gen.generate(bulk, substitution={substitute_element: bulk.symbol_set}))
+        defects = list(
+            gen.generate(bulk, substitution={substitute_element: bulk.symbol_set})
+        )
     elif defect_type == "interstitial":
         gen = InterstitialGenerator()
-        defects = list(gen.generate(bulk, insertions={interstitial_element: bulk.symbol_set}))
+        defects = list(
+            gen.generate(bulk, insertions={interstitial_element: bulk.symbol_set})
+        )
     else:
         raise ValueError(f"Unknown defect_type: {defect_type}")
 
@@ -82,18 +86,20 @@ def generate_defect_supercells(
         for q in range(charge_range[0], charge_range[1] + 1):
             charge_label = f"q{q:+d}" if q != 0 else "q0"
             name = f"{base_name}_{charge_label}"
-            results.append({
-                "name": name,
-                "structure": sc.copy(),
-                "charge": q,
-                "defect_info": {
-                    "type": defect_type,
-                    "site_element": site_element,
-                    "defect_index": i,
-                    "multiplicity": int(defect.multiplicity),
-                    "base_name": base_name,
-                },
-            })
+            results.append(
+                {
+                    "name": name,
+                    "structure": sc.copy(),
+                    "charge": q,
+                    "defect_info": {
+                        "type": defect_type,
+                        "site_element": site_element,
+                        "defect_index": i,
+                        "multiplicity": int(defect.multiplicity),
+                        "base_name": base_name,
+                    },
+                }
+            )
 
     return results
 
@@ -104,19 +110,31 @@ def main():
     )
     parser.add_argument("--bulk", required=True, help="Path to bulk structure file")
     parser.add_argument(
-        "--supercell_size", nargs=3, type=int, default=[3, 3, 3],
-        help="Supercell dimensions"
+        "--supercell_size",
+        nargs=3,
+        type=int,
+        default=[3, 3, 3],
+        help="Supercell dimensions",
     )
     parser.add_argument(
-        "--defect_type", choices=["vacancy", "substitution", "interstitial", "all"],
-        default="vacancy", help="Type of defects to generate"
+        "--defect_type",
+        choices=["vacancy", "substitution", "interstitial", "all"],
+        default="vacancy",
+        help="Type of defects to generate",
     )
     parser.add_argument(
-        "--charge_range", nargs=2, type=int, default=[-2, 2],
-        help="Min and max charge states (inclusive)"
+        "--charge_range",
+        nargs=2,
+        type=int,
+        default=[-2, 2],
+        help="Min and max charge states (inclusive)",
     )
-    parser.add_argument("--substitute_element", default=None, help="Element for substitution")
-    parser.add_argument("--interstitial_element", default=None, help="Element for interstitial")
+    parser.add_argument(
+        "--substitute_element", default=None, help="Element for substitution"
+    )
+    parser.add_argument(
+        "--interstitial_element", default=None, help="Element for interstitial"
+    )
     parser.add_argument("--output", default="dft_defects", help="Output directory")
     args = parser.parse_args()
 
@@ -152,14 +170,18 @@ def main():
     all_defects = []
     for dt in defect_types:
         defects = generate_defect_supercells(
-            bulk, sc_mat, dt,
+            bulk,
+            sc_mat,
+            dt,
             charge_range=tuple(args.charge_range),
             substitute_element=args.substitute_element,
             interstitial_element=args.interstitial_element,
         )
         all_defects.extend(defects)
-        print(f"✓ Generated {len(defects)} {dt} structure(s) "
-              f"(including charge states {args.charge_range[0]} to {args.charge_range[1]})")
+        print(
+            f"✓ Generated {len(defects)} {dt} structure(s) "
+            f"(including charge states {args.charge_range[0]} to {args.charge_range[1]})"
+        )
 
     # Write structure files and build index
     defect_index = {
@@ -182,7 +204,9 @@ def main():
         }
         entry.update(defect["defect_info"])
         defect_index["defects"].append(entry)
-        print(f"  → {defect['name']} ({len(defect['structure'])} atoms, q={defect['charge']:+d})")
+        print(
+            f"  → {defect['name']} ({len(defect['structure'])} atoms, q={defect['charge']:+d})"
+        )
 
     # Save index
     index_path = output_dir / "defect_index.json"
@@ -193,6 +217,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

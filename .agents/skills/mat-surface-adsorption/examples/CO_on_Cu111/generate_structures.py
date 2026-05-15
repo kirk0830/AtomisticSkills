@@ -7,11 +7,15 @@ from pymatgen.core.surface import SlabGenerator
 import numpy as np
 
 # Load Cu bulk structure
-cu_bulk = Structure.from_file('.agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/Cu_bulk.cif')
+cu_bulk = Structure.from_file(
+    ".agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/Cu_bulk.cif"
+)
 print(f"Loaded Cu bulk with {len(cu_bulk)} atoms")
 
 # Generate Cu(111) slab - increase size for better example
-slabgen = SlabGenerator(cu_bulk, (1, 1, 1), min_slab_size=10, min_vacuum_size=15, center_slab=True)
+slabgen = SlabGenerator(
+    cu_bulk, (1, 1, 1), min_slab_size=10, min_vacuum_size=15, center_slab=True
+)
 slabs = slabgen.get_slabs()
 slab = slabs[0]
 
@@ -20,7 +24,9 @@ slab.make_supercell([3, 3, 1])
 print(f"Generated Cu(111) slab (3x3 supercell) with {len(slab)} atoms")
 
 # Load CO molecule
-co_mol = Molecule.from_file('.agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/CO.xyz')
+co_mol = Molecule.from_file(
+    ".agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/CO.xyz"
+)
 print(f"Loaded CO molecule: {co_mol.composition}")
 
 # Find adsorption sites
@@ -29,9 +35,9 @@ ads_sites = asf.find_adsorption_sites()
 print(f"Found adsorption sites: {list(ads_sites.keys())}")
 
 # Get ontop site coordinate (first ontop site)
-if 'ontop' in ads_sites and len(ads_sites['ontop']) > 0:
+if "ontop" in ads_sites and len(ads_sites["ontop"]) > 0:
     # Get a central ontop site
-    ontop_sites = ads_sites['ontop']
+    ontop_sites = ads_sites["ontop"]
     # Find site closest to center
     center = np.array([0.5, 0.5, ontop_sites[0][2]])
     distances = [np.linalg.norm(np.array(site) - center) for site in ontop_sites]
@@ -48,7 +54,9 @@ initial_struct = asf.add_adsorbate(co_mol, ads_coord, translate=True, reorient=T
 print(f"Created initial structure with {len(initial_struct)} atoms")
 
 # Save initial structure using pymatgen's structure.to()
-initial_struct.to(filename='.agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/CO_Cu111_initial.cif')
+initial_struct.to(
+    filename=".agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/CO_Cu111_initial.cif"
+)
 print("✓ Saved CO_Cu111_initial.cif using pymatgen structure.to()")
 
 # Create relaxed structure by moving CO slightly closer to surface
@@ -74,10 +82,12 @@ relaxed_struct.replace(co_indices[0], c_site.specie, c_cart, coords_are_cartesia
 relaxed_struct.replace(co_indices[1], o_site.specie, o_cart, coords_are_cartesian=True)
 
 # Save relaxed structure using pymatgen's structure.to()
-relaxed_struct.to(filename='.agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/CO_Cu111_relaxed.cif')
+relaxed_struct.to(
+    filename=".agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/CO_Cu111_relaxed.cif"
+)
 print("✓ Saved CO_Cu111_relaxed.cif using pymatgen structure.to()")
 
 print("\n✅ Structure generation complete!")
 print(f"  Initial: {len(initial_struct)} atoms ({len(initial_struct)-2} Cu + 2 CO)")
 print(f"  Relaxed: {len(relaxed_struct)} atoms ({len(relaxed_struct)-2} Cu + 2 CO)")
-print(f"  CO moved 0.2 Å closer to surface")
+print("  CO moved 0.2 Å closer to surface")

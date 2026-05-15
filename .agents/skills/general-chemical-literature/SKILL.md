@@ -7,7 +7,7 @@ category: [general, chemistry, drug-discovery, materials]
 # Chemical Literature and Patent Mapping
 
 ## Goal
-To programmatically check if a specific chemical compound exists in recent literature or patent databases. This skill uses PubChem's PUG-REST XRefs endpoint to extract an exhaustive list of associated PubMed IDs and Patent numbers. 
+To programmatically check if a specific chemical compound exists in recent literature or patent databases. This skill uses PubChem's PUG-REST XRefs endpoint to extract an exhaustive list of associated PubMed IDs and Patent numbers.
 
 This is incredibly useful as an autonomous "novelty check" for generated molecules.
 
@@ -46,5 +46,5 @@ python .agents/skills/general-chemical-literature/scripts/get_xrefs.py \
 ---
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

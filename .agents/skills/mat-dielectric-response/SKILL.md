@@ -159,5 +159,5 @@ See [examples/](examples/) for a SiC dielectric-response tutorial and example pl
 
 ---
 
-**Author:** ChazzBM3  
+**Author:** ChazzBM3
 **Contact:** [musgrave@caltech.edu](mailto:musgrave@caltech.edu)

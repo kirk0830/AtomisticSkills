@@ -82,14 +82,14 @@ def _api_get_json(url: str, cfg: HttpConfig) -> Dict[str, Any]:
                 return json.loads(raw)
         except HTTPError as e:
             if e.code in {429, 500, 502, 503, 504} and attempt < cfg.retries:
-                wait = cfg.backoff * (2 ** attempt)
+                wait = cfg.backoff * (2**attempt)
                 time.sleep(wait)
                 attempt += 1
                 continue
             raise
         except URLError:
             if attempt < cfg.retries:
-                wait = cfg.backoff * (2 ** attempt)
+                wait = cfg.backoff * (2**attempt)
                 time.sleep(wait)
                 attempt += 1
                 continue
@@ -147,7 +147,11 @@ def _paged_get(
         total_count = meta.get("total_count")
         offset += params_page["limit"]
 
-        if total_count is not None and isinstance(total_count, int) and offset >= total_count:
+        if (
+            total_count is not None
+            and isinstance(total_count, int)
+            and offset >= total_count
+        ):
             break
         if len(chunk) < params_page["limit"]:
             break
@@ -381,7 +385,10 @@ def smiles_search(
     if mode == "similarity":
         endpoint = f"/similarity/{enc}/{int(similarity)}.json"
         data = _api_get_json(
-            _build_url(endpoint, {"limit": _clamp_limit(min(max_results, MAX_SERVER_LIMIT))}), cfg
+            _build_url(
+                endpoint, {"limit": _clamp_limit(min(max_results, MAX_SERVER_LIMIT))}
+            ),
+            cfg,
         )
         molecules = data.get("molecules", []) or []
         return [_format_molecule_summary(m) for m in molecules][:max_results]
@@ -389,7 +396,10 @@ def smiles_search(
     if mode == "substructure":
         endpoint = f"/substructure/{enc}.json"
         data = _api_get_json(
-            _build_url(endpoint, {"limit": _clamp_limit(min(max_results, MAX_SERVER_LIMIT))}), cfg
+            _build_url(
+                endpoint, {"limit": _clamp_limit(min(max_results, MAX_SERVER_LIMIT))}
+            ),
+            cfg,
         )
         molecules = data.get("molecules", []) or []
         return [_format_molecule_summary(m) for m in molecules][:max_results]
@@ -461,47 +471,99 @@ def main() -> None:
     )
     group = parser.add_mutually_exclusive_group(required=True)
 
-    group.add_argument("--target", help="Search targets by gene/protein name (free-text search)")
-    group.add_argument("--uniprot", help="Find targets by UniProt accession (e.g., P00533 for EGFR)")
-    group.add_argument("--target_id", help="Get activities for a ChEMBL target ID (e.g., CHEMBL203)")
-    group.add_argument("--chembl_id", help="Look up molecule by ChEMBL molecule ID (e.g., CHEMBL25)")
-    group.add_argument("--inchi_key", help="Look up molecule by standard InChIKey (exact identity)")
-    group.add_argument("--smiles", help="Chemical search by SMILES (similarity/substructure/exact)")
+    group.add_argument(
+        "--target", help="Search targets by gene/protein name (free-text search)"
+    )
+    group.add_argument(
+        "--uniprot", help="Find targets by UniProt accession (e.g., P00533 for EGFR)"
+    )
+    group.add_argument(
+        "--target_id", help="Get activities for a ChEMBL target ID (e.g., CHEMBL203)"
+    )
+    group.add_argument(
+        "--chembl_id", help="Look up molecule by ChEMBL molecule ID (e.g., CHEMBL25)"
+    )
+    group.add_argument(
+        "--inchi_key", help="Look up molecule by standard InChIKey (exact identity)"
+    )
+    group.add_argument(
+        "--smiles", help="Chemical search by SMILES (similarity/substructure/exact)"
+    )
 
-    parser.add_argument("--max_results", type=int, default=20, help="Maximum number of results to return")
-    parser.add_argument("--output", help="Path to save results (.json or .csv). If omitted, prints summary only.")
+    parser.add_argument(
+        "--max_results",
+        type=int,
+        default=20,
+        help="Maximum number of results to return",
+    )
+    parser.add_argument(
+        "--output",
+        help="Path to save results (.json or .csv). If omitted, prints summary only.",
+    )
 
-    parser.add_argument("--delay", type=float, default=0.3, help="Delay (seconds) between requests (API etiquette)")
-    parser.add_argument("--timeout", type=int, default=30, help="HTTP timeout (seconds)")
-    parser.add_argument("--retries", type=int, default=3, help="Retries for transient errors (429/5xx)")
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=0.3,
+        help="Delay (seconds) between requests (API etiquette)",
+    )
+    parser.add_argument(
+        "--timeout", type=int, default=30, help="HTTP timeout (seconds)"
+    )
+    parser.add_argument(
+        "--retries", type=int, default=3, help="Retries for transient errors (429/5xx)"
+    )
 
-    parser.add_argument("--target_type", help='Filter target_type (e.g., "SINGLE PROTEIN")')
+    parser.add_argument(
+        "--target_type", help='Filter target_type (e.g., "SINGLE PROTEIN")'
+    )
     parser.add_argument("--organism", help='Filter organism (e.g., "Homo sapiens")')
 
-    parser.add_argument("--activity_type", help="Filter standardized activity type (e.g., IC50, Ki, EC50)")
-    parser.add_argument("--assay_type", help="Filter assay type (e.g., B for binding, F for functional)")
-    parser.add_argument("--standard_units", help='Filter standard_units (e.g., "nM")')
-    parser.add_argument("--standard_relation", help='Filter standard_relation (e.g., "=")')
-    parser.add_argument("--pchembl_min", type=float, help="Filter pchembl_value >= this value")
-    parser.add_argument("--pchembl_max", type=float, help="Filter pchembl_value <= this value")
     parser.add_argument(
-        "--require_pchembl", action="store_true",
+        "--activity_type",
+        help="Filter standardized activity type (e.g., IC50, Ki, EC50)",
+    )
+    parser.add_argument(
+        "--assay_type", help="Filter assay type (e.g., B for binding, F for functional)"
+    )
+    parser.add_argument("--standard_units", help='Filter standard_units (e.g., "nM")')
+    parser.add_argument(
+        "--standard_relation", help='Filter standard_relation (e.g., "=")'
+    )
+    parser.add_argument(
+        "--pchembl_min", type=float, help="Filter pchembl_value >= this value"
+    )
+    parser.add_argument(
+        "--pchembl_max", type=float, help="Filter pchembl_value <= this value"
+    )
+    parser.add_argument(
+        "--require_pchembl",
+        action="store_true",
         help="Drop records without pchembl_value (or computed pChEMBL)",
     )
     parser.add_argument(
-        "--no_compute_pchembl", action="store_true",
+        "--no_compute_pchembl",
+        action="store_true",
         help="Do not compute pChEMBL from standardized fields",
     )
     parser.add_argument(
-        "--api_param", action="append",
+        "--api_param",
+        action="append",
         help="Extra arbitrary ChEMBL filter(s) as KEY=VALUE, repeatable (advanced).",
     )
 
     parser.add_argument(
-        "--smiles_mode", choices=["similarity", "substructure", "exact"], default="similarity",
+        "--smiles_mode",
+        choices=["similarity", "substructure", "exact"],
+        default="similarity",
         help="SMILES search mode (default: similarity)",
     )
-    parser.add_argument("--similarity", type=int, default=70, help="Similarity cutoff for similarity mode (0-100)")
+    parser.add_argument(
+        "--similarity",
+        type=int,
+        default=70,
+        help="Similarity cutoff for similarity mode (0-100)",
+    )
 
     args = parser.parse_args()
     cfg = HttpConfig(timeout=args.timeout, delay=args.delay, retries=args.retries)
@@ -584,6 +646,7 @@ def main() -> None:
 
         # Save input configs for reproducibility
         from src.utils.config_utils import save_skill_inputs
+
         save_skill_inputs(args, args.output_dir)
         _params_path.parent.mkdir(parents=True, exist_ok=True)
         _params_path.write_text(json.dumps(_config, indent=2, default=str))

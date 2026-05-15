@@ -23,6 +23,7 @@ Requirements:
     - numpy, matplotlib
     - run_lattice_kmc.py and analyze_kmc_msd.py from ../../scripts/
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,6 +35,7 @@ from pathlib import Path
 from typing import Tuple
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,17 +73,23 @@ def build_simple_cubic_lattice(a: float, nx: int, ny: int, nz: int) -> dict:
                     sx, sy, sz = 0, 0, 0
 
                     if jx < 0:
-                        jx += nx; sx = -1
+                        jx += nx
+                        sx = -1
                     elif jx >= nx:
-                        jx -= nx; sx = 1
+                        jx -= nx
+                        sx = 1
                     if jy < 0:
-                        jy += ny; sy = -1
+                        jy += ny
+                        sy = -1
                     elif jy >= ny:
-                        jy -= ny; sy = 1
+                        jy -= ny
+                        sy = 1
                     if jz < 0:
-                        jz += nz; sz = -1
+                        jz += nz
+                        sz = -1
                     elif jz >= nz:
-                        jz -= nz; sz = 1
+                        jz -= nz
+                        sz = 1
 
                     j = index_map[(jx, jy, jz)]
                     neighbors[i].append({"j": j, "shift": [sx, sy, sz]})
@@ -118,7 +126,7 @@ def compute_D_from_trace(trace_path: Path, dim: int = 3) -> Tuple[float, float]:
     if t_final <= 0:
         raise RuntimeError("Simulated time is zero.")
 
-    r = data["carrier_r_A"].astype(float)    # (n_carriers, 3)
+    r = data["carrier_r_A"].astype(float)  # (n_carriers, 3)
     r0 = data["carrier_r0_A"].astype(float)  # (n_carriers, 3)
     disp_sq = np.sum((r - r0) ** 2, axis=1)  # per-carrier |dr|^2
 
@@ -133,8 +141,12 @@ def main() -> None:
         description="Validate KMC engine against exact random walk diffusivity."
     )
     ap.add_argument("--max_steps", type=int, default=500000)
-    ap.add_argument("--n_replicas", type=int, default=5,
-                    help="Independent replicas per temperature for error bars")
+    ap.add_argument(
+        "--n_replicas",
+        type=int,
+        default=5,
+        help="Independent replicas per temperature for error bars",
+    )
     ap.add_argument("--out_dir", default=".")
     args = ap.parse_args()
 
@@ -200,7 +212,8 @@ def main() -> None:
 
             res = subprocess.run(
                 [sys.executable, str(KMC_SCRIPT), "--config", str(cfg_path)],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
             if res.returncode != 0:
                 print(f"  rep {rep} FAILED:\n{res.stderr[:200]}")
@@ -226,18 +239,22 @@ def main() -> None:
         ratio = D_mean / D_ana
         pct_err = (ratio - 1.0) * 100
 
-        results.append({
-            "T_K": T,
-            "D_kmc_A2_s": D_mean,
-            "D_kmc_std_A2_s": D_std,
-            "D_kmc_sem_A2_s": D_sem,
-            "D_exact_A2_s": D_ana,
-            "ratio": ratio,
-            "pct_error": pct_err,
-            "n_replicas": len(D_replicas),
-        })
+        results.append(
+            {
+                "T_K": T,
+                "D_kmc_A2_s": D_mean,
+                "D_kmc_std_A2_s": D_std,
+                "D_kmc_sem_A2_s": D_sem,
+                "D_exact_A2_s": D_ana,
+                "ratio": ratio,
+                "pct_error": pct_err,
+                "n_replicas": len(D_replicas),
+            }
+        )
 
-        print(f"  D_kmc   = {D_mean:.6e} +/- {D_sem:.2e} A^2/s  ({len(D_replicas)} reps)")
+        print(
+            f"  D_kmc   = {D_mean:.6e} +/- {D_sem:.2e} A^2/s  ({len(D_replicas)} reps)"
+        )
         print(f"  D_exact = {D_ana:.6e} A^2/s")
         print(f"  ratio   = {ratio:.4f}  ({pct_err:+.2f}%)")
 
@@ -246,7 +263,9 @@ def main() -> None:
         return
 
     print("\n" + "=" * 80)
-    print(f"{'T (K)':>8} {'D_kmc (A^2/s)':>16} {'D_exact (A^2/s)':>16} {'ratio':>8} {'err%':>8} {'reps':>5}")
+    print(
+        f"{'T (K)':>8} {'D_kmc (A^2/s)':>16} {'D_exact (A^2/s)':>16} {'ratio':>8} {'err%':>8} {'reps':>5}"
+    )
     print("-" * 80)
     for r in results:
         print(
@@ -293,12 +312,26 @@ def main() -> None:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
     # left: Arrhenius plot
-    ax1.errorbar(inv_T, D_kmc_arr, yerr=D_sem_arr * 1.96, fmt="o", color="C0",
-                 markersize=8, capsize=4, label="KMC (this engine)")
+    ax1.errorbar(
+        inv_T,
+        D_kmc_arr,
+        yerr=D_sem_arr * 1.96,
+        fmt="o",
+        color="C0",
+        markersize=8,
+        capsize=4,
+        label="KMC (this engine)",
+    )
     T_fine = np.linspace(min(temps) * 0.9, max(temps) * 1.1, 200)
     D_fine = np.array([d_exact(a, nu, barrier_eV, t, c=conc) for t in T_fine])
-    ax1.semilogy(1000.0 / T_fine, D_fine, "-", color="C1", linewidth=1.5,
-                 label=r"Exact: $D = a^2 \nu \exp(-E_b/k_BT)$")
+    ax1.semilogy(
+        1000.0 / T_fine,
+        D_fine,
+        "-",
+        color="C1",
+        linewidth=1.5,
+        label=r"Exact: $D = a^2 \nu \exp(-E_b/k_BT)$",
+    )
     ax1.set_xlabel("1000/T (1/K)")
     ax1.set_ylabel(r"D ($\AA^2$/s)")
     ax1.set_title("Arrhenius: KMC vs Analytical")
@@ -309,8 +342,15 @@ def main() -> None:
     ratio_sem = D_sem_arr / D_ana_arr
     ax2.axhline(1.0, color="gray", linestyle="--", linewidth=1)
     ax2.axhspan(0.95, 1.05, color="green", alpha=0.15, label=r"$\pm$5%")
-    ax2.errorbar(temps, ratios, yerr=ratio_sem * 1.96, fmt="o-", color="C0",
-                 markersize=8, capsize=4)
+    ax2.errorbar(
+        temps,
+        ratios,
+        yerr=ratio_sem * 1.96,
+        fmt="o-",
+        color="C0",
+        markersize=8,
+        capsize=4,
+    )
     ax2.set_xlabel("T (K)")
     ax2.set_ylabel(r"$D_{\mathrm{KMC}} / D_{\mathrm{exact}}$")
     ax2.set_title("Accuracy: KMC / Exact")

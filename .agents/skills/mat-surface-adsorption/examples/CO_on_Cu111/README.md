@@ -28,7 +28,7 @@ python .agents/skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
 
 The calculation will:
 1. Relax the Cu bulk structure
-2. Generate a Cu(111) slab  
+2. Generate a Cu(111) slab
 3. Relax the clean slab
 4. Relax the CO molecule in gas phase
 5. Place CO at various adsorption sites (ontop, bridge, hollow)
@@ -39,7 +39,7 @@ Typical adsorption energy for CO on Cu(111): **-0.5 to -1.5 eV** (ontop site is 
 
 ## Notes
 
-- The Cu(111) surface is a close-packed FCC surface, ideal for testing adsorption calculations  
+- The Cu(111) surface is a close-packed FCC surface, ideal for testing adsorption calculations
 - CO typically binds via the carbon atom (C-down orientation)
 - Multiple adsorption sites will be automatically identified and calculated
 - The most stable site and its energy will be reported in the results

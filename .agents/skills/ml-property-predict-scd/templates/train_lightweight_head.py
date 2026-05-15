@@ -66,12 +66,28 @@ def build_parser():
     parser = argparse.ArgumentParser(
         description="Train lightweight frozen-backbone heads on top of a pretrained SCD checkpoint."
     )
-    parser.add_argument("--repo-root", default=None, help="Path to SelfConditionedDenoisingAtoms.")
-    parser.add_argument("--model-name", default="ct-scd-pcq", help="Public checkpoint name.")
-    parser.add_argument("--checkpoint-path", default=None, help="Local checkpoint path. Overrides --model-name.")
-    parser.add_argument("--dataset", required=True, help="Dataset name exported by data/datasets/__init__.py.")
+    parser.add_argument(
+        "--repo-root", default=None, help="Path to SelfConditionedDenoisingAtoms."
+    )
+    parser.add_argument(
+        "--model-name", default="ct-scd-pcq", help="Public checkpoint name."
+    )
+    parser.add_argument(
+        "--checkpoint-path",
+        default=None,
+        help="Local checkpoint path. Overrides --model-name.",
+    )
+    parser.add_argument(
+        "--dataset",
+        required=True,
+        help="Dataset name exported by data/datasets/__init__.py.",
+    )
     parser.add_argument("--dataset-root", required=True, help="Dataset root path.")
-    parser.add_argument("--dataset-arg", default=None, help="Optional dataset_arg such as a target property.")
+    parser.add_argument(
+        "--dataset-arg",
+        default=None,
+        help="Optional dataset_arg such as a target property.",
+    )
     parser.add_argument("--head-mode", required=True, choices=HEAD_MODES)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--num-workers", type=int, default=4)
@@ -126,7 +142,9 @@ def build_parser():
         default=None,
         help="Hidden size for 2-layer external MLP heads. Defaults to emb_dim.",
     )
-    parser.add_argument("--activation", choices=sorted(ACTIVATIONS.keys()), default="silu")
+    parser.add_argument(
+        "--activation", choices=sorted(ACTIVATIONS.keys()), default="silu"
+    )
     return parser
 
 
@@ -237,7 +255,11 @@ def pool_atom_embeddings(atom_embs, batch_index, pool):
     pooled.index_add_(0, batch_index, atom_embs)
 
     if pool == "mean":
-        counts = torch.bincount(batch_index, minlength=num_graphs).clamp(min=1).to(atom_embs.device)
+        counts = (
+            torch.bincount(batch_index, minlength=num_graphs)
+            .clamp(min=1)
+            .to(atom_embs.device)
+        )
         pooled = pooled / counts.unsqueeze(-1)
 
     return pooled
@@ -263,7 +285,9 @@ def prepare_backbone(args, checkpoint_path, device, load_model):
         if args.set_head_agg is not None:
             load_kwargs["set_head_agg"] = args.set_head_agg
 
-    backbone, _ema_model, _ckpt = load_model(checkpoint_path, device=device, **load_kwargs)
+    backbone, _ema_model, _ckpt = load_model(
+        checkpoint_path, device=device, **load_kwargs
+    )
     backbone.denoise = False
     configure_model_graph_mode(backbone, args.allow_periodic, args.noise_in_loader)
     freeze_all(backbone)
@@ -296,7 +320,9 @@ def external_head_forward(backbone, head, batch, head_mode, pool, use_graph_batc
     return head(features)
 
 
-def evaluate(backbone, head, loader, target_mean, target_std, device, args, use_graph_batch):
+def evaluate(
+    backbone, head, loader, target_mean, target_std, device, args, use_graph_batch
+):
     backbone.eval()
     if args.head_mode == "scalar_head":
         backbone.scalar_head.eval()
@@ -314,7 +340,9 @@ def evaluate(backbone, head, loader, target_mean, target_std, device, args, use_
             if args.head_mode == "scalar_head":
                 pred = scalar_head_forward(backbone, batch, use_graph_batch)
             else:
-                pred = external_head_forward(backbone, head, batch, args.head_mode, args.pool, use_graph_batch)
+                pred = external_head_forward(
+                    backbone, head, batch, args.head_mode, args.pool, use_graph_batch
+                )
 
             if args.standardize_targets:
                 pred = pred * target_std + target_mean
@@ -329,7 +357,16 @@ def evaluate(backbone, head, loader, target_mean, target_std, device, args, use_
     return {"mae": mae, "rmse": rmse}
 
 
-def train_scalar_head_epoch(backbone, loader, optimizer, target_mean, target_std, device, use_graph_batch, standardize_targets):
+def train_scalar_head_epoch(
+    backbone,
+    loader,
+    optimizer,
+    target_mean,
+    target_std,
+    device,
+    use_graph_batch,
+    standardize_targets,
+):
     backbone.eval()
     backbone.scalar_head.train()
 
@@ -356,7 +393,17 @@ def train_scalar_head_epoch(backbone, loader, optimizer, target_mean, target_std
     return total_loss / max(total_graphs, 1)
 
 
-def train_external_head_epoch(backbone, head, loader, optimizer, target_mean, target_std, device, args, use_graph_batch):
+def train_external_head_epoch(
+    backbone,
+    head,
+    loader,
+    optimizer,
+    target_mean,
+    target_std,
+    device,
+    args,
+    use_graph_batch,
+):
     backbone.eval()
     head.train()
 
@@ -370,7 +417,9 @@ def train_external_head_epoch(backbone, head, loader, optimizer, target_mean, ta
         if args.standardize_targets:
             target_for_loss = (target - target_mean) / target_std
 
-        pred = external_head_forward(backbone, head, batch, args.head_mode, args.pool, use_graph_batch)
+        pred = external_head_forward(
+            backbone, head, batch, args.head_mode, args.pool, use_graph_batch
+        )
         loss = F.mse_loss(pred, target_for_loss)
 
         optimizer.zero_grad(set_to_none=True)
@@ -413,9 +462,15 @@ def main():
     data.prepare_data()
     data.setup("fit")
 
-    train_loader = make_loader(data.train_dataset, args.batch_size, args.num_workers, shuffle=True)
-    val_loader = make_loader(data.val_dataset, args.batch_size, args.num_workers, shuffle=False)
-    test_loader = make_loader(data.test_dataset, args.batch_size, args.num_workers, shuffle=False)
+    train_loader = make_loader(
+        data.train_dataset, args.batch_size, args.num_workers, shuffle=True
+    )
+    val_loader = make_loader(
+        data.val_dataset, args.batch_size, args.num_workers, shuffle=False
+    )
+    test_loader = make_loader(
+        data.test_dataset, args.batch_size, args.num_workers, shuffle=False
+    )
 
     first_batch = next(iter(train_loader)).to(device)
     out_dim = get_targets(first_batch).shape[-1]
@@ -466,8 +521,26 @@ def main():
                 use_graph_batch,
             )
 
-        val_metrics = evaluate(backbone, head, val_loader, target_mean, target_std, device, args, use_graph_batch)
-        test_metrics = evaluate(backbone, head, test_loader, target_mean, target_std, device, args, use_graph_batch)
+        val_metrics = evaluate(
+            backbone,
+            head,
+            val_loader,
+            target_mean,
+            target_std,
+            device,
+            args,
+            use_graph_batch,
+        )
+        test_metrics = evaluate(
+            backbone,
+            head,
+            test_loader,
+            target_mean,
+            target_std,
+            device,
+            args,
+            use_graph_batch,
+        )
 
         epoch_record = {
             "epoch": epoch,
@@ -506,8 +579,12 @@ def main():
                 payload["head_state_dict"] = head.state_dict()
             torch.save(payload, output_dir / "best_lightweight_head.pt")
 
-    (output_dir / "metrics.json").write_text(json.dumps({"best": best_metrics, "history": history}, indent=2))
-    print(f"Saved best lightweight head checkpoint to {output_dir / 'best_lightweight_head.pt'}")
+    (output_dir / "metrics.json").write_text(
+        json.dumps({"best": best_metrics, "history": history}, indent=2)
+    )
+    print(
+        f"Saved best lightweight head checkpoint to {output_dir / 'best_lightweight_head.pt'}"
+    )
     print(f"Saved metrics to {output_dir / 'metrics.json'}")
 
 

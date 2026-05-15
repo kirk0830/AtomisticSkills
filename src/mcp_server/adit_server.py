@@ -13,13 +13,10 @@ mcp_pipe_binary = setup_mcp_stdout()
 
 import logging
 import warnings
-import json
-from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from typing import Dict, Any, Optional
 from src.utils.serialization_utils import recursive_tolist
 from src.utils.research_utils import get_current_research_dir
-import traceback
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
@@ -50,6 +47,7 @@ def _get_wrapper(device: str = "auto") -> "ADiTWrapper":
     global _wrapper
     if _wrapper is None:
         from src.utils.mlips.adit.adit_wrapper import ADiTWrapper
+
         _wrapper = ADiTWrapper(device=device)
     return _wrapper
 

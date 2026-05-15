@@ -137,5 +137,5 @@ python .agents/skills/mat-defect-energy-dft/scripts/parse_defect_results.py \
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

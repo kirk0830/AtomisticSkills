@@ -120,5 +120,5 @@ The synthesis recipes are extracted from scientific literature using natural lan
 - [mat-intercalation-voltage](../mat-intercalation-voltage/SKILL.md): Calculate electrochemical properties of synthesized cathode materials
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

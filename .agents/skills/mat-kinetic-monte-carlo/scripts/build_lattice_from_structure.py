@@ -15,6 +15,7 @@ Requirements:
     - ase
     - numpy
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,19 +31,26 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="Build a lattice site network from a structure for lattice KMC."
     )
-    ap.add_argument("--structure", required=True, help="Path to input structure (CIF/POSCAR)")
     ap.add_argument(
-        "--site_element", required=True,
-        help="Element that defines lattice sites (e.g., Li for Li sublattice)"
+        "--structure", required=True, help="Path to input structure (CIF/POSCAR)"
     )
-    ap.add_argument("--cutoff", required=True, type=float, help="Neighbor cutoff in angstrom")
+    ap.add_argument(
+        "--site_element",
+        required=True,
+        help="Element that defines lattice sites (e.g., Li for Li sublattice)",
+    )
+    ap.add_argument(
+        "--cutoff", required=True, type=float, help="Neighbor cutoff in angstrom"
+    )
     ap.add_argument("--out", required=True, help="Output JSON path")
     args = ap.parse_args()
 
     atoms = read(args.structure)
     cell = np.array(atoms.cell.array, dtype=float)
     if np.linalg.det(cell) == 0:
-        raise RuntimeError("Cell matrix is singular; need periodic cell for lattice KMC.")
+        raise RuntimeError(
+            "Cell matrix is singular; need periodic cell for lattice KMC."
+        )
 
     symbols = np.array(atoms.get_chemical_symbols())
     site_indices = np.where(symbols == args.site_element)[0]
@@ -64,10 +72,9 @@ def main() -> None:
     for i, j, S in zip(i_list, j_list, S_list):
         if i == j and np.all(S == 0):
             continue
-        neighbors[int(i)].append({
-            "j": int(j),
-            "shift": [int(S[0]), int(S[1]), int(S[2])]
-        })
+        neighbors[int(i)].append(
+            {"j": int(j), "shift": [int(S[0]), int(S[1]), int(S[2])]}
+        )
 
     deg = [len(nb) for nb in neighbors]
     if min(deg) == 0:
@@ -92,6 +99,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.out)
 
 

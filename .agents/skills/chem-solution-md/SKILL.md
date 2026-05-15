@@ -185,5 +185,5 @@ After MD + analysis, expected RDF peak positions:
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

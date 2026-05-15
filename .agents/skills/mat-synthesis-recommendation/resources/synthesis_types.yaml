@@ -17,7 +17,7 @@ synthesis_types:
       - Battery cathodes (LiFePO4, LiCoO2)
       - Ceramics (BaTiO3, ZrO2)
       - Perovskites (LaFeO3)
-  
+
   hydrothermal:
     name: "Hydrothermal Synthesis"
     description: "Reaction in aqueous solution at elevated temperature and pressure"
@@ -34,7 +34,7 @@ synthesis_types:
       - Zeolites
       - Metal oxides (TiO2, ZnO)
       - Hydroxides
-  
+
   sol_gel:
     name: "Sol-Gel Synthesis"
     description: "Solution-based method forming gel intermediate"
@@ -51,7 +51,7 @@ synthesis_types:
       - Thin films
       - Silica-based materials
       - Mixed metal oxides
-  
+
   coprecipitation:
     name: "Co-precipitation"
     description: "Simultaneous precipitation of multiple components from solution"
@@ -68,7 +68,7 @@ synthesis_types:
       - Lithium iron phosphate
       - Mixed metal hydroxides
       - Carbonates
-  
+
   combustion:
     name: "Combustion Synthesis / Self-Propagating High-Temperature Synthesis (SHS)"
     description: "Exothermic reaction that propagates through mixture"
@@ -85,7 +85,7 @@ synthesis_types:
       - Refractory materials
       - Intermetallics
       - Ceramics
-  
+
   spray_pyrolysis:
     name: "Spray Pyrolysis"
     description: "Aerosol droplets decomposed at high temperature"

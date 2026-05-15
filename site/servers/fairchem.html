@@ -56,32 +56,32 @@
 </div>
 <div class="content">
   <div class="tools-list">
-    
+
         <div class="tool-card">
           <h3 class="tool-name">📎 load_model</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nLoad a FAIRCHEM model.\n\nSupported models include:\n- UMA (Universal): &#39;uma-s-1p2&#39;, &#39;uma-m-1p2&#39;, &#39;uma-s-1p1&#39;, &#39;uma-m-1p1&#39;, &#39;uma-s-1&#39;\n- ESEN (Organic/Molecular): &#39;esen-md-direct-all-omol&#39;, &#39;esen-sm-conserving-all-omol&#39;, &#39;esen-sm-direct-all-omol&#39;\n- ESEN (Catalysis/OC25): &#39;esen-sm-conserving-all-oc25&#39;, &#39;esen-md-direct-all-oc25&#39;\n- Fine-tuned checkpoint: provide the full path to an inference_ckpt.pt file\n\nArgs:\n    model_name: Name of the model to load (default: \"uma-s-1p2\").\n               Can also be a file path to a fine-tuned inference checkpoint\n               (e.g., \"/path/to/inference_ckpt.pt\" from fairchem CLI fine-tuning).\n    device: Device to use (\"auto\", \"cpu\", \"cuda\").\n    task_name: Optional task name for UMA multi-task models.\n              &#39;omat&#39; (default for bulk/periodic): Inorganic materials (PBE-level, OMat24 dataset).\n              &#39;omol&#39;: Molecules and polymers (PBE-level).\n              &#39;oc20&#39;: Heterogeneous catalysis / surface reactions (PBE-level).\n              &#39;odac&#39;: Metal-Organic Frameworks / CO2 capture (PBE-level).\n              &#39;omc&#39;: Molecular crystals (PBE-level).\n    inference_settings: Inference settings preset (default: \"default\").\n\nReturns:\n    Confirmation message.\n\nCRITICAL: This tool must be called before using any other tool to load the model into memory.\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 predict_structure</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nPredict energy, forces, and stress for a structure or a batch of structures.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n        \nReturns:\n    Dict: {&#39;energy&#39;: eV, &#39;forces&#39;: eV/A, &#39;stress&#39;: eV/\u00c5\u00b3}\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 get_info</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nGet information about the current loaded model.\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 relax_structure</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nRelax one or multiple structures using the loaded FAIRCHEM model.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    fmax: Force convergence criterion (eV/Ang).\n    steps: Maximum number of optimization steps.\n    optimizer: Optimizer to use (\"FIRE\", \"BFGS\", \"LBFGS\").\n    relax_cell: Whether to relax the unit cell (default: True).\n    output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.\n    \nReturns:\n    For single: Dict with energy, trajectory_path, cif_path, json_path\n    For batch: Dict with mode=\"batch\", total_structures, successful, failed, results list\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 run_md</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nRun molecular dynamics simulation using MatCalc.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    temperature: Temperature in Kelvin.\n    steps: Number of steps.\n    timestep: Timestep in fs.\n    ensemble: Ensemble \"nve\", \"nvt\" (Nose-Hoover), or \"npt\" (NPT).\n              Also supports variants like \"nvt_langevin\", \"nvt_andersen\", \"npt_berendsen\", \"npt_mtk\".\n    log_interval: Interval for logging to trajectory and logfile.\n    pressure: Target pressure in bar (for NPT).\n    pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).\n    output_dir: Directory to save results.\n    monitor: Whether to enable automatic MD monitoring.\n    monitor_type: Type of monitor (\"melting\", \"explosion\", \"overshoot\", \"volume\") or list of types.\n    monitor_params: Optional dictionary of parameters for the monitors (e.g., {\"upper_limit_ratio\": 4.0}).\n    supercell_min_length: Minimum length (\u00c5) for each lattice vector. Automatically expands supercell.\n    \nReturns:\n    Dictionary with MD results (trajectory_path, final_structure).\n```"'></div>
         </div>
-        
+
   </div>
 </div>
 <footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>

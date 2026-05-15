@@ -6,7 +6,7 @@ category: [materials]
 
 # Solid Free Energy
 
-This skill calculates the absolute free energy of a crystalline solid using **Frenkel-Ladd switching**, which is a specific form of **Thermodynamic Integration (TI)**. 
+This skill calculates the absolute free energy of a crystalline solid using **Frenkel-Ladd switching**, which is a specific form of **Thermodynamic Integration (TI)**.
 
 Thermodynamic integration computes the free energy difference between two states by integrating the derivative of the Hamiltonian along a continuous coupling path. In this skill, the path interpolates between a physical MLIP Hamiltonian (the target state) and a harmonic Einstein-crystal reference (where the exact absolute free energy is analytically known).
 

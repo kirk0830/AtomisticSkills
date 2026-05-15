@@ -14,7 +14,7 @@ To simulate the morphological evolution of structural transformations (like soli
 ### 1. Mathematical Formulation
 The Allen-Cahn equation describes the evolution of a non-conserved order parameter $\phi$ down a free energy gradient:
 $$ \frac{\partial \phi}{\partial t} = -M \frac{\delta F}{\delta \phi} = M \left( \epsilon^2 \nabla^2 \phi - \frac{\partial f(\phi)}{\partial \phi} \right) $$
-Where $M$ is the mobility, $\epsilon$ is the gradient energy coefficient controlling the interface thickness, and $f(\phi) = W \phi^2(1-\phi)^2$ is the double-well potential barrier between the two phases ($\phi=0$ and $\phi=1$). 
+Where $M$ is the mobility, $\epsilon$ is the gradient energy coefficient controlling the interface thickness, and $f(\phi) = W \phi^2(1-\phi)^2$ is the double-well potential barrier between the two phases ($\phi=0$ and $\phi=1$).
 
 Unlike Cahn-Hilliard, Allen-Cahn does not conserve the integral of $\phi$. It naturally drives systems to reduce their total interfacial area, resulting in curvature-driven boundary migration.
 

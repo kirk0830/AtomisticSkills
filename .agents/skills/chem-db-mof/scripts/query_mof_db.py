@@ -19,7 +19,6 @@ Requirements:
 
 import argparse
 import io
-import json
 import os
 import sys
 import tarfile
@@ -56,7 +55,10 @@ ARCMOF_DB7_SOURCE_LABELS = {"DB7", "Majumdar", "majumdar"}
 # QMOF query (via MPContribs)
 # ---------------------------------------------------------------------------
 
-def query_qmof(formula: str | None, identifier: str | None, max_results: int, output_dir: Path) -> list[str]:
+
+def query_qmof(
+    formula: str | None, identifier: str | None, max_results: int, output_dir: Path
+) -> list[str]:
     """
     Query the QMOF database on Materials Project via MPContribs.
 
@@ -72,7 +74,9 @@ def query_qmof(formula: str | None, identifier: str | None, max_results: int, ou
     try:
         from mpcontribs.client import Client
     except ImportError:
-        print("Error: mpcontribs-client is not installed. Run: pip install mpcontribs-client")
+        print(
+            "Error: mpcontribs-client is not installed. Run: pip install mpcontribs-client"
+        )
         sys.exit(1)
 
     api_key = os.environ.get("MP_API_KEY")
@@ -143,6 +147,7 @@ def query_qmof(formula: str | None, identifier: str | None, max_results: int, ou
 # ARC-MOF DB7 (Majumdar et al.) query via Zenodo
 # ---------------------------------------------------------------------------
 
+
 def _get_zenodo_file_url(filename: str) -> str:
     """
     Fetch the download URL for a specific file from the ARC-MOF Zenodo record
@@ -187,7 +192,11 @@ def _download_arcmof_metadata(cache_dir: Path) -> pd.DataFrame:
                     downloaded += len(chunk)
                     if total:
                         pct = 100 * downloaded / total
-                        print(f"\r  {downloaded / 1e6:.1f} / {total / 1e6:.1f} MB ({pct:.0f}%)", end="", flush=True)
+                        print(
+                            f"\r  {downloaded / 1e6:.1f} / {total / 1e6:.1f} MB ({pct:.0f}%)",
+                            end="",
+                            flush=True,
+                        )
         print()
         print("Metadata download complete.")
 
@@ -201,7 +210,15 @@ def _identify_db7_source_column(df: pd.DataFrame) -> str | None:
     Returns the column name or None if not found.
     """
     # Common column names used in ARC-MOF papers
-    for candidate in ["source_db", "source", "database", "db", "origin", "Source_DB", "Database"]:
+    for candidate in [
+        "source_db",
+        "source",
+        "database",
+        "db",
+        "origin",
+        "Source_DB",
+        "Database",
+    ]:
         if candidate in df.columns:
             return candidate
     return None
@@ -220,7 +237,9 @@ def _filter_db7(df: pd.DataFrame) -> pd.DataFrame:
         mask = df[id_col].astype(str).str.startswith(ARCMOF_DB7_PREFIX)
         db7 = df[mask].copy()
         if not db7.empty:
-            print(f"Found {len(db7)} DB7 (Majumdar) entries via prefix '{ARCMOF_DB7_PREFIX}' in column '{id_col}'.")
+            print(
+                f"Found {len(db7)} DB7 (Majumdar) entries via prefix '{ARCMOF_DB7_PREFIX}' in column '{id_col}'."
+            )
             return db7
 
     # Fallback: source database column
@@ -248,7 +267,9 @@ def _detect_id_column(df: pd.DataFrame) -> str | None:
     return df.columns[0] if len(df.columns) > 0 else None
 
 
-def _filter_by_elements(df: pd.DataFrame, elements: list[str], id_col: str) -> pd.DataFrame:
+def _filter_by_elements(
+    df: pd.DataFrame, elements: list[str], id_col: str
+) -> pd.DataFrame:
     """
     Filter structures to those containing ALL specified elements.
     Uses the identifier string or a formula column if available.
@@ -270,7 +291,9 @@ def _filter_by_elements(df: pd.DataFrame, elements: list[str], id_col: str) -> p
         print(f"After element filter {elements}: {len(result)} structures.")
         return result
     else:
-        print(f"Warning: no formula column found; cannot filter by elements {elements}. Returning all DB7 entries.")
+        print(
+            f"Warning: no formula column found; cannot filter by elements {elements}. Returning all DB7 entries."
+        )
         return df
 
 
@@ -281,13 +304,18 @@ def _elements_from_cif_bytes(cif_bytes: bytes) -> set[str]:
     This avoids a full pymatgen CifParser call for speed.
     """
     import re
+
     text = cif_bytes.decode("utf-8", errors="ignore")
 
     # Look for _atom_site_type_symbol values (most reliable)
     symbols = re.findall(r"_atom_site_type_symbol\s+([\s\S]+?)(?=_atom_site|\Z)", text)
     if symbols:
         raw = symbols[0].split()
-        elements = {re.sub(r"[^A-Za-z]", "", s).capitalize() for s in raw if s and not s.startswith("_")}
+        elements = {
+            re.sub(r"[^A-Za-z]", "", s).capitalize()
+            for s in raw
+            if s and not s.startswith("_")
+        }
         elements = {e for e in elements if e.isalpha() and len(e) <= 2}
         if elements:
             return elements
@@ -310,7 +338,7 @@ def _download_majumdar_tarball(cache_dir: Path) -> Path:
         print(f"Using cached Majumdar tarball: {tarball_path}")
         return tarball_path
 
-    print(f"Downloading Majumdar et al. CIF archive (~149 MB) from Materials Cloud ...")
+    print("Downloading Majumdar et al. CIF archive (~149 MB) from Materials Cloud ...")
     print("(One-time download; subsequent runs use the cache.)")
     with requests.get(MAJUMDAR_MATERIALS_CLOUD_URL, stream=True, timeout=600) as r:
         r.raise_for_status()
@@ -322,7 +350,11 @@ def _download_majumdar_tarball(cache_dir: Path) -> Path:
                 downloaded += len(chunk)
                 if total:
                     pct = 100 * downloaded / total
-                    print(f"\r  {downloaded / 1e6:.1f} / {total / 1e6:.1f} MB ({pct:.0f}%)", end="", flush=True)
+                    print(
+                        f"\r  {downloaded / 1e6:.1f} / {total / 1e6:.1f} MB ({pct:.0f}%)",
+                        end="",
+                        flush=True,
+                    )
     print()
     print("Majumdar tarball download complete.")
     return tarball_path
@@ -367,7 +399,9 @@ def _extract_majumdar_cifs(
     # Skip already-downloaded CIFs in the output dir
     existing = [str(p) for p in output_dir.glob("*.cif")]
     if len(existing) >= max_results:
-        print(f"{len(existing)} CIFs already present (>= max_results={max_results}); skipping.")
+        print(
+            f"{len(existing)} CIFs already present (>= max_results={max_results}); skipping."
+        )
         return existing[:max_results]
 
     tarball_path = _download_majumdar_tarball(cache_dir)
@@ -382,7 +416,7 @@ def _extract_majumdar_cifs(
     saved_stems: set[str] = {Path(p).stem for p in existing}
     saved_meta_rows: list[dict] = []
 
-    print(f"Extracting CIFs from nested mof_structures.tar ...")
+    print("Extracting CIFs from nested mof_structures.tar ...")
     if required_metals:
         print(f"  Metal filter (at least one required): {sorted(required_metals)}")
     if identifier:
@@ -441,7 +475,9 @@ def _extract_majumdar_cifs(
         print(f"Metadata (incl. CO2 uptake, selectivity) saved: {meta_out}")
 
     if len(saved_paths) < max_results and not identifier:
-        print(f"Note: only {len(saved_paths)} CIFs matched the filter across all {checked} checked.")
+        print(
+            f"Note: only {len(saved_paths)} CIFs matched the filter across all {checked} checked."
+        )
 
     return saved_paths[:max_results]
 
@@ -509,6 +545,7 @@ def query_arcmof_majumdar(
 # Main entry point
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Query MOF databases (QMOF or ARC-MOF DB7/Majumdar) and download CIF structures.",
@@ -543,16 +580,16 @@ Examples:
         type=str,
         default=None,
         help="[arcmof-majumdar] Comma-separated metal elements to filter by (e.g., 'Zn', 'Ni', 'Mg', or 'Zn,Ni'). "
-             "Structures containing AT LEAST ONE of the listed metals are returned. "
-             "Parsed from _atom_site_type_symbol in each CIF. "
-             "Add more metals to broaden diversity (e.g., 'Zn,Ni,Mg,Cu,Fe').",
+        "Structures containing AT LEAST ONE of the listed metals are returned. "
+        "Parsed from _atom_site_type_symbol in each CIF. "
+        "Add more metals to broaden diversity (e.g., 'Zn,Ni,Mg,Cu,Fe').",
     )
     parser.add_argument(
         "--identifier",
         type=str,
         default=None,
         help="Specific structure name or ID substring to retrieve (e.g., 'KAXQIL' for QMOF, "
-             "'DB7_00042' for ARC-MOF).",
+        "'DB7_00042' for ARC-MOF).",
     )
     parser.add_argument(
         "--max-results",
@@ -586,7 +623,9 @@ Examples:
         )
 
     elif args.database == "arcmof-majumdar":
-        elements = [e.strip() for e in args.elements.split(",")] if args.elements else []
+        elements = (
+            [e.strip() for e in args.elements.split(",")] if args.elements else []
+        )
         saved = query_arcmof_majumdar(
             elements=elements,
             identifier=args.identifier,
@@ -601,6 +640,7 @@ Examples:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

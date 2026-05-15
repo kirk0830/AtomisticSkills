@@ -42,5 +42,5 @@ python .agents/skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -8,7 +8,9 @@ FILE_KEY = "sb-pretrained.ckpt"
 DOWNLOAD_URL = f"https://zenodo.org/api/records/{RECORD_ID}/files/{FILE_KEY}/content"
 
 # Default cache directory (user-local, not inside the repo)
-DEFAULT_CACHE_DIR = os.path.join(os.path.expanduser("~"), ".cache", "react-ot", "checkpoints")
+DEFAULT_CACHE_DIR = os.path.join(
+    os.path.expanduser("~"), ".cache", "react-ot", "checkpoints"
+)
 
 
 def get_checkpoint_path(custom_path: str = None) -> str:

@@ -29,7 +29,7 @@ python .agents/skills/chem-sorption-relax/scripts/build_supercell.py \
 ```
 
 > [!TIP]
-> If the script output indicates a `1x1x1` supercell was created (i.e. no expansion needed), you can just use your original CIF or the output CIF, as they will be identical. 
+> If the script output indicates a `1x1x1` supercell was created (i.e. no expansion needed), you can just use your original CIF or the output CIF, as they will be identical.
 
 2. **Relax the Framework**: Relax the output structure using the MCP server environment. Ensure that the correct MLIP is loaded first.
 

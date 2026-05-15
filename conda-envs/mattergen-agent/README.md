@@ -66,7 +66,7 @@ conda env export --no-builds > example_full_env.yaml
 
 MatterGen provides several pretrained models:
 - `mattergen_base`: Base generative model
-- `mp_20_base`: Materials Project base model  
+- `mp_20_base`: Materials Project base model
 - `dft_mag_density`: Model for magnetic density conditioning
 - `chemical_system`: Model for chemical system conditioning
 

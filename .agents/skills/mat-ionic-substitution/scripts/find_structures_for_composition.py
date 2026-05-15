@@ -24,16 +24,12 @@ Requirements:
 import argparse
 import json
 import os
-import sys
 from pathlib import Path
 
 from pymatgen.core import Composition, Structure
 from pymatgen.core.periodic_table import Species
 from pymatgen.analysis.structure_prediction.substitution_probability import (
     SubstitutionPredictor,
-)
-from pymatgen.transformations.standard_transformations import (
-    SubstitutionTransformation,
 )
 
 
@@ -74,24 +70,24 @@ def find_substitution_precursors(
     predictor = SubstitutionPredictor(threshold=threshold)
 
     # list_prediction with to_this_composition=True finds what can map TO this list
-    predictions = predictor.list_prediction(
-        target_species, to_this_composition=True
-    )
+    predictions = predictor.list_prediction(target_species, to_this_composition=True)
 
     # Filter out identity substitutions
     filtered = []
     for pred in predictions:
         sub_map = pred["substitutions"]
-        actual_changes = {
-            k: v for k, v in sub_map.items() if str(k) != str(v)
-        }
+        actual_changes = {k: v for k, v in sub_map.items() if str(k) != str(v)}
         if actual_changes:
-            filtered.append({
-                "substitutions": {str(k): str(v) for k, v in sub_map.items()},
-                "actual_changes": {str(k): str(v) for k, v in actual_changes.items()},
-                "probability": pred["probability"],
-                "precursor_species": [str(k) for k in sub_map.keys()],
-            })
+            filtered.append(
+                {
+                    "substitutions": {str(k): str(v) for k, v in sub_map.items()},
+                    "actual_changes": {
+                        str(k): str(v) for k, v in actual_changes.items()
+                    },
+                    "probability": pred["probability"],
+                    "precursor_species": [str(k) for k in sub_map.keys()],
+                }
+            )
 
     filtered.sort(key=lambda x: x["probability"], reverse=True)
     return filtered
@@ -131,13 +127,15 @@ def query_mp_structures(
             ],
         )
         for doc in docs:
-            results.append({
-                "structure": doc.structure,
-                "material_id": str(doc.material_id),
-                "formula": doc.formula_pretty,
-                "energy_above_hull": doc.energy_above_hull,
-                "is_stable": doc.is_stable,
-            })
+            results.append(
+                {
+                    "structure": doc.structure,
+                    "material_id": str(doc.material_id),
+                    "formula": doc.formula_pretty,
+                    "energy_above_hull": doc.energy_above_hull,
+                    "is_stable": doc.is_stable,
+                }
+            )
 
     return results
 
@@ -233,24 +231,28 @@ def main() -> None:
     print(f"Found {len(direct_matches)} direct matches in MP")
 
     for match in direct_matches:
-        cif_name = f"{structure_index:03d}_{match['formula']}_MP_{match['material_id']}.cif"
-        
+        cif_name = (
+            f"{structure_index:03d}_{match['formula']}_MP_{match['material_id']}.cif"
+        )
+
         if args.max_cifs == 0 or structure_index < args.max_cifs:
             cif_path = output_dir / cif_name
             match["structure"].to(filename=str(cif_path))
 
-        all_results.append({
-            "index": structure_index,
-            "source": "materials_project",
-            "material_id": match["material_id"],
-            "formula": match["formula"],
-            "energy_above_hull": match["energy_above_hull"],
-            "is_stable": match["is_stable"],
-            "substitution_map": None,
-            "precursor_formula": None,
-            "probability": None,
-            "cif_file": cif_name,
-        })
+        all_results.append(
+            {
+                "index": structure_index,
+                "source": "materials_project",
+                "material_id": match["material_id"],
+                "formula": match["formula"],
+                "energy_above_hull": match["energy_above_hull"],
+                "is_stable": match["is_stable"],
+                "substitution_map": None,
+                "precursor_formula": None,
+                "probability": None,
+                "cif_file": cif_name,
+            }
+        )
         structure_index += 1
 
     # ── Part 2: Substitution-derived structures ──
@@ -316,21 +318,24 @@ def main() -> None:
                 precursor_formula = Composition(precursor_comp_dict).reduced_formula
 
                 # Query MP for precursor structures
-                print(f"  Searching MP for {precursor_formula} "
-                      f"(sub: {precursor['actual_changes']}, "
-                      f"p={precursor['probability']:.4f})...")
+                print(
+                    f"  Searching MP for {precursor_formula} "
+                    f"(sub: {precursor['actual_changes']}, "
+                    f"p={precursor['probability']:.4f})..."
+                )
 
                 mp_structures = query_mp_structures(precursor_formula)
                 if not mp_structures:
                     continue
 
-                print(f"    Found {len(mp_structures)} MP structures for {precursor_formula}")
+                print(
+                    f"    Found {len(mp_structures)} MP structures for {precursor_formula}"
+                )
 
                 for mp_struct in mp_structures:
                     # Apply substitution (precursor→target)
                     new_structure = apply_substitution(
-                        mp_struct["structure"], 
-                        precursor["actual_changes"]
+                        mp_struct["structure"], precursor["actual_changes"]
                     )
                     if new_structure is None:
                         continue
@@ -340,7 +345,7 @@ def main() -> None:
                         f"_from_{precursor_formula}"
                         f"_{mp_struct['material_id']}.cif"
                     )
-                    
+
                     if args.max_cifs == 0 or structure_index < args.max_cifs:
                         cif_path = output_dir / cif_name
                         new_structure.to(filename=str(cif_path))
@@ -348,19 +353,23 @@ def main() -> None:
                     sub_str = ", ".join(
                         f"{k}→{v}" for k, v in precursor["actual_changes"].items()
                     )
-                    all_results.append({
-                        "index": structure_index,
-                        "source": "substitution",
-                        "material_id": mp_struct["material_id"],
-                        "precursor_formula": precursor_formula,
-                        "formula": target_comp.reduced_formula,
-                        "substitution_map": precursor["actual_changes"],
-                        "substitution_str": sub_str,
-                        "probability": precursor["probability"],
-                        "precursor_energy_above_hull": mp_struct["energy_above_hull"],
-                        "precursor_is_stable": mp_struct["is_stable"],
-                        "cif_file": cif_name,
-                    })
+                    all_results.append(
+                        {
+                            "index": structure_index,
+                            "source": "substitution",
+                            "material_id": mp_struct["material_id"],
+                            "precursor_formula": precursor_formula,
+                            "formula": target_comp.reduced_formula,
+                            "substitution_map": precursor["actual_changes"],
+                            "substitution_str": sub_str,
+                            "probability": precursor["probability"],
+                            "precursor_energy_above_hull": mp_struct[
+                                "energy_above_hull"
+                            ],
+                            "precursor_is_stable": mp_struct["is_stable"],
+                            "cif_file": cif_name,
+                        }
+                    )
                     structure_index += 1
 
     # ── Save manifest ──
@@ -389,7 +398,7 @@ def main() -> None:
     # Print top substitution results
     sub_results = [r for r in all_results if r["source"] == "substitution"]
     if sub_results:
-        print(f"\nTop substitution-derived structures:")
+        print("\nTop substitution-derived structures:")
         for r in sub_results[:15]:
             print(
                 f"  [{r['index']:3d}] {r['precursor_formula']:15s} → {r['formula']:15s} "
@@ -402,6 +411,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

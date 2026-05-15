@@ -19,11 +19,9 @@ Requirements:
 import argparse
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Optional
 
-import numpy as np
 import yaml
 from ase import Atoms
 from ase.io import write as ase_write
@@ -72,7 +70,9 @@ def smiles_to_molecule(smiles: str, name: str = "molecule") -> Molecule:
         coords.append([pos.x, pos.y, pos.z])
 
     pmg_mol = Molecule(species, coords)
-    print(f"  Generated 3D geometry for {name}: {pmg_mol.formula} ({len(pmg_mol)} atoms)")
+    print(
+        f"  Generated 3D geometry for {name}: {pmg_mol.formula} ({len(pmg_mol)} atoms)"
+    )
     return pmg_mol
 
 
@@ -184,7 +184,9 @@ def build_solvation_box(
         solvent_density = 1.0
         solvent_mw = float(sum(el.atomic_mass for el in solvent_mol.species))
     else:
-        raise ValueError("Must provide one of: --solvent, --solvent_smiles, or --solvent_file")
+        raise ValueError(
+            "Must provide one of: --solvent, --solvent_smiles, or --solvent_file"
+        )
 
     # --- Load solute (optional) ---
     solute_mol = None
@@ -192,7 +194,9 @@ def build_solvation_box(
         solute_mol = smiles_to_molecule(solute_smiles, name="solute")
     elif solute_file is not None:
         solute_mol = Molecule.from_file(solute_file)
-        print(f"  Loaded solute from file: {solute_mol.formula} ({len(solute_mol)} atoms)")
+        print(
+            f"  Loaded solute from file: {solute_mol.formula} ({len(solute_mol)} atoms)"
+        )
 
     # --- Calculate box size ---
     if box_size is None:
@@ -207,17 +211,21 @@ def build_solvation_box(
     molecules = []
 
     if solute_mol is not None:
-        molecules.append({
-            "name": "solute",
-            "number": 1,
-            "coords": solute_mol,
-        })
+        molecules.append(
+            {
+                "name": "solute",
+                "number": 1,
+                "coords": solute_mol,
+            }
+        )
 
-    molecules.append({
-        "name": "solvent",
-        "number": num_solvent,
-        "coords": solvent_mol,
-    })
+    molecules.append(
+        {
+            "name": "solvent",
+            "number": num_solvent,
+            "coords": solvent_mol,
+        }
+    )
 
     box = [0.0, 0.0, 0.0, box_size, box_size, box_size]
 
@@ -306,49 +314,69 @@ def main() -> None:
     # Solvent specification (mutually exclusive)
     solvent_group = parser.add_mutually_exclusive_group(required=True)
     solvent_group.add_argument(
-        "--solvent", type=str, default=None,
-        help="Pre-defined solvent name (e.g., water, methanol, acetonitrile)"
+        "--solvent",
+        type=str,
+        default=None,
+        help="Pre-defined solvent name (e.g., water, methanol, acetonitrile)",
     )
     solvent_group.add_argument(
-        "--solvent_smiles", type=str, default=None,
-        help="SMILES string for the solvent molecule"
+        "--solvent_smiles",
+        type=str,
+        default=None,
+        help="SMILES string for the solvent molecule",
     )
     solvent_group.add_argument(
-        "--solvent_file", type=str, default=None,
-        help="Path to a solvent structure file (XYZ, CIF, etc.)"
+        "--solvent_file",
+        type=str,
+        default=None,
+        help="Path to a solvent structure file (XYZ, CIF, etc.)",
     )
 
     # Solute specification (optional, mutually exclusive)
     solute_group = parser.add_mutually_exclusive_group()
     solute_group.add_argument(
-        "--solute_smiles", type=str, default=None,
-        help="SMILES string for the solute molecule"
+        "--solute_smiles",
+        type=str,
+        default=None,
+        help="SMILES string for the solute molecule",
     )
     solute_group.add_argument(
-        "--solute_file", type=str, default=None,
-        help="Path to a solute structure file (XYZ, CIF, etc.)"
+        "--solute_file",
+        type=str,
+        default=None,
+        help="Path to a solute structure file (XYZ, CIF, etc.)",
     )
 
     # Box parameters
     parser.add_argument(
-        "--num_solvent", type=int, default=64,
-        help="Number of solvent molecules (default: 64)"
+        "--num_solvent",
+        type=int,
+        default=64,
+        help="Number of solvent molecules (default: 64)",
     )
     parser.add_argument(
-        "--box_size", type=float, default=None,
-        help="Cubic box side length in Å (auto-calculated from density if not set)"
+        "--box_size",
+        type=float,
+        default=None,
+        help="Cubic box side length in Å (auto-calculated from density if not set)",
     )
     parser.add_argument(
-        "--tolerance", type=float, default=2.0,
-        help="Minimum inter-molecular distance in Å (default: 2.0)"
+        "--tolerance",
+        type=float,
+        default=2.0,
+        help="Minimum inter-molecular distance in Å (default: 2.0)",
     )
     parser.add_argument(
-        "--seed", type=int, default=1,
-        help="Random seed for Packmol (default: 1, use -1 for random)"
+        "--seed",
+        type=int,
+        default=1,
+        help="Random seed for Packmol (default: 1, use -1 for random)",
     )
     parser.add_argument(
-        "--output_dir", type=str, required=True,
-        help="Output directory for solvation box files"
+        "--output_dir",
+        type=str,
+        required=True,
+        help="Output directory for solvation box files",
     )
 
     args = parser.parse_args()
@@ -379,6 +407,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

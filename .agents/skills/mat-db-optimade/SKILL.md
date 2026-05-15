@@ -48,5 +48,5 @@ When using the `--provider` parameter, you can provide the following short strin
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

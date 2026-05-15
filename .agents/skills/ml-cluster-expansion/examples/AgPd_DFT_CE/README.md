@@ -5,7 +5,7 @@ This example adapts the [icet AgPd tutorial](https://icet.materialsmodeling.org/
 **Dataset Origin:** The 137 training structures and their mixing energies used for this Cluster Expansion training are sourced from the [`icet` tutorial](https://gitlab.com/materials-modeling/icet/-/raw/master/examples/tutorial/reference_data.db?inline=false).
 
 ## 1. Extracting the Training Dataset
-The first step is to extract the structures and energies from the `ase` database and convert them into the `pymatgen` format expected by `smol`. 
+The first step is to extract the structures and energies from the `ase` database and convert them into the `pymatgen` format expected by `smol`.
 
 **Key Takeaway:** The `icet` database returns intensive mixing energy (`eV/atom`), while `smol`'s Cluster Expansion relies on total system energy. We must calculate the total extensive energy by multiplying by the number of atoms.
 
@@ -22,7 +22,7 @@ training_data = []
 for row in db.select("natoms<=6"):
     structure = AseAtomsAdaptor.get_structure(row.toatoms())
     total_mixing_energy = row.mixing_energy * row.natoms
-    
+
     training_data.append({
         "structure": structure.as_dict(),
         "energy": total_mixing_energy
@@ -52,7 +52,7 @@ result = train_cluster_expansion(
     disordered_structure=prim_structure.as_dict(),
     training_data=training_data,
     cutoffs={2: 8.0, 3: 6.5, 4: 5.5},
-    fit_method="ls", 
+    fit_method="ls",
     ce_file="cluster_expansion.json"
 )
 

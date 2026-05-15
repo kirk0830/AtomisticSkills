@@ -80,9 +80,7 @@ def propose_substitutions(
         probability = sub_info["probability"]
 
         # Skip identity substitution (no change)
-        actual_changes = {
-            k: v for k, v in sub_map.items() if str(k) != str(v)
-        }
+        actual_changes = {k: v for k, v in sub_map.items() if str(k) != str(v)}
         if not actual_changes:
             continue
 
@@ -92,18 +90,18 @@ def propose_substitutions(
             new_structure.replace_species({old_sp: new_sp})
 
         # Check charge balance
-        total_charge = sum(
-            site.specie.oxi_state * 1 for site in new_structure
-        )
+        total_charge = sum(site.specie.oxi_state * 1 for site in new_structure)
         if abs(total_charge) > 0.01:
             continue
 
-        results.append({
-            "structure": new_structure,
-            "substitution_map": {str(k): str(v) for k, v in actual_changes.items()},
-            "probability": probability,
-            "formula": new_structure.composition.reduced_formula,
-        })
+        results.append(
+            {
+                "structure": new_structure,
+                "substitution_map": {str(k): str(v) for k, v in actual_changes.items()},
+                "probability": probability,
+                "formula": new_structure.composition.reduced_formula,
+            }
+        )
 
     # Sort by probability descending
     results.sort(key=lambda x: x["probability"], reverse=True)
@@ -179,18 +177,20 @@ def main() -> None:
         # Save CIF
         formula = result["formula"]
         cif_name = f"{i:03d}_{formula}.cif"
-        
+
         if args.max_cifs == 0 or i < args.max_cifs:
             cif_path = output_dir / cif_name
             result["structure"].to(filename=str(cif_path))
 
-        manifest_entries.append({
-            "index": i,
-            "formula": formula,
-            "substitution_map": result["substitution_map"],
-            "probability": result["probability"],
-            "cif_file": cif_name,
-        })
+        manifest_entries.append(
+            {
+                "index": i,
+                "formula": formula,
+                "substitution_map": result["substitution_map"],
+                "probability": result["probability"],
+                "cif_file": cif_name,
+            }
+        )
 
     # Save manifest
     manifest_path = output_dir / "substitution_manifest.json"
@@ -211,15 +211,16 @@ def main() -> None:
     print(f"Output directory: {output_dir}")
     print(f"{'='*60}")
     for entry in manifest_entries[:20]:
-        sub_str = ", ".join(
-            f"{k}→{v}" for k, v in entry["substitution_map"].items()
+        sub_str = ", ".join(f"{k}→{v}" for k, v in entry["substitution_map"].items())
+        print(
+            f"  [{entry['index']:3d}] {entry['formula']:20s} ({sub_str}) p={entry['probability']:.4f}"
         )
-        print(f"  [{entry['index']:3d}] {entry['formula']:20s} ({sub_str}) p={entry['probability']:.4f}")
     if len(manifest_entries) > 20:
         print(f"  ... and {len(manifest_entries) - 20} more (see manifest)")
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

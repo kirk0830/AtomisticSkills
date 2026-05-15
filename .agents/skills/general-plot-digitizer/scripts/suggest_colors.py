@@ -45,11 +45,7 @@ def suggest_colors(
 
     v_min = 5 if allow_black else 30
     if exclude_white:
-        mask = (
-            (pixels[:, 1] > 20)
-            & (pixels[:, 2] > v_min)
-            & (pixels[:, 2] < 250)
-        )
+        mask = (pixels[:, 1] > 20) & (pixels[:, 2] > v_min) & (pixels[:, 2] < 250)
         pixels = pixels[mask]
 
     if len(pixels) < n_colors:
@@ -120,7 +116,9 @@ def main() -> None:
     if args.bounding_box:
         parts = args.bounding_box.split(",")
         if len(parts) != 4:
-            print("Error: --bounding-box must be X_MIN,Y_MIN,X_MAX,Y_MAX", file=sys.stderr)
+            print(
+                "Error: --bounding-box must be X_MIN,Y_MIN,X_MAX,Y_MAX", file=sys.stderr
+            )
             sys.exit(1)
         x_min, y_min, x_max, y_max = [int(p.strip()) for p in parts]
     elif args.metadata:
@@ -153,15 +151,19 @@ def main() -> None:
     )
 
     if not results:
-        print("No distinct colors found. Try --allow-black or check bounding box.", file=sys.stderr)
+        print(
+            "No distinct colors found. Try --allow-black or check bounding box.",
+            file=sys.stderr,
+        )
         sys.exit(0)
 
     parts = [f"{hex_c} ({cnt} px)" for hex_c, cnt in results]
     print(" ".join(parts))
-    print("Use with: --curve-color \"<hex>\"", file=sys.stderr)
+    print('Use with: --curve-color "<hex>"', file=sys.stderr)
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.image)
 
 

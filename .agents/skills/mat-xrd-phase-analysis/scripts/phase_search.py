@@ -23,10 +23,10 @@ Requirements:
     - Conda environment with dara-xrd (e.g. xrd-agent)
     - BGMN installed; DARA may download it on first run
 """
+
 import argparse
 import json
 import os
-import tempfile
 from pathlib import Path
 from typing import List, Optional
 
@@ -39,7 +39,9 @@ except ImportError:
     )
 
 import warnings
+
 warnings.simplefilter("ignore", DeprecationWarning)
+
 
 def phase_search(
     xrd_data_path: str,
@@ -100,7 +102,9 @@ def phase_search(
                 raise ValueError("Provide either --chemical_system or --cif_dir")
             cifs_dest.mkdir(parents=True, exist_ok=True)
             if verbose:
-                print(f"Fetching CIFs for chemical system {chemical_system} from {database.upper()} to {cifs_dest} ...")
+                print(
+                    f"Fetching CIFs for chemical system {chemical_system} from {database.upper()} to {cifs_dest} ..."
+                )
             try:
                 if database.lower() == "icsd":
                     db = ICSDDatabase()
@@ -120,7 +124,9 @@ def phase_search(
                 return []
             all_cifs = sorted(cifs_dest.glob("*.cif"))
             if not all_cifs:
-                raise RuntimeError(f"No CIFs found for {chemical_system} in COD (check system string).")
+                raise RuntimeError(
+                    f"No CIFs found for {chemical_system} in COD (check system string)."
+                )
             if verbose:
                 print(f"Using {len(all_cifs)} CIFs from {cifs_dest}")
 
@@ -186,7 +192,11 @@ def phase_search(
     summary = {
         "pattern": str(xrd_path),
         "chemical_system": chemical_system,
-        "cif_dir": str(cif_dir) if cif_dir else str(output_path / "cifs") if not cif_dir and chemical_system else None,
+        "cif_dir": str(cif_dir)
+        if cif_dir
+        else str(output_path / "cifs")
+        if not cif_dir and chemical_system
+        else None,
         "num_solutions": len(search_results),
         "best_rwp": search_results[0].refinement_result.lst_data.rwp,
         "solutions": solutions,
@@ -199,7 +209,9 @@ def phase_search(
         print(f"\nPhase search completed. {len(search_results)} solution(s) found.")
         print(f"Best R_wp: {summary['best_rwp']:.2f}%")
         for s in solutions[:5]:
-            print(f"  {s['rank']}. R_wp = {s['rwp']:.2f}% | {', '.join(s['phase_files'][:3])}{'...' if len(s['phase_files']) > 3 else ''}")
+            print(
+                f"  {s['rank']}. R_wp = {s['rwp']:.2f}% | {', '.join(s['phase_files'][:3])}{'...' if len(s['phase_files']) > 3 else ''}"
+            )
         print(f"Results saved to: {output_path}")
         print(f"Summary: {summary_path}")
 
@@ -256,7 +268,9 @@ def main():
     args = parser.parse_args()
 
     if not args.chemical_system and not args.cif_dir:
-        parser.error("Provide either --chemical_system (to fetch CIFs from COD/ICSD) or --cif_dir (existing CIFs)")
+        parser.error(
+            "Provide either --chemical_system (to fetch CIFs from COD/ICSD) or --cif_dir (existing CIFs)"
+        )
 
     # Full phase search
     phase_search(
@@ -273,6 +287,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

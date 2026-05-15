@@ -16,8 +16,9 @@ from mp_api.client import MPRester
 from pymatgen.io.cif import CifWriter
 from pymatgen.core import Element
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
+
 
 def query_element_structure(element: str, api_key: str = None) -> str:
     """
@@ -29,37 +30,57 @@ def query_element_structure(element: str, api_key: str = None) -> str:
             docs = mpr.materials.summary.search(
                 formula=element,
                 is_stable=True,
-                fields=["material_id", "structure", "energy_above_hull"]
+                fields=["material_id", "structure", "energy_above_hull"],
             )
-            
+
             if not docs:
-                logger.warning(f"No stable phase found for element {element} in Materials Project summary.")
+                logger.warning(
+                    f"No stable phase found for element {element} in Materials Project summary."
+                )
                 # Try searching without is_stable=True and pick lowest E_hull
                 docs = mpr.materials.summary.search(
                     formula=element,
-                    fields=["material_id", "structure", "energy_above_hull"]
+                    fields=["material_id", "structure", "energy_above_hull"],
                 )
                 if not docs:
                     return None
-                
+
             # Sort by energy_above_hull and pick the best one
-            docs.sort(key=lambda x: x.energy_above_hull if x.energy_above_hull is not None else 1e9)
+            docs.sort(
+                key=lambda x: x.energy_above_hull
+                if x.energy_above_hull is not None
+                else 1e9
+            )
             best_doc = docs[0]
-            
-            logger.info(f"Selected phase for {element}: {best_doc.material_id} (E_hull={best_doc.energy_above_hull})")
+
+            logger.info(
+                f"Selected phase for {element}: {best_doc.material_id} (E_hull={best_doc.energy_above_hull})"
+            )
             return best_doc.structure
     except Exception as e:
         logger.error(f"Error querying {element}: {str(e)}")
         return None
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Query ground state element structures from Materials Project.")
-    parser.add_argument("--elements", nargs="+", help="List of elements to query (e.g., Li Fe O). If empty, queries all elements H-Lr.")
-    parser.add_argument("--output_dir", default="../resources/structures", help="Directory to save CIF files")
+    parser = argparse.ArgumentParser(
+        description="Query ground state element structures from Materials Project."
+    )
+    parser.add_argument(
+        "--elements",
+        nargs="+",
+        help="List of elements to query (e.g., Li Fe O). If empty, queries all elements H-Lr.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        default="../resources/structures",
+        help="Directory to save CIF files",
+    )
     args = parser.parse_args()
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
     _params_path.parent.mkdir(parents=True, exist_ok=True)
     _params_path.write_text(_json.dumps(_config, indent=2, default=str))
@@ -75,7 +96,9 @@ def main():
     for element in elements:
         output_path = os.path.join(args.output_dir, f"{element}.cif")
         if os.path.exists(output_path):
-            logger.info(f"Structure for {element} already exists at {output_path}. Skipping.")
+            logger.info(
+                f"Structure for {element} already exists at {output_path}. Skipping."
+            )
             continue
 
         logger.info(f"Querying element: {element}")

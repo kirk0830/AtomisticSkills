@@ -86,9 +86,18 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Multicomponent BVT GCMC (N-component mixture) in a periodic host (CIF) using UMA/FairChem."
     )
-    p.add_argument("--cif", type=Path, required=True, help="Path to periodic framework CIF file.")
-    p.add_argument("--steps", type=int, required=True, help="Number of Monte Carlo steps.")
-    p.add_argument("--temperature-K", type=float, required=True, help="Simulation temperature in Kelvin.")
+    p.add_argument(
+        "--cif", type=Path, required=True, help="Path to periodic framework CIF file."
+    )
+    p.add_argument(
+        "--steps", type=int, required=True, help="Number of Monte Carlo steps."
+    )
+    p.add_argument(
+        "--temperature-K",
+        type=float,
+        required=True,
+        help="Simulation temperature in Kelvin.",
+    )
     p.add_argument("--scheme", choices=["gcmc", "hmc"], default="gcmc")
     p.add_argument(
         "--output-dir",
@@ -96,17 +105,37 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default=Path("."),
         help="Directory for results (multi_gcmc.json + PNGs).",
     )
-    p.add_argument("--restart-traj", type=Path, default=None, help="Optional: restart from previous ASE .traj.")
-    p.add_argument("--restart-frame", type=int, default=-1, help="Frame index to restart from (default -1).")
-    p.add_argument("--device", type=str, default="auto", help="Device string (e.g. 'cuda', 'cpu', 'auto').")
+    p.add_argument(
+        "--restart-traj",
+        type=Path,
+        default=None,
+        help="Optional: restart from previous ASE .traj.",
+    )
+    p.add_argument(
+        "--restart-frame",
+        type=int,
+        default=-1,
+        help="Frame index to restart from (default -1).",
+    )
+    p.add_argument(
+        "--device",
+        type=str,
+        default="auto",
+        help="Device string (e.g. 'cuda', 'cpu', 'auto').",
+    )
     p.add_argument(
         "--calculator",
         type=str,
         required=True,
         choices=["mace", "fairchem", "matgl"],
-        help="Backend MLIP calculator to use."
+        help="Backend MLIP calculator to use.",
     )
-    p.add_argument("--model-name", type=str, required=True, help="Name or path of the model checkpoint")
+    p.add_argument(
+        "--model-name",
+        type=str,
+        required=True,
+        help="Name or path of the model checkpoint",
+    )
     p.add_argument(
         "--task-name",
         type=str,
@@ -126,12 +155,32 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default=1,
         help="Starting tag for species; tags assigned in canonical order: tag = starting_tag + i.",
     )
-    p.add_argument("--grid-resolution", type=int, default=10, help="BVT cavity grid resolution.")
-    p.add_argument("--translate-max", type=float, default=5.0, help="Translate move max_delta (Å).")
-    p.add_argument("--probe-fmax", type=float, default=0.05, help="LBFGS fmax for probe relaxation.")
-    p.add_argument("--probe-steps", type=int, default=200, help="LBFGS max steps for probe relaxation.")
+    p.add_argument(
+        "--grid-resolution", type=int, default=10, help="BVT cavity grid resolution."
+    )
+    p.add_argument(
+        "--translate-max", type=float, default=5.0, help="Translate move max_delta (Å)."
+    )
+    p.add_argument(
+        "--probe-fmax",
+        type=float,
+        default=0.05,
+        help="LBFGS fmax for probe relaxation.",
+    )
+    p.add_argument(
+        "--probe-steps",
+        type=int,
+        default=200,
+        help="LBFGS max steps for probe relaxation.",
+    )
     # Mixture: N components (same as COFclean)
-    p.add_argument("--gases", nargs="+", type=str, default=None, help="Gas species list, e.g. --gases CO2 N2")
+    p.add_argument(
+        "--gases",
+        nargs="+",
+        type=str,
+        default=None,
+        help="Gas species list, e.g. --gases CO2 N2",
+    )
     p.add_argument(
         "--y",
         nargs="+",
@@ -139,8 +188,15 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         default=None,
         help="Mole fractions aligned with --gases, e.g. --y 0.15 0.85 (will be normalized).",
     )
-    p.add_argument("--p-total-bar", type=float, default=None, help="Total pressure in bar.")
-    p.add_argument("--kij", action="append", default=[], help="Optional PR kij entries like 'CO2,N2,0.0'. Repeatable.")
+    p.add_argument(
+        "--p-total-bar", type=float, default=None, help="Total pressure in bar."
+    )
+    p.add_argument(
+        "--kij",
+        action="append",
+        default=[],
+        help="Optional PR kij entries like 'CO2,N2,0.0'. Repeatable.",
+    )
     return p.parse_args(args=argv)
 
 
@@ -158,7 +214,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     y_in = np.asarray(args.y, dtype=float)
 
     if len(gases_in) != len(y_in):
-        raise ValueError(f"--gases (n={len(gases_in)}) and --y (n={len(y_in)}) must match.")
+        raise ValueError(
+            f"--gases (n={len(gases_in)}) and --y (n={len(y_in)}) must match."
+        )
     if len(set(gases_in)) != len(gases_in):
         raise ValueError(f"Duplicate gas in --gases: {gases_in}")
     if np.any(y_in < 0) or y_in.sum() <= 0:
@@ -177,7 +235,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     out_dir = gcmc_output_dir(args.output_dir)
     # Use a distinct default filename from the single-component script
-    gcmc_json_path = args.output if args.output is not None else out_dir / "multi_gcmc.json"
+    gcmc_json_path = (
+        args.output if args.output is not None else out_dir / "multi_gcmc.json"
+    )
     starting_tag = int(args.starting_tag)
     species_tags = [starting_tag + i for i in range(len(species_names))]
 
@@ -257,7 +317,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     host.calc = calc_host
     tags = ensure_tags(host)
     try:
-        host_max = int(np.max(np.asarray(tags[:host_natoms], dtype=int))) if host_natoms > 0 else int(np.max(tags))
+        host_max = (
+            int(np.max(np.asarray(tags[:host_natoms], dtype=int)))
+            if host_natoms > 0
+            else int(np.max(tags))
+        )
         if starting_tag <= host_max:
             LOGGER.warning(
                 "starting_tag=%d <= host_max_tag=%d. Consider using --starting-tag %d to avoid overlap.",
@@ -288,7 +352,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     Pc = np.array([float(GAS_DB[nm]["Pc"]) for nm in species_names], dtype=float)
     omega = np.array([float(GAS_DB[nm]["omega"]) for nm in species_names], dtype=float)
     M = np.array(
-        [float(GAS_DB[nm].get("M", GAS_DB[nm].get("molar_mass", 0.0))) for nm in species_names],
+        [
+            float(GAS_DB[nm].get("M", GAS_DB[nm].get("molar_mass", 0.0)))
+            for nm in species_names
+        ],
         dtype=float,
     )
     kij = None
@@ -375,8 +442,12 @@ def main(argv: Optional[list[str]] = None) -> int:
             "temperature_K": float(T),
             "p_total_bar": f"{p_total_bar:.8f}",
             "species_order": ",".join(species_names),
-            "p_partial_bar": ",".join(f"{nm}:{p_bar_map[nm]:.8f}" for nm in species_names),
-            "restart_traj": str(args.restart_traj) if args.restart_traj is not None else "",
+            "p_partial_bar": ",".join(
+                f"{nm}:{p_bar_map[nm]:.8f}" for nm in species_names
+            ),
+            "restart_traj": str(args.restart_traj)
+            if args.restart_traj is not None
+            else "",
             "restart_frame": int(args.restart_frame),
             "host_natoms": int(host_natoms),
             "starting_tag": int(starting_tag),
@@ -462,6 +533,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
     # Remove traj/log and .npy intermediates; keep JSON and PNGs

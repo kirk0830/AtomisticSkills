@@ -11,12 +11,12 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 
 ## Instructions
 
-1.  **Background Research**: 
+1.  **Background Research**:
     - Search for the approximate melting point ($T_m$) and boiling/evaporation point ($T_{vap}$) of the material.
     - Choose a melting temperature $T_{melt}$ where $T_m < T_{melt} \ll T_{vap}$.
     - **MD Parameters**: Refer to the [mat-md-monitors](../mat-md-monitors/SKILL.md) skill for best practices on timesteps and monitors. In general, use a 2.0 fs timestep for systems without Hydrogen.
 
-2.  **Phase Preparation**: 
+2.  **Phase Preparation**:
     - **Solid**: Create a supercell using `create_supercell.py`.
     ```bash
     # Env: base-agent
@@ -46,7 +46,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
     mcp_mace_relax_structure(structure_data="interface.cif", relax_cell=True)
     ```
 5.  **Phase Verification**: Before running production MD, verify solid-liquid coexistence in all structures.
-    
+
     First, extract reference atomic features:
     ```bash
     # Env: mace-agent (or matgl-agent)
@@ -55,14 +55,14 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
         structure_data="solid_supercell.cif",
         output_path="<research_dir>/solid_features.json"
     )
-    
+
     # Extract from pure liquid - use explicit output path
     mcp_mace_predict_atomic_features(
         structure_data="liquid_supercell.cif",
         output_path="<research_dir>/liquid_features.json"
     )
     ```
-    
+
     Then verify phases:
     ```bash
     # Env: base-agent
@@ -70,12 +70,12 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
     python .agents/skills/mat-melting-point/scripts/check_phase.py <research_dir>/solid_features.json \
         --solid_features <research_dir>/solid_features.json \
         --liquid_features <research_dir>/liquid_features.json
-    
+
     # Liquid should be ~100% liquid
     python .agents/skills/mat-melting-point/scripts/check_phase.py <research_dir>/liquid_features.json \
         --solid_features <research_dir>/solid_features.json \
         --liquid_features <research_dir>/liquid_features.json
-    
+
     # Interface should show ~50% solid/liquid coexistence
     # (Requires predicting features for the relaxed interface first)
     mcp_mace_predict_atomic_features(
@@ -86,21 +86,21 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
         --solid_features <research_dir>/solid_features.json \
         --liquid_features <research_dir>/liquid_features.json
     ```
-    
+
     **Expected:**
     - Solid: ≥95% solid
-    - Liquid: ≥95% liquid  
+    - Liquid: ≥95% liquid
     - Interface: 40-60% solid (coexistence maintained)
-    
+
     **If interface lost coexistence:** Adjust melting temperature or relaxation parameters.
 
 6.  **Thermalization (Equilibration)**: Start from the 0 K relaxed structure and run a short NVT thermalization at the expected $T_m$ to properly distribute kinetic and potential energy.
     ```bash
     mcp_mace_run_md(
-        structure_data="interface_relax/relaxed_structure.cif", 
+        structure_data="interface_relax/relaxed_structure.cif",
         temperature=933, # Target expected Tm
-        ensemble="nvt", 
-        steps=5000, 
+        ensemble="nvt",
+        steps=5000,
         timestep=2.0,
         output_dir="thermalization_md"
     )
@@ -110,11 +110,11 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
     ```bash
     mcp_mace_run_md(
         structure_data="thermalization_md/<formula>_<temp>K_nvt.traj", # Pass .traj to preserve velocities
-        temperature=933, 
-        ensemble="nve", 
-        steps=100000, 
+        temperature=933,
+        ensemble="nve",
+        steps=100000,
         timestep=2.0,
-        monitor=True, 
+        monitor=True,
         monitor_type="melting",
         output_dir="production_md"
     )
@@ -160,5 +160,5 @@ python .agents/skills/mat-melting-point/scripts/create_interface.py Al_solid.cif
 - **Environments**: Different MLIPs require specific Conda environments (e.g., `mace-agent`, `matgl-agent`). Ensure the scripts are run within the correct environment for the chosen model.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -59,32 +59,40 @@ if __name__ == "__main__":
         description="Unconditional crystal structure generation using DiffCSP++"
     )
     parser.add_argument(
-        "--model", default="mp_gen",
-        help="Generation model: mp_gen, perov_gen, carbon_gen (default: mp_gen)"
+        "--model",
+        default="mp_gen",
+        help="Generation model: mp_gen, perov_gen, carbon_gen (default: mp_gen)",
     )
     parser.add_argument(
-        "--num_structures", default=10, type=int,
-        help="Number of structures to generate (default: 10)"
+        "--num_structures",
+        default=10,
+        type=int,
+        help="Number of structures to generate (default: 10)",
     )
     parser.add_argument(
-        "--output_dir", default="diffcsp_gen_output",
-        help="Output directory for CIF files"
+        "--output_dir",
+        default="diffcsp_gen_output",
+        help="Output directory for CIF files",
     )
     parser.add_argument(
-        "--step_lr", default=5e-6, type=float,
-        help="Langevin dynamics step size (default: 5e-6)"
+        "--step_lr",
+        default=5e-6,
+        type=float,
+        help="Langevin dynamics step size (default: 5e-6)",
     )
     parser.add_argument(
-        "--batch_size", default=128, type=int,
-        help="Batch size for parallel generation (default: 128)"
+        "--batch_size",
+        default=128,
+        type=int,
+        help="Batch size for parallel generation (default: 128)",
     )
     parser.add_argument(
-        "--device", default="auto",
-        help="Device: auto, cpu, cuda (default: auto)"
+        "--device", default="auto", help="Device: auto, cpu, cuda (default: auto)"
     )
     args = parser.parse_args()
     main(args)
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)

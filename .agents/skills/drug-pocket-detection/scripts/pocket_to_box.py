@@ -40,15 +40,27 @@ def main() -> None:
         description="Export a binding-site-definition box JSON from a detected pocket."
     )
     parser.add_argument("--pockets", required=True, help="JSON from detect_pockets.py.")
-    parser.add_argument("--rank", type=int, default=1, help="Pocket rank to export (default: 1).")
-    parser.add_argument("--padding", type=float, default=6.0,
-                        help="Padding (A) added on each side beyond the pocket extent (default: 6.0).")
-    parser.add_argument("--min_size", type=float, default=20.0,
-                        help="Minimum box edge length (A) per axis (default: 20.0).")
     parser.add_argument(
-        "--default_size", type=float, default=22.0,
+        "--rank", type=int, default=1, help="Pocket rank to export (default: 1)."
+    )
+    parser.add_argument(
+        "--padding",
+        type=float,
+        default=6.0,
+        help="Padding (A) added on each side beyond the pocket extent (default: 6.0).",
+    )
+    parser.add_argument(
+        "--min_size",
+        type=float,
+        default=20.0,
+        help="Minimum box edge length (A) per axis (default: 20.0).",
+    )
+    parser.add_argument(
+        "--default_size",
+        type=float,
+        default=22.0,
         help="Cubic box edge (A) used when neither bounding_box nor volume is "
-             "available (e.g., P2Rank pockets) (default: 22.0).",
+        "available (e.g., P2Rank pockets) (default: 22.0).",
     )
     parser.add_argument("--output_json", required=True, help="Output box JSON.")
     args = parser.parse_args()
@@ -116,10 +128,7 @@ def main() -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w") as fh:
         json.dump(box, fh, indent=4)
-    print(
-        f"Wrote {out} (sizing={sizing}, "
-        f"size=({sx:.1f}, {sy:.1f}, {sz:.1f}) A)"
-    )
+    print(f"Wrote {out} (sizing={sizing}, " f"size=({sx:.1f}, {sy:.1f}, {sz:.1f}) A)")
 
 
 if __name__ == "__main__":

@@ -20,4 +20,3 @@ The extension can be installed via the marketplace search within the Antigravity
     - **Rotate**: Left-click and drag.
     - **Zoom**: Scroll wheel.
     - **Pan**: Right-click and drag.
-

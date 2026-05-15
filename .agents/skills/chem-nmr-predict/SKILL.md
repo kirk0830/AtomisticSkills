@@ -129,5 +129,5 @@ Required packages: `numpy`, `rdkit`, `requests`, `nmrsim`.
 
 ---
 
-**Author:** Jesus Diaz Sanchez  
+**Author:** Jesus Diaz Sanchez
 **Contact:** [GitHub @jdsanc](https://github.com/jdsanc)

@@ -11,7 +11,7 @@ This example demonstrates how to calculate the activation energy barrier for a L
 
 ## Files
 
-- `prepare_licoo2.py`: 
+- `prepare_licoo2.py`:
     - Queries LiCoO2 from Materials Project (mp-22526).
     - Creates a supercell.
     - Removes one Li atom to create a vacancy.

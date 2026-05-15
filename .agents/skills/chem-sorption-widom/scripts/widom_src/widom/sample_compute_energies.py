@@ -49,17 +49,21 @@ def sample_compute_energies(
     gas = gas.copy()
 
     # Use common preparation function
-    structure_supercell, gas_positions, is_accessible = prepare_structures_for_insertion(
-        structure=structure,
-        gas=gas,
-        num_insertions=num_insertions,
-        cutoff_distance=cutoff_distance,
-        cutoff_to_com=cutoff_to_com,
-        min_interplanar_distance=min_interplanar_distance,
-        random_seed=random_seed,
+    structure_supercell, gas_positions, is_accessible = (
+        prepare_structures_for_insertion(
+            structure=structure,
+            gas=gas,
+            num_insertions=num_insertions,
+            cutoff_distance=cutoff_distance,
+            cutoff_to_com=cutoff_to_com,
+            min_interplanar_distance=min_interplanar_distance,
+            random_seed=random_seed,
+        )
     )
 
-    print(f"Number of accessible positions: {np.sum(is_accessible)} out of {num_insertions}")
+    print(
+        f"Number of accessible positions: {np.sum(is_accessible)} out of {num_insertions}"
+    )
 
     # Prepare arrays for results
     energies = np.zeros(num_insertions)  # [eV], total energy
@@ -72,11 +76,7 @@ def sample_compute_energies(
 
     for i in tqdm(accessible_indices):
         # Create combined structure using common function
-        combined = create_combined_structure(
-            structure_supercell,
-            gas,
-            gas_positions[i]
-        )
+        combined = create_combined_structure(structure_supercell, gas, gas_positions[i])
 
         # Calculate energy
         combined.calc = calculator

@@ -79,10 +79,25 @@ def build_parser():
     parser = argparse.ArgumentParser(
         description="Run the CT-SCD QM9 finetuning example with the ct-scd-pcq checkpoint."
     )
-    parser.add_argument("--repo-root", default=None, help="Path to SelfConditionedDenoisingAtoms.")
-    parser.add_argument("--config", default="configs/finetune_qm9.yaml", help="Run config relative to the SCD repo.")
-    parser.add_argument("--property", default="homo", choices=QM9_PROPERTIES, help="QM9 target property.")
-    parser.add_argument("--checkpoint", default="ct-scd-pcq", help="Checkpoint name passed to --load-hf.")
+    parser.add_argument(
+        "--repo-root", default=None, help="Path to SelfConditionedDenoisingAtoms."
+    )
+    parser.add_argument(
+        "--config",
+        default="configs/finetune_qm9.yaml",
+        help="Run config relative to the SCD repo.",
+    )
+    parser.add_argument(
+        "--property",
+        default="homo",
+        choices=QM9_PROPERTIES,
+        help="QM9 target property.",
+    )
+    parser.add_argument(
+        "--checkpoint",
+        default="ct-scd-pcq",
+        help="Checkpoint name passed to --load-hf.",
+    )
     parser.add_argument("--job-id", default=None, help="Optional explicit job id.")
     parser.add_argument(
         "--conda-env",
@@ -108,10 +123,28 @@ def build_parser():
         action="store_true",
         help="Train on every GPU visible through CUDA_VISIBLE_DEVICES instead of only logical GPU 0.",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Print the resolved training command without launching it.")
-    parser.add_argument("--full-run", action="store_true", help="Run the full upstream schedule instead of a smoke test.")
-    parser.add_argument("--num-steps", type=int, default=100, help="Smoke-test max steps when --full-run is not used.")
-    parser.add_argument("--val-interval", type=int, default=1, help="Validation interval for smoke tests.")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the resolved training command without launching it.",
+    )
+    parser.add_argument(
+        "--full-run",
+        action="store_true",
+        help="Run the full upstream schedule instead of a smoke test.",
+    )
+    parser.add_argument(
+        "--num-steps",
+        type=int,
+        default=100,
+        help="Smoke-test max steps when --full-run is not used.",
+    )
+    parser.add_argument(
+        "--val-interval",
+        type=int,
+        default=1,
+        help="Validation interval for smoke tests.",
+    )
     return parser
 
 
@@ -120,7 +153,10 @@ def maybe_restart_in_conda_env(target_env):
     if current_env == target_env:
         return
     print(f"Restarting CT-SCD_QM9 example in {target_env} environment...", flush=True)
-    subprocess.run(["conda", "run", "-n", target_env, "python", __file__, *sys.argv[1:]], check=True)
+    subprocess.run(
+        ["conda", "run", "-n", target_env, "python", __file__, *sys.argv[1:]],
+        check=True,
+    )
     raise SystemExit(0)
 
 
@@ -168,13 +204,17 @@ def build_device_args(args):
         return ["--use-devices", "0"], 1
 
     if args.dry_run and args.cuda_visible_devices:
-        visible_count = len([x for x in args.cuda_visible_devices.split(",") if x.strip()])
+        visible_count = len(
+            [x for x in args.cuda_visible_devices.split(",") if x.strip()]
+        )
         logical_ids = [str(i) for i in range(visible_count)]
         return ["--use-devices", *logical_ids], visible_count
 
     visible_count = torch.cuda.device_count()
     if visible_count < 1:
-        raise RuntimeError("No CUDA GPUs are visible after applying CUDA_VISIBLE_DEVICES.")
+        raise RuntimeError(
+            "No CUDA GPUs are visible after applying CUDA_VISIBLE_DEVICES."
+        )
     logical_ids = [str(i) for i in range(visible_count)]
     return ["--use-devices", *logical_ids], visible_count
 
@@ -212,7 +252,14 @@ def main():
         cmd.extend(["--noise_in_loader", "True"])
 
     if not args.full_run:
-        cmd.extend(["--num-steps", str(args.num_steps), "--val-interval", str(args.val_interval)])
+        cmd.extend(
+            [
+                "--num-steps",
+                str(args.num_steps),
+                "--val-interval",
+                str(args.val_interval),
+            ]
+        )
 
     device_args, visible_count = build_device_args(args)
     cmd.extend(device_args)

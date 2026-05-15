@@ -36,4 +36,3 @@ Each directory corresponds to a benchmark reaction and contains:
     - Species properties (Energy, ZPE, Enthalpy, Entropy, Gibbs).
     - Reaction thermodynamics (ΔH, ΔS, ΔG).
     - Model metadata.
-

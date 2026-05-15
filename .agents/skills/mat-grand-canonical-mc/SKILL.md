@@ -162,5 +162,5 @@ By sweeping Δμ, we can map out the entire compositional range and identify:
 5. **Multiple runs**: For critical regions, run multiple independent simulations to check reproducibility.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

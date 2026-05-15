@@ -100,7 +100,7 @@ The calculated curve shows the misorientation boundaries reproducing the well-kn
 | 13 | 22.62 | 0.776 | 0.92 | ~0.72 |
 | 25 | 16.26 | 0.720 | -    | -     |
 
-EAM-Mishin: Rittner & Seidman, *Phys. Rev. B* **54**, 6999 (1996).  
+EAM-Mishin: Rittner & Seidman, *Phys. Rev. B* **54**, 6999 (1996).
 DFT-PBE: Olmsted et al., *Acta Mater.* **57**, 3704 (2009).
 
 TensorNet-r2SCAN values fall between EAM (tends to overestimate) and DFT-PBE (underestimates due to self-interaction errors), which is the expected behaviour for an r2SCAN-level potential. The energy ordering and relative cusps reproduce the qualitative features of both reference datasets.
@@ -149,5 +149,5 @@ TensorNet-r2SCAN values fall between EAM (tends to overestimate) and DFT-PBE (un
 
 ---
 
-**Author:** Yu Yao, Bowen Deng  
+**Author:** Yu Yao, Bowen Deng
 **Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

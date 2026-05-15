@@ -21,7 +21,7 @@ The JSON outputs provide a clean, structured schema of the graph network solver'
 
 1. **Traditional Precursors (`B2O3` + `BaO` + `Li2O`)**
    - See: `traditional_output.json`
-   - **Result**: The lowest-cost pathway (`total_cost` ≈ 0.194) requires **3 distinct steps**. 
+   - **Result**: The lowest-cost pathway (`total_cost` ≈ 0.194) requires **3 distinct steps**.
    - **Why this is problematic**: The reaction network must navigate through multiple intermediate phases (e.g., `Li3B11O18`, `Ba2B2O5`) before forming the final target phase. This reduces synthesis efficiency due to competing thermodynamic driving forces of intermediates.
 
 2. **Predicted Precursors (`LiBO2` + `BaO`)**

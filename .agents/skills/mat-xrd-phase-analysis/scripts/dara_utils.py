@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from typing import Optional
 
 try:
     from dara.xrd import XYFile

@@ -108,7 +108,7 @@ mcp_fairchem_load_model(model_name="uma-s-1p1")
 # Relax H2O reference
 mcp_fairchem_relax_structure(
     structure_data="./structures/references/H2O.cif",
-    fmax=0.02,        
+    fmax=0.02,
     steps=500,
     relax_cell=True,
     output_dir="./relaxed_solids/" # SAVE TO SAME DIR AS SOLIDS
@@ -211,10 +211,10 @@ This allows thermodynamically consistent mixing of:
 
 3. **Pymatgen Pourbaix module**: https://pymatgen.org/pymatgen.analysis.pourbaix_diagram.html
 
-4. **Related skills**: 
+4. **Related skills**:
    - [mat-stability](../mat-stability/SKILL.md) for convex hull calculations
    - [mat-elemental-energies](../mat-elemental-energies/SKILL.md) for retrieving pre-calculated elemental reference energies required for formation energy calculations.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -4,16 +4,16 @@ $ TDB-file for the thermodynamic assessment of the Al-ZN system
 $
 $-------------------------------------------------------------------------------
 $ 2011.11.9
-$ 
+$
 $ TDB file created by T.Abe, K.Hashimoto and Y.sawada
 $
-$ Particle Simulation and Thermodynamics Group, National Institute for 
+$ Particle Simulation and Thermodynamics Group, National Institute for
 $ Materials Science. 1-2-1 Sengen, Tsukuba, Ibaraki 305-0047, Japan
 $ e-mail: abe.taichi@nims.go.jp
 $ Copyright (C) NIMS 2009
 $
 $ ------------------------------------------------------------------------------
-$ PARAMETERS ARE TAKEN FROM 
+$ PARAMETERS ARE TAKEN FROM
 $ Reevaluation of the Al-Zn System,
 $ Sabine an Mey, Z.Metallkd., 84 (1993) 451-455.
 $
@@ -32,7 +32,7 @@ $-------------------------------------------------------------------------------
     +74092*T**(-1);                                                   700.00 Y
     -11276.24+223.0269*T-38.58443*T*LN(T)+18.531982E-3*T**2-5.764227E-6*T**3
     +74092*T**(-1);                                                    933.6 Y
-    -11277.68+188.6620*T-31.74819*T*LN(T)-1234.26E25*T**(-9);        2900.00 N ! 
+    -11277.68+188.6620*T-31.74819*T*LN(T)-1234.26E25*T**(-9);        2900.00 N !
  FUNCTION  GALLIQ   298.0
     +3029.403+125.2307*T-24.36720*T*LN(T)-1.884662E-3*T**2-0.877664E-6*T**3
     +74092*T**(-1)+79.401E-21*T**7;                                   700.00 Y
@@ -90,5 +90,3 @@ $-------------------------------------------------------------------------------
 
 $
 $------------------------------------------------------------------- END OF LINE
-
- 

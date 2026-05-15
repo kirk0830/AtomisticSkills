@@ -50,7 +50,8 @@ def load_structures(path: str) -> List[Atoms]:
 
     if p.is_dir():
         files = sorted(
-            f for f in p.iterdir()
+            f
+            for f in p.iterdir()
             if f.suffix.lower() in struct_exts or f.name == "POSCAR"
         )
         if not files:
@@ -120,7 +121,7 @@ def compute_uncertainty(atoms: Atoms, calc) -> dict:
 
     # Convert variance → std, work in meV units
     energy_std_mev = float(np.sqrt(energy_var) * 1000.0 / n_atoms)  # meV/atom
-    forces_std_mev = np.sqrt(forces_var) * 1000.0                    # meV/Å, shape (N, 3)
+    forces_std_mev = np.sqrt(forces_var) * 1000.0  # meV/Å, shape (N, 3)
     max_force_std_mev = float(forces_std_mev.max())
     mean_force_std_mev = float(forces_std_mev.mean())
 
@@ -135,6 +136,7 @@ def compute_uncertainty(atoms: Atoms, calc) -> dict:
 def plot_uncertainty_distribution(records: list, output_path: str) -> None:
     """Plot histograms of energy and force uncertainty across all structures."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -207,7 +209,7 @@ def main():
         "--head",
         default=None,
         help="Model head name for multi-head MACE models (e.g. 'omat_pbe' for MACE-MH-1). "
-             "Required when using MACE-MH foundation models.",
+        "Required when using MACE-MH foundation models.",
     )
     args = parser.parse_args()
 
@@ -235,7 +237,9 @@ def main():
 
     for i, atoms in enumerate(structures):
         source = atoms.info.get("source_file", f"structure_{i}")
-        logger.info(f"[{i+1}/{len(structures)}] Processing {source} ({len(atoms)} atoms)")
+        logger.info(
+            f"[{i+1}/{len(structures)}] Processing {source} ({len(atoms)} atoms)"
+        )
 
         metrics = compute_uncertainty(atoms, calc)
         metrics["structure_index"] = i
@@ -302,12 +306,15 @@ def main():
     print(f"  Energy std (max)    : {np.max(energy_stds):.2f} meV/atom")
     print(f"  Force  std (mean)   : {np.mean(force_stds):.2f} meV/Å")
     print(f"  Force  std (max)    : {np.max(force_stds):.2f} meV/Å")
-    print(f"  Flagged for DFT     : {n_flagged}/{len(structures)} ({100*n_flagged/len(structures):.1f}%)")
+    print(
+        f"  Flagged for DFT     : {n_flagged}/{len(structures)} ({100*n_flagged/len(structures):.1f}%)"
+    )
     print(f"  Results saved to    : {output_dir}")
     print("=" * 60)
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

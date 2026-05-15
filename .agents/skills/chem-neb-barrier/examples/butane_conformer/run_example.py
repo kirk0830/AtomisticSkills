@@ -12,18 +12,22 @@ Usage (from project root):
     conda activate mace-agent
     python .agents/skills/chem-neb-barrier/examples/butane_conformer/run_example.py
 """
+
 import os
 import sys
 import json
 import numpy as np
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../"))
+project_root = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../../../../")
+)
 sys.path.insert(0, project_root)
 
 from ase.io import read, write
 from ase.optimize import FIRE
 from ase.mep import NEB, NEBTools
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -73,7 +77,7 @@ def main():
 
     # Carbon indices for dihedral (first 4 atoms from RDKit SMILES "CCCC")
     c_idx = [0, 1, 2, 3]
-    print(f"Initial dihedrals (C0-C1-C2-C3):")
+    print("Initial dihedrals (C0-C1-C2-C3):")
     print(f"  Gauche: {compute_dihedral(gauche.positions, c_idx):.1f} deg")
     print(f"  Anti: {compute_dihedral(anti.positions, c_idx):.1f} deg")
 
@@ -95,13 +99,17 @@ def main():
     print(f"  Anti energy: {e_anti:.6f} eV, dihedral: {d_anti:.1f} deg")
 
     energy_diff = e_gauche - e_anti
-    print(f"  Energy diff (gauche - anti): {energy_diff:.4f} eV ({energy_diff * 23.0609:.2f} kcal/mol)")
+    print(
+        f"  Energy diff (gauche - anti): {energy_diff:.4f} eV ({energy_diff * 23.0609:.2f} kcal/mol)"
+    )
 
     write(os.path.join(OUTPUT_DIR, "gauche_relaxed.xyz"), gauche)
     write(os.path.join(OUTPUT_DIR, "anti_relaxed.xyz"), anti)
 
     # Step 2: Build NEB band (gauche -> anti)
-    print(f"\nBuilding NEB band with {N_IMAGES} intermediate images (gauche -> anti)...")
+    print(
+        f"\nBuilding NEB band with {N_IMAGES} intermediate images (gauche -> anti)..."
+    )
     images = [gauche.copy()]
     for _ in range(N_IMAGES):
         images.append(gauche.copy())
@@ -133,15 +141,19 @@ def main():
     ts_idx = np.argmax(energies)
     ts_structure = images[ts_idx]
 
-    print(f"\n=== NEB Results ===")
-    print(f"Forward barrier (gauche -> anti): {barrier_fwd:.4f} eV ({barrier_fwd * 23.0609:.2f} kcal/mol)")
-    print(f"Reverse barrier (anti -> gauche): {barrier_rev:.4f} eV ({barrier_rev * 23.0609:.2f} kcal/mol)")
+    print("\n=== NEB Results ===")
+    print(
+        f"Forward barrier (gauche -> anti): {barrier_fwd:.4f} eV ({barrier_fwd * 23.0609:.2f} kcal/mol)"
+    )
+    print(
+        f"Reverse barrier (anti -> gauche): {barrier_rev:.4f} eV ({barrier_rev * 23.0609:.2f} kcal/mol)"
+    )
     print(f"Converged: {converged}")
     print(f"TS image index: {ts_idx}")
-    print(f"Literature: ~0.15 eV (3.4 kcal/mol) gauche->anti")
+    print("Literature: ~0.15 eV (3.4 kcal/mol) gauche->anti")
 
     # Final dihedral path
-    print(f"\nFinal path dihedrals:")
+    print("\nFinal path dihedrals:")
     dihedrals = []
     for i, img in enumerate(images):
         d = compute_dihedral(img.positions, c_idx)

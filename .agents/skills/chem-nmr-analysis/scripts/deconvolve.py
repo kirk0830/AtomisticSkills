@@ -37,6 +37,7 @@ from scipy.optimize import linprog
 # Spectrum I/O helpers
 # ---------------------------------------------------------------------------
 
+
 def detect_delim(path: str, default: str = ",") -> str:
     p = pathlib.Path(path)
     if p.suffix.lower() in (".tsv", ".xy"):
@@ -49,7 +50,9 @@ def detect_delim(path: str, default: str = ",") -> str:
         return default
 
 
-def load_xy(path: str, delimiter: Optional[str] = None, mnova: bool = False) -> np.ndarray:
+def load_xy(
+    path: str, delimiter: Optional[str] = None, mnova: bool = False
+) -> np.ndarray:
     if delimiter is None:
         delimiter = "\t" if mnova else detect_delim(path)
     try:
@@ -71,6 +74,7 @@ def baseline_correct(arr: np.ndarray) -> np.ndarray:
 # Wasserstein LP deconvolution (scipy port of dualdeconv2)
 # ---------------------------------------------------------------------------
 
+
 def _merge_axes(*spectra_confs: list[tuple[float, float]]) -> np.ndarray:
     """Build a sorted, deduplicated common ppm axis from multiple spectra."""
     all_ppm = set()
@@ -80,7 +84,9 @@ def _merge_axes(*spectra_confs: list[tuple[float, float]]) -> np.ndarray:
     return np.array(sorted(all_ppm))
 
 
-def _intensities_on_axis(confs: list[tuple[float, float]], axis: np.ndarray) -> np.ndarray:
+def _intensities_on_axis(
+    confs: list[tuple[float, float]], axis: np.ndarray
+) -> np.ndarray:
     """Project a (ppm, intensity) list onto a common axis (zero where absent)."""
     lookup = {}
     for ppm, inten in confs:
@@ -130,10 +136,14 @@ def wasserstein_deconvolve(
     axis = _merge_axes(mix_n, *comp_n)
     n = len(axis)
     if n < 2:
-        return {"proportions": [0.0] * len(comp_n), "wasserstein_distance": float("nan"), "noise": 1.0}
+        return {
+            "proportions": [0.0] * len(comp_n),
+            "wasserstein_distance": float("nan"),
+            "noise": 1.0,
+        }
 
     # Intensity vectors on common axis
-    v = _intensities_on_axis(mix_n, axis)        # mixture
+    v = _intensities_on_axis(mix_n, axis)  # mixture
     T = [_intensities_on_axis(c, axis) for c in comp_n]  # components
     k = len(T)
 
@@ -201,7 +211,9 @@ def wasserstein_deconvolve(
     # Extract proportions from dual variables of component constraints
     # result.ineqlin.marginals[j] for the first k constraints
     duals = result.ineqlin.marginals
-    proportions = [-float(duals[j]) for j in range(k)]  # negated because dual of <= constraint
+    proportions = [
+        -float(duals[j]) for j in range(k)
+    ]  # negated because dual of <= constraint
 
     # Noise: from reduced costs (dual of upper bound constraints)
     noise = 1.0 - sum(proportions)
@@ -241,9 +253,7 @@ def deconvolve_spectra(
     dict with "proportions", "wasserstein_distance", "noise"
     """
     mix_confs = list(zip(mix_arr[:, 0].tolist(), mix_arr[:, 1].tolist()))
-    comp_confs = [
-        list(zip(a[:, 0].tolist(), a[:, 1].tolist())) for a in comp_arrays
-    ]
+    comp_confs = [list(zip(a[:, 0].tolist(), a[:, 1].tolist())) for a in comp_arrays]
 
     raw = wasserstein_deconvolve(mix_confs, comp_confs, kappa=kappa)
     raw_props = raw["proportions"]
@@ -263,9 +273,17 @@ def deconvolve_spectra(
 # Plotting (delegated to plot.py)
 # ---------------------------------------------------------------------------
 
-def _save_plot(out_path: str, mix_arr: np.ndarray, comp_arrays: list,
-               names: list, props: list, wd: float) -> None:
+
+def _save_plot(
+    out_path: str,
+    mix_arr: np.ndarray,
+    comp_arrays: list,
+    names: list,
+    props: list,
+    wd: float,
+) -> None:
     from plot import plot_deconvolution
+
     plot_deconvolution(mix_arr, comp_arrays, names, props, wd, out_path)
 
 
@@ -273,19 +291,50 @@ def _save_plot(out_path: str, mix_arr: np.ndarray, comp_arrays: list,
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
-    ap = argparse.ArgumentParser(description="Estimate component proportions in an NMR mixture.")
-    ap.add_argument("mixture", help="CSV/TSV file with mixture: columns [ppm, intensity]")
-    ap.add_argument("components", nargs="+", help="CSV/TSV files for components: columns [ppm, intensity]")
-    ap.add_argument("--protons", type=int, nargs="+", help="Proton counts for each component (e.g. 18 18)")
-    ap.add_argument("--names", nargs="+", help='Names for components (e.g. borneol isoborneol)')
-    ap.add_argument("--kappa", type=float, default=0.25, help="Denoising penalty (default: 0.25)")
-    ap.add_argument("--mnova", action="store_true", help="Treat inputs as Mnova TSV (delimiter='\\t')")
-    ap.add_argument("--baseline-correct", action="store_true",
-                    help="Shift each spectrum so its minimum intensity becomes 0.")
-    ap.add_argument("--plot", metavar="FILE", default=None,
-                    help="Save a deconvolution plot to FILE (e.g. result.png).")
-    ap.add_argument("--json", action="store_true", help="Print JSON result line as well")
+    ap = argparse.ArgumentParser(
+        description="Estimate component proportions in an NMR mixture."
+    )
+    ap.add_argument(
+        "mixture", help="CSV/TSV file with mixture: columns [ppm, intensity]"
+    )
+    ap.add_argument(
+        "components",
+        nargs="+",
+        help="CSV/TSV files for components: columns [ppm, intensity]",
+    )
+    ap.add_argument(
+        "--protons",
+        type=int,
+        nargs="+",
+        help="Proton counts for each component (e.g. 18 18)",
+    )
+    ap.add_argument(
+        "--names", nargs="+", help="Names for components (e.g. borneol isoborneol)"
+    )
+    ap.add_argument(
+        "--kappa", type=float, default=0.25, help="Denoising penalty (default: 0.25)"
+    )
+    ap.add_argument(
+        "--mnova",
+        action="store_true",
+        help="Treat inputs as Mnova TSV (delimiter='\\t')",
+    )
+    ap.add_argument(
+        "--baseline-correct",
+        action="store_true",
+        help="Shift each spectrum so its minimum intensity becomes 0.",
+    )
+    ap.add_argument(
+        "--plot",
+        metavar="FILE",
+        default=None,
+        help="Save a deconvolution plot to FILE (e.g. result.png).",
+    )
+    ap.add_argument(
+        "--json", action="store_true", help="Print JSON result line as well"
+    )
     ap.add_argument("--quiet", action="store_true", help="Suppress verbose output")
     args = ap.parse_args()
 
@@ -295,21 +344,35 @@ def main():
 
     if args.baseline_correct:
         if not args.quiet:
-            print("Baseline correction: shifting each spectrum so its minimum intensity = 0.")
+            print(
+                "Baseline correction: shifting each spectrum so its minimum intensity = 0."
+            )
         mix_arr = baseline_correct(mix_arr)
         comp_arrays = [baseline_correct(a) for a in comp_arrays]
 
     n = len(comp_arrays)
-    names = args.names if args.names and len(args.names) == n else [f"comp{i}" for i in range(n)]
+    names = (
+        args.names
+        if args.names and len(args.names) == n
+        else [f"comp{i}" for i in range(n)]
+    )
     if args.names and len(args.names) != n:
-        print("WARNING: --names length does not match number of components; using default names.", file=sys.stderr)
+        print(
+            "WARNING: --names length does not match number of components; using default names.",
+            file=sys.stderr,
+        )
 
     if args.protons and len(args.protons) != n:
-        print("ERROR: --protons length must equal number of components.", file=sys.stderr)
+        print(
+            "ERROR: --protons length must equal number of components.", file=sys.stderr
+        )
         sys.exit(2)
     protons = args.protons if args.protons else [1] * n
     if not args.protons:
-        print("NOTE: No --protons provided; assuming 1 for each component.", file=sys.stderr)
+        print(
+            "NOTE: No --protons provided; assuming 1 for each component.",
+            file=sys.stderr,
+        )
 
     # Deconvolve
     result = deconvolve_spectra(mix_arr, comp_arrays, protons, kappa=args.kappa)
@@ -334,6 +397,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.plot)
 
 

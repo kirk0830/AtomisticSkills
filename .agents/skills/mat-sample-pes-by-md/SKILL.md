@@ -15,7 +15,7 @@ To generate diverse and representative atomic configurations from a starting str
     - **Recommended**: `M3GNet-MP-2021.2.8-PES` (MatGL) or `MACE-MP-small` (MACE) for general inorganic materials.
 2.  **Off-Equilibrium Sampling (MD-Clustering)**:
     - Use the unified sampling script to run a short MD trajectory and pick representative configurations via K-Means clustering of latent features.
-    
+
     Using MatGL (CHGNet):
     ```bash
     # Env: matgl-agent
@@ -52,7 +52,7 @@ calc = MatGLCrystalFeatureCalculator(potential=model)
 
 # Initialize and run sampler
 sampler = OffEquilibriumSampler(
-    calculator=calc, 
+    calculator=calc,
     atoms=initial_atoms,
     total_steps=1000,
     temperature=800,
@@ -76,5 +76,5 @@ Sampling 10 representative configurations from a 10 ps MD trajectory of LiMnO2 a
 - **Clustering**: Requires `scikit-learn` in the environment.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

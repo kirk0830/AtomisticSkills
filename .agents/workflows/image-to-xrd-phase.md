@@ -6,7 +6,7 @@ description: End-to-end workflow for digitizing an XRD plot image and identifyin
 
 This workflow guides you through computationally identifying the crystalline phases of a material when your only starting point is an image or screenshot of an X-Ray Diffraction (XRD) plot.
 
-**Scientific Problem:** 
+**Scientific Problem:**
 Often in literature analysis or quick experimental checks, raw diffractometer data (`.xy` or `.xrdml` files) is unavailable, and researchers only have access to a published image of the XRD spectrum. To computationally index these peaks and confirm the phase purity or exact polymorph of the sample against a database (like the Crystallography Open Database), the image must first be transformed into a numerical dataset. This workflow connects visual AI Agent data extraction with mathematical pseudo-Voigt profiling and high-throughput DARA phase searching to achieve end-to-end phase identification from a pure visual input.
 
 ## Step-by-Step Methodology
@@ -24,7 +24,7 @@ Search the numerical dataset against a structural database to find the matching 
 - **Skill:** Use the `mat-xrd-phase-analysis` skill.
 - **Action:** The Agent will query the database (e.g., COD) for Candidate CIFs using the provided chemical system. It will then use DARA's BGMN-backed tree search to match the experimental `.xy` pattern against combinations of these CIFs.
 - **Decision:** Review the $R_{wp}$ (Weighted Profile R-factor) of the resulting solutions. If the $R_{wp}$ is very high or the residual plot is poor, you may need to ask the Agent to re-extract the peaks more carefully in Step 1, or try a different chemical system.
-- **Output:** A `results_summary.json` ranking the best matching phases, and refined fit plots bridging the digitized input with the theoretical models. 
+- **Output:** A `results_summary.json` ranking the best matching phases, and refined fit plots bridging the digitized input with the theoretical models.
 
 ### Optional Step 3: Refinement
 If you already know the phases and simply want to refine their lattice parameters or weight fractions against the digitized plot.

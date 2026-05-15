@@ -103,7 +103,11 @@ def pixel_to_data(
         else:
             X_data = x_min + t_x * (x_max - x_min)
 
-    if y_calibration_points and len(y_calibration_points) >= 2 and y_calibration != "per_curve_normalized":
+    if (
+        y_calibration_points
+        and len(y_calibration_points) >= 2
+        and y_calibration != "per_curve_normalized"
+    ):
         cal = sorted(y_calibration_points, key=lambda p: p["pixel"])
         p1, p2 = cal[0], cal[-1]
         px1, v1 = p1["pixel"], p1["value"]
@@ -141,7 +145,9 @@ def pixel_to_data(
             if np.abs(dy) < 1e-9:
                 Y_data = np.zeros_like(y_pixel)
             else:
-                Y_data = (y_max_trace - y_pixel) / dy  # baseline (large y) -> 0, peak (small y) -> 1
+                Y_data = (
+                    y_max_trace - y_pixel
+                ) / dy  # baseline (large y) -> 0, peak (small y) -> 1
         elif y_scale == "log":
             if y_min <= 0 or y_max <= 0:
                 raise ValueError("Log scale requires positive y_min and y_max")
@@ -261,6 +267,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

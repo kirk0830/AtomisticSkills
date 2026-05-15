@@ -31,9 +31,8 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
-import numpy as np
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
 if project_root not in sys.path:
@@ -64,7 +63,11 @@ def parse_relax_result(json_path: Path) -> Optional[Dict]:
     n_atoms = data.get("n_atoms") or data.get("natoms")
     lattice = data.get("lattice", {})
     a = lattice.get("a") or lattice.get("matrix", [[None]])[0][0]
-    b = lattice.get("b") or lattice.get("matrix", [[None, None]])[1][1] if lattice else None
+    b = (
+        lattice.get("b") or lattice.get("matrix", [[None, None]])[1][1]
+        if lattice
+        else None
+    )
 
     # Fallback: pymatgen Structure dict inside "final_structure"
     if energy is None:
@@ -79,7 +82,12 @@ def parse_relax_result(json_path: Path) -> Optional[Dict]:
     if energy is None or n_atoms is None or a is None or b is None:
         return None
 
-    return {"energy": float(energy), "n_atoms": int(n_atoms), "a": float(a), "b": float(b)}
+    return {
+        "energy": float(energy),
+        "n_atoms": int(n_atoms),
+        "a": float(a),
+        "b": float(b),
+    }
 
 
 def parse_relax_subdir(subdir: Path) -> Optional[Dict]:
@@ -113,8 +121,8 @@ def compute_gb_energy(
 ) -> float:
     """Return grain boundary energy in J/m²."""
     delta_e = e_gb - n_atoms * e_bulk_per_atom  # eV
-    gamma = delta_e / (2.0 * area_A2)           # eV/Å²
-    return gamma * EV_PER_A2_TO_J_PER_M2        # J/m²
+    gamma = delta_e / (2.0 * area_A2)  # eV/Å²
+    return gamma * EV_PER_A2_TO_J_PER_M2  # J/m²
 
 
 def load_metadata(relaxation_dir: Path) -> Optional[Dict]:
@@ -134,6 +142,7 @@ def load_metadata(relaxation_dir: Path) -> Optional[Dict]:
 def plot_gb_energy(records: List[Dict], output_path: str, formula: str = "") -> None:
     """Plot grain boundary energy vs. misorientation angle."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -154,7 +163,9 @@ def plot_gb_energy(records: List[Dict], output_path: str, formula: str = "") -> 
             color=sigma_to_color[sigma],
             s=60,
             zorder=3,
-            label=f"Σ{sigma}" if sigma not in [r.get("sigma") for r in records[:records.index(rec)]] else "",
+            label=f"Σ{sigma}"
+            if sigma not in [r.get("sigma") for r in records[: records.index(rec)]]
+            else "",
         )
 
     # Connect points with a line
@@ -242,16 +253,19 @@ def main():
 
     # Collect result sources: JSON files (flat) OR per-structure subdirs (MCP batch relax)
     _EXCLUDE = {"gb_structure_metadata.json"}
-    json_files = [
-        p for p in sorted(relax_dir.glob("*.json")) if p.name not in _EXCLUDE
-    ]
+    json_files = [p for p in sorted(relax_dir.glob("*.json")) if p.name not in _EXCLUDE]
     if not json_files:
         json_files = sorted(relax_dir.glob("*/relaxation_results.json"))
 
-    subdirs = [
-        d for d in sorted(relax_dir.iterdir())
-        if d.is_dir() and (d / "relaxed_energy.txt").exists()
-    ] if not json_files else []
+    subdirs = (
+        [
+            d
+            for d in sorted(relax_dir.iterdir())
+            if d.is_dir() and (d / "relaxed_energy.txt").exists()
+        ]
+        if not json_files
+        else []
+    )
 
     if not json_files and not subdirs:
         raise FileNotFoundError(
@@ -308,7 +322,9 @@ def main():
         records.append(rec)
 
         sigma_str = f"Σ{rec['sigma']}" if rec["sigma"] else "?"
-        angle_str = f"{rec['rotation_angle_deg']:.2f}°" if rec["rotation_angle_deg"] else "?"
+        angle_str = (
+            f"{rec['rotation_angle_deg']:.2f}°" if rec["rotation_angle_deg"] else "?"
+        )
         logger.info(
             f"  {sigma_str:6s}  {angle_str:8s}  "
             f"γ_GB = {gb_energy:.4f} J/m²  "
@@ -337,8 +353,13 @@ def main():
     # Save CSV
     csv_path = output_dir / "gb_summary_table.csv"
     fieldnames = [
-        "filename", "sigma", "rotation_angle_deg", "n_atoms",
-        "total_energy_eV", "interface_area_A2", "gb_energy_J_m2",
+        "filename",
+        "sigma",
+        "rotation_angle_deg",
+        "n_atoms",
+        "total_energy_eV",
+        "interface_area_A2",
+        "gb_energy_J_m2",
     ]
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
@@ -365,13 +386,20 @@ def main():
     print(f"  Bulk E/atom (eV)      : {args.bulk_energy_per_atom}")
     print(f"  γ_GB range (J/m²)     : {min(gb_energies):.4f} – {max(gb_energies):.4f}")
     sigma_str = f"Σ{min_rec['sigma']}" if min_rec.get("sigma") is not None else "?"
-    angle_str = f"{min_rec['rotation_angle_deg']:.2f}°" if min_rec.get("rotation_angle_deg") is not None else "?"
-    print(f"  Lowest energy GB      : {sigma_str} at {angle_str} → γ = {min_rec['gb_energy_J_m2']:.4f} J/m²")
+    angle_str = (
+        f"{min_rec['rotation_angle_deg']:.2f}°"
+        if min_rec.get("rotation_angle_deg") is not None
+        else "?"
+    )
+    print(
+        f"  Lowest energy GB      : {sigma_str} at {angle_str} → γ = {min_rec['gb_energy_J_m2']:.4f} J/m²"
+    )
     print(f"  Results saved to      : {output_dir}")
     print("=" * 60)
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

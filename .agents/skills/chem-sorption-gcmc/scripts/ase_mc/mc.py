@@ -1,12 +1,10 @@
 """Molecular Dynamics."""
 
-import warnings
 import numpy as np
 from ase.optimize.optimize import Dynamics
 from .logger import MCLogger
 from ase.parallel import world, DummyMPI
 from ase.io.trajectory import Trajectory
-from ase import units
 from ase.calculators.calculator import all_properties
 from ase.calculators.singlepoint import SinglePointCalculator
 
@@ -231,7 +229,7 @@ class MonteCarlo(Dynamics):
         # Filter results if the calculator is from outside ASE
         keys = list(results)
         for key in keys:
-            if not(key in all_properties):
+            if key not in all_properties:
                 _ = results.pop(key)
         atoms_copy.calc = SinglePointCalculator(atoms_copy, **results)
         return atoms_copy

@@ -20,7 +20,7 @@ Our server-level interception (`setup_mcp_stdout()` and `run_fastmcp_server()`) 
 1. **Interception:** We duplicate the "real" stdout (File Descriptor 1) so the MCP JSON-RPC payload has a clean, protected pipe to write to.
 2. **Redirection:** We redirect the system-level FD 1 to stderr (FD 2). Thus, any legacy binaries writing to hardcoded standard output will instead output to stderr, freeing FD 1 for protocol negotiation.
 3. **Patching:** We patch Python's internal `sys.stdout` to point to `sys.stderr`.
-4. **JSON-RPC Delivery:** We launch the FastMCP server with explicit, customized asynchronous streams (via `mcp_transport_manager`) bound specifically to the protected pipe from step 1. 
+4. **JSON-RPC Delivery:** We launch the FastMCP server with explicit, customized asynchronous streams (via `mcp_transport_manager`) bound specifically to the protected pipe from step 1.
 
 ### Best Practices for Developers
 

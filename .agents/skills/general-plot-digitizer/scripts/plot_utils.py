@@ -36,21 +36,25 @@ def load_metadata(metadata_path: str, validate: bool = True) -> dict:
         meta = json.load(f)
     if not validate:
         return meta
-        
+
     if "x_calibration_points" not in meta:
         for key in ("x_tick_min", "x_tick_max"):
             if key not in meta:
-                raise ValueError(f"Metadata missing required field: {key} (or x_calibration_points)")
-                
+                raise ValueError(
+                    f"Metadata missing required field: {key} (or x_calibration_points)"
+                )
+
     if "y_calibration_points" not in meta:
         for key in ("y_tick_min", "y_tick_max"):
             if key not in meta:
-                raise ValueError(f"Metadata missing required field: {key} (or y_calibration_points)")
-                
+                raise ValueError(
+                    f"Metadata missing required field: {key} (or y_calibration_points)"
+                )
+
     for key in ("x_scale", "y_scale", "bounding_box"):
         if key not in meta:
             raise ValueError(f"Metadata missing required field: {key}")
-            
+
     bb = meta["bounding_box"]
     for k in ("x_min", "y_min", "x_max", "y_max"):
         if k not in bb:
@@ -109,6 +113,7 @@ def scale_metadata_bbox(meta: dict, factor: float) -> dict:
 
     return result
 
+
 def draw_grid_on_image(image_path: str, output_path: str, grid_size: int = 100) -> None:
     """
     Draw a labeled pixel grid on an image for precise coordinate reading.
@@ -126,21 +131,26 @@ def draw_grid_on_image(image_path: str, output_path: str, grid_size: int = 100) 
         ValueError: If the image cannot be read.
     """
     import cv2
+
     img = cv2.imread(image_path)
     if img is None:
         raise ValueError(f"Could not read image {image_path}")
-    
+
     h, w = img.shape[:2]
     # Draw horizontal lines
     for y in range(0, h, grid_size):
         cv2.line(img, (0, y), (w, y), (200, 200, 200), 1, cv2.LINE_AA)
-        cv2.putText(img, str(y), (5, y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-        
+        cv2.putText(
+            img, str(y), (5, y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1
+        )
+
     # Draw vertical lines
     for x in range(0, w, grid_size):
         cv2.line(img, (x, 0), (x, h), (200, 200, 200), 1, cv2.LINE_AA)
-        cv2.putText(img, str(x), (x + 5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
-        
+        cv2.putText(
+            img, str(x), (x + 5, 15), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1
+        )
+
     cv2.imwrite(output_path, img)
 
 
@@ -151,21 +161,27 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Utilities for plot digitization")
     parser.add_argument("image", nargs="?", help="Input image path")
-    parser.add_argument("--draw-grid", action="store_true", help="Draw a 100x100 grid on the image for pixel estimation")
-    parser.add_argument("--grid-size", type=int, default=100, help="Grid size in pixels (default: 100)")
-    
+    parser.add_argument(
+        "--draw-grid",
+        action="store_true",
+        help="Draw a 100x100 grid on the image for pixel estimation",
+    )
+    parser.add_argument(
+        "--grid-size", type=int, default=100, help="Grid size in pixels (default: 100)"
+    )
+
     args = parser.parse_args()
-    
+
     if args.draw_grid:
         if not args.image:
             print("Error: --draw-grid requires an input image path.", file=sys.stderr)
             sys.exit(1)
-            
+
         img_path = Path(args.image)
         if not img_path.exists():
             print(f"Error: Image not found: {args.image}", file=sys.stderr)
             sys.exit(1)
-            
+
         out_path = img_path.with_name(f"{img_path.stem}_grid.png")
         try:
             draw_grid_on_image(str(img_path), str(out_path), grid_size=args.grid_size)

@@ -19,7 +19,6 @@ Requirements:
 
 import argparse
 import json
-import sys
 import warnings
 from pathlib import Path
 
@@ -31,19 +30,51 @@ from pymatgen.symmetry.groups import SpaceGroup
 # Common space groups for inorganic crystals, weighted by frequency in ICSD
 COMMON_SPACEGROUPS = [
     # Cubic
-    225, 227, 221, 229, 216, 226,
+    225,
+    227,
+    221,
+    229,
+    216,
+    226,
     # Hexagonal
-    194, 186, 167, 166, 193, 164,
+    194,
+    186,
+    167,
+    166,
+    193,
+    164,
     # Trigonal
-    148, 155, 160, 161,
+    148,
+    155,
+    160,
+    161,
     # Tetragonal
-    139, 140, 136, 129, 141, 127,
+    139,
+    140,
+    136,
+    129,
+    141,
+    127,
     # Orthorhombic
-    62, 63, 64, 58, 55, 57, 59, 61, 33, 36,
+    62,
+    63,
+    64,
+    58,
+    55,
+    57,
+    59,
+    61,
+    33,
+    36,
     # Monoclinic
-    14, 12, 15, 13, 11,
+    14,
+    12,
+    15,
+    13,
+    11,
     # Triclinic
-    2, 1,
+    2,
+    1,
 ]
 
 
@@ -103,8 +134,12 @@ def check_min_distances(structure: Structure, scale: float = 0.7) -> bool:
                 continue
             d = structure.get_distance(i, j)
             min_d = get_min_distance(
-                site_i.specie if hasattr(site_i.specie, "symbol") else Element(str(site_i.specie)),
-                site_j.specie if hasattr(site_j.specie, "symbol") else Element(str(site_j.specie)),
+                site_i.specie
+                if hasattr(site_i.specie, "symbol")
+                else Element(str(site_i.specie)),
+                site_j.specie
+                if hasattr(site_j.specie, "symbol")
+                else Element(str(site_j.specie)),
             )
             if d < min_d:
                 return False
@@ -164,7 +199,9 @@ def generate_random_structure(
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             structure = Structure(
-                lattice, species, coords,
+                lattice,
+                species,
+                coords,
                 coords_are_cartesian=False,
             )
 
@@ -329,11 +366,13 @@ def main() -> None:
         attempts += 1
 
         if structure is not None:
-            generated.append({
-                "structure": structure,
-                "spacegroup": sg,
-                "volume_scale": vol_scale,
-            })
+            generated.append(
+                {
+                    "structure": structure,
+                    "spacegroup": sg,
+                    "volume_scale": vol_scale,
+                }
+            )
             if len(generated) % 10 == 0:
                 print(f"  Generated {len(generated)}/{args.num_structures}...")
 
@@ -347,15 +386,17 @@ def main() -> None:
         cif_path = output_dir / cif_name
         item["structure"].to(filename=str(cif_path))
 
-        manifest_entries.append({
-            "index": i,
-            "formula": formula,
-            "spacegroup": item["spacegroup"],
-            "volume_scale": round(item["volume_scale"], 3),
-            "num_atoms": len(item["structure"]),
-            "volume": round(item["structure"].volume, 2),
-            "cif_file": cif_name,
-        })
+        manifest_entries.append(
+            {
+                "index": i,
+                "formula": formula,
+                "spacegroup": item["spacegroup"],
+                "volume_scale": round(item["volume_scale"], 3),
+                "num_atoms": len(item["structure"]),
+                "volume": round(item["structure"].volume, 2),
+                "cif_file": cif_name,
+            }
+        )
 
     # Save manifest
     manifest_path = output_dir / "generation_manifest.json"
@@ -385,14 +426,15 @@ def main() -> None:
     sg_counts: dict[int, int] = {}
     for e in manifest_entries:
         sg_counts[e["spacegroup"]] = sg_counts.get(e["spacegroup"], 0) + 1
-    print(f"\n  Space group distribution:")
+    print("\n  Space group distribution:")
     for sg, count in sorted(sg_counts.items(), key=lambda x: -x[1])[:10]:
         print(f"    SG {sg:3d}: {count} structures")
 
-    print(f"\n  Next step: Relax all structures with an MLIP, then rank by energy.")
+    print("\n  Next step: Relax all structures with an MLIP, then rank by energy.")
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

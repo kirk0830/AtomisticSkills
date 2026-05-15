@@ -32,15 +32,15 @@ If you want to match against a specific subset of structures (like a local ICSD 
 python .agents/skills/mat-structure-novelty/scripts/match_structure.py target_structure_1.cif target_structure_2.xyz --output match_results.json
 ```
 
-**Literature Fallback (Novel/Unmatched Structures):** 
-If the script fails to find any *structural* match among the candidates in the Materials Project, you should perform a literature search to see if the material has been synthesized. 
+**Literature Fallback (Novel/Unmatched Structures):**
+If the script fails to find any *structural* match among the candidates in the Materials Project, you should perform a literature search to see if the material has been synthesized.
 When searching the literature for the structure, **ONLY use the composition as input** (for example, `"Li3ZrCl6"` or `"Li3InCl6"`). Do not include the space group or crystal system in the search query, as papers often do not index those exact terms in searchable abstracts.
 After finding papers that report the composition, you must read the paper and **compare the structure** described in the literature with your candidate polymorph to determine if they match.
 > [!IMPORTANT]
 > If a literature match is reported but the **full text is not available (Open Access = False)** and you are unable to definitively read the paper to confirm the exact reported structure matches yours, you MUST explicitly tell the user that "literature full text is not available and the structure cannot be conclusively confirmed".
 
 ### Step 2: Literature Search (Mandatory)
-If the structure is entirely novel, or just to know if the *composition* itself has been heavily studied or synthesized in particular conditions, you **MUST** perform a literature search using the `search_literature` MCP tool. 
+If the structure is entirely novel, or just to know if the *composition* itself has been heavily studied or synthesized in particular conditions, you **MUST** perform a literature search using the `search_literature` MCP tool.
 
 ```bash
 mcp_search_literature(
@@ -65,5 +65,5 @@ python .agents/skills/mat-structure-novelty/scripts/match_structure.py generated
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

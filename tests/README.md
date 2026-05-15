@@ -136,7 +136,7 @@ def test_mace_feature(skip_if_wrong_env):
 
 ### 1. `load_structure_from_file()` Returns Pymatgen Structure
 
-**Old behavior**: Returned ASE Atoms  
+**Old behavior**: Returned ASE Atoms
 **New behavior**: Returns Pymatgen Structure
 
 **Test**: `tests/base/test_structure_utils.py::TestLoadStructureFromFile`
@@ -157,7 +157,7 @@ def test_mace_feature(skip_if_wrong_env):
 
 ### 1. Atomic Feature Extraction
 
-**MACE**: `tests/mace/test_mace_wrapper.py::TestMACEPredictAtomicFeatures`  
+**MACE**: `tests/mace/test_mace_wrapper.py::TestMACEPredictAtomicFeatures`
 **MatGL**: `tests/matgl/test_matgl_wrapper.py::TestMatGLPredictAtomicFeatures`
 
 ### 2. Base Relax Structure Implementation

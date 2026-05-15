@@ -65,7 +65,9 @@ def prepare_structures_for_insertion(
         Tuple of (supercell structure, gas positions, accessibility array)
     """
     # Create supercell if needed
-    structure_supercell = create_supercell_if_needed(structure, min_interplanar_distance)
+    structure_supercell = create_supercell_if_needed(
+        structure, min_interplanar_distance
+    )
 
     # Set up random number generator
     rng = np.random.default_rng(random_seed)
@@ -77,11 +79,7 @@ def prepare_structures_for_insertion(
     framework_coords = structure_supercell.get_positions()
     lattice_matrix = np.array(structure_supercell.cell)
     is_accessible = check_accessibility(
-        gas_positions,
-        framework_coords,
-        lattice_matrix,
-        cutoff_distance,
-        cutoff_to_com
+        gas_positions, framework_coords, lattice_matrix, cutoff_distance, cutoff_to_com
     )
 
     return structure_supercell, gas_positions, is_accessible

@@ -56,42 +56,42 @@
 </div>
 <div class="content">
   <div class="tools-list">
-    
+
         <div class="tool-card">
           <h3 class="tool-name">📎 load_model</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nLoad a MatGL model.\n\nSupported models include:\n- PES Models: &#39;CHGNet-MatPES-PBE-2025.2.10-2.7M-PES&#39;, &#39;CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES&#39;, &#39;CHGNet-MPtrj-2024.2.13-11M-PES&#39;, &#39;CHGNet-MPtrj-2023.12.1-2.7M-PES&#39;\n- PES Models: &#39;M3GNet-MP-2021.2.8-PES&#39;, &#39;M3GNet-MatPES-PBE-v2025.1-PES&#39;, &#39;M3GNet-MatPES-r2SCAN-v2025.1-PES&#39;, &#39;M3GNet-MP-2021.2.8-DIRECT-PES&#39;\n- PES Models: &#39;TensorNet-MatPES-PBE-v2025.1-PES&#39;, &#39;TensorNet-MatPES-r2SCAN-v2025.1-PES&#39;, &#39;M3GNet-ANI-1x-Subset-PES&#39;, &#39;SO3Net-ANI-1x-Subset-PES&#39;\n\nArgs:\n    model_name: Name of the model to load.\n    device: Device to use (\"auto\", \"cpu\", \"cuda\").\n    \nReturns:\n    Confirmation message.\n\nCRITICAL: This tool must be called before using any other tool (except predict_bandgap) to load the model into memory.\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 predict_structure</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nPredict energy and forces for a structure or a batch of structures.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n\nReturns:\n    Dictionary containing:\n    - \"energy\": Total potential energy (eV)\n    - \"forces\": Atomic forces (eV/A)\n    - \"stress\": (Optional) Stress tensor in eV/\u00c5\u00b3\n    - \"charges\": (Optional) Atomic charges if supported (e.g., CHGNet)\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 predict_atomic_features</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nPredict atomic latent features (descriptors) for a structure.\nAutomatically saves features to the current research directory.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    output_path: Optional custom path for saving features. If not provided, auto-generates\n                 based on structure filename (e.g., &#39;solid.cif&#39; -> &#39;solid_features.json&#39;).\n\nReturns:\n    Dict: {\n        &#39;atomic_features&#39;: [[...], ...], \n        &#39;feature_dim&#39;: int, \n        &#39;num_atoms&#39;: int,\n        &#39;saved_path&#39;: str  # Path to saved JSON file\n    }\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 predict_bandgap</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nPredict the bandgap for a structure using MEGNet.\nUses an isolated model instance to avoid conflicts with PES calculations.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n\nReturns:\n    Dictionary containing \"bandgap\" in eV.\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 get_info</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nGet information about the current loaded model.\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 relax_structure</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nRelax one or multiple structures using the loaded MatGL model.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    fmax: Force convergence criterion (eV/Ang).\n    steps: Maximum number of optimization steps.\n    optimizer: Optimizer to use (\"FIRE\", \"BFGS\", \"LBFGS\").\n    relax_cell: Whether to relax the unit cell.\n    output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.\n    \nReturns:\n    For single: Dict with energy, trajectory_path, cif_path, json_path\n    For batch: Dict with mode=\"batch\", total_structures, successful, failed, results list\n```"'></div>
         </div>
-        
+
         <div class="tool-card">
           <h3 class="tool-name">📎 run_md</h3>
           <div class="tool-doc rendered-md" data-md='"```text\nRun molecular dynamics simulation using MatCalc.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    log_interval: Interval for logging to trajectory and logfile.\n    pressure: Target pressure in bar (for NPT).\n    pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).\n    output_dir: Directory to save results.\n    monitor: Whether to enable automatic MD monitoring.\n    monitor_type: Type of monitor (\"melting\", \"explosion\", \"overshoot\", \"volume\") or list of types.\n    monitor_params: Optional dictionary of parameters for the monitors (e.g., {\"upper_limit_ratio\": 4.0}).\n    supercell_min_length: Minimum length (\u00c5) for each lattice vector. Automatically expands supercell.\nReturns:\n    Dictionary with MD results (trajectory_path, final_structure).\n```"'></div>
         </div>
-        
+
   </div>
 </div>
 <footer><p>AtomisticSkills — Open-sourced AI research infrastructure</p></footer>

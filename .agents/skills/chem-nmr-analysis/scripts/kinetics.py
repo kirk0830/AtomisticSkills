@@ -45,18 +45,27 @@ def save_kinetics_plot(
       - Bottom: Wasserstein distance vs time (fit quality indicator).
     """
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
     plt.rcParams.update({"font.size": 14})
 
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 7), sharex=True,
-                                    gridspec_kw={"height_ratios": [2, 1]})
+    fig, (ax1, ax2) = plt.subplots(
+        2, 1, figsize=(8, 7), sharex=True, gridspec_kw={"height_ratios": [2, 1]}
+    )
 
     for i, name in enumerate(names):
         fracs = [p.get(name, float("nan")) for p in proportions_over_time]
-        ax1.plot(times, [f * 100 for f in fracs], "o-", color=f"C{i}",
-                 lw=2.5, markersize=5, label=name)
+        ax1.plot(
+            times,
+            [f * 100 for f in fracs],
+            "o-",
+            color=f"C{i}",
+            lw=2.5,
+            markersize=5,
+            label=name,
+        )
 
     ax1.set_ylabel("Mole fraction (%)", fontweight="bold")
     ax1.set_ylim(-5, 105)
@@ -83,39 +92,65 @@ def main():
     ap = argparse.ArgumentParser(
         description="Run NMR deconvolution at each time point and plot kinetics."
     )
-    ap.add_argument("--refs", nargs="+", required=True,
-                    help="Reference spectrum files for each component")
-    ap.add_argument("--timepoints", nargs="+", required=True,
-                    help="Crude spectrum files ordered by time")
-    ap.add_argument("--times", type=float, nargs="+", required=True,
-                    help="Time values matching --timepoints (e.g. 0 5 10 20)")
-    ap.add_argument("--time_unit", default="min",
-                    help="Time axis label (default: min)")
-    ap.add_argument("--protons", type=int, nargs="+",
-                    help="Proton counts per reference component")
-    ap.add_argument("--names", nargs="+",
-                    help="Component names (must match number of --refs)")
-    ap.add_argument("--baseline_correct", action="store_true",
-                    help="Shift each spectrum so its minimum intensity = 0.")
-    ap.add_argument("--kappa", type=float, default=0.25,
-                    help="Denoising penalty (default: 0.25)")
-    ap.add_argument("--mnova", action="store_true",
-                    help="Treat inputs as Mnova TSV")
-    ap.add_argument("--output_dir", default="kinetics_results",
-                    help="Directory for kinetics CSV and plot")
+    ap.add_argument(
+        "--refs",
+        nargs="+",
+        required=True,
+        help="Reference spectrum files for each component",
+    )
+    ap.add_argument(
+        "--timepoints",
+        nargs="+",
+        required=True,
+        help="Crude spectrum files ordered by time",
+    )
+    ap.add_argument(
+        "--times",
+        type=float,
+        nargs="+",
+        required=True,
+        help="Time values matching --timepoints (e.g. 0 5 10 20)",
+    )
+    ap.add_argument("--time_unit", default="min", help="Time axis label (default: min)")
+    ap.add_argument(
+        "--protons", type=int, nargs="+", help="Proton counts per reference component"
+    )
+    ap.add_argument(
+        "--names", nargs="+", help="Component names (must match number of --refs)"
+    )
+    ap.add_argument(
+        "--baseline_correct",
+        action="store_true",
+        help="Shift each spectrum so its minimum intensity = 0.",
+    )
+    ap.add_argument(
+        "--kappa", type=float, default=0.25, help="Denoising penalty (default: 0.25)"
+    )
+    ap.add_argument("--mnova", action="store_true", help="Treat inputs as Mnova TSV")
+    ap.add_argument(
+        "--output_dir",
+        default="kinetics_results",
+        help="Directory for kinetics CSV and plot",
+    )
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()
 
     if len(args.times) != len(args.timepoints):
-        print("ERROR: --times and --timepoints must have the same length.", file=sys.stderr)
+        print(
+            "ERROR: --times and --timepoints must have the same length.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     out_dir = pathlib.Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     n_refs = len(args.refs)
-    names = args.names if args.names and len(args.names) == n_refs \
+    names = (
+        args.names
+        if args.names and len(args.names) == n_refs
         else [f"comp{i}" for i in range(n_refs)]
+    )
     protons = args.protons if args.protons else [1] * n_refs
     if args.protons and len(args.protons) != n_refs:
         print("ERROR: --protons length must equal number of --refs.", file=sys.stderr)
@@ -145,8 +180,9 @@ def main():
             wd_over_time.append(wd)
 
             if not args.quiet:
-                frac_str = "  ".join(f"{n}={props_dict.get(n, 0)*100:.1f}%"
-                                     for n in names)
+                frac_str = "  ".join(
+                    f"{n}={props_dict.get(n, 0)*100:.1f}%" for n in names
+                )
                 print(f"{frac_str}  WD={wd:.5f}")
         except Exception as e:
             print(f"FAILED: {e}", file=sys.stderr)
@@ -165,13 +201,20 @@ def main():
 
     # Save plot
     plot_path = out_dir / "kinetics_plot"
-    save_kinetics_plot(args.times, args.time_unit, names,
-                       proportions_over_time, wd_over_time, plot_path)
+    save_kinetics_plot(
+        args.times,
+        args.time_unit,
+        names,
+        proportions_over_time,
+        wd_over_time,
+        plot_path,
+    )
     if not args.quiet:
         print(f"Kinetics plot  -> {plot_path}.png, {plot_path}.svg")
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

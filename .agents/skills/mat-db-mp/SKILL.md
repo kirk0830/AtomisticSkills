@@ -281,7 +281,7 @@ Structures:
 - **MP-API Version**: Similarity search requires mp-api >= 0.46.0 with `find_similar` method
 - **Python Version**: Base-agent uses Python 3.11
 - **Rate Limits**: Materials Project API has rate limits; large queries may be throttled
-- **Endpoint Differences**: 
+- **Endpoint Differences**:
   - `summary` endpoint includes crystal structures (CIF format)
   - `thermo` endpoint provides detailed thermodynamic data but no structures
 - **Similarity Chemical Filter**: The `--chemsys` parameter in similarity search performs post-filtering for exact element matches, not compositional similarity
@@ -291,10 +291,10 @@ Structures:
 
 - **Summary** (`mpr.materials.summary`): General material data with structures
 - **Thermo** (`mpr.materials.thermo`): Detailed thermodynamic properties
-- **Elasticity** (`mpr.materials.elasticity`): Elastic modulus and tensor data  
+- **Elasticity** (`mpr.materials.elasticity`): Elastic modulus and tensor data
 - **Magnetism** (`mpr.materials.magnetism`): Magnetic ordering and moments
 - **Similarity** (`mpr.materials.similarity`): CrystalNN-based structure matching
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

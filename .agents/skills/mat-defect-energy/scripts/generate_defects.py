@@ -14,9 +14,8 @@ Requirements:
 
 import argparse
 import json
-import os
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 from pymatgen.core import Structure
@@ -25,7 +24,6 @@ from pymatgen.analysis.defects.generators import (
     SubstitutionGenerator,
     InterstitialGenerator,
 )
-from pymatgen.transformations.standard_transformations import SupercellTransformation
 
 
 def generate_vacancies(structure: Structure, supercell_matrix: List[List[int]]) -> list:
@@ -52,16 +50,18 @@ def generate_vacancies(structure: Structure, supercell_matrix: List[List[int]]) 
         site_element = defect.site.specie.symbol
         site_idx = int(defect.defect_site_index)
         name = f"vac_{site_element}_{i}"
-        results.append({
-            "name": name,
-            "structure": sc,
-            "defect_info": {
-                "type": "vacancy",
-                "removed_element": site_element,
-                "site_index": site_idx,
-                "multiplicity": int(defect.multiplicity),
-            },
-        })
+        results.append(
+            {
+                "name": name,
+                "structure": sc,
+                "defect_info": {
+                    "type": "vacancy",
+                    "removed_element": site_element,
+                    "site_index": site_idx,
+                    "multiplicity": int(defect.multiplicity),
+                },
+            }
+        )
     return results
 
 
@@ -82,23 +82,27 @@ def generate_substitutions(
         List of dicts with 'name', 'structure', 'defect_info'.
     """
     sub_gen = SubstitutionGenerator()
-    defects = sub_gen.generate(structure, substitution={substitute_element: structure.symbol_set})
+    defects = sub_gen.generate(
+        structure, substitution={substitute_element: structure.symbol_set}
+    )
     results = []
     for i, defect in enumerate(defects):
         sc = defect.get_supercell_structure(sc_mat=np.array(supercell_matrix))
         original_element = defect.site.specie.symbol
         name = f"sub_{substitute_element}_on_{original_element}_{i}"
-        results.append({
-            "name": name,
-            "structure": sc,
-            "defect_info": {
-                "type": "substitution",
-                "original_element": original_element,
-                "substitute_element": substitute_element,
-                "site_index": int(defect.defect_site_index),
-                "multiplicity": int(defect.multiplicity),
-            },
-        })
+        results.append(
+            {
+                "name": name,
+                "structure": sc,
+                "defect_info": {
+                    "type": "substitution",
+                    "original_element": original_element,
+                    "substitute_element": substitute_element,
+                    "site_index": int(defect.defect_site_index),
+                    "multiplicity": int(defect.multiplicity),
+                },
+            }
+        )
     return results
 
 
@@ -119,21 +123,25 @@ def generate_interstitials(
         List of dicts with 'name', 'structure', 'defect_info'.
     """
     int_gen = InterstitialGenerator()
-    defects = int_gen.generate(structure, insertions={interstitial_element: structure.symbol_set})
+    defects = int_gen.generate(
+        structure, insertions={interstitial_element: structure.symbol_set}
+    )
     results = []
     for i, defect in enumerate(defects):
         sc = defect.get_supercell_structure(sc_mat=np.array(supercell_matrix))
         name = f"int_{interstitial_element}_{i}"
-        results.append({
-            "name": name,
-            "structure": sc,
-            "defect_info": {
-                "type": "interstitial",
-                "inserted_element": interstitial_element,
-                "frac_coords": defect.site.frac_coords.tolist(),
-                "multiplicity": int(defect.multiplicity),
-            },
-        })
+        results.append(
+            {
+                "name": name,
+                "structure": sc,
+                "defect_info": {
+                    "type": "interstitial",
+                    "inserted_element": interstitial_element,
+                    "frac_coords": defect.site.frac_coords.tolist(),
+                    "multiplicity": int(defect.multiplicity),
+                },
+            }
+        )
     return results
 
 
@@ -141,7 +149,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Generate point-defect supercells from a bulk crystal structure."
     )
-    parser.add_argument("--bulk", required=True, help="Path to bulk structure file (CIF/POSCAR)")
+    parser.add_argument(
+        "--bulk", required=True, help="Path to bulk structure file (CIF/POSCAR)"
+    )
     parser.add_argument(
         "--supercell_size",
         nargs=3,
@@ -165,7 +175,9 @@ def main():
         default=None,
         help="Element to insert (required for interstitial type)",
     )
-    parser.add_argument("--output", default="defect_structures", help="Output directory")
+    parser.add_argument(
+        "--output", default="defect_structures", help="Output directory"
+    )
     args = parser.parse_args()
 
     # Read bulk structure
@@ -244,6 +256,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

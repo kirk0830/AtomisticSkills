@@ -15,23 +15,40 @@ from pymatgen.io.lobster import Cohpcar
 from pymatgen.core import Structure
 from lobsterpy.plotting import PlainCohpPlotter
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Analyze and plot COHPCAR from LOBSTER.")
-    parser.add_argument("--cohpcar", type=str, default="COHPCAR.lobster", help="Path to COHPCAR file")
-    parser.add_argument("--poscar", type=str, default="POSCAR", help="Path to POSCAR file (optional, for context)")
-    parser.add_argument("--save", type=str, default="cohp_plot.png", help="Path to save the resulting plot")
+    parser = argparse.ArgumentParser(
+        description="Analyze and plot COHPCAR from LOBSTER."
+    )
+    parser.add_argument(
+        "--cohpcar", type=str, default="COHPCAR.lobster", help="Path to COHPCAR file"
+    )
+    parser.add_argument(
+        "--poscar",
+        type=str,
+        default="POSCAR",
+        help="Path to POSCAR file (optional, for context)",
+    )
+    parser.add_argument(
+        "--save",
+        type=str,
+        default="cohp_plot.png",
+        help="Path to save the resulting plot",
+    )
     args = parser.parse_args()
 
     cohpcar_path = Path(args.cohpcar)
     if not cohpcar_path.exists():
         print(f"❌ Error: File not found: {cohpcar_path}")
-        print("💡 Hint: Ensure you have extracted your LOBSTER outputs from the remote HPC directory.")
+        print(
+            "💡 Hint: Ensure you have extracted your LOBSTER outputs from the remote HPC directory."
+        )
         return
-        
+
     print(f"📊 Loading COHP data from {cohpcar_path}...")
     # Load COHPCAR file using pymatgen's LOBSTER parsing classes
     cohpcar = Cohpcar(filename=str(cohpcar_path))
-    
+
     # Check if POSCAR exists (for context or advanced scaling in Custom plotters)
     structure_path = Path(args.poscar)
     if structure_path.exists():
@@ -43,27 +60,29 @@ def main():
     print("📈 Generating COHP plot...")
     # Initialize plotter pushing Fermi level (E_f) to 0 eV
     plotter = PlainCohpPlotter(zero_at_efermi=True)
-    
+
     # Retrieve dictionary of COHPs
     all_cohps = cohpcar.get_all_cohps()
-    
+
     plotted_count = 0
     # Add bonds to the plotter (we limit to 5 to avoid visual clutter)
     for label, cohp in all_cohps.items():
         if plotted_count < 5:
             plotter.add_cohp(label=f"Bond {label}", cohp=cohp)
             plotted_count += 1
-            
+
     # Generate matplotlib figure
     fig = plotter.get_plot()
-    
+
     print(f"💾 Saving plot to {args.save}...")
     fig.savefig(args.save, dpi=300, bbox_inches="tight")
     print("✅ Done!")
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
+
 
 if __name__ == "__main__":
     main()

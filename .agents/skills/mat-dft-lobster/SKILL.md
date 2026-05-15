@@ -16,7 +16,7 @@ Because `WAVECAR` files are extremely large (often tens or hundreds of gigabytes
 
 ## Installation
 
-LOBSTER is free to download for non-commercial use from [http://www.cohp.de/](http://www.cohp.de/). 
+LOBSTER is free to download for non-commercial use from [http://www.cohp.de/](http://www.cohp.de/).
 
 To use this skill, deploy the compiled `lobster` binary to your remote HPC worker or local testing environment and ensure its path is exported in your environment `PATH`. All required Python packages (`lobsterpy`, `ijson`) are already provided by the `atomate2-agent` environment.
 
@@ -71,5 +71,5 @@ python .agents/skills/mat-dft-lobster/scripts/analyze_lobster.py --cohpcar COHPC
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub](https://github.com/bowen-bd)

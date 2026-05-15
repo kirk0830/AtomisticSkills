@@ -58,7 +58,7 @@ THEME["font_family"] = "Arial"
 save_presentation(prs, "output.pptx")
 ```
 
-The agent edits the Python script and re-runs to reflect changes. 
+The agent edits the Python script and re-runs to reflect changes.
 **CRITICAL ITERATION LOOP**: The agent **MUST** visually inspect the generated slides using their VLM capabilities to ensure elements do not overlap, text fits perfectly within boxes, and the slide space is used efficiently with a universal, professional design style.
 
 To preview a slide as an image for visual inspection:
@@ -97,5 +97,5 @@ See [amorphorization example](examples/amorphorization/) for a complete runnable
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -166,11 +166,11 @@ parser.add_argument("--option", default=default_value, help="What this option co
 def process_structure(atoms: Atoms, threshold: float = 0.5) -> dict:
     """
     Brief description of what the function does.
-    
+
     Args:
         atoms: ASE Atoms object to process
         threshold: Cutoff value for some criterion
-        
+
     Returns:
         Dictionary containing results with keys: 'metric1', 'metric2'
     """
@@ -237,7 +237,7 @@ At the very end of every `SKILL.md` file, include a footer separated by a horizo
 ```markdown
 ---
 
-**Author:** Name  
+**Author:** Name
 **Contact:** [GitHub @username](https://github.com/username)
 ```
 
@@ -245,6 +245,6 @@ At the very end of every `SKILL.md` file, include a footer separated by a horizo
 ```markdown
 ---
 
-**Author:** Name  
+**Author:** Name
 **Contact:** [name@example.com](mailto:name@example.com)
 ```

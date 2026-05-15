@@ -19,11 +19,11 @@ def run_finetuning(
     epochs: int = 100,
     output_dir: Path = None,
     learning_rate: float = 5e-6,
-    batch_size: int = 32
+    batch_size: int = 32,
 ) -> None:
     """
     Run MatterGen fine-tuning.
-    
+
     Args:
         training_data_path: Path to training data CSV
         property_name: Property name to condition on
@@ -35,11 +35,11 @@ def run_finetuning(
     """
     if output_dir is None:
         output_dir = Path(f"finetuned_{property_name}")
-    
+
     output_dir = Path(output_dir).absolute()
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    print(f"=== MatterGen Fine-Tuning ===")
+
+    print("=== MatterGen Fine-Tuning ===")
     print(f"Training data: {training_data_path}")
     print(f"Property: {property_name}")
     print(f"Base model: {base_model}")
@@ -48,16 +48,24 @@ def run_finetuning(
     print(f"Learning rate: {learning_rate}")
     print(f"Batch size: {batch_size}")
     print()
-    
+
     # Create temporary config directory for custom property
     config_dir = output_dir / "config"
     config_dir.mkdir(exist_ok=True)
-    
+
     # Get MatterGen's config directory
     import mattergen
+
     mattergen_dir = Path(mattergen.__file__).parent
-    property_embeddings_dir = mattergen_dir / "conf" / "lightning_module" / "diffusion_module" / "model" / "property_embeddings"
-    
+    property_embeddings_dir = (
+        mattergen_dir
+        / "conf"
+        / "lightning_module"
+        / "diffusion_module"
+        / "model"
+        / "property_embeddings"
+    )
+
     # Create property embedding YAML file
     property_config_path = property_embeddings_dir / f"{property_name}.yaml"
     property_config_content = f"""_target_: mattergen.property_embeddings.PropertyEmbedding
@@ -71,18 +79,18 @@ conditional_embedding_module:
 scaler:
   _target_: mattergen.common.utils.data_utils.StandardScalerTorch
 """
-    
+
     # Save to both locations (MatterGen dir and backup in output dir)
-    with open(property_config_path, 'w') as f:
+    with open(property_config_path, "w") as f:
         f.write(property_config_content)
-    
+
     backup_path = config_dir / f"{property_name}.yaml"
-    with open(backup_path, 'w') as f:
+    with open(backup_path, "w") as f:
         f.write(property_config_content)
-    
+
     print(f"✓ Created property config in MatterGen: {property_config_path}")
     print(f"✓ Backup saved to: {backup_path}")
-    
+
     # Create custom adapter config in output directory
     adapter_config_dir = mattergen_dir / "conf" / "adapter"
     adapter_config_path = adapter_config_dir / "custom_property.yaml"
@@ -98,25 +106,25 @@ adapter:
 defaults:
   - /lightning_module/diffusion_module/model/property_embeddings@adapter.property_embeddings_adapt.{property_name}: {property_name}
 """
-    
-    with open(adapter_config_path, 'w') as f:
+
+    with open(adapter_config_path, "w") as f:
         f.write(adapter_config_content)
-    
+
     backup_adapter_path = config_dir / "adapter_custom.yaml"
-    with open(backup_adapter_path, 'w') as f:
+    with open(backup_adapter_path, "w") as f:
         f.write(adapter_config_content)
-    
+
     print(f"✓ Created adapter config in MatterGen: {adapter_config_path}")
     print(f"✓ Backup saved to: {backup_adapter_path}")
-    
+
     # Create custom data module config for CSV dataset
     data_module_config_dir = mattergen_dir / "conf" / "data_module"
     data_module_config_path = data_module_config_dir / "custom_csv.yaml"
-    
+
     # Create cache directory for CSV parsing
     cache_dir = output_dir / "cache"
     cache_dir.mkdir(exist_ok=True)
-    
+
     data_module_config_content = f"""_target_: mattergen.common.data.datamodule.CrystDataModule
 _recursive_: true
 properties: [{property_name}]
@@ -127,7 +135,7 @@ transforms:
 - _target_: mattergen.common.data.transform.set_chemical_system_string
   _partial_: true
 
-dataset_transforms: 
+dataset_transforms:
   - _target_: mattergen.common.data.dataset_transform.filter_sparse_properties
     _partial_: true
 
@@ -157,19 +165,18 @@ batch_size:
 
 max_epochs: {epochs}
 """
-    
-    with open(data_module_config_path, 'w') as f:
+
+    with open(data_module_config_path, "w") as f:
         f.write(data_module_config_content)
-    
+
     backup_data_module_path = config_dir / "data_module_custom.yaml"
-    with open(backup_data_module_path, 'w') as f:
+    with open(backup_data_module_path, "w") as f:
         f.write(data_module_config_content)
-    
+
     print(f"✓ Created data module config in MatterGen: {data_module_config_path}")
     print(f"✓ Backup saved to: {backup_data_module_path}")
     print()
-    
-    
+
     # Build Hydra config overrides using the custom adapter config
     # Following official MatterGen fine-tuning approach from README
     overrides = [
@@ -178,34 +185,33 @@ max_epochs: {epochs}
         f"trainer.max_epochs={epochs}",
         f"lightning_module.optimizer_partial.lr={learning_rate}",
         "trainer.check_val_every_n_epoch=1",  # CRITICAL FIX: Validate every epoch so ModelCheckpoint can save
-        "~trainer.logger"  # Disable WandB logging
+        "~trainer.logger",  # Disable WandB logging
     ]
-    
+
     # Build command using official mattergen-finetune CLI
     # This ensures Hydra's automatic checkpoint management is used
     cmd = ["mattergen-finetune"] + overrides
-    
-    print(f"Running command:")
+
+    print("Running command:")
     print(" ".join(cmd))
     print()
-    
+
     try:
         result = subprocess.run(
             cmd,
             check=True,
             cwd=output_dir,  # Run in output dir so Hydra outputs are relative to it
             text=True,
-            env={**subprocess.os.environ, "OUTPUT_DIR": str(output_dir)}
+            env={**subprocess.os.environ, "OUTPUT_DIR": str(output_dir)},
         )
-        
-        
-        print(f"\n✓ Fine-tuning completed successfully")
-        
+
+        print("\n✓ Fine-tuning completed successfully")
+
         # Find checkpoints in Hydra's output directory structure
         # Hydra saves to outputs/singlerun/YYYY-MM-DD/HH-MM-SS/checkpoints/
         hydra_outputs = output_dir / "outputs" / "singlerun"
         checkpoint_paths = []
-        
+
         if hydra_outputs.exists():
             # Find all checkpoint directories
             for date_dir in sorted(hydra_outputs.iterdir(), reverse=True):
@@ -216,20 +222,26 @@ max_epochs: {epochs}
                             checkpoints = list(checkpoint_dir.glob("*.ckpt"))
                             if checkpoints:
                                 checkpoint_paths.extend(checkpoints)
-                                print(f"✓ Found {len(checkpoints)} checkpoint(s) in {checkpoint_dir}:")
+                                print(
+                                    f"✓ Found {len(checkpoints)} checkpoint(s) in {checkpoint_dir}:"
+                                )
                                 for ckpt in checkpoints:
                                     print(f"  - {ckpt.name}")
                                 break  # Use most recent time directory
                     if checkpoint_paths:
                         break  # Use most recent date directory
-        
+
         if not checkpoint_paths:
-            print("⚠ Warning: No checkpoints found. Check outputs/singlerun/ directory.")
-        
+            print(
+                "⚠ Warning: No checkpoints found. Check outputs/singlerun/ directory."
+            )
+
         return 0
-        
+
     except subprocess.CalledProcessError as e:
-        print(f"\n✗ Fine-tuning failed with return code {e.returncode}", file=sys.stderr)
+        print(
+            f"\n✗ Fine-tuning failed with return code {e.returncode}", file=sys.stderr
+        )
         return e.returncode
     except Exception as e:
         print(f"\n✗ Error: {e}", file=sys.stderr)
@@ -256,56 +268,56 @@ Examples:
     --property-name band_gap \\
     --epochs 2 \\
     --output-dir ./test_finetune
-        """
+        """,
     )
     parser.add_argument(
         "--training-data",
         type=Path,
         required=True,
-        help="Path to training data CSV file (output from prepare_training_data.py)"
+        help="Path to training data CSV file (output from prepare_training_data.py)",
     )
     parser.add_argument(
         "--property-name",
         required=True,
-        help="Name of the property to condition on (must match column in CSV)"
+        help="Name of the property to condition on (must match column in CSV)",
     )
     parser.add_argument(
         "--base-model",
         default="mattergen_base",
         choices=["mattergen_base", "mp_20_base", "dft_mag_density", "chemical_system"],
-        help="Base model to start fine-tuning from (default: mattergen_base)"
+        help="Base model to start fine-tuning from (default: mattergen_base)",
     )
     parser.add_argument(
         "--epochs",
         type=int,
         default=100,
-        help="Number of training epochs (default: 100)"
+        help="Number of training epochs (default: 100)",
     )
     parser.add_argument(
         "--learning-rate",
         type=float,
         default=5e-6,
-        help="Learning rate for adapter training (default: 5e-6)"
+        help="Learning rate for adapter training (default: 5e-6)",
     )
     parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=32,
-        help="Training batch size (default: 32)"
+        "--batch-size", type=int, default=32, help="Training batch size (default: 32)"
     )
     parser.add_argument(
         "--output-dir",
         type=Path,
-        help="Output directory for checkpoints (default: ./finetuned_{property_name})"
+        help="Output directory for checkpoints (default: ./finetuned_{property_name})",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Validate training data exists
     if not args.training_data.exists():
-        print(f"Error: Training data file not found: {args.training_data}", file=sys.stderr)
+        print(
+            f"Error: Training data file not found: {args.training_data}",
+            file=sys.stderr,
+        )
         sys.exit(1)
-    
+
     # Run fine-tuning
     exit_code = run_finetuning(
         training_data_path=args.training_data,
@@ -314,9 +326,9 @@ Examples:
         epochs=args.epochs,
         output_dir=args.output_dir,
         learning_rate=args.learning_rate,
-        batch_size=args.batch_size
+        batch_size=args.batch_size,
     )
-    
+
     sys.exit(exit_code)
 
 

@@ -158,7 +158,10 @@ def find_primary_outcar(vasprun_path: Path) -> Path | None:
     Returns:
         Matching OUTCAR path when present, otherwise `None`.
     """
-    for candidate in (vasprun_path.parent / "OUTCAR", vasprun_path.parent / "OUTCAR.gz"):
+    for candidate in (
+        vasprun_path.parent / "OUTCAR",
+        vasprun_path.parent / "OUTCAR.gz",
+    ):
         if candidate.exists():
             return candidate
     return None
@@ -183,7 +186,9 @@ def ensure_frequency_dependent_calculation(vasprun_path: Path) -> None:
         )
 
 
-def parse_dielectric_section(outcar_path: Path, header: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def parse_dielectric_section(
+    outcar_path: Path, header: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Parse a dielectric data block from OUTCAR.
 
@@ -233,12 +238,16 @@ def parse_dielectric_section(outcar_path: Path, header: str) -> tuple[np.ndarray
             break
 
     if not energies:
-        raise ValueError(f"No dielectric data found after section '{header}' in {outcar_path}")
+        raise ValueError(
+            f"No dielectric data found after section '{header}' in {outcar_path}"
+        )
 
     return np.array(energies), np.array(real), np.array(imag)
 
 
-def summarize_dielectric(energies: np.ndarray, real: np.ndarray, imag: np.ndarray) -> None:
+def summarize_dielectric(
+    energies: np.ndarray, real: np.ndarray, imag: np.ndarray
+) -> None:
     """
     Print a compact summary of the dielectric spectrum.
 
@@ -260,7 +269,9 @@ def summarize_dielectric(energies: np.ndarray, real: np.ndarray, imag: np.ndarra
     above_threshold = np.where(eps2_avg > threshold)[0]
     if len(above_threshold) > 0:
         onset_energy = energies[above_threshold[0]]
-        print(f"  - Approximate absorption onset (Im > {threshold}): {onset_energy:.3f} eV")
+        print(
+            f"  - Approximate absorption onset (Im > {threshold}): {onset_energy:.3f} eV"
+        )
 
 
 def plot_dielectric(
@@ -373,7 +384,9 @@ def plot_dielectric(
         labels = ["xx", "yy", "zz"]
         colors = ["tab:blue", "tab:orange", "tab:green"]
         for idx, (label, color) in enumerate(zip(labels, colors)):
-            ax.plot(energies, real[:, idx], color=color, lw=2, label=f"Re(epsilon_{label})")
+            ax.plot(
+                energies, real[:, idx], color=color, lw=2, label=f"Re(epsilon_{label})"
+            )
             ax.plot(
                 energies,
                 -imag[:, idx],
@@ -405,48 +418,42 @@ if __name__ == "__main__":
         description="Plot the dielectric function from a VASP optics calculation"
     )
     parser.add_argument(
-        "input_path",
-        help="Path to vasprun.xml(.gz) or a directory containing it"
+        "input_path", help="Path to vasprun.xml(.gz) or a directory containing it"
     )
     parser.add_argument(
         "--output",
         default="dielectric_function.png",
-        help="Output path for the dielectric plot (default: dielectric_function.png)"
+        help="Output path for the dielectric plot (default: dielectric_function.png)",
     )
     parser.add_argument(
         "--mode",
         choices=["average", "diagonal"],
         default="average",
-        help="Plot diagonal average or separate xx/yy/zz components (default: average)"
+        help="Plot diagonal average or separate xx/yy/zz components (default: average)",
     )
     parser.add_argument(
         "--xmax",
         type=float,
         default=15.0,
-        help="Upper x-axis limit in eV (default: 15)"
+        help="Upper x-axis limit in eV (default: 15)",
     )
     parser.add_argument(
-        "--ymin",
-        type=float,
-        default=-50.0,
-        help="Lower y-axis limit (default: -50)"
+        "--ymin", type=float, default=-50.0, help="Lower y-axis limit (default: -50)"
     )
     parser.add_argument(
-        "--ymax",
-        type=float,
-        default=40.0,
-        help="Upper y-axis limit (default: 40)"
+        "--ymax", type=float, default=40.0, help="Upper y-axis limit (default: 40)"
     )
     parser.add_argument(
         "--chi-outcar",
         default=None,
-        help="Optional path to OUTCAR from an `ALGO = CHI` calculation"
+        help="Optional path to OUTCAR from an `ALGO = CHI` calculation",
     )
 
     args = parser.parse_args()
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
     _params_path.parent.mkdir(parents=True, exist_ok=True)
     _params_path.write_text(_json.dumps(_config, indent=2, default=str))

@@ -34,6 +34,7 @@ from pathlib import Path
 # Load .env from project root if present (enables GOOGLE_API_KEY without manual export)
 try:
     from dotenv import load_dotenv
+
     for d in Path(__file__).resolve().parents:
         env_file = d / ".env"
         if env_file.exists():
@@ -110,7 +111,10 @@ def validate_metadata_schema(meta: dict, strict: bool) -> list[str]:
         for line in lines:
             print(f"Schema validation error: {line}", file=sys.stderr)
     else:
-        print("Warning: metadata JSON does not fully match metadata_schema.json:", file=sys.stderr)
+        print(
+            "Warning: metadata JSON does not fully match metadata_schema.json:",
+            file=sys.stderr,
+        )
         for line in lines:
             print(f"  {line}", file=sys.stderr)
     return lines
@@ -141,34 +145,26 @@ def extract_json_from_response(text: str) -> dict:
     return json.loads(_normalize_comma_decimals(text))
 
 
-def call_gemini(
-    image_path: str, prompt: str, model_name: str | None = None
-) -> dict:
+def call_gemini(image_path: str, prompt: str, model_name: str | None = None) -> dict:
     """Call Gemini API with image and prompt. Returns parsed JSON."""
     try:
         from google import genai
     except ImportError:
-        raise RuntimeError(
-            "google-genai not installed. Run: pip install google-genai"
-        )
+        raise RuntimeError("google-genai not installed. Run: pip install google-genai")
 
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise RuntimeError("GOOGLE_API_KEY environment variable not set")
 
     resolved = (
-        model_name
-        or os.environ.get("GEMINI_MODEL", "").strip()
-        or DEFAULT_GEMINI_MODEL
+        model_name or os.environ.get("GEMINI_MODEL", "").strip() or DEFAULT_GEMINI_MODEL
     )
 
     import PIL.Image
 
     client = genai.Client(api_key=api_key)
     img = PIL.Image.open(image_path)
-    response = client.models.generate_content(
-        model=resolved, contents=[prompt, img]
-    )
+    response = client.models.generate_content(model=resolved, contents=[prompt, img])
     text = response.text
     return extract_json_from_response(text)
 
@@ -251,7 +247,10 @@ def validate_metadata(meta: dict) -> dict:
             meta[k] = False
         else:
             meta[k] = bool(meta[k])
-    if "y_calibration" in meta and meta["y_calibration"] not in ("axis", "per_curve_normalized"):
+    if "y_calibration" in meta and meta["y_calibration"] not in (
+        "axis",
+        "per_curve_normalized",
+    ):
         meta["y_calibration"] = "axis"
     # Patch text_regions: ensure y_max is present (VLMs sometimes omit it)
     _default_text_h = 20
@@ -359,6 +358,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

@@ -38,7 +38,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -59,11 +59,30 @@ logger = logging.getLogger("RamanAnalysis")
 # For non-centrosymmetric groups nearly all modes can be both.
 
 CENTROSYMMETRIC_POINT_GROUPS = {
-    "Ci", "C2h", "D2h", "C4h", "D4h", "S6", "D3d",
-    "C6h", "D6h", "Th", "Oh", "S10",
+    "Ci",
+    "C2h",
+    "D2h",
+    "C4h",
+    "D4h",
+    "S6",
+    "D3d",
+    "C6h",
+    "D6h",
+    "Th",
+    "Oh",
+    "S10",
     # Hermann-Mauguin equivalents
-    "-1", "2/m", "mmm", "4/m", "4/mmm", "-3", "-3m",
-    "6/m", "6/mmm", "m-3", "m-3m",
+    "-1",
+    "2/m",
+    "mmm",
+    "4/m",
+    "4/mmm",
+    "-3",
+    "-3m",
+    "6/m",
+    "6/mmm",
+    "m-3",
+    "m-3m",
 }
 
 
@@ -87,7 +106,7 @@ def _is_raman_active(label: str, point_group: str) -> bool:
         # Raman active ↔ gerade (ends with 'g'), BUT excluding A2g (rotation, Raman inactive)
         if clean in {"A2g"}:
             return False
-        return clean.endswith("g") or clean.endswith("g'") or clean.endswith("g\"")
+        return clean.endswith("g") or clean.endswith("g'") or clean.endswith('g"')
 
     # Non-centrosymmetric: all modes are potentially Raman active.
     # (A full determination requires the character table of the specific point group.)
@@ -97,6 +116,7 @@ def _is_raman_active(label: str, point_group: str) -> bool:
 def load_phonopy_result(phonon_yaml: str):
     """Load a phonopy Phonopy object from phonon.yaml."""
     import phonopy
+
     phonon = phonopy.load(phonopy_yaml=phonon_yaml)
     return phonon
 
@@ -112,7 +132,7 @@ def get_gamma_frequencies_and_eigenvectors(
     band_dict = phonon.get_band_structure_dict()
     # band_dict['frequencies'] shape: (n_paths, n_qpoints, n_bands)
     freqs_thz = band_dict["frequencies"][0][0]  # THz
-    eigvecs = band_dict["eigenvectors"][0][0]   # (n_atoms*3, n_bands)
+    eigvecs = band_dict["eigenvectors"][0][0]  # (n_atoms*3, n_bands)
 
     # Convert THz → cm⁻¹  (1 THz = 33.3564 cm⁻¹)
     freqs_cm = freqs_thz * 33.3564
@@ -142,7 +162,7 @@ def run_irreps(phonon, freq_tolerance_cm: float = 0.5) -> Optional[dict]:
         if hasattr(phonon, "set_irreps"):
             phonon.set_irreps(q=[0.0, 0.0, 0.0])
             irreps_obj = phonon.irreps
-            ir_labels = irreps_obj._ir_labels        # list, may contain None
+            ir_labels = irreps_obj._ir_labels  # list, may contain None
             ir_freqs_thz = list(irreps_obj.frequencies)
         else:
             # Legacy phonopy 2.x
@@ -161,7 +181,6 @@ def run_irreps(phonon, freq_tolerance_cm: float = 0.5) -> Optional[dict]:
     except Exception as exc:
         logger.warning(f"IrReps analysis failed: {exc}. Will use 'Unknown' labels.")
         return None
-
 
 
 def compute_raman_intensities_from_born(
@@ -188,8 +207,9 @@ def compute_raman_intensities_from_born(
     """
     try:
         from pymatgen.io.vasp.outputs import Outcar
+
         outcar = Outcar(outcar_path)
-        born_charges = np.array(outcar.born)     # shape (n_atoms, 3, 3)
+        born_charges = np.array(outcar.born)  # shape (n_atoms, 3, 3)
         epsilon_inf = np.array(outcar.dielectric_tensor)  # shape (3, 3)
     except Exception as exc:
         logger.warning(f"Failed to parse Born charges from {outcar_path}: {exc}")
@@ -221,7 +241,7 @@ def compute_raman_intensities_from_born(
         alpha_nu = np.zeros((3, 3))
         for k, (Z_k, m_k) in enumerate(zip(born_charges, masses)):
             # Normalised mass-weighted displacement for atom k in mode nu
-            e_nu_k = eigvecs[3 * k: 3 * k + 3, nu].real / np.sqrt(m_k)
+            e_nu_k = eigvecs[3 * k : 3 * k + 3, nu].real / np.sqrt(m_k)
             # Raman tensor contribution: Z*_k contracted with mode displacement
             alpha_nu += np.outer(Z_k @ e_nu_k, np.ones(3))
 
@@ -232,17 +252,21 @@ def compute_raman_intensities_from_born(
             for j in range(3):
                 beta2 += (alpha_nu[i, j] - (alpha_avg if i == j else 0)) ** 2
         beta2 /= 2.0
-        I_classical = (10 * alpha_avg ** 2 + 7 * beta2)
+        I_classical = 10 * alpha_avg**2 + 7 * beta2
 
         # Bose-Einstein correction
         hbar_omega = 1.0546e-34 * omega_nu
         kBT = 1.381e-23 * temperature_K
         bose_factor = 1.0
         if hbar_omega / kBT < 50:
-            bose_factor = (1 + 1 / (np.exp(hbar_omega / kBT) - 1 + 1e-30))
+            bose_factor = 1 + 1 / (np.exp(hbar_omega / kBT) - 1 + 1e-30)
 
         # Pre-factor: (ω_laser - ω_ν)⁴ / ω_ν
-        pre = (omega_laser - omega_nu) ** 4 / (omega_nu + 1e-30) if freq_thz > 0.1 else 0.0
+        pre = (
+            (omega_laser - omega_nu) ** 4 / (omega_nu + 1e-30)
+            if freq_thz > 0.1
+            else 0.0
+        )
 
         intensities[nu] = max(0.0, pre * bose_factor * I_classical)
 
@@ -284,6 +308,7 @@ def plot_spectrum(
 ) -> None:
     """Plot simulated Raman spectrum and save to file."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -297,7 +322,8 @@ def plot_spectrum(
         ax.axvline(freq, color="#E74C3C", linewidth=0.8, alpha=0.6, linestyle="--")
 
     intensity_note = (
-        "equal intensities (MLIP tier)" if intensity_type == "equal"
+        "equal intensities (MLIP tier)"
+        if intensity_type == "equal"
         else "DFT Raman intensities"
     )
     ax.set_xlabel("Raman shift (cm⁻¹)", fontweight="bold")
@@ -411,7 +437,9 @@ def main():
     intensity_type = "equal"
     intensities = np.zeros(n_modes)
     if args.born_charges:
-        logger.info(f"Computing Raman intensities from Born charges: {args.born_charges}")
+        logger.info(
+            f"Computing Raman intensities from Born charges: {args.born_charges}"
+        )
         dft_intensities = compute_raman_intensities_from_born(
             phonon, args.born_charges, laser_wavelength_nm=args.laser_wavelength
         )
@@ -420,7 +448,9 @@ def main():
             intensity_type = "dft"
             logger.info("Using DFT-computed Raman intensities")
         else:
-            logger.warning("DFT intensity computation failed; falling back to equal intensities")
+            logger.warning(
+                "DFT intensity computation failed; falling back to equal intensities"
+            )
 
     if intensity_type == "equal":
         for rec in mode_records:
@@ -464,8 +494,14 @@ def main():
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["mode_index", "frequency_cm", "symmetry_label",
-                        "is_acoustic", "raman_active", "raman_intensity"],
+            fieldnames=[
+                "mode_index",
+                "frequency_cm",
+                "symmetry_label",
+                "is_acoustic",
+                "raman_active",
+                "raman_intensity",
+            ],
         )
         writer.writeheader()
         writer.writerows(mode_records)
@@ -473,10 +509,18 @@ def main():
 
     # Plot
     from pymatgen.core import Structure
+
     struct = Structure.from_file(args.structure)
     formula = struct.composition.reduced_formula
     plot_path = str(output_dir / "raman_spectrum.png")
-    plot_spectrum(x, y, raman_freqs, plot_path, title=f"Raman Spectrum — {formula}", intensity_type=intensity_type)
+    plot_spectrum(
+        x,
+        y,
+        raman_freqs,
+        plot_path,
+        title=f"Raman Spectrum — {formula}",
+        intensity_type=intensity_type,
+    )
 
     # Print summary
     print("\n" + "=" * 60)
@@ -496,6 +540,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

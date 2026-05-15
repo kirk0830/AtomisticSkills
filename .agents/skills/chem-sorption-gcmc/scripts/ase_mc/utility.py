@@ -5,8 +5,8 @@ from ase import neighborlist, units
 from ase.parallel import world, DummyMPI
 
 
-def get_components(atoms, radii = None):
-    '''Returns the total number of compontents, component list, and connectivity matrix of an ASE atoms object'''
+def get_components(atoms, radii=None):
+    """Returns the total number of compontents, component list, and connectivity matrix of an ASE atoms object"""
 
     if radii is None:
         cut_offs = neighborlist.natural_cutoffs(atoms)
@@ -45,7 +45,9 @@ def calculate_virial_pressure(atoms, temperature_K):
     return pressure
 
 
-def random_packing(atoms, adsorbate, n=1, tolerance=2.0, max_iter=1000, communicator=world):
+def random_packing(
+    atoms, adsorbate, n=1, tolerance=2.0, max_iter=1000, communicator=world
+):
     """A system setup function that tries to insert n number of probe molecules"""
 
     if communicator is None:
@@ -59,7 +61,7 @@ def random_packing(atoms, adsorbate, n=1, tolerance=2.0, max_iter=1000, communic
         attempt = 0
         while overlap:
             if attempt == max_iter:
-                print(f"WARNING: MAX ITER REACHED.")
+                print("WARNING: MAX ITER REACHED.")
                 print(f"WARNING: Could not pack system with {n} probe molecules.")
                 print(f"WARNING: System currently has {probe_count + 1} molecules.")
                 break
@@ -136,4 +138,3 @@ def chemical_potential_to_activity(
     arg = chemical_potential_kjpermol * kj_to_j / Avogadro / Boltzmann / temperature_K
     activity_one_over_angstrom3 = np.exp(arg) / debroglie3
     return activity_one_over_angstrom3
-

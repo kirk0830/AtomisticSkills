@@ -31,5 +31,5 @@ As of **2026-01-30**, the library is fully expanded and contains **89 elements**
 - **Units**: Energies are stored as **eV/atom** (total potential energy of the relaxed structure divided by the number of atoms).
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

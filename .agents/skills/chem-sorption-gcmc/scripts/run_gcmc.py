@@ -53,9 +53,6 @@ from src.utils.structure_utils import normalize_charge_spin
 LOGGER = logging.getLogger(__name__)
 
 
-
-
-
 def retag_all_guests_single_species(atoms: Atoms, host_natoms: int) -> int | None:
     total = len(atoms)
     if total <= host_natoms:
@@ -74,33 +71,77 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="BVT Monte Carlo adsorption of a probe gas into a periodic host using a generic MLIP."
     )
-    p.add_argument("--cif", type=Path, required=True, help="Path to periodic framework CIF file.")
-    p.add_argument("--steps", type=int, required=True, help="Number of Monte Carlo steps.")
-    p.add_argument("--temperature-K", type=float, required=True, help="Simulation temperature in Kelvin.")
-    p.add_argument("--pressure-bar", type=float, default=1.0, help="Gas pressure in bar.")
+    p.add_argument(
+        "--cif", type=Path, required=True, help="Path to periodic framework CIF file."
+    )
+    p.add_argument(
+        "--steps", type=int, required=True, help="Number of Monte Carlo steps."
+    )
+    p.add_argument(
+        "--temperature-K",
+        type=float,
+        required=True,
+        help="Simulation temperature in Kelvin.",
+    )
+    p.add_argument(
+        "--pressure-bar", type=float, default=1.0, help="Gas pressure in bar."
+    )
     p.add_argument("--scheme", choices=["gcmc", "hmc"], default="gcmc")
-    p.add_argument("--adsorbate", choices=["CO2", "N2"], default="CO2", help="Probe gas to adsorb.")
-    p.add_argument("--output-dir", type=Path, default=Path("."), help="Directory for results.")
-    p.add_argument("--restart-traj", type=Path, default=None, help="Optional: restart from previous ASE trajectory.")
-    p.add_argument("--restart-frame", type=int, default=-1, help="Frame index to restart from.")
+    p.add_argument(
+        "--adsorbate", choices=["CO2", "N2"], default="CO2", help="Probe gas to adsorb."
+    )
+    p.add_argument(
+        "--output-dir", type=Path, default=Path("."), help="Directory for results."
+    )
+    p.add_argument(
+        "--restart-traj",
+        type=Path,
+        default=None,
+        help="Optional: restart from previous ASE trajectory.",
+    )
+    p.add_argument(
+        "--restart-frame", type=int, default=-1, help="Frame index to restart from."
+    )
     p.add_argument(
         "--calculator",
         type=str,
         required=True,
         choices=["mace", "fairchem", "matgl"],
-        help="Backend MLIP calculator to use."
+        help="Backend MLIP calculator to use.",
     )
-    p.add_argument("--model-name", type=str, required=True, help="Name or path of the model checkpoint")
+    p.add_argument(
+        "--model-name",
+        type=str,
+        required=True,
+        help="Name or path of the model checkpoint",
+    )
     p.add_argument(
         "--task-name",
         type=str,
         default=None,
         help="Optional task name required by some calculators (e.g. odac for fairchem).",
     )
-    p.add_argument("--device", type=str, default="auto", help="Device string (e.g. 'cuda', 'cpu', 'auto').")
-    p.add_argument("--model-tag", type=str, default=None, help="Model tag for metadata.")
-    p.add_argument("--output", "-o", type=Path, default=None, help="Output JSON path (default: output_dir/gcmc_results.json)")
-    p.add_argument("--keep-intermediates", action="store_true", help="Keep intermediate .log, .traj, and .npy files instead of deleting them.")
+    p.add_argument(
+        "--device",
+        type=str,
+        default="auto",
+        help="Device string (e.g. 'cuda', 'cpu', 'auto').",
+    )
+    p.add_argument(
+        "--model-tag", type=str, default=None, help="Model tag for metadata."
+    )
+    p.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="Output JSON path (default: output_dir/gcmc_results.json)",
+    )
+    p.add_argument(
+        "--keep-intermediates",
+        action="store_true",
+        help="Keep intermediate .log, .traj, and .npy files instead of deleting them.",
+    )
     return p.parse_args()
 
 
@@ -128,6 +169,7 @@ def main() -> int:
 
     out_dir.mkdir(parents=True, exist_ok=True)
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, out_dir / "input_configs.yaml")
 
     t0 = time.perf_counter()
@@ -177,7 +219,9 @@ def main() -> int:
     starting_tag = guest_tag if guest_tag is not None else (host_max + 1)
 
     print_restart_sanity_single(
-        host, host_natoms, probe,
+        host,
+        host_natoms,
+        probe,
         label=restart_label + (" [retagged guests]" if retagged else ""),
     )
     LOGGER.info(
@@ -240,7 +284,9 @@ def main() -> int:
     )
 
     restarting = args.restart_traj is not None
-    traj_path, log_path = mc_traj_log_paths(out_dir=out_dir, restarting=restarting, stub="mc")
+    traj_path, log_path = mc_traj_log_paths(
+        out_dir=out_dir, restarting=restarting, stub="mc"
+    )
     dyn = MonteCarlo(
         atoms=host,
         dft_calc=calc_host,
@@ -258,7 +304,9 @@ def main() -> int:
         traj_path.name,
         log_path.name,
     )
-    dt_mc, steps_per_sec = run_mc_with_timing(dyn=dyn, steps=args.steps, perf_counter=time.perf_counter)
+    dt_mc, steps_per_sec = run_mc_with_timing(
+        dyn=dyn, steps=args.steps, perf_counter=time.perf_counter
+    )
     LOGGER.info("MC completed in %.3f s | %.2f steps/s", dt_mc, steps_per_sec)
 
     write_timing_kv(
@@ -326,7 +374,6 @@ def main() -> int:
     payload["qst_block_size"] = qst_block_size
     write_gcmc_results_json(gcmc_json_path, payload)
     LOGGER.info("Wrote %s", gcmc_json_path)
-
 
     # Remove traj/log and .npy intermediates; keep JSON and PNGs (nmols.png, energy.png)
     if not args.keep_intermediates:

@@ -181,9 +181,7 @@ class PubChemClient:
                 resp_headers = {
                     k: v for k, v in (e.headers.items() if e.headers else [])
                 }
-                self._apply_throttle_feedback(
-                    resp_headers.get("X-Throttling-Control")
-                )
+                self._apply_throttle_feedback(resp_headers.get("X-Throttling-Control"))
 
                 if status == 503 and attempt < self.max_retries:
                     sleep_s = self._compute_backoff(resp_headers, attempt)
@@ -216,22 +214,14 @@ class PubChemClient:
             0.0, self.backoff_base_s
         )
 
-    def _apply_throttle_feedback(
-        self, x_throttling_control: Optional[str]
-    ) -> None:
+    def _apply_throttle_feedback(self, x_throttling_control: Optional[str]) -> None:
         status = _worst_throttle_status(x_throttling_control)
         if status == "yellow":
-            self.rate_limiter.extra_delay = max(
-                self.rate_limiter.extra_delay, 0.2
-            )
+            self.rate_limiter.extra_delay = max(self.rate_limiter.extra_delay, 0.2)
         elif status == "red":
-            self.rate_limiter.extra_delay = max(
-                self.rate_limiter.extra_delay, 1.0
-            )
+            self.rate_limiter.extra_delay = max(self.rate_limiter.extra_delay, 1.0)
         elif status == "black":
-            self.rate_limiter.extra_delay = max(
-                self.rate_limiter.extra_delay, 3.0
-            )
+            self.rate_limiter.extra_delay = max(self.rate_limiter.extra_delay, 3.0)
         elif status == "green":
             self.rate_limiter.extra_delay = max(
                 0.0, self.rate_limiter.extra_delay - 0.1
@@ -253,9 +243,7 @@ class PubChemClient:
 
     # ---- Search methods ----
 
-    def search_by_name(
-        self, name: str, name_type: str = "complete"
-    ) -> List[int]:
+    def search_by_name(self, name: str, name_type: str = "complete") -> List[int]:
         encoded = urllib.parse.quote(name, safe="")
         nt = urllib.parse.quote(name_type, safe="")
         url = f"{BASE_URL}/compound/name/{encoded}/cids/JSON?name_type={nt}"
@@ -393,9 +381,7 @@ def parse_args() -> argparse.Namespace:
     g.add_argument("--inchi", help="Search by InChI (POST-backed).")
     g.add_argument("--inchikey", help="Search by InChIKey.")
     g.add_argument("--cid", type=int, help="Look up by PubChem CID.")
-    g.add_argument(
-        "--formula", help="Search by molecular formula (fastformula)."
-    )
+    g.add_argument("--formula", help="Search by molecular formula (fastformula).")
 
     p.add_argument(
         "--name_type",
@@ -521,9 +507,7 @@ def main() -> None:
         query.update({"type": "cid", "value": args.cid})
     elif args.name:
         cids = client.search_by_name(args.name, name_type=args.name_type)
-        query.update(
-            {"type": "name", "value": args.name, "name_type": args.name_type}
-        )
+        query.update({"type": "name", "value": args.name, "name_type": args.name_type})
     elif args.smiles:
         cids = client.search_by_smiles(args.smiles)
         query.update({"type": "smiles", "value": args.smiles})
@@ -623,6 +607,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

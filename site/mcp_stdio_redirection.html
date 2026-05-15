@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!md) return;
     const mathBlocks = [];
     const placeholder = (i) => `MATHPLACEHOLDER${i}X`;
-    
+
     // Protect block math $$...$$
     let safe = md.replace(/\$\$([\s\S]+?)\$\$/g, (_, m) => {
       mathBlocks.push(`$$${m}$$`);

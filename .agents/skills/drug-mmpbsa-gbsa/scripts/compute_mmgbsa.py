@@ -176,8 +176,11 @@ def compute_mmgbsa(
     # Step 1: Strip solvent and write subsystem PDBs
     print("--- Stripping solvent and writing subsystem PDBs ---")
     complex_pdb, receptor_pdb, ligand_pdb = strip_and_write_pdbs(
-        topology_path, trajectory_path,
-        ligand_sel_str, receptor_sel_str, output_dir,
+        topology_path,
+        trajectory_path,
+        ligand_sel_str,
+        receptor_sel_str,
+        output_dir,
     )
 
     # Step 2: Load small molecules for template generator
@@ -192,12 +195,12 @@ def compute_mmgbsa(
 
     # Step 3: Build three implicit-solvent systems
     print("\n--- Building implicit-solvent systems ---")
-    print(
-        f"Dielectrics: solute={solute_dielectric}, solvent={solvent_dielectric}"
-    )
+    print(f"Dielectrics: solute={solute_dielectric}, solvent={solvent_dielectric}")
     print("Building complex system...")
     complex_system, complex_top, _ = build_implicit_system(
-        complex_pdb, small_molecules, protein_ff,
+        complex_pdb,
+        small_molecules,
+        protein_ff,
         solute_dielectric=solute_dielectric,
         solvent_dielectric=solvent_dielectric,
     )
@@ -205,14 +208,18 @@ def compute_mmgbsa(
     print("Building receptor system...")
     receptor_molecules = [cofactor_mol] if cofactor_mol else []
     receptor_system, receptor_top, _ = build_implicit_system(
-        receptor_pdb, receptor_molecules, protein_ff,
+        receptor_pdb,
+        receptor_molecules,
+        protein_ff,
         solute_dielectric=solute_dielectric,
         solvent_dielectric=solvent_dielectric,
     )
 
     print("Building ligand system...")
     ligand_system, ligand_top, _ = build_implicit_system(
-        ligand_pdb, [ligand_mol], protein_ff,
+        ligand_pdb,
+        [ligand_mol],
+        protein_ff,
         solute_dielectric=solute_dielectric,
         solvent_dielectric=solvent_dielectric,
     )
@@ -296,16 +303,26 @@ def compute_mmgbsa(
         ctx_ligand.setPositions(ligand_pos_omm)
         e_ligand = ctx_ligand.getState(getEnergy=True).getPotentialEnergy()
 
-        dg = (e_complex - e_receptor - e_ligand).value_in_unit(unit.kilocalorie_per_mole)
+        dg = (e_complex - e_receptor - e_ligand).value_in_unit(
+            unit.kilocalorie_per_mole
+        )
 
-        frame_results.append({
-            "frame": fi,
-            "time_ns": round(time_ns, 4),
-            "E_complex_kcal": round(e_complex.value_in_unit(unit.kilocalorie_per_mole), 2),
-            "E_receptor_kcal": round(e_receptor.value_in_unit(unit.kilocalorie_per_mole), 2),
-            "E_ligand_kcal": round(e_ligand.value_in_unit(unit.kilocalorie_per_mole), 2),
-            "dG_kcal": round(dg, 2),
-        })
+        frame_results.append(
+            {
+                "frame": fi,
+                "time_ns": round(time_ns, 4),
+                "E_complex_kcal": round(
+                    e_complex.value_in_unit(unit.kilocalorie_per_mole), 2
+                ),
+                "E_receptor_kcal": round(
+                    e_receptor.value_in_unit(unit.kilocalorie_per_mole), 2
+                ),
+                "E_ligand_kcal": round(
+                    e_ligand.value_in_unit(unit.kilocalorie_per_mole), 2
+                ),
+                "dG_kcal": round(dg, 2),
+            }
+        )
 
         if (i + 1) % 10 == 0 or i == 0:
             print(f"  Frame {fi} ({time_ns:.2f} ns): dG = {dg:.2f} kcal/mol")
@@ -357,7 +374,7 @@ def compute_mmgbsa(
         json.dump(summary, f, indent=4)
     print(f"Wrote summary: {summary_path}")
 
-    print(f"\n--- MM-GBSA Results ---")
+    print("\n--- MM-GBSA Results ---")
     print(f"dG = {dg_mean:.2f} +/- {dg_std:.2f} kcal/mol (SEM: {dg_sem:.2f})")
     print(f"Frames evaluated: {len(frame_results)}")
     print(f"Wall time: {wall_time:.1f} s")
@@ -372,28 +389,71 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Single-trajectory MM-GBSA rescoring with OpenMM GBn2."
     )
-    parser.add_argument("--topology", required=True, help="Solvated complex PDB (topology).")
-    parser.add_argument("--trajectory", required=True, help="Production trajectory (DCD).")
-    parser.add_argument("--ligand_sdf", required=True, help="Ligand SDF (for parameterization).")
-    parser.add_argument("--cofactor_sdf", default=None, help="Cofactor SDF (e.g., NADPH).")
-    parser.add_argument("--ligand_resname", default="UNL", help="Ligand residue name (default: UNL).")
-    parser.add_argument("--ligand_sel", default=None, help="Full MDAnalysis selection for ligand (overrides --ligand_resname).")
-    parser.add_argument("--cofactor_resname", default=None, help="Cofactor residue name (e.g., NDP).")
-    parser.add_argument("--cofactor_sel", default=None, help="Full MDAnalysis selection for cofactor (overrides --cofactor_resname).")
-    parser.add_argument("--skip_ns", type=float, default=0.5,
-                        help="Skip first N ns of trajectory as equilibration (default: 0.5). "
-                             "For longer production MD (>10 ns), increase proportionally (e.g., "
-                             "1-5 ns).")
-    parser.add_argument("--stride", type=int, default=5, help="Frame stride for evaluation (default: 5).")
-    parser.add_argument("--protein_ff", default="amber/ff14SB", help="Protein force field (default: amber/ff14SB).")
-    parser.add_argument("--solute_dielectric", type=float, default=1.0,
-                        help="Interior dielectric constant of the solute (default: 1.0). Raise to "
-                             "2-4 for polar or highly charged binding sites; see SKILL.md for "
-                             "guidance. This parameter is a major knob for MM-GBSA rankings.")
-    parser.add_argument("--solvent_dielectric", type=float, default=78.5,
-                        help="Solvent dielectric constant (default: 78.5, bulk water). Rarely "
-                             "needs to be changed.")
-    parser.add_argument("--output_dir", required=True, help="Output directory for MM-GBSA results.")
+    parser.add_argument(
+        "--topology", required=True, help="Solvated complex PDB (topology)."
+    )
+    parser.add_argument(
+        "--trajectory", required=True, help="Production trajectory (DCD)."
+    )
+    parser.add_argument(
+        "--ligand_sdf", required=True, help="Ligand SDF (for parameterization)."
+    )
+    parser.add_argument(
+        "--cofactor_sdf", default=None, help="Cofactor SDF (e.g., NADPH)."
+    )
+    parser.add_argument(
+        "--ligand_resname", default="UNL", help="Ligand residue name (default: UNL)."
+    )
+    parser.add_argument(
+        "--ligand_sel",
+        default=None,
+        help="Full MDAnalysis selection for ligand (overrides --ligand_resname).",
+    )
+    parser.add_argument(
+        "--cofactor_resname", default=None, help="Cofactor residue name (e.g., NDP)."
+    )
+    parser.add_argument(
+        "--cofactor_sel",
+        default=None,
+        help="Full MDAnalysis selection for cofactor (overrides --cofactor_resname).",
+    )
+    parser.add_argument(
+        "--skip_ns",
+        type=float,
+        default=0.5,
+        help="Skip first N ns of trajectory as equilibration (default: 0.5). "
+        "For longer production MD (>10 ns), increase proportionally (e.g., "
+        "1-5 ns).",
+    )
+    parser.add_argument(
+        "--stride",
+        type=int,
+        default=5,
+        help="Frame stride for evaluation (default: 5).",
+    )
+    parser.add_argument(
+        "--protein_ff",
+        default="amber/ff14SB",
+        help="Protein force field (default: amber/ff14SB).",
+    )
+    parser.add_argument(
+        "--solute_dielectric",
+        type=float,
+        default=1.0,
+        help="Interior dielectric constant of the solute (default: 1.0). Raise to "
+        "2-4 for polar or highly charged binding sites; see SKILL.md for "
+        "guidance. This parameter is a major knob for MM-GBSA rankings.",
+    )
+    parser.add_argument(
+        "--solvent_dielectric",
+        type=float,
+        default=78.5,
+        help="Solvent dielectric constant (default: 78.5, bulk water). Rarely "
+        "needs to be changed.",
+    )
+    parser.add_argument(
+        "--output_dir", required=True, help="Output directory for MM-GBSA results."
+    )
     args = parser.parse_args()
 
     topology_path = Path(args.topology)
@@ -401,7 +461,11 @@ def main() -> None:
     ligand_sdf = Path(args.ligand_sdf)
     cofactor_sdf = Path(args.cofactor_sdf) if args.cofactor_sdf else None
 
-    for label, path in [("Topology", topology_path), ("Trajectory", trajectory_path), ("Ligand SDF", ligand_sdf)]:
+    for label, path in [
+        ("Topology", topology_path),
+        ("Trajectory", trajectory_path),
+        ("Ligand SDF", ligand_sdf),
+    ]:
         if not path.exists():
             print(f"ERROR: {label} not found: {path}", file=sys.stderr)
             sys.exit(1)
@@ -439,6 +503,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

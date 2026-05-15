@@ -18,6 +18,7 @@ Usage:
 Requirements:
     pymatgen, ase, numpy (base-agent or mace-agent env)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,12 +30,13 @@ from pathlib import Path
 
 import numpy as np
 from ase import Atoms
-from ase.io import write as ase_write
 from ase.optimize import FIRE
 from pymatgen.core import Lattice, Structure
 from pymatgen.io.ase import AseAtomsAdaptor
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../"))
+project_root = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../../../../")
+)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
@@ -53,8 +55,9 @@ def build_bcc_w_supercell(a: float, nx: int, ny: int, nz: int) -> Structure:
     return supercell
 
 
-def add_h_at_tsite(structure: Structure, frac_in_conv: list[float],
-                   nx: int, ny: int, nz: int) -> Structure:
+def add_h_at_tsite(
+    structure: Structure, frac_in_conv: list[float], nx: int, ny: int, nz: int
+) -> Structure:
     """Insert H at a tetrahedral site given in fractional coords of the conventional cell.
 
     Converts to supercell fractional coords and appends H.
@@ -66,8 +69,9 @@ def add_h_at_tsite(structure: Structure, frac_in_conv: list[float],
     return s
 
 
-def relax_structure(atoms: Atoms, calc, fmax: float = 0.01,
-                    max_steps: int = 500) -> Atoms:
+def relax_structure(
+    atoms: Atoms, calc, fmax: float = 0.01, max_steps: int = 500
+) -> Atoms:
     """Relax atomic positions with fixed cell."""
     atoms.calc = calc
     opt = FIRE(atoms, logfile="-")
@@ -79,14 +83,25 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="Prepare NEB endpoints for H migration in BCC W (T-site hop)."
     )
-    ap.add_argument("--model_type", default="mace", choices=["mace", "fairchem", "matgl"])
+    ap.add_argument(
+        "--model_type", default="mace", choices=["mace", "fairchem", "matgl"]
+    )
     ap.add_argument("--model_name", default="MACE-OMAT-0-small")
     ap.add_argument("--device", default="auto")
     ap.add_argument("--a", type=float, default=3.165, help="W lattice constant (A)")
-    ap.add_argument("--supercell", type=int, nargs=3, default=[3, 3, 3],
-                    help="Supercell dimensions (nx ny nz)")
-    ap.add_argument("--fmax", type=float, default=0.01,
-                    help="Force convergence for relaxation (eV/A)")
+    ap.add_argument(
+        "--supercell",
+        type=int,
+        nargs=3,
+        default=[3, 3, 3],
+        help="Supercell dimensions (nx ny nz)",
+    )
+    ap.add_argument(
+        "--fmax",
+        type=float,
+        default=0.01,
+        help="Force convergence for relaxation (eV/A)",
+    )
     ap.add_argument("--output_dir", default=".", help="Output directory")
     args = ap.parse_args()
 
@@ -118,12 +133,15 @@ def main() -> None:
     print(f"\nLoading {args.model_type} model: {args.model_name}...")
     if args.model_type == "mace":
         from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+
         wrapper = MACEWrapper(model_name=args.model_name, device=args.device)
     elif args.model_type == "fairchem":
         from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
+
         wrapper = FAIRCHEMWrapper(model_name=args.model_name, device=args.device)
     elif args.model_type == "matgl":
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+
         wrapper = MatGLWrapper(model_name=args.model_name, device=args.device)
     wrapper.load()
     calc = wrapper.create_calculator()

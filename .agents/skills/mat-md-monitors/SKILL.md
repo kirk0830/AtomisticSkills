@@ -55,7 +55,7 @@ MD stability monitoring is integrated directly into the `run_md` tool via ASE ca
 - **Action**: When a monitor triggers, the simulation stops immediately with a `status: "stopped"` and a clear `stop_reason` in the result dictionary.
 
 ### 2. Parameter Initialization
-- **Time Step**: 
+- **Time Step**:
     - **2.0 fs**: Recommended for most systems without light elements (Hydrogen).
     - **0.5 - 1.0 fs**: Use for systems containing Hydrogen, or at very high temperatures (> 2000K) to maintain stability.
 - **Thermostat**: Use a coupling constant (`taut`) around $100 \times \text{timestep}$.
@@ -76,5 +76,5 @@ Monitoring stability is handled automatically by the ASE callbacks. When a monit
 - **Reporting**: Always report simulation parameters (ensemble, T, timestep, duration) in the research report.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

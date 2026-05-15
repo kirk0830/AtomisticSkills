@@ -11,8 +11,6 @@ from .moves import (
     Delete,
 )
 from .utility import get_components
-from ase.io import write
-import numpy as np
 
 
 def process_temperature(temperature, temperature_K, orig_unit):
@@ -170,7 +168,6 @@ class Ensemble:
                 else:
                     pass
 
-
     def set_thermal_moves(self, include_hmc=True):
         if include_hmc:
             self.moves += [
@@ -217,7 +214,6 @@ class Ensemble:
                 exclusion_list=self.exclusion_list,
             ),
         ]
-
 
     def set_npt_mechanical_moves(self):
         if self.ln_volume:
@@ -279,9 +275,6 @@ class Ensemble:
                 )
             ]
 
-
-
-
     # Make the process_temperature function available to subclasses
     # as a static method.  This makes it easy for MC objects to use
     # it, while functions in mc have access to it
@@ -338,11 +331,11 @@ class BVT(Ensemble):
         b_parameter,
         species,
         reference_energy,
-        starting_tag = 0,
+        starting_tag=0,
         rmin=1.0,
         rcavity=4.0,
         grid_resolution=10,
-        r_overlap = 1.0,
+        r_overlap=1.0,
         cavity_bias=False,
         temperature=None,
         temperature_K=None,
@@ -361,7 +354,7 @@ class BVT(Ensemble):
             cavity_bias=cavity_bias,
             rcavity=rcavity,
             grid_resolution=grid_resolution,
-            r_overlap = r_overlap,
+            r_overlap=r_overlap,
             exclusion_list=exclusion_list,
         )
 

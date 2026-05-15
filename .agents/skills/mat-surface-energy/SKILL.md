@@ -46,7 +46,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
     # Env: matgl-agent
     mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
     mcp_matgl_relax_structure(
-        structure_data="slabs/", 
+        structure_data="slabs/",
         relax_cell=False,  # DO NOT relax cell for slabs (fixed area)
         fmax=0.02,
         output_dir="slab_relaxations/"
@@ -99,5 +99,5 @@ python .agents/skills/mat-surface-energy/scripts/generate_wulff.py --energies_js
 - **Consistency**: Use the SAME MLIP and convergence settings for both bulk and slab relaxations.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

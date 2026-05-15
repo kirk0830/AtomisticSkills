@@ -12,17 +12,42 @@ Requirements:
 import argparse
 import os
 from pymatgen.core import Structure
-from pymatgen.core.surface import SlabGenerator, generate_all_slabs
-from pymatgen.io.ase import AseAtomsAdaptor
+from pymatgen.core.surface import generate_all_slabs
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate oriented slabs for surface energy calculations.")
-    parser.add_argument("--bulk", required=True, help="Path to bulk structure file (CIF, POSCAR, etc.)")
-    parser.add_argument("--max_index", type=int, default=1, help="Maximum Miller index to consider (default: 1)")
-    parser.add_argument("--min_thickness", type=float, default=10.0, help="Minimum slab thickness in Angstroms (default: 10.0)")
-    parser.add_argument("--vacuum", type=float, default=15.0, help="Vacuum thickness in Angstroms (default: 15.0)")
-    parser.add_argument("--output", default="slabs", help="Directory to save generated slabs (default: slabs)")
-    parser.add_argument("--primitive", action="store_true", help="Use primitive cell for generation")
+    parser = argparse.ArgumentParser(
+        description="Generate oriented slabs for surface energy calculations."
+    )
+    parser.add_argument(
+        "--bulk", required=True, help="Path to bulk structure file (CIF, POSCAR, etc.)"
+    )
+    parser.add_argument(
+        "--max_index",
+        type=int,
+        default=1,
+        help="Maximum Miller index to consider (default: 1)",
+    )
+    parser.add_argument(
+        "--min_thickness",
+        type=float,
+        default=10.0,
+        help="Minimum slab thickness in Angstroms (default: 10.0)",
+    )
+    parser.add_argument(
+        "--vacuum",
+        type=float,
+        default=15.0,
+        help="Vacuum thickness in Angstroms (default: 15.0)",
+    )
+    parser.add_argument(
+        "--output",
+        default="slabs",
+        help="Directory to save generated slabs (default: slabs)",
+    )
+    parser.add_argument(
+        "--primitive", action="store_true", help="Use primitive cell for generation"
+    )
 
     args = parser.parse_args()
 
@@ -43,10 +68,12 @@ def main():
         center_slab=True,
         lll_reduce=True,
         bonds=None,  # Standard bonds
-        ftol=0.1
+        ftol=0.1,
     )
 
-    print(f"Generating slabs for {bulk.composition.reduced_formula} up to index {args.max_index}...")
+    print(
+        f"Generating slabs for {bulk.composition.reduced_formula} up to index {args.max_index}..."
+    )
     count = 0
     for i, slab in enumerate(slabs):
         hkl = "".join(map(str, slab.miller_index))
@@ -62,7 +89,9 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
+
 
 if __name__ == "__main__":
     main()

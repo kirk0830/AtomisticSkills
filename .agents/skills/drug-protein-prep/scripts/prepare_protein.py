@@ -23,8 +23,6 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import shutil
-import subprocess
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -38,13 +36,42 @@ LOGGER = logging.getLogger("protein-prep")
 WATER_RESNAMES = {"HOH", "WAT", "H2O", "TIP3", "SOL"}
 
 STANDARD_AA = {
-    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE",
-    "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
-    "HID", "HIE", "HIP", "CYX",
+    "ALA",
+    "ARG",
+    "ASN",
+    "ASP",
+    "CYS",
+    "GLN",
+    "GLU",
+    "GLY",
+    "HIS",
+    "ILE",
+    "LEU",
+    "LYS",
+    "MET",
+    "PHE",
+    "PRO",
+    "SER",
+    "THR",
+    "TRP",
+    "TYR",
+    "VAL",
+    "HID",
+    "HIE",
+    "HIP",
+    "CYX",
 }
 STANDARD_NA = {
-    "A", "C", "G", "U", "I",
-    "DA", "DC", "DG", "DT", "DU",
+    "A",
+    "C",
+    "G",
+    "U",
+    "I",
+    "DA",
+    "DC",
+    "DG",
+    "DT",
+    "DU",
 }
 
 
@@ -77,7 +104,9 @@ def fetch_rcsb_structure(
         if fmt_ == "cif":
             if assembly is None:
                 return f"https://files.rcsb.org/download/{pdb_id_upper}.cif"
-            return f"https://files.rcsb.org/download/{pdb_id_lower}-assembly{assembly}.cif"
+            return (
+                f"https://files.rcsb.org/download/{pdb_id_lower}-assembly{assembly}.cif"
+            )
         raise ValueError(f"Unsupported fmt: {fmt_}")
 
     tried: List[str] = []
@@ -148,12 +177,14 @@ def handle_missing_residues(
     missing_list = []
     for (chain_index, insert_index), names in fixer.missingResidues.items():
         chain_id = chains[chain_index].id if chain_index < len(chains) else None
-        missing_list.append({
-            "chain_index": int(chain_index),
-            "chain_id": chain_id,
-            "insert_index": int(insert_index),
-            "residue_names": list(names),
-        })
+        missing_list.append(
+            {
+                "chain_index": int(chain_index),
+                "chain_id": chain_id,
+                "insert_index": int(insert_index),
+                "residue_names": list(names),
+            }
+        )
 
     if mode == "ignore":
         fixer.missingResidues = {}
@@ -191,12 +222,14 @@ def replace_nonstandard_residues(
     fixer.findNonstandardResidues()
     nonstd = []
     for residue, replacement in fixer.nonstandardResidues:
-        nonstd.append({
-            "chain_id": residue.chain.id,
-            "residue_id": residue.id,
-            "resname": residue.name,
-            "replacement": replacement,
-        })
+        nonstd.append(
+            {
+                "chain_id": residue.chain.id,
+                "residue_id": residue.id,
+                "resname": residue.name,
+                "replacement": replacement,
+            }
+        )
     fixer.replaceNonstandardResidues()
     return {"replace_nonstandard": True, "nonstandard_residues": nonstd}
 
@@ -258,7 +291,11 @@ def apply_heterogen_policy(
             continue
 
         if heterogens == "water":
-            if _is_polymer_resname(name) or (name in WATER_RESNAMES) or (name in keep_set):
+            if (
+                _is_polymer_resname(name)
+                or (name in WATER_RESNAMES)
+                or (name in keep_set)
+            ):
                 continue
             to_delete.append(res)
             continue
@@ -309,8 +346,6 @@ def write_pdb(
             PDBFile.writeFile(fixer.topology, fixer.positions, f, keepIds=keep_ids)
         except TypeError:
             PDBFile.writeFile(fixer.topology, fixer.positions, f)
-
-
 
 
 def prepare_protein(
@@ -369,7 +404,6 @@ def prepare_protein(
     write_pdb(fixer, pdb_out, keep_ids=True)
     summary["pdb_file"] = str(pdb_out)
 
-
     summary["success"] = True
     return summary
 
@@ -383,45 +417,59 @@ def main() -> None:
     input_group.add_argument("--pdb_file", help="Path to local PDB/mmCIF file")
 
     parser.add_argument(
-        "--assembly", type=int, default=None,
+        "--assembly",
+        type=int,
+        default=None,
         help="RCSB biological assembly index (e.g., 1)",
     )
     parser.add_argument(
-        "--rcsb_format", choices=["auto", "pdb", "cif"], default="auto",
+        "--rcsb_format",
+        choices=["auto", "pdb", "cif"],
+        default="auto",
         help="Download format",
     )
     parser.add_argument(
-        "--chains", nargs="+",
+        "--chains",
+        nargs="+",
         help="Chain IDs to keep (e.g., --chains A B)",
     )
 
     parser.add_argument(
-        "--heterogens", choices=["all", "none", "water", "non-water"], default="none",
+        "--heterogens",
+        choices=["all", "none", "water", "non-water"],
+        default="none",
         help="Heterogen handling: all | none | water (keep water, drop other) | non-water (drop water only)",
     )
     parser.add_argument(
-        "--keep_resname", nargs="*", default=[],
+        "--keep_resname",
+        nargs="*",
+        default=[],
         help="Residue names to keep even if heterogens removed (e.g., ZN HEM)",
     )
     parser.add_argument(
-        "--delete_resname", nargs="*", default=[],
+        "--delete_resname",
+        nargs="*",
+        default=[],
         help="Residue names to delete (e.g., SO4 GOL)",
     )
 
     parser.add_argument(
-        "--missing_residues", choices=["ignore", "ignore_terminal", "build"],
+        "--missing_residues",
+        choices=["ignore", "ignore_terminal", "build"],
         default="ignore",
         help="Missing residue policy: ignore (default) | ignore_terminal | build",
     )
     parser.add_argument(
-        "--no_replace_nonstandard", action="store_true",
+        "--no_replace_nonstandard",
+        action="store_true",
         help="Disable replacement of nonstandard residues",
     )
     parser.add_argument(
-        "--ph", type=float, default=7.0,
+        "--ph",
+        type=float,
+        default=7.0,
         help="pH used for adding hydrogens (default: 7.0)",
     )
-
 
     parser.add_argument("--output_dir", default=".", help="Output directory")
     parser.add_argument("--verbose", action="store_true", help="Verbose logging")
@@ -465,7 +513,6 @@ def main() -> None:
         missing_residues=args.missing_residues,
         replace_nonstandard=not args.no_replace_nonstandard,
         ph=args.ph,
-
     )
     if url_used:
         summary["rcsb_url"] = url_used
@@ -473,7 +520,6 @@ def main() -> None:
     try:
         import openmm
         import pdbfixer as _pdbfixer
-        import meeko as _meeko
 
         summary["versions"] = {
             "openmm": (
@@ -482,7 +528,6 @@ def main() -> None:
                 else _safe_version(openmm)
             ),
             "pdbfixer": _safe_version(_pdbfixer),
-
         }
     except Exception:
         pass
@@ -495,6 +540,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

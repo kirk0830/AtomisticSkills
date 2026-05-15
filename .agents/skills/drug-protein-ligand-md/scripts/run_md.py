@@ -26,7 +26,9 @@ import openmm.app as app
 import openmm.unit as unit
 
 
-def step_with_progress(simulation, total_steps: int, chunk: int = 10000, label: str = "") -> None:
+def step_with_progress(
+    simulation, total_steps: int, chunk: int = 10000, label: str = ""
+) -> None:
     """Run simulation steps with periodic progress to stdout."""
     done = 0
     while done < total_steps:
@@ -34,10 +36,17 @@ def step_with_progress(simulation, total_steps: int, chunk: int = 10000, label: 
         simulation.step(n)
         done += n
         state = simulation.context.getState(getEnergy=True)
-        temp_k = (2 * state.getKineticEnergy() / (simulation.system.getNumParticles() * 3 * unit.MOLAR_GAS_CONSTANT_R)).value_in_unit(unit.kelvin)
+        temp_k = (
+            2
+            * state.getKineticEnergy()
+            / (simulation.system.getNumParticles() * 3 * unit.MOLAR_GAS_CONSTANT_R)
+        ).value_in_unit(unit.kelvin)
         pe = state.getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
         pct = 100 * done / total_steps
-        print(f"  {label} {done}/{total_steps} ({pct:.0f}%) T={temp_k:.1f} K  PE={pe:.0f} kJ/mol", flush=True)
+        print(
+            f"  {label} {done}/{total_steps} ({pct:.0f}%) T={temp_k:.1f} K  PE={pe:.0f} kJ/mol",
+            flush=True,
+        )
 
 
 def select_platform() -> openmm.Platform:
@@ -70,9 +79,7 @@ def add_restraints(
     Returns:
         The CustomExternalForce object (for later removal or scaling).
     """
-    force = openmm.CustomExternalForce(
-        "k*periodicdistance(x, y, z, x0, y0, z0)^2"
-    )
+    force = openmm.CustomExternalForce("k*periodicdistance(x, y, z, x0, y0, z0)^2")
     force.addGlobalParameter("k", restraint_k)
     force.addPerParticleParameter("x0")
     force.addPerParticleParameter("y0")
@@ -177,9 +184,7 @@ def run_md(
             simulation.context.setPeriodicBoxVectors(*box)
         simulation.minimizeEnergy(maxIterations=minimize_steps)
 
-        state = simulation.context.getState(
-            getPositions=True, getEnergy=True
-        )
+        state = simulation.context.getState(getPositions=True, getEnergy=True)
         positions = state.getPositions()
         box = state.getPeriodicBoxVectors()
         pe = state.getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
@@ -226,9 +231,7 @@ def run_md(
     # -- Phase 3: NPT Equilibration (restrained, then released) --
     if equil_npt_steps > 0:
         print(f"\n--- NPT Equilibration ({equil_npt_steps} steps) ---")
-        barostat = openmm.MonteCarloBarostat(
-            pressure * unit.atmosphere, temp, 25
-        )
+        barostat = openmm.MonteCarloBarostat(pressure * unit.atmosphere, temp, 25)
         system.addForce(barostat)
 
         integrator = openmm.LangevinMiddleIntegrator(temp, 1.0 / unit.picosecond, dt)
@@ -257,7 +260,9 @@ def run_md(
         half = equil_npt_steps // 2
         step_with_progress(simulation, half, chunk=5000, label="NPT-restrained")
         simulation.context.setParameter("k", restraint_k * 0.1)
-        step_with_progress(simulation, equil_npt_steps - half, chunk=5000, label="NPT-releasing")
+        step_with_progress(
+            simulation, equil_npt_steps - half, chunk=5000, label="NPT-releasing"
+        )
 
         state = simulation.context.getState(getPositions=True, getVelocities=True)
         positions = state.getPositions()
@@ -359,21 +364,77 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run protein-ligand MD simulation with OpenMM."
     )
-    parser.add_argument("--system_xml", required=True, help="Serialized OpenMM System XML.")
-    parser.add_argument("--input_pdb", required=True, help="Solvated complex PDB (topology).")
-    parser.add_argument("--state_xml", default=None, help="Initial state XML for full-precision positions and box vectors.")
-    parser.add_argument("--temperature", type=float, default=300.0, help="Temperature in K (default: 300).")
-    parser.add_argument("--pressure", type=float, default=1.0, help="Pressure in atm (default: 1.0).")
-    parser.add_argument("--timestep", type=float, default=4.0, help="Timestep in fs (default: 4.0).")
-    parser.add_argument("--minimize_steps", type=int, default=5000, help="Max minimization steps (default: 5000).")
-    parser.add_argument("--equil_nvt_steps", type=int, default=25000, help="NVT equilibration steps (default: 25000).")
-    parser.add_argument("--equil_npt_steps", type=int, default=50000, help="NPT equilibration steps (default: 50000).")
-    parser.add_argument("--production_steps", type=int, default=2500000, help="Production NPT steps (default: 2500000).")
-    parser.add_argument("--restraint_k", type=float, default=50.0, help="Restraint k in kJ/mol/nm^2 (default: 50.0).")
-    parser.add_argument("--reporting_interval", type=int, default=5000, help="Trajectory save interval in steps (default: 5000).")
-    parser.add_argument("--checkpoint_interval", type=int, default=25000, help="Checkpoint save interval in steps (default: 25000).")
-    parser.add_argument("--seed", type=int, default=0, help="Random seed (default: 0 = random).")
-    parser.add_argument("--restart_from", default=None, help="State XML to restart from.")
+    parser.add_argument(
+        "--system_xml", required=True, help="Serialized OpenMM System XML."
+    )
+    parser.add_argument(
+        "--input_pdb", required=True, help="Solvated complex PDB (topology)."
+    )
+    parser.add_argument(
+        "--state_xml",
+        default=None,
+        help="Initial state XML for full-precision positions and box vectors.",
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=300.0,
+        help="Temperature in K (default: 300).",
+    )
+    parser.add_argument(
+        "--pressure", type=float, default=1.0, help="Pressure in atm (default: 1.0)."
+    )
+    parser.add_argument(
+        "--timestep", type=float, default=4.0, help="Timestep in fs (default: 4.0)."
+    )
+    parser.add_argument(
+        "--minimize_steps",
+        type=int,
+        default=5000,
+        help="Max minimization steps (default: 5000).",
+    )
+    parser.add_argument(
+        "--equil_nvt_steps",
+        type=int,
+        default=25000,
+        help="NVT equilibration steps (default: 25000).",
+    )
+    parser.add_argument(
+        "--equil_npt_steps",
+        type=int,
+        default=50000,
+        help="NPT equilibration steps (default: 50000).",
+    )
+    parser.add_argument(
+        "--production_steps",
+        type=int,
+        default=2500000,
+        help="Production NPT steps (default: 2500000).",
+    )
+    parser.add_argument(
+        "--restraint_k",
+        type=float,
+        default=50.0,
+        help="Restraint k in kJ/mol/nm^2 (default: 50.0).",
+    )
+    parser.add_argument(
+        "--reporting_interval",
+        type=int,
+        default=5000,
+        help="Trajectory save interval in steps (default: 5000).",
+    )
+    parser.add_argument(
+        "--checkpoint_interval",
+        type=int,
+        default=25000,
+        help="Checkpoint save interval in steps (default: 25000).",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=0, help="Random seed (default: 0 = random)."
+    )
+    parser.add_argument(
+        "--restart_from", default=None, help="State XML to restart from."
+    )
     parser.add_argument("--output_dir", required=True, help="Output directory.")
     args = parser.parse_args()
 
@@ -411,6 +472,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

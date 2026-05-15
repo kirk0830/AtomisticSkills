@@ -70,5 +70,5 @@ See `examples/` for detailed usage scenarios, including Silicon EOS calculation.
 - **Fitting Model**: MatCalc uses the Birch-Murnaghan equation of state by default.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

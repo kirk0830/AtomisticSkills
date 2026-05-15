@@ -27,7 +27,9 @@ def detect_delimiter(path: str) -> str:
         return ","
 
 
-def load_spectrum(path: str, delimiter: Optional[str] = None) -> Tuple[np.ndarray, np.ndarray]:
+def load_spectrum(
+    path: str, delimiter: Optional[str] = None
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Load a two-column spectrum file (ppm, intensity).
 
@@ -96,5 +98,7 @@ def load_time_series(
     if ppm_max is None:
         ppm_max = float(max(s[0].max() for s in spectra))
     grid = np.linspace(ppm_min, ppm_max, n_points)
-    matrix = np.stack([interpolate_to_grid(ppm, intens, grid) for ppm, intens in spectra])
+    matrix = np.stack(
+        [interpolate_to_grid(ppm, intens, grid) for ppm, intens in spectra]
+    )
     return grid, matrix

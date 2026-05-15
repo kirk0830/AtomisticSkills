@@ -74,5 +74,5 @@ mcp_drugdisc_compute_molecular_descriptors(
 - **TPSA option**: By default, TPSA uses RDKit's default behavior (no S/P); `include_sandp_tpsa=True` includes S/P contributions
 ---
 
-**Author:** Matthew Cox  
+**Author:** Matthew Cox
 **Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

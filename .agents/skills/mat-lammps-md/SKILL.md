@@ -100,5 +100,5 @@ See the respective README.md files under [examples/mace/](examples/mace/), [exam
 
 ---
 
-**Author:** Jurģis Ruža  
+**Author:** Jurģis Ruža
 **Contact:** [GitHub @JurgisR](https://github.com/JurgisR)

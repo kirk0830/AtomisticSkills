@@ -180,10 +180,10 @@ See [examples/](examples/) for the complete DOS calculation showing the distribu
 - **VASP Setup**: Requires properly configured VASP environment:
   - `PMG_VASP_PSP_DIR` must point to POTCAR directory (or set in `~/.pmgrc.yaml`)
   - For remote execution: Atomate2/jobflow-remote must be configured
-- **Environments**: 
+- **Environments**:
   - Band structure calculation: `atomate2-agent` (via MCP tool)
   - Post-processing scripts: `base-agent` (pymatgen, matplotlib)
-- **Functional Choice**: 
+- **Functional Choice**:
   - PBE (omat, mp presets) typically **underestimates** band gaps
   - For accurate gaps: Use hybrid functionals (HSE06) or GW methods (not yet supported)
   - MatPES presets (matpes-pbe, matpes-r2scan) use r2SCAN which improves gap predictions
@@ -203,5 +203,5 @@ For production calculations, **always use DFT** (this skill) and choose the appr
 - **Accurate gaps**: HSE06 or GW (requires custom INCAR settings)
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

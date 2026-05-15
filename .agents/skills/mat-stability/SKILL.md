@@ -11,7 +11,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 
 > [!TIP]
 > **Finite Temperature Stability**: While this skill focuses on 0K stability (potential energy), you can construct a finite-temperature phase diagram by replacing potential energies with **Free Energies** ($G = U + F_{\text{vib}}$) calculated from the [mat-qha-thermal-expansion](../../skills/qha-thermal-expansion/SKILL.md) skill.
-> 
+>
 > **Electrochemical Stability**: The phase diagram constructed here can be seamlessly reused to calculate the material's electrochemical window (ECW) against a specific mobile ion (e.g., Li/Li+). See the [mat-electrochemical-window](../mat-electrochemical-window/SKILL.md) skill for detailed methods.
 
 ## Instructions
@@ -20,9 +20,9 @@ To determine the thermodynamic stability of a material at 0K by computing the en
     - **Recommended**: r2SCAN-level foundation potentials for high accuracy
     - **Options**: `TensorNet-MatPES-r2SCAN-v2025.1-PES` (MatGL) or `MACE-MH-1` with `matpes_r2scan` head
     - See [ml-foundation-potentials](../../skills/ml-foundation-potentials/SKILL.md) for detailed guidance
-    
+
     **Note**: r2SCAN shows high accuracy for predicting thermodynamic stability (MAE 80 meV/atom for formation energies vs PBE's 175 meV/atom)[^1]. Using r2SCAN-trained potentials ensures consistency with Materials Project's r2SCAN entries.
-    
+
     [^1]: Kingsbury, R. et al. "Performance comparison of r2SCAN and SCAN metaGGA density functionals for solid materials via an automated, high-throughput computational workflow" *Physical Review Materials* **6**, 013801 (2022). [DOI: 10.1103/PhysRevMaterials.6.013801](https://doi.org/10.1103/PhysRevMaterials.6.013801)
 
 2.  **Query Materials Project Hull**: Retrieve all structures on the convex hull in the target material's chemical space.
@@ -34,7 +34,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
         --thermo_type "R2SCAN" \
         --output hull_structures/
     ```
-    
+
     This script will:
     - Query Materials Project for all stable phases in the chemical space (including all subsystems)
     - Download structures on the convex hull (ground state phases)
@@ -54,12 +54,12 @@ To determine the thermodynamic stability of a material at 0K by computing the en
         output_dir="relaxed/"
     )
     ```
-    
+
     The MCP tool will automatically:
     - Process all CIF files in `hull_structures/`
     - Create individual subdirectories in `relaxed/` for each structure
     - Save energies to `relaxed_energy.txt` files for compute_ehull.py
-    
+
     **Critical**: Use the **same MLIP and settings** for all relaxations to ensure energy consistency.
 
 4.  **Construct Convex Hull & Calculate Stability**: Build a pymatgen phase diagram using the relaxed energies.
@@ -73,7 +73,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
         --mobile_ion Li \
         --output stability_analysis.json
     ```
-    
+
     The script will:
     - Read relaxed structures and energies from each subdirectory
     - Create `ComputedEntry` objects for pymatgen
@@ -85,7 +85,7 @@ To determine the thermodynamic stability of a material at 0K by computing the en
     - **$E_{hull} = 0$ meV/atom**: **STABLE** - On the convex hull, thermodynamically stable
     - **$0 < E_{hull} \leq 50$ meV/atom**: **METASTABLE** - May be synthesizable under kinetic control
     - **$E_{hull} > 50$ meV/atom**: **UNSTABLE** - Likely to decompose into competing phases
-    
+
     The decomposition reaction and products are also reported by pymatgen.
 
 ## Examples
@@ -131,7 +131,7 @@ We also provide a stored record of this example run in `examples/li3ps4_stabilit
 - **Chemical Space**: The query must include ALL elements in the target material. For example, for LiFePO4, query "Li-Fe-P-O" not just "Li-Fe-P".
 - **Hull Completeness**: Ensure all competing phases are included. Missing hull phases will lead to underestimated E_hull (false negatives for instability).
 - **Hull Reuse**: If calculating the stability of multiple different structures in the same chemical space, we should reuse the hull instead of relaxing them again.
-- **Stability Thresholds**: 
+- **Stability Thresholds**:
   - $E_{hull} = 0$ meV/atom: **Stable**
   - $0 < E_{hull} \leq 50$ meV/atom: **Metastable**
   - $E_{hull} > 50$ meV/atom: **Unstable**
@@ -141,5 +141,5 @@ We also provide a stored record of this example run in `examples/li3ps4_stabilit
 - **DFT Validation**: For publication-quality results, validate E_hull with DFT calculations, especially for materials close to the stability threshold.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

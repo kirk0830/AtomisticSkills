@@ -80,29 +80,29 @@ def convert_dif_to_xy(dif_path: Path) -> None:
 def convert_json_to_xy(json_path: Path) -> None:
     """
     Convert XRD JSON output to .xy format.
-    
+
     Args:
         json_path: Path to JSON file from xrd-spectrum skill
     """
     with open(json_path) as f:
         data = json.load(f)
-    
+
     # Extract 2θ (x) and intensity (y) arrays
     x = data.get("x", [])
     y = data.get("y", [])
-    
+
     if not x or not y:
         raise ValueError("JSON file must contain 'x' and 'y' arrays")
-    
+
     if len(x) != len(y):
         raise ValueError(f"x and y arrays must have same length: {len(x)} vs {len(y)}")
-    
+
     # Write .xy file (two space-separated columns)
     output_path = Path(json_path.parent / (json_path.stem + ".xy"))
     with open(output_path, "w") as f:
         for angle, intensity in zip(x, y):
             f.write(f"{angle:.6f} {intensity:.6f}\n")
-    
+
     print(f"Converted {len(x)} data points from {json_path} to {output_path}")
 
 
@@ -112,13 +112,13 @@ def main():
     )
     parser.add_argument(
         "--input_file",
-        help="Path to XRD file: JSON (from xrd-spectrum skill) or experimental DIF (.txt)"
+        help="Path to XRD file: JSON (from xrd-spectrum skill) or experimental DIF (.txt)",
     )
     parser.add_argument(
         "--format",
         choices=("auto", "json", "dif"),
         default="auto",
-        help="Input format; 'auto' infers from extension (default: auto)"
+        help="Input format; 'auto' infers from extension (default: auto)",
     )
     args = parser.parse_args()
 
@@ -147,6 +147,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

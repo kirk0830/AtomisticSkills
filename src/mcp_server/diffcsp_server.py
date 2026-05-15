@@ -13,13 +13,9 @@ mcp_pipe_binary = setup_mcp_stdout()
 
 import logging
 import warnings
-import json
-from pathlib import Path
 from mcp.server.fastmcp import FastMCP
-from typing import Dict, Any, Optional, List
-from src.utils.serialization_utils import recursive_tolist
+from typing import Dict, Any, Optional
 from src.utils.research_utils import get_current_research_dir
-import traceback
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
@@ -50,6 +46,7 @@ def _get_wrapper(model_name: str = "mp_csp", device: str = "auto"):
     global _wrappers
     if model_name not in _wrappers:
         from src.utils.mlips.diffcsp.diffcsp_wrapper import DiffCSPWrapper
+
         _wrappers[model_name] = DiffCSPWrapper(model_name=model_name, device=device)
     return _wrappers[model_name]
 
@@ -93,7 +90,9 @@ def generate_structures_with_symmetry(
         Dictionary with 'num_generated' and 'output_dir'.
     """
     if not output_dir:
-        output_dir = str(get_current_research_dir() / "diffcsp" / "symmetry_constrained")
+        output_dir = str(
+            get_current_research_dir() / "diffcsp" / "symmetry_constrained"
+        )
     os.makedirs(output_dir, exist_ok=True)
 
     wrapper = _get_wrapper(model_name=model_name, device=device)

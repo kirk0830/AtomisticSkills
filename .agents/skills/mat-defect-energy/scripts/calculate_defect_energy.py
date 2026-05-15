@@ -17,11 +17,10 @@ Requirements:
 
 import argparse
 import json
-from collections import Counter
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from pymatgen.core import Structure, Composition
+from pymatgen.core import Structure
 
 
 def parse_relaxation_dir(relax_dir: Path) -> Tuple[float, Structure]:
@@ -44,7 +43,11 @@ def parse_relaxation_dir(relax_dir: Path) -> Tuple[float, Structure]:
         if fpath.exists():
             with open(fpath) as f:
                 data = json.load(f)
-            energy = data.get("relaxed_energy") or data.get("energy") or data.get("final_energy")
+            energy = (
+                data.get("relaxed_energy")
+                or data.get("energy")
+                or data.get("final_energy")
+            )
             if energy is not None:
                 break
 
@@ -109,7 +112,9 @@ def load_elemental_energies(energies_file: Optional[str] = None) -> Dict[str, fl
             return json.load(f)
 
     # Try standard skill location
-    skill_path = Path(__file__).parent.parent.parent / "mat-elemental-energies" / "resources"
+    skill_path = (
+        Path(__file__).parent.parent.parent / "mat-elemental-energies" / "resources"
+    )
     if skill_path.exists():
         for fname in skill_path.glob("*.json"):
             with open(fname) as f:
@@ -124,7 +129,9 @@ def load_elemental_energies(energies_file: Optional[str] = None) -> Dict[str, fl
             if result:
                 return result
 
-    print("⚠️  No elemental energies found. Chemical potential corrections will be zero.")
+    print(
+        "⚠️  No elemental energies found. Chemical potential corrections will be zero."
+    )
     return {}
 
 
@@ -132,7 +139,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Calculate point-defect formation energies from relaxation results."
     )
-    parser.add_argument("--bulk_dir", required=True, help="Directory with bulk relaxation results")
+    parser.add_argument(
+        "--bulk_dir", required=True, help="Directory with bulk relaxation results"
+    )
     parser.add_argument(
         "--defect_dir", required=True, help="Directory with defect relaxation results"
     )
@@ -148,7 +157,9 @@ def main():
         default=None,
         help="JSON file mapping element -> energy_per_atom (eV/atom)",
     )
-    parser.add_argument("--output", default="defect_energies.json", help="Output JSON file")
+    parser.add_argument(
+        "--output", default="defect_energies.json", help="Output JSON file"
+    )
     args = parser.parse_args()
 
     bulk_dir = Path(args.bulk_dir)
@@ -159,8 +170,10 @@ def main():
     n_bulk = len(bulk_structure)
     e_bulk_per_atom = bulk_energy / n_bulk
     bulk_species = get_species_count(bulk_structure)
-    print(f"✓ Bulk: {bulk_structure.formula}, E = {bulk_energy:.4f} eV, "
-          f"E/atom = {e_bulk_per_atom:.4f} eV/atom ({n_bulk} atoms)")
+    print(
+        f"✓ Bulk: {bulk_structure.formula}, E = {bulk_energy:.4f} eV, "
+        f"E/atom = {e_bulk_per_atom:.4f} eV/atom ({n_bulk} atoms)"
+    )
 
     # The pristine supercell is the bulk_dir itself (already the supercell)
     pristine_species = bulk_species.copy()
@@ -246,6 +259,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

@@ -7,7 +7,7 @@ To document a functional 10-epoch fine-tuning workflow on challenging high-energ
 
 ## Instructions
 
-### 1. Prepare Training Data 
+### 1. Prepare Training Data
 The dataset is processed using the `prepare_mace_data.py` script. The training data must contain `structure` (pymatgen dict) or `atoms`, along with labeled properties.
 
 Because the raw `vasp_s` labels in this WBM extraction are recorded in `kB`, we MUST pass the `--vasp-stress-conversion` flag to multiply them by `-1/1602.1766208` during extraction. The script also automatically unravels multi-layer dictionaries (e.g., `{wbm_id: [{config_id: {data}}]}`).
@@ -53,5 +53,5 @@ This directory contains the artifacts generated from a 10-epoch execution of the
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

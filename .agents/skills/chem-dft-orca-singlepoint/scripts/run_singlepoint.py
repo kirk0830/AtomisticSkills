@@ -97,7 +97,7 @@ def run_singlepoint(
         special_option=special_option,
         nprocs=nprocs,
         extra_calculator_settings=extra_calculator_settings,
-        output_dir=output_dir
+        output_dir=output_dir,
     )
 
     props = [su.Property.Energy]
@@ -146,7 +146,9 @@ def run_singlepoint(
         hessian = results.hessian
         hessian_ev_ang2 = hessian * HARTREE_TO_EV * BOHR_PER_ANGSTROM**2
         output["hessian_eV_per_Ang2"] = hessian_ev_ang2.tolist()
-        logger.info(f"Hessian computed: {hessian_ev_ang2.shape[0]}x{hessian_ev_ang2.shape[1]} matrix")
+        logger.info(
+            f"Hessian computed: {hessian_ev_ang2.shape[0]}x{hessian_ev_ang2.shape[1]} matrix"
+        )
 
     ase.io.write(os.path.join(output_dir, "input_structure.xyz"), atoms)
 
@@ -160,20 +162,52 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    parser.add_argument("--structure", required=True, help="Path to input structure (.xyz, .cif, etc.)")
+    parser.add_argument(
+        "--structure", required=True, help="Path to input structure (.xyz, .cif, etc.)"
+    )
     parser.add_argument("--charge", type=int, default=0, help="Molecular charge")
-    parser.add_argument("--spin_multiplicity", type=int, default=1, help="Spin multiplicity (2S+1)")
-    parser.add_argument("--functional", default="PBE", help="DFT functional (e.g. PBE, B3LYP, wB97X-V)")
-    parser.add_argument("--basis_set", default="def2-SVP", help="Basis set (e.g. def2-SVP, def2-TZVP)")
-    parser.add_argument("--dispersion", default=None, help="Dispersion correction (e.g. D3BJ, D4)")
-    parser.add_argument("--solvation", default=None, choices=["CPCM", "SMD"], help="Implicit solvation model")
-    parser.add_argument("--solvent", default=None, help="Solvent name (e.g. water, ethanol); required if --solvation is set")
-    parser.add_argument("--special_option", default="NOSOSCF", help="ORCA special option (default: NOSOSCF). Set to empty string to disable.")
-    parser.add_argument("--nprocs", type=int, default=1, help="Number of CPU cores for ORCA")
-    parser.add_argument("--compute_gradients", action="store_true", help="Compute gradients (forces)")
-    parser.add_argument("--compute_hessian", action="store_true", help="Compute Hessian matrix")
-    parser.add_argument("--calculator_settings", default=None,
-                        help='Extra SCINE calculator settings as JSON string, e.g. \'{"max_scf_iterations": 420}\'')
+    parser.add_argument(
+        "--spin_multiplicity", type=int, default=1, help="Spin multiplicity (2S+1)"
+    )
+    parser.add_argument(
+        "--functional", default="PBE", help="DFT functional (e.g. PBE, B3LYP, wB97X-V)"
+    )
+    parser.add_argument(
+        "--basis_set", default="def2-SVP", help="Basis set (e.g. def2-SVP, def2-TZVP)"
+    )
+    parser.add_argument(
+        "--dispersion", default=None, help="Dispersion correction (e.g. D3BJ, D4)"
+    )
+    parser.add_argument(
+        "--solvation",
+        default=None,
+        choices=["CPCM", "SMD"],
+        help="Implicit solvation model",
+    )
+    parser.add_argument(
+        "--solvent",
+        default=None,
+        help="Solvent name (e.g. water, ethanol); required if --solvation is set",
+    )
+    parser.add_argument(
+        "--special_option",
+        default="NOSOSCF",
+        help="ORCA special option (default: NOSOSCF). Set to empty string to disable.",
+    )
+    parser.add_argument(
+        "--nprocs", type=int, default=1, help="Number of CPU cores for ORCA"
+    )
+    parser.add_argument(
+        "--compute_gradients", action="store_true", help="Compute gradients (forces)"
+    )
+    parser.add_argument(
+        "--compute_hessian", action="store_true", help="Compute Hessian matrix"
+    )
+    parser.add_argument(
+        "--calculator_settings",
+        default=None,
+        help="Extra SCINE calculator settings as JSON string, e.g. '{\"max_scf_iterations\": 420}'",
+    )
     parser.add_argument("--output_dir", default=None, help="Output directory")
 
     args = parser.parse_args()
@@ -208,6 +242,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

@@ -50,9 +50,7 @@ def check_orca_binary() -> str:
             f"ORCA_BINARY_PATH points to a non-existent file: {orca_path}"
         )
     if not os.access(orca_path, os.X_OK):
-        raise EnvironmentError(
-            f"ORCA binary is not executable: {orca_path}"
-        )
+        raise EnvironmentError(f"ORCA binary is not executable: {orca_path}")
     logger.info(f"ORCA binary validated: {orca_path}")
     return orca_path
 
@@ -201,11 +199,17 @@ def setup_orca_calculator(
         logger.info(f"  Solvation: {solvation}, solvent: {solvent}")
 
     # make sure that raw ORCA files are in the output directory if no other place was specified
-    if extra_calculator_settings is None or 'base_working_directory' not in extra_calculator_settings:
-        calculator.settings['base_working_directory'] = str(Path(output_dir).resolve())
+    if (
+        extra_calculator_settings is None
+        or "base_working_directory" not in extra_calculator_settings
+    ):
+        calculator.settings["base_working_directory"] = str(Path(output_dir).resolve())
     # set higher default memory than specified in wrapper if not specified otherwise
-    if extra_calculator_settings is None or 'external_program_memory' not in extra_calculator_settings:
-        calculator.settings['external_program_memory'] = 4096 * nprocs
+    if (
+        extra_calculator_settings is None
+        or "external_program_memory" not in extra_calculator_settings
+    ):
+        calculator.settings["external_program_memory"] = 4096 * nprocs
     logger.debug(str(calculator.settings.as_dict()))
 
     calculator.structure = atom_collection

@@ -90,12 +90,14 @@ def run_validation(
 
         all_passed = all(test_results.values()) if test_results else False
 
-        per_pose.append({
-            "pose_index": i,
-            "valid": all_passed,
-            "tests": test_results,
-            "diagnostics": diagnostics,
-        })
+        per_pose.append(
+            {
+                "pose_index": i,
+                "valid": all_passed,
+                "tests": test_results,
+                "diagnostics": diagnostics,
+            }
+        )
 
         if all_passed:
             valid_indices.append(i)
@@ -132,7 +134,7 @@ def run_validation(
     # human-readable summary
     summary_path = output_dir / "summary.txt"
     with open(summary_path, "w", encoding="utf-8") as f:
-        f.write(f"Pose Validation Summary\n")
+        f.write("Pose Validation Summary\n")
         f.write(f"{'='*40}\n")
         f.write(f"Input poses:  {n_input}\n")
         f.write(f"Valid poses:  {n_valid}\n")
@@ -141,7 +143,9 @@ def run_validation(
         for entry in per_pose:
             status = "PASS" if entry["valid"] else "FAIL"
             f.write(f"Pose {entry['pose_index']}: {status}\n")
-            failed = [k for k, v in entry["tests"].items() if isinstance(v, bool) and not v]
+            failed = [
+                k for k, v in entry["tests"].items() if isinstance(v, bool) and not v
+            ]
             if failed:
                 f.write(f"  Failed: {', '.join(failed)}\n")
 
@@ -191,6 +195,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

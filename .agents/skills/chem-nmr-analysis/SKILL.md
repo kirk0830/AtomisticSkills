@@ -177,5 +177,5 @@ Required packages: `numpy`, `scipy` (>= 1.7), `matplotlib`, `rdkit`, `requests`,
 
 ---
 
-**Author:** Jesus Diaz Sanchez  
+**Author:** Jesus Diaz Sanchez
 **Contact:** [GitHub @jdsanc](https://github.com/jdsanc)

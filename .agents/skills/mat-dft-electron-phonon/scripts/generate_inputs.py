@@ -10,13 +10,19 @@ Requirements:
 """
 
 import argparse
-import json
 from pymatgen.core import Structure
 from atomate2.vasp.flows.elph import ElectronPhononMaker
 
+
 def main():
-    parser = argparse.ArgumentParser(description="Generate ElectronPhononMaker flow DAG for Silicon.")
-    parser.add_argument("--output", default="elph_flow.json", help="Output JSON path to save the DAG representation.")
+    parser = argparse.ArgumentParser(
+        description="Generate ElectronPhononMaker flow DAG for Silicon."
+    )
+    parser.add_argument(
+        "--output",
+        default="elph_flow.json",
+        help="Output JSON path to save the DAG representation.",
+    )
     args = parser.parse_args()
 
     # Silicon primitive cell (FCC)
@@ -35,18 +41,28 @@ def main():
     # 5. Averaging bandgaps to extract the ZGMR (Zero-Point Renormalization) and temperature shifts
     maker = ElectronPhononMaker(
         name="Si_Electron_Phonon",
-        temperatures=(0, 300, 600),   # Evaluate T=0K (quantum fluctuations), 300K, and 600K
-        min_supercell_length=10.0     # Minimum supercell length in Angstroms
+        temperatures=(
+            0,
+            300,
+            600,
+        ),  # Evaluate T=0K (quantum fluctuations), 300K, and 600K
+        min_supercell_length=10.0,  # Minimum supercell length in Angstroms
     )
 
     flow = maker.make(si_structure)
 
     # Submit workflow to remote worker
     from jobflow_remote import submit_flow
-    flow_ids = submit_flow(flow, project="remote_perlmutter", worker="perlmutter_worker")
 
-    print(f"✅ Submitted Electron-Phonon workflow DAG with {len(flow.jobs)} top-level job nodes.")
+    flow_ids = submit_flow(
+        flow, project="remote_perlmutter", worker="perlmutter_worker"
+    )
+
+    print(
+        f"✅ Submitted Electron-Phonon workflow DAG with {len(flow.jobs)} top-level job nodes."
+    )
     print(f"Flow IDs: {flow_ids}")
+
 
 if __name__ == "__main__":
     main()

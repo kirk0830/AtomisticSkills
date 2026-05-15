@@ -51,11 +51,9 @@ import time
 import warnings
 from pathlib import Path
 
-import numpy as np
 
 import openmm
 import openmm.app as app
-import openmm.unit as unit
 
 import parmed
 
@@ -68,9 +66,7 @@ with warnings.catch_warnings():
 # Subsystem extraction (mirrors compute_mmgbsa.py for consistent atom sets)
 # ---------------------------------------------------------------------------
 
-SOLUTE_SEL = (
-    "not (resname HOH WAT TIP3 SOL NA CL Na+ Cl- K K+ NA+ CL-)"
-)
+SOLUTE_SEL = "not (resname HOH WAT TIP3 SOL NA CL Na+ Cl- K K+ NA+ CL-)"
 
 
 def _check_cli(name: str) -> str:
@@ -120,6 +116,7 @@ def strip_and_write_pdbs(
 # OpenFF / OpenMM parameterization, then ParmEd -> Amber prmtop
 # ---------------------------------------------------------------------------
 
+
 def load_openff_molecule(sdf_path: Path):
     from openff.toolkit import Molecule
 
@@ -146,7 +143,8 @@ def _build_openmm_system(
     ff = app.ForceField(f"{protein_ff}.xml")
     if small_molecules:
         generator = SMIRNOFFTemplateGenerator(
-            molecules=small_molecules, forcefield="openff-2.2.0",
+            molecules=small_molecules,
+            forcefield="openff-2.2.0",
         )
         ff.registerTemplateGenerator(generator.generator)
 
@@ -164,7 +162,7 @@ _RADII_FOR_IGB: dict[int, str] = {
     1: "mbondi",
     2: "mbondi2",
     5: "mbondi2",
-    7: "mbondi",   # GBn (Mongan et al. 2007) parameterized against mbondi.
+    7: "mbondi",  # GBn (Mongan et al. 2007) parameterized against mbondi.
     8: "mbondi3",  # GBn2 (Nguyen et al. 2013) parameterized against mbondi3.
 }
 
@@ -233,9 +231,12 @@ def parameterize_subsystems(
     _save_amber_prmtop(ls, lt, lp, ligand_prmtop, ligand_inpcrd, radius_set)
 
     return {
-        "complex_prmtop": complex_prmtop, "complex_inpcrd": complex_inpcrd,
-        "receptor_prmtop": receptor_prmtop, "receptor_inpcrd": receptor_inpcrd,
-        "ligand_prmtop": ligand_prmtop, "ligand_inpcrd": ligand_inpcrd,
+        "complex_prmtop": complex_prmtop,
+        "complex_inpcrd": complex_inpcrd,
+        "receptor_prmtop": receptor_prmtop,
+        "receptor_inpcrd": receptor_inpcrd,
+        "ligand_prmtop": ligand_prmtop,
+        "ligand_inpcrd": ligand_inpcrd,
     }
 
 
@@ -243,12 +244,15 @@ def parameterize_subsystems(
 # Trajectory conversion via cpptraj
 # ---------------------------------------------------------------------------
 
+
 def _trajectory_dt_ps(topology_path: Path, trajectory_path: Path) -> float:
     u = mda.Universe(str(topology_path), str(trajectory_path))
     if len(u.trajectory) < 2:
         return 20.0
-    u.trajectory[0]; t0 = u.trajectory[0].time
-    u.trajectory[1]; t1 = u.trajectory[1].time
+    u.trajectory[0]
+    t0 = u.trajectory[0].time
+    u.trajectory[1]
+    t1 = u.trajectory[1].time
     dt = t1 - t0
     return float(dt) if dt > 0 else 20.0
 
@@ -275,24 +279,28 @@ def convert_trajectory_with_cpptraj(
     n_total = len(mda.Universe(str(topology_path), str(trajectory_path)).trajectory)
     start_one_based = max(1, skip_frames + 1)
     last = n_total
-    script = "\n".join([
-        f"parm {topology_path}",
-        f"trajin {trajectory_path} {start_one_based} {last} {stride}",
-        "strip :HOH,WAT,TIP3,SOL,Na+,Cl-,K+,NA,CL,K",
-        f"trajout {nc_path} netcdf",
-        "go",
-        "quit",
-        "",
-    ])
+    script = "\n".join(
+        [
+            f"parm {topology_path}",
+            f"trajin {trajectory_path} {start_one_based} {last} {stride}",
+            "strip :HOH,WAT,TIP3,SOL,Na+,Cl-,K+,NA,CL,K",
+            f"trajout {nc_path} netcdf",
+            "go",
+            "quit",
+            "",
+        ]
+    )
     cpptraj_in.write_text(script)
-    print(f"\n--- Converting trajectory with cpptraj ---")
+    print("\n--- Converting trajectory with cpptraj ---")
     print(f"  cpptraj input: {cpptraj_in}")
     proc = subprocess.run(
         [cpptraj_bin, "-i", str(cpptraj_in)],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     if proc.returncode != 0:
-        sys.stderr.write(proc.stdout); sys.stderr.write(proc.stderr)
+        sys.stderr.write(proc.stdout)
+        sys.stderr.write(proc.stderr)
         sys.exit(f"cpptraj failed (exit {proc.returncode}).")
 
     if not nc_path.exists():
@@ -301,6 +309,7 @@ def convert_trajectory_with_cpptraj(
     # Sanity check: NetCDF atom count must match the dry-complex prmtop.
     try:
         from scipy.io import netcdf_file
+
         with netcdf_file(str(nc_path), "r", mmap=False) as nc:
             nc_atoms = int(nc.dimensions["atom"])
             nc_frames = int(nc.dimensions["frame"])
@@ -321,6 +330,7 @@ def convert_trajectory_with_cpptraj(
 # ---------------------------------------------------------------------------
 # MMPBSA.py invocation
 # ---------------------------------------------------------------------------
+
 
 def write_mmpbsa_in(
     out_path: Path,
@@ -375,16 +385,24 @@ def run_mmpbsa(
     mmpbsa_bin = _check_cli("MMPBSA.py")
     work_dir_abs = work_dir.resolve()
     cmd = [
-        mmpbsa_bin, "-O",
-        "-i", str(mmpbsa_in.resolve()),
-        "-cp", str(complex_prmtop.resolve()),
-        "-rp", str(receptor_prmtop.resolve()),
-        "-lp", str(ligand_prmtop.resolve()),
-        "-y", str(trajectory.resolve()),
-        "-o", str(work_dir_abs / "FINAL_RESULTS_MMPBSA.dat"),
-        "-do", str(work_dir_abs / "FINAL_DECOMP_MMPBSA.dat"),
+        mmpbsa_bin,
+        "-O",
+        "-i",
+        str(mmpbsa_in.resolve()),
+        "-cp",
+        str(complex_prmtop.resolve()),
+        "-rp",
+        str(receptor_prmtop.resolve()),
+        "-lp",
+        str(ligand_prmtop.resolve()),
+        "-y",
+        str(trajectory.resolve()),
+        "-o",
+        str(work_dir_abs / "FINAL_RESULTS_MMPBSA.dat"),
+        "-do",
+        str(work_dir_abs / "FINAL_DECOMP_MMPBSA.dat"),
     ]
-    print(f"\n--- Running MMPBSA.py ---")
+    print("\n--- Running MMPBSA.py ---")
     print(f"  {' '.join(cmd)}")
     proc = subprocess.run(cmd, cwd=str(work_dir_abs), capture_output=True, text=True)
     sys.stdout.write(proc.stdout)
@@ -403,9 +421,7 @@ def run_mmpbsa(
 
 _DELTA_HEADER_RE = re.compile(r"DELTA TOTAL", re.IGNORECASE)
 _SECTION_RE = re.compile(r"^(GENERALIZED BORN|POISSON BOLTZMANN):?", re.IGNORECASE)
-_DG_RE = re.compile(
-    r"DELTA TOTAL\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)"
-)
+_DG_RE = re.compile(r"DELTA TOTAL\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)")
 
 
 def parse_final_results(path: Path) -> dict:
@@ -436,6 +452,7 @@ def parse_final_results(path: Path) -> dict:
 # Driver
 # ---------------------------------------------------------------------------
 
+
 def compute_mmpbsa(
     topology_path: Path,
     trajectory_path: Path,
@@ -459,35 +476,55 @@ def compute_mmpbsa(
     # Strip + write subsystem PDBs
     print("--- Stripping solvent and writing subsystem PDBs ---")
     complex_pdb, receptor_pdb, ligand_pdb, n_dry_atoms = strip_and_write_pdbs(
-        topology_path, trajectory_path, ligand_sel, receptor_sel, output_dir,
+        topology_path,
+        trajectory_path,
+        ligand_sel,
+        receptor_sel,
+        output_dir,
     )
 
     # Build prmtops via OpenMM + ParmEd (preserves atom ordering vs. trajectory).
     # GB radii must match the chosen igb model; PB-only runs use mbondi2 too.
     radius_set = _RADII_FOR_IGB.get(gb_model, "mbondi2")
     paths = parameterize_subsystems(
-        complex_pdb, receptor_pdb, ligand_pdb,
-        ligand_sdf, cofactor_sdf, protein_ff, radius_set, output_dir,
+        complex_pdb,
+        receptor_pdb,
+        ligand_pdb,
+        ligand_sdf,
+        cofactor_sdf,
+        protein_ff,
+        radius_set,
+        output_dir,
     )
 
     # Convert + strip trajectory
     dt_ps = _trajectory_dt_ps(topology_path, trajectory_path)
     skip_frames = max(0, int(skip_ns * 1000.0 / dt_ps)) if dt_ps > 0 else 0
     nc_path = convert_trajectory_with_cpptraj(
-        topology_path, trajectory_path, n_dry_atoms,
-        skip_frames=skip_frames, stride=stride, output_dir=output_dir,
+        topology_path,
+        trajectory_path,
+        n_dry_atoms,
+        skip_frames=skip_frames,
+        stride=stride,
+        output_dir=output_dir,
     )
 
     # MMPBSA.py
     mmpbsa_in = output_dir / "mmpbsa.in"
     write_mmpbsa_in(
-        mmpbsa_in, method=method,
-        pb_int_diel=pb_int_diel, pb_ext_diel=pb_ext_diel,
-        gb_model=gb_model, salt_conc=salt_conc,
+        mmpbsa_in,
+        method=method,
+        pb_int_diel=pb_int_diel,
+        pb_ext_diel=pb_ext_diel,
+        gb_model=gb_model,
+        salt_conc=salt_conc,
     )
     final = run_mmpbsa(
-        output_dir, mmpbsa_in,
-        paths["complex_prmtop"], paths["receptor_prmtop"], paths["ligand_prmtop"],
+        output_dir,
+        mmpbsa_in,
+        paths["complex_prmtop"],
+        paths["receptor_prmtop"],
+        paths["ligand_prmtop"],
         nc_path,
     )
 
@@ -530,7 +567,7 @@ def compute_mmpbsa(
     summary_path.write_text(json.dumps(summary, indent=4))
     print(f"\nWrote summary: {summary_path}")
 
-    print(f"\n--- MM-PBSA / MM-GBSA Results ---")
+    print("\n--- MM-PBSA / MM-GBSA Results ---")
     for tag, vals in summary["results"].items():
         print(
             f"  {tag}: dG = {vals['dG_mean_kcal_mol']:.2f} +/- "
@@ -546,36 +583,84 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Single-trajectory MM-PBSA / MM-GBSA via AmberTools MMPBSA.py.",
     )
-    parser.add_argument("--topology", required=True, help="Solvated complex PDB (topology).")
-    parser.add_argument("--trajectory", required=True, help="Production trajectory (DCD).")
-    parser.add_argument("--ligand_sdf", required=True, help="Ligand SDF for parameterization.")
-    parser.add_argument("--cofactor_sdf", default=None, help="Cofactor SDF (e.g., NADPH).")
-    parser.add_argument("--ligand_resname", default="UNL", help="Ligand residue name (default: UNL).")
-    parser.add_argument("--ligand_sel", default=None,
-                        help="Full MDAnalysis selection for ligand (overrides --ligand_resname).")
-    parser.add_argument("--cofactor_resname", default=None, help="Cofactor residue name.")
-    parser.add_argument("--cofactor_sel", default=None,
-                        help="Full MDAnalysis selection for cofactor (overrides --cofactor_resname).")
     parser.add_argument(
-        "--method", choices=["pb", "gb", "both"], default="both",
+        "--topology", required=True, help="Solvated complex PDB (topology)."
+    )
+    parser.add_argument(
+        "--trajectory", required=True, help="Production trajectory (DCD)."
+    )
+    parser.add_argument(
+        "--ligand_sdf", required=True, help="Ligand SDF for parameterization."
+    )
+    parser.add_argument(
+        "--cofactor_sdf", default=None, help="Cofactor SDF (e.g., NADPH)."
+    )
+    parser.add_argument(
+        "--ligand_resname", default="UNL", help="Ligand residue name (default: UNL)."
+    )
+    parser.add_argument(
+        "--ligand_sel",
+        default=None,
+        help="Full MDAnalysis selection for ligand (overrides --ligand_resname).",
+    )
+    parser.add_argument(
+        "--cofactor_resname", default=None, help="Cofactor residue name."
+    )
+    parser.add_argument(
+        "--cofactor_sel",
+        default=None,
+        help="Full MDAnalysis selection for cofactor (overrides --cofactor_resname).",
+    )
+    parser.add_argument(
+        "--method",
+        choices=["pb", "gb", "both"],
+        default="both",
         help="Implicit-solvent method (default: both).",
     )
-    parser.add_argument("--skip_ns", type=float, default=0.5,
-                        help="Skip first N ns of trajectory as equilibration (default: 0.5).")
-    parser.add_argument("--stride", type=int, default=5,
-                        help="Frame stride after skipping (default: 5).")
-    parser.add_argument("--protein_ff", default="amber/ff14SB",
-                        help="Protein force field XML name (default: amber/ff14SB).")
-    parser.add_argument("--pb_int_diel", type=float, default=1.0,
-                        help="PB interior (solute) dielectric (default: 1.0).")
-    parser.add_argument("--pb_ext_diel", type=float, default=80.0,
-                        help="PB exterior (solvent) dielectric (default: 80.0).")
-    parser.add_argument("--gb_model", type=int, default=5, choices=[1, 2, 5, 7, 8],
-                        help="GB model index (igb): 5 = OBC2 / mbondi2 (default, most widely used for "
-                             "MM-GBSA); 2 = OBC1 / mbondi2; 7 = GBn / mbondi; 8 = GBn2 / mbondi3; "
-                             "1 = HCT / mbondi. Radius set is paired automatically via ParmEd.")
-    parser.add_argument("--salt_conc", type=float, default=0.0,
-                        help="Salt concentration in M for GB (saltcon) and PB (istrng) (default: 0.0).")
+    parser.add_argument(
+        "--skip_ns",
+        type=float,
+        default=0.5,
+        help="Skip first N ns of trajectory as equilibration (default: 0.5).",
+    )
+    parser.add_argument(
+        "--stride",
+        type=int,
+        default=5,
+        help="Frame stride after skipping (default: 5).",
+    )
+    parser.add_argument(
+        "--protein_ff",
+        default="amber/ff14SB",
+        help="Protein force field XML name (default: amber/ff14SB).",
+    )
+    parser.add_argument(
+        "--pb_int_diel",
+        type=float,
+        default=1.0,
+        help="PB interior (solute) dielectric (default: 1.0).",
+    )
+    parser.add_argument(
+        "--pb_ext_diel",
+        type=float,
+        default=80.0,
+        help="PB exterior (solvent) dielectric (default: 80.0).",
+    )
+    parser.add_argument(
+        "--gb_model",
+        type=int,
+        default=5,
+        choices=[1, 2, 5, 7, 8],
+        help="GB model index (igb): 5 = OBC2 / mbondi2 (default, most widely used for "
+        "MM-GBSA); 2 = OBC1 / mbondi2; 7 = GBn / mbondi; 8 = GBn2 / mbondi3; "
+        "1 = HCT / mbondi. Radius set is paired automatically via ParmEd.",
+    )
+    parser.add_argument(
+        "--salt_conc",
+        type=float,
+        default=0.0,
+        help="Salt concentration in M for GB (saltcon) and PB (istrng) (default: 0.0).",
+    )
     parser.add_argument("--output_dir", required=True, help="Output directory.")
     args = parser.parse_args()
 
@@ -594,7 +679,9 @@ def main() -> None:
     ligand_sdf = Path(args.ligand_sdf)
     cofactor_sdf = Path(args.cofactor_sdf) if args.cofactor_sdf else None
     for label, path in [
-        ("Topology", topology), ("Trajectory", trajectory), ("Ligand SDF", ligand_sdf),
+        ("Topology", topology),
+        ("Trajectory", trajectory),
+        ("Ligand SDF", ligand_sdf),
     ]:
         if not path.exists():
             sys.exit(f"ERROR: {label} not found: {path}")

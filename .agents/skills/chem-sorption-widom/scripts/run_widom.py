@@ -1,5 +1,5 @@
 """
-Run Widom insertion with any supported MLIP (MACE, FairChem, MatGL) to compute 
+Run Widom insertion with any supported MLIP (MACE, FairChem, MatGL) to compute
 Henry coefficient and heat of adsorption.
 
 Usage:
@@ -32,16 +32,23 @@ from widom_common import (
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Run Widom insertion with a generic MLIP calculator.")
+    p = argparse.ArgumentParser(
+        description="Run Widom insertion with a generic MLIP calculator."
+    )
     add_common_widom_args(p)
     p.add_argument(
         "--calculator",
         type=str,
         required=True,
         choices=["mace", "fairchem", "matgl"],
-        help="Backend MLIP calculator to use."
+        help="Backend MLIP calculator to use.",
     )
-    p.add_argument("--model-name", type=str, required=True, help="Name or path of the model checkpoint")
+    p.add_argument(
+        "--model-name",
+        type=str,
+        required=True,
+        help="Name or path of the model checkpoint",
+    )
     p.add_argument(
         "--task-name",
         type=str,
@@ -55,8 +62,16 @@ def parse_args() -> argparse.Namespace:
         choices=["auto", "cuda", "cpu"],
         help="'auto' picks CUDA if available",
     )
-    p.add_argument("--model-tag", type=str, default=None, help="Model tag for output metadata")
-    p.add_argument("--output", "-o", type=Path, default=None, help="Output JSON path (default: output_dir/widom_results.json)")
+    p.add_argument(
+        "--model-tag", type=str, default=None, help="Model tag for output metadata"
+    )
+    p.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="Output JSON path (default: output_dir/widom_results.json)",
+    )
     return p.parse_args()
 
 
@@ -68,7 +83,7 @@ def main() -> int:
     normalize_charge_spin(atoms, args.task_name)
 
     model_tag = args.model_tag or f"{args.calculator}_{args.model_name}"
-    
+
     # Load the MLIP calculator
     wrapper = load_wrapper(
         args.calculator,
@@ -108,6 +123,7 @@ def main() -> int:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
     return 0

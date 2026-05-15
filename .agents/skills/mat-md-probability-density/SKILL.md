@@ -11,7 +11,7 @@ To visualize the spatial probability density of mobile ions (e.g., Li, Na) from 
 
 ## Instructions
 
-1.  **MD Simulation**: Run an MD simulation at an appropriate temperature to observe sufficient diffusion events. 
+1.  **MD Simulation**: Run an MD simulation at an appropriate temperature to observe sufficient diffusion events.
     > Note: Short MD trajectories (e.g., ≤10 ps) often have too few discrete ion hops to naturally form continuous probability density tubes. The resulting density will look like isolated blobs exactly at the crystal lattice sites. To visualize continuous macroscopic diffusion pathways for short trajectories, use the `--log` compression flag to mathematically connect the sparse pathways.
     - The trajectory is typically saved to `trajectory.traj`.
     - Ensure `supercell_min_length` is reasonably large (>10 Å) to avoid finite-size artifacts in the density mapping.
@@ -47,5 +47,5 @@ To visualize the spatial probability density of mobile ions (e.g., Li, Na) from 
 - **Memory Limits**: Avoid setting `--interval` too small ($< 0.1$) on large supercells, as this may result in extremely large 3D grid sizes and out-of-memory errors.
 
 ---
-**Author**: Bowen Deng  
+**Author**: Bowen Deng
 **Contact**: [GitHub @bowen-bd](https://github.com/bowen-bd)

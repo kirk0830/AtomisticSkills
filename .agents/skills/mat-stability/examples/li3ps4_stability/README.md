@@ -1,6 +1,6 @@
 # Li3PS4 Stability and ECW Calculation Example
 
-This example demonstrates the complete end-to-end pipeline for evaluating the 0K thermodynamic stability ($E_{hull}$) and the intrinsic Electrochemical Stability Window (ECW) of $\text{Li}_3\text{PS}_4$. 
+This example demonstrates the complete end-to-end pipeline for evaluating the 0K thermodynamic stability ($E_{hull}$) and the intrinsic Electrochemical Stability Window (ECW) of $\text{Li}_3\text{PS}_4$.
 
 It seamlessly combines functionality from both the `mat-stability` and `mat-electrochemical-window` skills.
 

@@ -71,5 +71,5 @@ python .agents/skills/chem-sorption-widom/scripts/run_widom.py \
 
 ---
 
-**Author:** Artur Lyssenko  
+**Author:** Artur Lyssenko
 **Contact:** [GitHub @arturlyssenko12](https://github.com/arturlyssenko12)

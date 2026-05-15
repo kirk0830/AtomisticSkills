@@ -19,7 +19,7 @@ python ../../scripts/run_phase_analysis.py --data GeO2-ZnO_700C_60min.xrdml --ou
 The results are summarized in `results_summary.json` mapping the probability of matches for each reference CIF found.
 
 ### Literature Comparison
-In standard literature detailing the `ZnO-GeO2` pseudobinary system, solid-state reactions (calcination or sintering) between ZnO and GeO2 at temperatures ranging from 700 °C to 1000 °C predominantly yield the inverse spinel phase **zinc orthogermanate (Zn2GeO4)** ($2\text{ZnO} + \text{GeO}_2 \rightarrow \text{Zn}_2\text{GeO}_4$). 
+In standard literature detailing the `ZnO-GeO2` pseudobinary system, solid-state reactions (calcination or sintering) between ZnO and GeO2 at temperatures ranging from 700 °C to 1000 °C predominantly yield the inverse spinel phase **zinc orthogermanate (Zn2GeO4)** ($2\text{ZnO} + \text{GeO}_2 \rightarrow \text{Zn}_2\text{GeO}_4$).
 The DARA automated search on our experimental dataset independently confirms this empirical consensus. Looking at `results_summary.json`, the solver successfully extracted the `Zn2GeO4_148` (space group R-3) reference profile as a primary constituent phase with high confidence alongside residual unreacted starting materials (`GeO2` and `ZnO`), matching textbook reaction expectations.
 
 ### Visual Validation

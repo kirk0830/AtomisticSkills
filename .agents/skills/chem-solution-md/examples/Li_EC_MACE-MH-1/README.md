@@ -68,4 +68,3 @@ python .agents/skills/chem-solution-md/scripts/analyze_solution_md.py \
 - Borodin, O. & Smith, G.D., "LiTFSI Structure and Transport in Ethylene Carbonate from Molecular Dynamics Simulations", *J. Phys. Chem. B*, **110**(10), 4971–4977, 2006. [DOI](https://doi.org/10.1021/jp056249q)
 - Xu, K., "Nonaqueous Liquid Electrolytes for Lithium-Based Rechargeable Batteries", *Chem. Rev.*, **104**(10), 4303–4418, 2004. [DOI](https://doi.org/10.1021/cr030203g)
 - CRC Handbook of Chemistry and Physics, 97th Edition, 2016–2017.
-

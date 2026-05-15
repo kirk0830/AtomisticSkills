@@ -619,6 +619,7 @@ def main() -> int:
     run_frenkel_ladd(args)
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
     return 0

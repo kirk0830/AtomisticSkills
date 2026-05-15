@@ -37,6 +37,7 @@ import sys
 from pathlib import Path
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -182,17 +183,37 @@ def plot_score_hist_kde(scores: np.ndarray, output_path: Path) -> None:
     plt.close()
 
 
-def plot_score_vs_mw(scores: np.ndarray, mws: np.ndarray, output_path: Path,
-                     labels: np.ndarray | None = None) -> None:
+def plot_score_vs_mw(
+    scores: np.ndarray,
+    mws: np.ndarray,
+    output_path: Path,
+    labels: np.ndarray | None = None,
+) -> None:
     """Plot docking score vs. molecular weight to visualize size bias."""
     fig, ax = plt.subplots(figsize=(5, 4))
 
     if labels is not None:
         active_mask = labels == 1
-        ax.scatter(mws[~active_mask], scores[~active_mask], alpha=0.4, s=20,
-                   color="#b2182b", label="Inactive", zorder=2)
-        ax.scatter(mws[active_mask], scores[active_mask], alpha=0.7, s=30,
-                   color="#2166ac", label="Active", edgecolors="black", linewidths=0.5, zorder=3)
+        ax.scatter(
+            mws[~active_mask],
+            scores[~active_mask],
+            alpha=0.4,
+            s=20,
+            color="#b2182b",
+            label="Inactive",
+            zorder=2,
+        )
+        ax.scatter(
+            mws[active_mask],
+            scores[active_mask],
+            alpha=0.7,
+            s=30,
+            color="#2166ac",
+            label="Active",
+            edgecolors="black",
+            linewidths=0.5,
+            zorder=3,
+        )
         ax.legend(fontsize=9, frameon=False)
     else:
         ax.scatter(mws, scores, alpha=0.5, s=20, color="#2166ac", zorder=2)
@@ -264,8 +285,13 @@ def plot_roc(enrichment: dict, output_path: Path) -> None:
 def plot_enrichment_factors(enrichment: dict, output_path: Path) -> None:
     """Plot enrichment factor bar chart."""
     cutoffs = ["1%", "2%", "5%", "10%", "20%"]
-    efs = [enrichment["ef_1pct"], enrichment["ef_2pct"], enrichment["ef_5pct"],
-           enrichment["ef_10pct"], enrichment["ef_20pct"]]
+    efs = [
+        enrichment["ef_1pct"],
+        enrichment["ef_2pct"],
+        enrichment["ef_5pct"],
+        enrichment["ef_10pct"],
+        enrichment["ef_20pct"],
+    ]
 
     fig, ax = plt.subplots(figsize=(4, 3.5))
     bars = ax.bar(cutoffs, efs, color="#4393c3", edgecolor="black", linewidth=0.5)
@@ -278,8 +304,14 @@ def plot_enrichment_factors(enrichment: dict, output_path: Path) -> None:
     ax.spines["right"].set_visible(False)
 
     for bar, ef in zip(bars, efs):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
-                f"{ef:.1f}x", ha="center", va="bottom", fontsize=8)
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.1,
+            f"{ef:.1f}x",
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
 
     plt.tight_layout()
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -326,21 +358,42 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Post-docking analysis: score distributions, enrichment, ligand efficiency."
     )
-    parser.add_argument("--docking_csv", required=True, type=Path,
-                        help="Docking results CSV with compound_id, best_affinity, smiles columns.")
-    parser.add_argument("--library_csv", type=Path, default=None,
-                        help="Library CSV with compound_id and label columns (for enrichment).")
-    parser.add_argument("--active_label", default="active",
-                        help="Label string for actives in library CSV (default: active).")
-    parser.add_argument("--inactive_label", default="inactive",
-                        help="Label string for inactives in library CSV (default: inactive).")
-    parser.add_argument("--parent_id_col", default=None,
-                        help="Column name holding the parent compound ID. When set, "
-                             "microstates are collapsed to best-score-per-parent before "
-                             "computing ligand efficiency, enrichment, and plots. Use this "
-                             "when the library contained enumerated protomers/tautomers.")
-    parser.add_argument("--output_dir", required=True, type=Path,
-                        help="Output directory for plots and results.")
+    parser.add_argument(
+        "--docking_csv",
+        required=True,
+        type=Path,
+        help="Docking results CSV with compound_id, best_affinity, smiles columns.",
+    )
+    parser.add_argument(
+        "--library_csv",
+        type=Path,
+        default=None,
+        help="Library CSV with compound_id and label columns (for enrichment).",
+    )
+    parser.add_argument(
+        "--active_label",
+        default="active",
+        help="Label string for actives in library CSV (default: active).",
+    )
+    parser.add_argument(
+        "--inactive_label",
+        default="inactive",
+        help="Label string for inactives in library CSV (default: inactive).",
+    )
+    parser.add_argument(
+        "--parent_id_col",
+        default=None,
+        help="Column name holding the parent compound ID. When set, "
+        "microstates are collapsed to best-score-per-parent before "
+        "computing ligand efficiency, enrichment, and plots. Use this "
+        "when the library contained enumerated protomers/tautomers.",
+    )
+    parser.add_argument(
+        "--output_dir",
+        required=True,
+        type=Path,
+        help="Output directory for plots and results.",
+    )
     args = parser.parse_args()
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -378,15 +431,19 @@ def main() -> None:
         smiles = row.get("smiles", "")
         label = row.get("label", "") or label_map.get(cid, "")
 
-        le_data = compute_ligand_efficiency(smiles, score) if smiles else {"valid": False}
+        le_data = (
+            compute_ligand_efficiency(smiles, score) if smiles else {"valid": False}
+        )
 
-        results.append({
-            "compound_id": cid,
-            "label": label,
-            "docking_score": score,
-            "smiles": smiles,
-            **{k: v for k, v in le_data.items()},
-        })
+        results.append(
+            {
+                "compound_id": cid,
+                "label": label,
+                "docking_score": score,
+                "smiles": smiles,
+                **{k: v for k, v in le_data.items()},
+            }
+        )
 
     # Arrays for plotting
     scores = np.array([r["docking_score"] for r in results])
@@ -400,15 +457,34 @@ def main() -> None:
 
     # Score vs MW
     print("Plotting score vs. MW...")
-    has_labels = any(r["label"] in (args.active_label, args.inactive_label) for r in results)
+    has_labels = any(
+        r["label"] in (args.active_label, args.inactive_label) for r in results
+    )
     if has_labels:
-        plot_labels = np.array([1 if r["label"] == args.active_label else 0
-                                for r in results if r["label"] in (args.active_label, args.inactive_label)])
-        plot_scores = np.array([r["docking_score"] for r in results
-                                if r["label"] in (args.active_label, args.inactive_label)])
-        plot_mws = np.array([r.get("mw", 0) for r in results
-                             if r["label"] in (args.active_label, args.inactive_label)])
-        plot_score_vs_mw(plot_scores, plot_mws, plots_dir / "score_vs_mw.png", labels=plot_labels)
+        plot_labels = np.array(
+            [
+                1 if r["label"] == args.active_label else 0
+                for r in results
+                if r["label"] in (args.active_label, args.inactive_label)
+            ]
+        )
+        plot_scores = np.array(
+            [
+                r["docking_score"]
+                for r in results
+                if r["label"] in (args.active_label, args.inactive_label)
+            ]
+        )
+        plot_mws = np.array(
+            [
+                r.get("mw", 0)
+                for r in results
+                if r["label"] in (args.active_label, args.inactive_label)
+            ]
+        )
+        plot_score_vs_mw(
+            plot_scores, plot_mws, plots_dir / "score_vs_mw.png", labels=plot_labels
+        )
     else:
         plot_score_vs_mw(scores, mws, plots_dir / "score_vs_mw.png")
 
@@ -420,22 +496,45 @@ def main() -> None:
     enrichment = None
     if has_labels:
         print("Computing enrichment...")
-        enrich_labels = np.array([1 if r["label"] == args.active_label else 0
-                                  for r in results if r["label"] in (args.active_label, args.inactive_label)])
-        enrich_scores = np.array([-r["docking_score"] for r in results
-                                  if r["label"] in (args.active_label, args.inactive_label)])
+        enrich_labels = np.array(
+            [
+                1 if r["label"] == args.active_label else 0
+                for r in results
+                if r["label"] in (args.active_label, args.inactive_label)
+            ]
+        )
+        enrich_scores = np.array(
+            [
+                -r["docking_score"]
+                for r in results
+                if r["label"] in (args.active_label, args.inactive_label)
+            ]
+        )
         enrichment = compute_enrichment(enrich_labels, enrich_scores)
 
         if "error" not in enrichment:
             print(f"  AUC: {enrichment['auc']:.3f}")
-            print(f"  EF1%: {enrichment['ef_1pct']:.1f}x  EF5%: {enrichment['ef_5pct']:.1f}x  EF10%: {enrichment['ef_10pct']:.1f}x")
+            print(
+                f"  EF1%: {enrichment['ef_1pct']:.1f}x  EF5%: {enrichment['ef_5pct']:.1f}x  EF10%: {enrichment['ef_10pct']:.1f}x"
+            )
 
             plot_roc(enrichment, plots_dir / "roc_curve.png")
             plot_enrichment_factors(enrichment, plots_dir / "enrichment_factors.png")
 
     # Write enriched results CSV
-    out_fields = ["compound_id", "label", "docking_score", "mw", "clogp", "tpsa",
-                  "heavy_atoms", "le", "bei", "sei", "smiles"]
+    out_fields = [
+        "compound_id",
+        "label",
+        "docking_score",
+        "mw",
+        "clogp",
+        "tpsa",
+        "heavy_atoms",
+        "le",
+        "bei",
+        "sei",
+        "smiles",
+    ]
     csv_path = args.output_dir / "docking_analysis.csv"
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=out_fields, extrasaction="ignore")
@@ -455,7 +554,9 @@ def main() -> None:
         "score_min": round(float(scores.min()), 3),
         "score_max": round(float(scores.max()), 3),
         "le_mean": round(float(les[les > 0].mean()), 4) if np.any(les > 0) else None,
-        "le_median": round(float(np.median(les[les > 0])), 4) if np.any(les > 0) else None,
+        "le_median": round(float(np.median(les[les > 0])), 4)
+        if np.any(les > 0)
+        else None,
     }
     if enrichment and "error" not in enrichment:
         summary["enrichment"] = {
@@ -478,6 +579,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

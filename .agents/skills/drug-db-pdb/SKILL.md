@@ -112,5 +112,5 @@ python .agents/skills/drug-db-pdb/scripts/query_pdb.py \
 - **Environment**: Requires the `base-agent` conda environment.
 ---
 
-**Author:** Matthew Cox  
+**Author:** Matthew Cox
 **Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

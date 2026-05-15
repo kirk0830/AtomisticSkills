@@ -27,7 +27,7 @@ phono3py 3.x renamed `ConductivityRTA.kappa_TOT_RTA` to `.kappa`. Apply the foll
 
 ## 2. Choosing a Foundation Potential
 
-Phonon and thermal conductivity calculations are highly sensitive to the quality of the potential energy surface (PES). 
+Phonon and thermal conductivity calculations are highly sensitive to the quality of the potential energy surface (PES).
 
 > [!IMPORTANT]
 > - **Use OMAT or MatPES trained models**: These models (e.g., `MACE-OMAT-0-small`, `TensorNet-MatPES-r2SCAN`) are specifically optimized for forces and vibrational stability.
@@ -43,7 +43,7 @@ First of all, using the [`mat-electronic-structure` skill](../mat-electronic-str
 
 ### Step Two: Calculate phonon properties
 
-Before calculating thermal conductivity (which is related to higher order force constants), we need to calculate phonon properties which is related to second order force constants. Use the [`mat-phonon` skill](../mat-phonon/SKILL.md) to calculate phonon properties. 
+Before calculating thermal conductivity (which is related to higher order force constants), we need to calculate phonon properties which is related to second order force constants. Use the [`mat-phonon` skill](../mat-phonon/SKILL.md) to calculate phonon properties.
 
 Check the `phonon_results.json` file and phonon band structure to see if the phonon properties are reasonable, especially for imaginary frequencies in phonon band. If there are imaginary frequencies, the structure is not stable. In this case, redo the structure optimization first, and if it does not work, try different models/methods. Only after validating the phonon properties, proceed to calculate thermal conductivity.
 

@@ -94,11 +94,11 @@ python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
 ### Periodic Materials (solid-state diffusion)
 
 - **Recommended**:
-    - **OMAT**: 
+    - **OMAT**:
         - `MACE-OMAT-0-small`
         - `MACE-MH-1` (head: `omat_pbe`)
         - `uma-s-1p1` (head: `omat`)
-    - **MatPES**: 
+    - **MatPES**:
         - `MACE-MATPES-r2SCAN-0`
         - `MACE-MH-1` (head: `matpes_r2scan`)
         - `CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES`
@@ -130,5 +130,5 @@ python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
 See `examples/` directory for sample inputs and outputs.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

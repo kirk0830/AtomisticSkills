@@ -206,7 +206,6 @@ pip install matgl --no-deps --force-reinstall
 
 ---
 
-**Last Updated**: 2026-02-13  
-**Tested On**: NVIDIA DGX Spark with GB10 GPU (ARM/aarch64)  
+**Last Updated**: 2026-02-13
+**Tested On**: NVIDIA DGX Spark with GB10 GPU (ARM/aarch64)
 **Author**: Bowen Deng
-

@@ -1,6 +1,6 @@
 # Oxadiazole Isomerization (C₂H₂N₂O)
 
-**Reaction:** 1,2,4-oxadiazole ring rearrangement  
+**Reaction:** 1,2,4-oxadiazole ring rearrangement
 **Source:** Transition1x validation dataset (reaction index 0)
 
 This example is extracted from the official React-OT validation dataset ([Zenodo](https://zenodo.org/records/13131875)). The reference TS is computed at the ωB97x/6-31G(d) level of theory.

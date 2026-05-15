@@ -31,10 +31,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
-import numpy as np
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdMolAlign
 
@@ -122,7 +120,9 @@ def load_docked_poses(docked_path: Path) -> list[Chem.Mol]:
     for conf_idx in range(n_confs):
         pose = Chem.RWMol(combined)
         pose.RemoveAllConformers()
-        pose.AddConformer(Chem.Conformer(combined.GetConformer(conf_idx)), assignId=True)
+        pose.AddConformer(
+            Chem.Conformer(combined.GetConformer(conf_idx)), assignId=True
+        )
         poses.append(pose.GetMol())
 
     return poses
@@ -239,24 +239,32 @@ def compute_all_rmsd(
         pose_num = i + 1
         try:
             rmsd = symmetry_corrected_rmsd(ref_mol, pose)
-            results.append({
-                "pose": pose_num,
-                "rmsd_heavy_atom": round(rmsd, 3),
-                "pass": rmsd < threshold,
-            })
+            results.append(
+                {
+                    "pose": pose_num,
+                    "rmsd_heavy_atom": round(rmsd, 3),
+                    "pass": rmsd < threshold,
+                }
+            )
         except Exception as e:
-            results.append({
-                "pose": pose_num,
-                "rmsd_heavy_atom": None,
-                "pass": False,
-                "error": str(e),
-            })
+            results.append(
+                {
+                    "pose": pose_num,
+                    "rmsd_heavy_atom": None,
+                    "pass": False,
+                    "error": str(e),
+                }
+            )
 
-    valid_rmsds = [r["rmsd_heavy_atom"] for r in results if r["rmsd_heavy_atom"] is not None]
+    valid_rmsds = [
+        r["rmsd_heavy_atom"] for r in results if r["rmsd_heavy_atom"] is not None
+    ]
     best_rmsd = min(valid_rmsds) if valid_rmsds else None
     best_pose = None
     if best_rmsd is not None:
-        best_pose = next(r["pose"] for r in results if r["rmsd_heavy_atom"] == best_rmsd)
+        best_pose = next(
+            r["pose"] for r in results if r["rmsd_heavy_atom"] == best_rmsd
+        )
 
     top_pose_result = results[0] if results else None
     top_pose_rmsd = top_pose_result["rmsd_heavy_atom"] if top_pose_result else None
@@ -298,19 +306,26 @@ def main() -> None:
         description="Compute symmetry-corrected in-place heavy-atom RMSD between docked poses and a reference ligand."
     )
     parser.add_argument(
-        "--docked", required=True, type=Path,
+        "--docked",
+        required=True,
+        type=Path,
         help="Path to docked poses (multi-model PDBQT, poses in Vina score order).",
     )
     parser.add_argument(
-        "--reference", required=True, type=Path,
+        "--reference",
+        required=True,
+        type=Path,
         help="Path to reference crystal ligand (PDB or SDF).",
     )
     parser.add_argument(
-        "--smiles", default=None,
+        "--smiles",
+        default=None,
         help="SMILES for bond-order assignment (required if reference is PDB).",
     )
     parser.add_argument(
-        "--threshold", type=float, default=DEFAULT_THRESHOLD_ANGSTROM,
+        "--threshold",
+        type=float,
+        default=DEFAULT_THRESHOLD_ANGSTROM,
         help=(
             "RMSD pass/fail threshold in Angstroms (default: 2.0). "
             "Consider 1.5 for small rigid fragments or 2.5-3.0 for large flexible ligands. "
@@ -318,7 +333,9 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--output_dir", type=Path, default=Path("rmsd_results"),
+        "--output_dir",
+        type=Path,
+        default=Path("rmsd_results"),
         help="Directory to write results.",
     )
 
@@ -333,6 +350,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

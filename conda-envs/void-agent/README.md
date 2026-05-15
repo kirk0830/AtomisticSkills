@@ -9,7 +9,7 @@ This conda environment is specifically built to support the `VOID` library (Voro
 ## Installation
 
 This installer leverages `uv` and `conda` to accelerate the installation timeline.
-It automatically replaces the cumbersome manual compile procedure for Zeo++ and Voro++ by installing a pre-packaged build (`zeopp-lsmo`) from `conda-forge`. 
+It automatically replaces the cumbersome manual compile procedure for Zeo++ and Voro++ by installing a pre-packaged build (`zeopp-lsmo`) from `conda-forge`.
 It will clone the core VOID repository directly from `https://github.com/learningmatter-mit/VOID.git` into `~/projects/atomistic_skills/VOID` to install it.
 
 Run the auto-installer:

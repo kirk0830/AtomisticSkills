@@ -2,7 +2,6 @@
 
 import weakref
 import time
-import ase.units as units
 from ase.parallel import world
 from ase.utils import IOContext
 

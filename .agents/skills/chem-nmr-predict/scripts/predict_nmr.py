@@ -31,10 +31,12 @@ import requests
 # SMILES -> Molfile conversion (RDKit)
 # ---------------------------------------------------------------------------
 
+
 def smiles_to_molblock(smiles: str) -> str:
     """Convert SMILES to a V2000 molfile block via RDKit."""
     from rdkit import Chem
     from rdkit.Chem import AllChem
+
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError(f"Invalid SMILES: {smiles}")
@@ -84,17 +86,21 @@ def fetch_spinus(smiles: str) -> list[dict]:
         for i in range(n_couplings):
             base = 4 + i * 3
             if base + 2 < len(tokens):
-                couplings.append({
-                    "atom_idx": int(tokens[base]),
-                    "distance": int(tokens[base + 1]),
-                    "J_Hz": float(tokens[base + 2]),
-                })
-        atoms.append({
-            "atom_idx": atom_idx,
-            "parent_heavy_atom": parent,
-            "shift_ppm": shift,
-            "couplings": couplings,
-        })
+                couplings.append(
+                    {
+                        "atom_idx": int(tokens[base]),
+                        "distance": int(tokens[base + 1]),
+                        "J_Hz": float(tokens[base + 2]),
+                    }
+                )
+        atoms.append(
+            {
+                "atom_idx": atom_idx,
+                "parent_heavy_atom": parent,
+                "shift_ppm": shift,
+                "couplings": couplings,
+            }
+        )
 
     return atoms
 
@@ -102,6 +108,7 @@ def fetch_spinus(smiles: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 # Group equivalent hydrogens and build signal table
 # ---------------------------------------------------------------------------
+
 
 def group_signals(atoms: list[dict]) -> list[dict]:
     """
@@ -146,13 +153,15 @@ def group_signals(atoms: list[dict]) -> list[dict]:
         mult_map = {0: "s", 1: "d", 2: "t", 3: "q", 4: "quint", 5: "sext", 6: "sept"}
         multiplicity = mult_map.get(n_partners, "m")
 
-        signals.append({
-            "shift_ppm": round(float(shift), 3),
-            "nH": n_h,
-            "multiplicity": multiplicity,
-            "J_Hz": ",".join(str(j) for j in j_unique) if j_unique else "",
-            "atom_indices": [a["atom_idx"] for a in group_atoms],
-        })
+        signals.append(
+            {
+                "shift_ppm": round(float(shift), 3),
+                "nH": n_h,
+                "multiplicity": multiplicity,
+                "J_Hz": ",".join(str(j) for j in j_unique) if j_unique else "",
+                "atom_indices": [a["atom_idx"] for a in group_atoms],
+            }
+        )
 
     signals.sort(key=lambda s: -s["shift_ppm"])
     return signals
@@ -161,6 +170,7 @@ def group_signals(atoms: list[dict]) -> list[dict]:
 # ---------------------------------------------------------------------------
 # nmrsim spectrum simulation
 # ---------------------------------------------------------------------------
+
 
 def simulate_spectrum(
     atoms: list[dict],
@@ -201,8 +211,10 @@ def simulate_spectrum(
         spin_system = SpinSystem(v=v, J=J_list)
         peaklist = spin_system.peaklist()
     except Exception as e:
-        print(f"WARNING: nmrsim simulation failed, falling back to stick spectrum: {e}",
-              file=sys.stderr)
+        print(
+            f"WARNING: nmrsim simulation failed, falling back to stick spectrum: {e}",
+            file=sys.stderr,
+        )
         peaklist = [(a["shift_ppm"] * field_mhz, 1.0) for a in atoms]
 
     if not peaklist:
@@ -219,7 +231,7 @@ def simulate_spectrum(
     spectrum = np.zeros(n_points)
     hwhm = linewidth_hz / 2.0
     for f, amp in zip(freqs_hz, intensities):
-        spectrum += amp * (hwhm**2) / ((freq_axis - f)**2 + hwhm**2)
+        spectrum += amp * (hwhm**2) / ((freq_axis - f) ** 2 + hwhm**2)
 
     max_val = spectrum.max()
     if max_val > 0:
@@ -232,7 +244,10 @@ def simulate_spectrum(
 # Save outputs
 # ---------------------------------------------------------------------------
 
-def save_spectrum_xy(ppm: np.ndarray, intensity: np.ndarray, path: pathlib.Path) -> None:
+
+def save_spectrum_xy(
+    ppm: np.ndarray, intensity: np.ndarray, path: pathlib.Path
+) -> None:
     """Save spectrum as two-column .xy file (ppm, intensity), descending ppm."""
     order = np.argsort(ppm)[::-1]
     arr = np.column_stack([ppm[order], intensity[order]])
@@ -252,27 +267,50 @@ def save_signals_csv(signals: list[dict], path: pathlib.Path) -> None:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
     ap = argparse.ArgumentParser(
         description="Predict 1H NMR spectra from SMILES via NMRdb.org SPINUS + nmrsim."
     )
-    ap.add_argument("--smiles", nargs="+", required=True,
-                    help="SMILES strings for compounds")
-    ap.add_argument("--names", nargs="+",
-                    help="Names for each SMILES (used in filenames). Defaults to comp0, comp1, ...")
-    ap.add_argument("--field_mhz", type=float, default=400.0,
-                    help="Spectrometer frequency in MHz (default: 400)")
-    ap.add_argument("--linewidth", type=float, default=1.0,
-                    help="Lorentzian linewidth FWHM in Hz (default: 1.0)")
-    ap.add_argument("--n_points", type=int, default=8192,
-                    help="Number of points in simulated spectrum (default: 8192)")
-    ap.add_argument("--output_dir", default="nmr_predictions",
-                    help="Directory for output files (default: nmr_predictions/)")
+    ap.add_argument(
+        "--smiles", nargs="+", required=True, help="SMILES strings for compounds"
+    )
+    ap.add_argument(
+        "--names",
+        nargs="+",
+        help="Names for each SMILES (used in filenames). Defaults to comp0, comp1, ...",
+    )
+    ap.add_argument(
+        "--field_mhz",
+        type=float,
+        default=400.0,
+        help="Spectrometer frequency in MHz (default: 400)",
+    )
+    ap.add_argument(
+        "--linewidth",
+        type=float,
+        default=1.0,
+        help="Lorentzian linewidth FWHM in Hz (default: 1.0)",
+    )
+    ap.add_argument(
+        "--n_points",
+        type=int,
+        default=8192,
+        help="Number of points in simulated spectrum (default: 8192)",
+    )
+    ap.add_argument(
+        "--output_dir",
+        default="nmr_predictions",
+        help="Directory for output files (default: nmr_predictions/)",
+    )
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()
 
-    names = args.names if args.names and len(args.names) == len(args.smiles) \
+    names = (
+        args.names
+        if args.names and len(args.names) == len(args.smiles)
         else [f"comp{i}" for i in range(len(args.smiles))]
+    )
 
     out_dir = pathlib.Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -304,14 +342,16 @@ def main():
             save_spectrum_xy(ppm, intensity, xy_path)
             save_signals_csv(signals, sig_path)
 
-            found.append({
-                "smiles": smiles,
-                "name": name,
-                "n_signals": len(signals),
-                "n_atoms_h": len(atoms),
-                "spectrum": str(xy_path),
-                "signals": str(sig_path),
-            })
+            found.append(
+                {
+                    "smiles": smiles,
+                    "name": name,
+                    "n_signals": len(signals),
+                    "n_atoms_h": len(atoms),
+                    "spectrum": str(xy_path),
+                    "signals": str(sig_path),
+                }
+            )
             if not args.quiet:
                 print(f"OK ({len(signals)} signals, {len(atoms)} H atoms)")
 
@@ -340,6 +380,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

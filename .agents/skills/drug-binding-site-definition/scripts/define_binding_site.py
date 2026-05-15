@@ -36,6 +36,7 @@ with warnings.catch_warnings():
 # Coordinate extraction
 # ---------------------------------------------------------------------------
 
+
 def _filter_altlocs(atoms: mda.core.groups.AtomGroup) -> mda.core.groups.AtomGroup:
     """Keep only atoms with altloc blank or 'A', excluding B/C/etc."""
     mask = np.isin(atoms.altLocs, ["", " ", "A"])
@@ -78,10 +79,16 @@ def _extract_coords_rdkit(path: Path) -> np.ndarray:
             raise ValueError(f"No valid molecules found in {path}")
 
     conf = mol.GetConformer()
-    return np.array([
-        [conf.GetAtomPosition(i).x, conf.GetAtomPosition(i).y, conf.GetAtomPosition(i).z]
-        for i in range(mol.GetNumAtoms())
-    ])
+    return np.array(
+        [
+            [
+                conf.GetAtomPosition(i).x,
+                conf.GetAtomPosition(i).y,
+                conf.GetAtomPosition(i).z,
+            ]
+            for i in range(mol.GetNumAtoms())
+        ]
+    )
 
 
 _EXTRACTORS = {
@@ -111,6 +118,7 @@ def extract_ligand_coords(ligand_file: Path) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Residue selection
 # ---------------------------------------------------------------------------
+
 
 def _parse_residue_spec(spec: str) -> Tuple[str, str, int, str]:
     """
@@ -158,9 +166,7 @@ def _build_mda_selection(residue_specs: List[str]) -> str:
     return " or ".join(parts)
 
 
-def extract_residue_coords(
-    protein_file: Path, residue_specs: List[str]
-) -> np.ndarray:
+def extract_residue_coords(protein_file: Path, residue_specs: List[str]) -> np.ndarray:
     """
     Extract coordinates of specified residues from a protein structure file.
 
@@ -191,10 +197,12 @@ def extract_residue_coords(
                 combined |= m
             no_icode_specs = [p for p in parsed if not p[3]]
             if no_icode_specs:
-                no_icode_sel = _build_mda_selection([
-                    f"{p[0]}:{p[1]}{p[2]}" if p[0] else f"{p[1]}{p[2]}"
-                    for p in no_icode_specs
-                ])
+                no_icode_sel = _build_mda_selection(
+                    [
+                        f"{p[0]}:{p[1]}{p[2]}" if p[0] else f"{p[1]}{p[2]}"
+                        for p in no_icode_specs
+                    ]
+                )
                 no_icode_atoms = u.select_atoms(no_icode_sel)
                 combined |= np.isin(atoms.indices, no_icode_atoms.indices)
             atoms = atoms[combined]
@@ -220,6 +228,7 @@ def extract_residue_coords(
 # ---------------------------------------------------------------------------
 # Box computation
 # ---------------------------------------------------------------------------
+
 
 def compute_box(
     positions: np.ndarray,
@@ -263,6 +272,7 @@ def validate_box_json(data: dict) -> None:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -371,6 +381,7 @@ def main() -> None:
 
         # Save input configs for reproducibility
         from src.utils.config_utils import save_skill_inputs
+
         save_skill_inputs(args, args.output_dir)
         _params_path.parent.mkdir(parents=True, exist_ok=True)
         _params_path.write_text(json.dumps(_config, indent=2, default=str))

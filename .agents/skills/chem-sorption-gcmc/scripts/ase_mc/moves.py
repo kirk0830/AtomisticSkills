@@ -22,26 +22,19 @@ class MCMove:
         target_acceptance=None,
         communicator=world,
         rng=None,
-
         nsteps=None,
-
         pressure=None,
         mask=None,
         ln_volume=True,
-
         b_parameter=None,
         reference_energy=None,
-
         grid_resolution=None,
         rcavity=None,
         cavity_bias=None,
-
         species=None,
         species_tag=None,
-
-        limits = None,
-
-        ):
+        limits=None,
+    ):
         if communicator is None:
             communicator = DummyMPI()
         self.communicator = communicator
@@ -92,7 +85,6 @@ class MCMove:
             res_y = np.linspace(0, 1, num=grid_resolution, endpoint=False)
             res_z = np.linspace(0, 1, num=grid_resolution, endpoint=False)
 
-
             self.ncavities = 0
             self.ngrid_points = grid_resolution**3
             self.iscavity = np.ones(self.ngrid_points, dtype=bool)
@@ -100,16 +92,14 @@ class MCMove:
             xx, yy, zz = np.meshgrid(res_x, res_y, res_z)
             self.grid_points = np.vstack((xx.ravel(), yy.ravel(), zz.ravel())).T
 
-            #r_grid = (hmat @ s_grid.T).T
-            #self.grid_points = np.zeros((self.ngrid_points, 3))
-            #i = 0
-            #for gx in res_x:
+            # r_grid = (hmat @ s_grid.T).T
+            # self.grid_points = np.zeros((self.ngrid_points, 3))
+            # i = 0
+            # for gx in res_x:
             #    for gy in res_y:
             #        for gz in res_z:
             #            self.grid_points[i] = np.array([gx, gy, gz])
             #            i += 1
-
-
 
     def generate_uniform_random_number(self, n=1):
         zeta = self.rng.rand(n)
@@ -119,7 +109,9 @@ class MCMove:
         return zeta
 
     def random_choice_from_array(self, arr):
-        zeta = np.array([self.rng.randint(len(arr))]) # Do this bc MPI4Py only works with NumPy arrays
+        zeta = np.array(
+            [self.rng.randint(len(arr))]
+        )  # Do this bc MPI4Py only works with NumPy arrays
         self.communicator.broadcast(zeta, 0)
         choice = arr[zeta[0]]
         return choice
@@ -146,11 +138,14 @@ class MCMove:
 
     def get_mol_idxs(self, atom_idx):
         mol_idx = self.component_list[atom_idx]
-        mol_idxs = [ atom_idx for atom_idx in range(len(self.component_list)) if self.component_list[atom_idx] == mol_idx ]
+        mol_idxs = [
+            atom_idx
+            for atom_idx in range(len(self.component_list))
+            if self.component_list[atom_idx] == mol_idx
+        ]
         return np.array(mol_idxs)
 
-    def get_components(self, atoms, radii = None):
-
+    def get_components(self, atoms, radii=None):
         if radii is None:
             cut_offs = neighborlist.natural_cutoffs(atoms)
         else:
@@ -166,7 +161,7 @@ class MCMove:
         )
         return n_components, component_list, connectivity_matrix
 
-    def get_random_molecule_otf(self, atoms, exclusion_list = None):
+    def get_random_molecule_otf(self, atoms, exclusion_list=None):
         """Choose a random molecule as array of atom indicies using ASE's neighbor list and SciPy"""
         # Ensures we do not pick an index in the exclusion_list
         if exclusion_list is None:
@@ -187,10 +182,9 @@ class MCMove:
             mol_idxs = np.setdiff1d(mol_idxs, exclusion_list)
             return mol_idxs
 
-
-    def check_overlap(self, atoms, selection = None):
+    def check_overlap(self, atoms, selection=None):
         if selection is None:
-            distances = atoms.get_all_distances(mic = True)
+            distances = atoms.get_all_distances(mic=True)
             # Drop diagonal entries
             m = distances.shape[0]
             strided = np.lib.stride_tricks.as_strided
@@ -206,13 +200,12 @@ class MCMove:
             all_atom_indices = np.arange(0, natoms)
             other_atom_indices = np.delete(all_atom_indices, selection)
             for atomidx in selection:
-                distances = atoms.get_distances(atomidx, other_atom_indices, mic = True)
+                distances = atoms.get_distances(atomidx, other_atom_indices, mic=True)
                 if np.any(distances < self.r_overlap):
                     overlap = True
                     break
 
         return overlap
-
 
     def get_acceptance_rate(self):
         return self.accepted / self.attempted
@@ -226,19 +219,18 @@ class MCMove:
         ransq = 2.0
         while ransq >= 1.0:
             zeta = self.generate_uniform_random_number(n=2)
-            ran1 = 1.0 - 2.0*zeta[0]
-            ran2 = 1.0 - 2.0*zeta[1]
-            ransq = ran1*ran1 + ran2*ran2
+            ran1 = 1.0 - 2.0 * zeta[0]
+            ran2 = 1.0 - 2.0 * zeta[1]
+            ransq = ran1 * ran1 + ran2 * ran2
 
         ranh = 2.0 * np.sqrt(1.0 - ransq)
         ux = ran1 * ranh
         uy = ran2 * ranh
-        uz = 1.0 - 2.0*ransq
+        uz = 1.0 - 2.0 * ransq
         u = np.array([ux, uy, uz])
         return u
 
-
-    def random_rotation_angles(self, max_angle = 180.0):
+    def random_rotation_angles(self, max_angle=180.0):
         twopi_rad = 2.0 * np.pi
         twopi_deg = 360.0
         zeta_angles = self.generate_uniform_random_number(n=3)
@@ -305,7 +297,7 @@ class MCMove:
         atoms.set_momenta(momenta)
 
     def velocity_verlet_step(self, atoms, forces):
-        '''Copied mostly from ase.md.verlet, here, we use self.max_delta as the timestep for MD'''
+        """Copied mostly from ase.md.verlet, here, we use self.max_delta as the timestep for MD"""
 
         p = atoms.get_momenta()
         p += 0.5 * self.max_delta * forces
@@ -327,7 +319,6 @@ class MCMove:
             atoms.set_momenta(atoms.get_momenta() + 0.5 * self.max_delta * forces_n)
         return overlap
 
-
     def update_max_delta(self):
         if self.attempted % self.update_frequency == 0 and self.attempted != 0:
             if self.get_acceptance_rate() >= self.target_acceptance:
@@ -338,10 +329,8 @@ class MCMove:
             if self.limits is not None:
                 if self.max_delta < self.limits[0]:
                     self.max_delta = self.limits[0]
-                elif self.max_delta  > self.limits[1]:
+                elif self.max_delta > self.limits[1]:
                     self.max_delta = self.limits[1]
-
-
 
     def find_cavities(self, hmat, s):
         for grid_idx, grid_s in enumerate(self.grid_points):
@@ -362,7 +351,6 @@ class MCMove:
         pass
 
 
-
 class Thermal(MCMove):
     def __init__(
         self,
@@ -375,8 +363,8 @@ class Thermal(MCMove):
         r_overlap,
         target_acceptance,
         scale_delta,
-        exclusion_list = None,
-        limits = None,
+        exclusion_list=None,
+        limits=None,
         name="Thermal",
         communicator=world,
         rng=None,
@@ -388,12 +376,12 @@ class Thermal(MCMove):
             attempted=attempted,
             probability=probability,
             r_overlap=r_overlap,
-            update_frequency = update_frequency,
-            max_delta = max_delta,
-            limits = limits,
-            beta = beta,
-            target_acceptance = target_acceptance,
-            scale_delta = scale_delta,
+            update_frequency=update_frequency,
+            max_delta=max_delta,
+            limits=limits,
+            beta=beta,
+            target_acceptance=target_acceptance,
+            scale_delta=scale_delta,
             communicator=communicator,
             rng=rng,
         )
@@ -456,7 +444,6 @@ class Thermal(MCMove):
         return s
 
 
-
 class Translate(Thermal):
     def __init__(
         self,
@@ -469,13 +456,12 @@ class Translate(Thermal):
         target_acceptance,
         scale_delta,
         r_overlap,
-        exclusion_list = None,
+        exclusion_list=None,
         limits=(0.1, 14.0),
         name="Translate",
         communicator=world,
         rng=None,
-        ):
-
+    ):
         Thermal.__init__(
             self,
             name=name,
@@ -488,11 +474,11 @@ class Translate(Thermal):
             target_acceptance=target_acceptance,
             scale_delta=scale_delta,
             r_overlap=r_overlap,
-            exclusion_list = exclusion_list,
+            exclusion_list=exclusion_list,
             limits=limits,
             communicator=communicator,
             rng=rng,
-            )
+        )
 
     def generate_r_n(self, atoms):
         r_o = atoms.get_positions()
@@ -517,13 +503,12 @@ class Rotate(Thermal):
         r_overlap,
         target_acceptance,
         scale_delta,
-        limits = (0.1, 180.0),
-        exclusion_list = None,
+        limits=(0.1, 180.0),
+        exclusion_list=None,
         name="Rotate",
         communicator=world,
         rng=None,
-        ):
-
+    ):
         Thermal.__init__(
             self,
             name=name,
@@ -532,27 +517,26 @@ class Rotate(Thermal):
             probability=probability,
             update_frequency=update_frequency,
             max_delta=max_delta,
-            limits = limits,
+            limits=limits,
             beta=beta,
             r_overlap=r_overlap,
             target_acceptance=target_acceptance,
-            exclusion_list = exclusion_list,
+            exclusion_list=exclusion_list,
             scale_delta=scale_delta,
             communicator=communicator,
             rng=rng,
-            )
+        )
 
     def generate_r_n(self, atoms):
         r_o = atoms.get_positions()
         mol_idxs = self.get_random_molecule_otf(atoms, self.exclusion_list)
         atoms_tmp = atoms[mol_idxs]
-        phi, theta, psi = self.random_rotation_angles(max_angle = self.max_delta)
+        phi, theta, psi = self.random_rotation_angles(max_angle=self.max_delta)
         atoms_tmp.euler_rotate(phi, theta, psi, center="COM")
         dr = np.zeros(r_o.shape)
         dr[mol_idxs] = atoms_tmp.get_positions() - r_o[mol_idxs]
         r_n = r_o + dr
         atoms.set_positions(r_n)
-
 
 
 class HMC(MCMove):
@@ -621,7 +605,6 @@ class HMC(MCMove):
             if overlap:
                 break
 
-
         if overlap:
             accepted = False
         else:
@@ -670,12 +653,11 @@ class Volume(MCMove):
         mask,
         scale_delta,
         target_acceptance,
-        limits = None,
+        limits=None,
         name="Volume",
         communicator=world,
         rng=None,
     ):
-
         if limits is None:
             if ln_volume:
                 limits = (0.001, 0.1)
@@ -690,7 +672,7 @@ class Volume(MCMove):
             probability=probability,
             update_frequency=update_frequency,
             max_delta=max_delta,
-            limits = limits,
+            limits=limits,
             beta=beta,
             pressure=pressure,
             ln_volume=ln_volume,
@@ -725,8 +707,8 @@ class Volume(MCMove):
         energy_n = atoms.get_potential_energy()
         results_n = atoms.calc.results
 
-        #self.set_component_list(atoms)
-        #accepted = self.acceptance_rule(self.n_components, energy_n, energy_o, v_n, v_o)
+        # self.set_component_list(atoms)
+        # accepted = self.acceptance_rule(self.n_components, energy_n, energy_o, v_n, v_o)
         accepted = self.acceptance_rule(len(atoms), energy_n, energy_o, v_n, v_o)
 
         if accepted:
@@ -748,10 +730,6 @@ class Volume(MCMove):
         s += f"attempted:{self.attempted}#"
         s += f"max_delta:{self.max_delta:.3f}#"
         return s
-
-
-
-
 
 
 class Insert(MCMove):
@@ -784,13 +762,13 @@ class Insert(MCMove):
             reference_energy=reference_energy,
             species=species,
             grid_resolution=grid_resolution,
-            r_overlap = r_overlap,
+            r_overlap=r_overlap,
             rcavity=rcavity,
             cavity_bias=cavity_bias,
             species_tag=species_tag,
             communicator=communicator,
             rng=rng,
-            )
+        )
 
         self.n_molecules = 0
         self.original_natoms = 0
@@ -801,7 +779,6 @@ class Insert(MCMove):
         energetic = -self.beta * (dE - self.reference_energy)
         chemical = self.b_parameter - np.log(n_molecules + 1) + self.ln_pcav
         return np.log(zeta) < energetic + chemical
-
 
     def restore_r_o(self, atoms):
         del atoms[self.original_natoms :]
@@ -823,7 +800,7 @@ class Insert(MCMove):
             new_atom_indices = np.arange(natoms_n)
             old_atom_indices = np.arange(natoms_o)
             trial_atom_indices = np.delete(new_atom_indices, old_atom_indices)
-            autoreject = self.check_overlap(atoms, selection = trial_atom_indices)
+            autoreject = self.check_overlap(atoms, selection=trial_atom_indices)
 
         return autoreject
 
@@ -889,7 +866,6 @@ class Insert(MCMove):
             species_index_list = []
             energy_o = 0.0
             results_o = None
-
 
         autoreject = self.generate_r_n(atoms)
 
@@ -971,7 +947,9 @@ class Delete(MCMove):
         return np.log(zeta) < energetic + chemical
 
     def execute(self, atoms, results_o):
-        species_index_list = [atom.index for atom in atoms if atom.tag == self.species_tag]
+        species_index_list = [
+            atom.index for atom in atoms if atom.tag == self.species_tag
+        ]
         self.n_molecules = len(species_index_list) // len(self.species)
         energy_o, _ = self.initialize_bookkeeping(atoms, results_o, need_forces=False)
 
@@ -1008,29 +986,28 @@ class Delete(MCMove):
         self.attempted += 1
         return accepted, results
 
-
     def generate_r_n(self, atoms, species_index_list):
         autoreject = False
 
-        molecule_species_array = species_index_list.reshape((self.n_molecules, len(self.species)))
+        molecule_species_array = species_index_list.reshape(
+            (self.n_molecules, len(self.species))
+        )
         mol_idxs = self.random_choice_from_array(molecule_species_array)
 
-
-        #random_species_index = self.random_choice_from_array(species_index_list)
-        #mol_idxs = self.get_mol_idxs(random_species_index)
+        # random_species_index = self.random_choice_from_array(species_index_list)
+        # mol_idxs = self.get_mol_idxs(random_species_index)
 
         # If a mol_idxs can contain more atoms if a reaction occured or if a
         # probe molecule adsorbed on a metal slab
         # only delete molecules part of the species
 
         # TEMPORARY FIX, autoreject the move if a "reaction" occured
-        #autoreject = False
-        #if len(mol_idxs) != len(self.species):
+        # autoreject = False
+        # if len(mol_idxs) != len(self.species):
         #    autoreject = True
 
         syms = atoms[mol_idxs].get_chemical_symbols()
         r = atoms[mol_idxs].get_positions()
-
 
         self.destroyed_atoms = Atoms(syms, r)
         for atom in self.destroyed_atoms:
@@ -1064,22 +1041,20 @@ class Delete(MCMove):
         pcav = ncavities / self.ngrid_points
         zeta = self.generate_uniform_random_number(n=1)
 
-        if zeta < (1.0 - pcav)**self.ngrid_points:
+        if zeta < (1.0 - pcav) ** self.ngrid_points:
             self.ln_pcav = 0  # Running Metropolis MC
 
         else:
             self.ln_pcav = np.log(pcav)
 
+        # attempt_cavbias = not (zeta_attempt < 1.0 - pcav)
 
-        #attempt_cavbias = not (zeta_attempt < 1.0 - pcav)
-
-        #if attempt_cavbias:
+        # if attempt_cavbias:
         #    self.ln_pcav = np.log(pcav)
 
         # Otherwise, use metropolis sampling and pray!
-        #else:
+        # else:
         #    self.ln_pcav = 0  # No bias added
-
 
     def get_move_stats(self):
         s = ""
@@ -1090,4 +1065,3 @@ class Delete(MCMove):
         s += f"n_species:{self.n_molecules}#"
         s += f"n_cavities: {self.ncavities}"
         return s
-

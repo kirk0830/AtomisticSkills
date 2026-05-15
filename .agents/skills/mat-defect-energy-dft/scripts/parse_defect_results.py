@@ -39,6 +39,7 @@ def parse_vasp_energy(calc_dir: Path) -> Optional[float]:
         vr_path = calc_dir / vr_name
         if vr_path.exists():
             from pymatgen.io.vasp import Vasprun
+
             vr = Vasprun(str(vr_path), parse_dos=False, parse_eigen=False)
             return vr.final_energy
 
@@ -46,6 +47,7 @@ def parse_vasp_energy(calc_dir: Path) -> Optional[float]:
     oszicar_path = calc_dir / "OSZICAR"
     if oszicar_path.exists():
         from pymatgen.io.vasp import Oszicar
+
         osz = Oszicar(str(oszicar_path))
         return osz.final_energy
 
@@ -55,7 +57,11 @@ def parse_vasp_energy(calc_dir: Path) -> Optional[float]:
         if fpath.exists():
             with open(fpath) as f:
                 data = json.load(f)
-            energy = data.get("relaxed_energy") or data.get("energy") or data.get("final_energy")
+            energy = (
+                data.get("relaxed_energy")
+                or data.get("energy")
+                or data.get("final_energy")
+            )
             if energy is not None:
                 return float(energy)
 
@@ -82,6 +88,7 @@ def parse_vasp_vbm_bandgap(calc_dir: Path) -> Tuple[Optional[float], Optional[fl
         vr_path = calc_dir / vr_name
         if vr_path.exists():
             from pymatgen.io.vasp import Vasprun
+
             vr = Vasprun(str(vr_path), parse_dos=True, parse_eigen=True)
             bs = vr.get_band_structure()
             vbm = bs.get_vbm()["energy"]
@@ -127,7 +134,12 @@ def compute_freysoldt_correction(
     # Conversion: e^2/(4*pi*eps0) in eV·Å
     COULOMB_CONST = 14.3996
 
-    e_corr = -ALPHA_MADELUNG * charge**2 * COULOMB_CONST / (2.0 * dielectric * lattice_length)
+    e_corr = (
+        -ALPHA_MADELUNG
+        * charge**2
+        * COULOMB_CONST
+        / (2.0 * dielectric * lattice_length)
+    )
     return e_corr
 
 
@@ -171,10 +183,14 @@ def compute_formation_energies(
 
         # Chemical potential correction
         delta_n = entry.get("delta_n", {})
-        mu_correction = sum(dn * elemental_energies.get(el, 0.0) for el, dn in delta_n.items())
+        mu_correction = sum(
+            dn * elemental_energies.get(el, 0.0) for el, dn in delta_n.items()
+        )
 
         # Finite-size correction
-        e_corr = compute_freysoldt_correction(q, dielectric, lattice_volume, lattice_length)
+        e_corr = compute_freysoldt_correction(
+            q, dielectric, lattice_volume, lattice_length
+        )
 
         # Formation energy at each Fermi level
         # E_f = E_defect - (n_defect/n_bulk)*E_bulk + sum(Dn_i*mu_i) + q*(VBM + E_F) + E_corr
@@ -191,16 +207,18 @@ def compute_formation_energies(
             e_f = e_f_at_vbm + q * ef
             formation_vs_fermi.append({"fermi_eV": ef, "formation_eV": e_f})
 
-        results.append({
-            "name": entry["name"],
-            "base_name": entry.get("base_name", entry["name"]),
-            "charge": q,
-            "defect_energy_eV": e_defect,
-            "correction_eV": e_corr,
-            "mu_correction_eV": mu_correction,
-            "formation_at_vbm_eV": e_f_at_vbm,
-            "formation_vs_fermi": formation_vs_fermi,
-        })
+        results.append(
+            {
+                "name": entry["name"],
+                "base_name": entry.get("base_name", entry["name"]),
+                "charge": q,
+                "defect_energy_eV": e_defect,
+                "correction_eV": e_corr,
+                "mu_correction_eV": mu_correction,
+                "formation_at_vbm_eV": e_f_at_vbm,
+                "formation_vs_fermi": formation_vs_fermi,
+            }
+        )
 
     return results
 
@@ -263,21 +281,31 @@ def main():
     parser = argparse.ArgumentParser(
         description="Parse DFT defect results and compute formation energy diagrams."
     )
-    parser.add_argument("--bulk_dir", required=True, help="Directory with bulk DFT results")
-    parser.add_argument("--defect_dir", required=True, help="Directory with defect DFT results")
     parser.add_argument(
-        "--defect_index", required=True,
-        help="JSON file with defect index (from generate_defect_structures.py)"
+        "--bulk_dir", required=True, help="Directory with bulk DFT results"
     )
     parser.add_argument(
-        "--dielectric", type=float, required=True,
-        help="Static dielectric constant of the host material"
+        "--defect_dir", required=True, help="Directory with defect DFT results"
     )
     parser.add_argument(
-        "--elemental_energies", default=None,
-        help="JSON file mapping element -> energy_per_atom (eV/atom)"
+        "--defect_index",
+        required=True,
+        help="JSON file with defect index (from generate_defect_structures.py)",
     )
-    parser.add_argument("--output", default="formation_energies.json", help="Output JSON")
+    parser.add_argument(
+        "--dielectric",
+        type=float,
+        required=True,
+        help="Static dielectric constant of the host material",
+    )
+    parser.add_argument(
+        "--elemental_energies",
+        default=None,
+        help="JSON file mapping element -> energy_per_atom (eV/atom)",
+    )
+    parser.add_argument(
+        "--output", default="formation_energies.json", help="Output JSON"
+    )
     parser.add_argument("--plot", default=None, help="Output plot path (png)")
     args = parser.parse_args()
 
@@ -286,15 +314,19 @@ def main():
         defect_index = json.load(f)
 
     bulk_num_atoms = defect_index["pristine_num_atoms"]
-    print(f"✓ Defect index: {len(defect_index['defects'])} entries, "
-          f"pristine = {bulk_num_atoms} atoms")
+    print(
+        f"✓ Defect index: {len(defect_index['defects'])} entries, "
+        f"pristine = {bulk_num_atoms} atoms"
+    )
 
     # Parse bulk energy
     bulk_dir = Path(args.bulk_dir)
     bulk_energy = parse_vasp_energy(bulk_dir)
     if bulk_energy is None:
         raise FileNotFoundError(f"No energy found in bulk directory: {bulk_dir}")
-    print(f"✓ Bulk energy: {bulk_energy:.4f} eV ({bulk_energy/bulk_num_atoms:.4f} eV/atom)")
+    print(
+        f"✓ Bulk energy: {bulk_energy:.4f} eV ({bulk_energy/bulk_num_atoms:.4f} eV/atom)"
+    )
 
     # Try to get VBM and band gap
     vbm, band_gap = parse_vasp_vbm_bandgap(bulk_dir)
@@ -331,12 +363,19 @@ def main():
 
         # Compute delta_n (pristine - defect composition)
         from pymatgen.core import Structure
+
         defect_struct = Structure.from_file(defect_info["file"])
         pristine_path = Path(args.defect_index).parent / "pristine_supercell.cif"
         pristine_struct = Structure.from_file(str(pristine_path))
 
-        pristine_comp = {str(el): int(amt) for el, amt in pristine_struct.composition.element_composition.items()}
-        defect_comp = {str(el): int(amt) for el, amt in defect_struct.composition.element_composition.items()}
+        pristine_comp = {
+            str(el): int(amt)
+            for el, amt in pristine_struct.composition.element_composition.items()
+        }
+        defect_comp = {
+            str(el): int(amt)
+            for el, amt in defect_struct.composition.element_composition.items()
+        }
 
         delta_n = {}
         for el in set(list(pristine_comp.keys()) + list(defect_comp.keys())):
@@ -388,7 +427,14 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
     # Serialize, converting numpy types
     with open(output_path, "w") as f:
-        json.dump(output_data, f, indent=2, default=lambda o: float(o) if isinstance(o, (np.floating, np.integer)) else o)
+        json.dump(
+            output_data,
+            f,
+            indent=2,
+            default=lambda o: float(o)
+            if isinstance(o, (np.floating, np.integer))
+            else o,
+        )
 
     print(f"\n✓ Saved {len(results)} formation energies to {output_path}")
 
@@ -398,6 +444,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

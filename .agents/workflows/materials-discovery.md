@@ -16,12 +16,12 @@ Generate or retrieve a diverse set of initial candidate structures. Select the a
 
 - **Database Mining**: Query existing databases for initial structural prototypes or materials that naturally meet basic constraints.
   - *Skill Reference*: `mat-db-mp` (Materials Project querying)
-  
+
 - **Generative AI Methods**: Use machine learning generative models to create novel hypothetical structures.
   - *Skill Reference*: `ml-generative-mattergen` (Diffusion-based generation, optionally conditioned on properties/systems)
   - *Skill Reference*: `ml-generative-diffcsp` (Constrained generation using space groups and Wyckoff positions)
   - *Skill Reference*: `ml-generative-adit` (Unified generation of periodic structures)
-  
+
 - **Heuristics & Substitutions**: Formulate new candidates by mimicking or scrambling known prototypes.
   - *Skill Reference*: `mat-ionic-substitution` (Data-mined ionic substitution rules)
   - *Skill Reference*: `mat-random-structure-search` (AIRSS-style generation for specific compositions)
@@ -34,7 +34,7 @@ Maintain a centralized record of all candidates to track their progress through 
 - **Property Columns**: Add columns for downstream calculated metrics (e.g., `e_above_hull`, `bandgap`, `bulk_modulus`) to easily query and filter the best performers later.
 
 ## 4. Stability Determination
-Before investing in expensive property calculations, screen out inherently unstable candidates. 
+Before investing in expensive property calculations, screen out inherently unstable candidates.
 
 - **0K Thermodynamic Stability (Required)**: Calculate the energy above the convex hull ($E_{\text{hull}}$) to ensure the material won't spontaneously phase-separate.
   - *Skill Reference*: `mat-stability`
@@ -62,7 +62,7 @@ Evaluate functional properties to find the best candidates for your specific app
 *Update the tracking table (from step 3) continuously as properties are calculated.*
 
 ## 6. Structure Novelty Check
-Once the top-performing candidates are identified, confirm that they are genuinely new discoveries. 
+Once the top-performing candidates are identified, confirm that they are genuinely new discoveries.
 - *Skill Reference*: `mat-structure-novelty` (Compare candidate structures against known theoretical and experimental databases like MP or ICSD to filter out duplicates or heavily researched materials).
 
 ## 7. Synthesizability Report

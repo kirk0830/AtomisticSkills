@@ -90,12 +90,23 @@ def main() -> None:
 
     corners = [
         (cx + dx, cy + dy, cz + dz)
-        for dx in (-sx, sx) for dy in (-sy, sy) for dz in (-sz, sz)
+        for dx in (-sx, sx)
+        for dy in (-sy, sy)
+        for dz in (-sz, sz)
     ]
     edges = [
-        (0, 1), (2, 3), (4, 5), (6, 7),
-        (0, 2), (1, 3), (4, 6), (5, 7),
-        (0, 4), (1, 5), (2, 6), (3, 7),
+        (0, 1),
+        (2, 3),
+        (4, 5),
+        (6, 7),
+        (0, 2),
+        (1, 3),
+        (4, 6),
+        (5, 7),
+        (0, 4),
+        (1, 5),
+        (2, 6),
+        (3, 7),
     ]
     obj = [LINEWIDTH, 2.0, COLOR, 1.0, 0.3, 0.3, BEGIN, LINES]
     for i, j in edges:
@@ -121,6 +132,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
     _params_path.parent.mkdir(parents=True, exist_ok=True)
     _params_path.write_text(json.dumps(_config, indent=2, default=str))

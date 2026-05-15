@@ -7,7 +7,6 @@ from pathlib import Path
 import argparse
 import json
 import logging
-import math
 import sys
 from typing import Any
 
@@ -22,7 +21,7 @@ if _WIDOM_SRC.is_dir() and str(_WIDOM_SRC) not in sys.path:
     sys.path.insert(0, str(_WIDOM_SRC))
 
 from widom import WidomInsertionResults, run_widom_insertion  # noqa: E402
-from src.utils.serialization_utils import format_temperature_key, finite_or_none
+from src.utils.serialization_utils import finite_or_none
 
 LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +32,9 @@ def select_device(requested: str) -> str:
     try:
         import torch
     except Exception as exc:
-        raise RuntimeError("Device selection requires torch when using --device auto.") from exc
+        raise RuntimeError(
+            "Device selection requires torch when using --device auto."
+        ) from exc
     return "cuda" if torch.cuda.is_available() else "cpu"
 
 
@@ -48,19 +49,70 @@ def read_structure(structure_path: Path | str) -> Atoms:
 
 
 def add_common_widom_args(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--structure", type=Path, required=True, help="Path to input structure (.cif or .xyz)")
-    parser.add_argument("--name", type=str, required=True, help="Name or id of the framework")
-    parser.add_argument("--gas", type=str, required=True, help="Gas molecule name (e.g. CO2, N2)")
-    parser.add_argument("--temperature", type=float, required=True, help="Temperature in Kelvin")
-    parser.add_argument("--num-insertions", type=int, default=5000, help="Number of Widom insertion attempts")
-    parser.add_argument("--optimize-structures", action="store_true", help="Optimize framework and gas before insertion (default: use structure as-is)")
-    parser.add_argument("--cutoff-distance", type=float, default=1.0, help="Minimum framework-gas distance (Å)")
-    parser.add_argument("--cutoff-to-com", action="store_true", help="Use gas center-of-mass for cutoff checks")
-    parser.add_argument("--min-interplanar-distance", type=float, default=12.0, help="Min interplanar distance before supercell (Å)")
-    parser.add_argument("--random-seed", type=int, default=0, help="Random seed for sampling and bootstrap")
-    parser.add_argument("--min-interaction-energy", type=float, default=-1.25, help="Minimum valid interaction energy (eV)")
-    parser.add_argument("--model-outputs-interaction-energy", action="store_true", help="Treat model energies as interaction energies")
-    parser.add_argument("--output-dir", type=Path, default=Path("."), help="Directory for output JSON")
+    parser.add_argument(
+        "--structure",
+        type=Path,
+        required=True,
+        help="Path to input structure (.cif or .xyz)",
+    )
+    parser.add_argument(
+        "--name", type=str, required=True, help="Name or id of the framework"
+    )
+    parser.add_argument(
+        "--gas", type=str, required=True, help="Gas molecule name (e.g. CO2, N2)"
+    )
+    parser.add_argument(
+        "--temperature", type=float, required=True, help="Temperature in Kelvin"
+    )
+    parser.add_argument(
+        "--num-insertions",
+        type=int,
+        default=5000,
+        help="Number of Widom insertion attempts",
+    )
+    parser.add_argument(
+        "--optimize-structures",
+        action="store_true",
+        help="Optimize framework and gas before insertion (default: use structure as-is)",
+    )
+    parser.add_argument(
+        "--cutoff-distance",
+        type=float,
+        default=1.0,
+        help="Minimum framework-gas distance (Å)",
+    )
+    parser.add_argument(
+        "--cutoff-to-com",
+        action="store_true",
+        help="Use gas center-of-mass for cutoff checks",
+    )
+    parser.add_argument(
+        "--min-interplanar-distance",
+        type=float,
+        default=12.0,
+        help="Min interplanar distance before supercell (Å)",
+    )
+    parser.add_argument(
+        "--random-seed",
+        type=int,
+        default=0,
+        help="Random seed for sampling and bootstrap",
+    )
+    parser.add_argument(
+        "--min-interaction-energy",
+        type=float,
+        default=-1.25,
+        help="Minimum valid interaction energy (eV)",
+    )
+    parser.add_argument(
+        "--model-outputs-interaction-energy",
+        action="store_true",
+        help="Treat model energies as interaction energies",
+    )
+    parser.add_argument(
+        "--output-dir", type=Path, default=Path("."), help="Directory for output JSON"
+    )
+
 
 def widom_standalone_payload(
     *,

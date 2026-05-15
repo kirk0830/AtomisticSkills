@@ -51,19 +51,33 @@ with warnings.catch_warnings():
 
 
 THREE_TO_ONE = {
-    "ALA": "A", "ARG": "R", "ASN": "N", "ASP": "D", "CYS": "C",
-    "GLN": "Q", "GLU": "E", "GLY": "G", "HIS": "H", "ILE": "I",
-    "LEU": "L", "LYS": "K", "MET": "M", "PHE": "F", "PRO": "P",
-    "SER": "S", "THR": "T", "TRP": "W", "TYR": "Y", "VAL": "V",
+    "ALA": "A",
+    "ARG": "R",
+    "ASN": "N",
+    "ASP": "D",
+    "CYS": "C",
+    "GLN": "Q",
+    "GLU": "E",
+    "GLY": "G",
+    "HIS": "H",
+    "ILE": "I",
+    "LEU": "L",
+    "LYS": "K",
+    "MET": "M",
+    "PHE": "F",
+    "PRO": "P",
+    "SER": "S",
+    "THR": "T",
+    "TRP": "W",
+    "TYR": "Y",
+    "VAL": "V",
 }
 
 
 def _check_cli(name: str) -> str:
     path = shutil.which(name)
     if not path:
-        sys.exit(
-            f"ERROR: '{name}' not found on PATH. See SKILL.md install notes."
-        )
+        sys.exit(f"ERROR: '{name}' not found on PATH. See SKILL.md install notes.")
     return path
 
 
@@ -145,6 +159,7 @@ def _bounding_box(coords: np.ndarray) -> dict[str, list[float]] | None:
 # fpocket
 # ---------------------------------------------------------------------------
 
+
 def _parse_fpocket_info(info_path: Path) -> list[dict[str, Any]]:
     """Parse `<input>_info.txt` written by fpocket.
 
@@ -199,9 +214,9 @@ def _alpha_sphere_centers(pqr_path: Path) -> np.ndarray:
 def _pqr_path_for(pockets_dir: Path, idx: int) -> Path | None:
     """Return the alpha-sphere PQR file for pocket `idx`, supporting old + new fpocket layouts."""
     candidates = [
-        pockets_dir / f"pocket{idx}_vert.pqr",          # current fpocket (1-indexed)
-        pockets_dir / f"pocket{idx - 1}_vert.pqr",      # legacy 0-indexed releases
-        pockets_dir / f"pocket{idx}_vert.pdb",          # very old releases
+        pockets_dir / f"pocket{idx}_vert.pqr",  # current fpocket (1-indexed)
+        pockets_dir / f"pocket{idx - 1}_vert.pqr",  # legacy 0-indexed releases
+        pockets_dir / f"pocket{idx}_vert.pdb",  # very old releases
     ]
     for c in candidates:
         if c.exists():
@@ -274,7 +289,9 @@ def _collect_fpocket_results(
         idx = int(entry["_pocket_index"])
         pqr = _pqr_path_for(pockets_dir, idx)
         if pqr is None:
-            print(f"WARN: missing alpha-sphere file for pocket {idx} under {pockets_dir}; skipping.")
+            print(
+                f"WARN: missing alpha-sphere file for pocket {idx} under {pockets_dir}; skipping."
+            )
             continue
         centers = _alpha_sphere_centers(pqr)
         if len(centers) == 0:
@@ -286,38 +303,52 @@ def _collect_fpocket_results(
         druggability = entry.get("Druggability Score")
         volume = entry.get("Volume") or entry.get("Real volume (Monte Carlo)")
         n_spheres_raw = entry.get("Number of Alpha Spheres")
-        results.append({
-            "rank": None,  # filled after sorting
-            "id": f"pocket_{idx}",
-            "fpocket_index": idx,
-            "druggability_score": (
-                float(druggability) if isinstance(druggability, (int, float)) else None
-            ),
-            "fpocket_score": (
-                float(entry["Score"]) if isinstance(entry.get("Score"), (int, float)) else None
-            ),
-            "volume_a3": float(volume) if isinstance(volume, (int, float)) else None,
-            "n_alpha_spheres": (
-                int(n_spheres_raw) if isinstance(n_spheres_raw, (int, float)) else int(len(centers))
-            ),
-            "hydrophobicity_score": (
-                float(entry["Hydrophobicity score"])
-                if isinstance(entry.get("Hydrophobicity score"), (int, float))
-                else None
-            ),
-            "polarity_score": (
-                float(entry["Polarity score"])
-                if isinstance(entry.get("Polarity score"), (int, float))
-                else None
-            ),
-            "center": {"x": float(center[0]), "y": float(center[1]), "z": float(center[2])},
-            "bounding_box": bbox,
-            "residues": residues,
-            "n_residues": len(residues),
-            "raw_metrics": {
-                k: v for k, v in entry.items() if not k.startswith("_")
-            },
-        })
+        results.append(
+            {
+                "rank": None,  # filled after sorting
+                "id": f"pocket_{idx}",
+                "fpocket_index": idx,
+                "druggability_score": (
+                    float(druggability)
+                    if isinstance(druggability, (int, float))
+                    else None
+                ),
+                "fpocket_score": (
+                    float(entry["Score"])
+                    if isinstance(entry.get("Score"), (int, float))
+                    else None
+                ),
+                "volume_a3": float(volume)
+                if isinstance(volume, (int, float))
+                else None,
+                "n_alpha_spheres": (
+                    int(n_spheres_raw)
+                    if isinstance(n_spheres_raw, (int, float))
+                    else int(len(centers))
+                ),
+                "hydrophobicity_score": (
+                    float(entry["Hydrophobicity score"])
+                    if isinstance(entry.get("Hydrophobicity score"), (int, float))
+                    else None
+                ),
+                "polarity_score": (
+                    float(entry["Polarity score"])
+                    if isinstance(entry.get("Polarity score"), (int, float))
+                    else None
+                ),
+                "center": {
+                    "x": float(center[0]),
+                    "y": float(center[1]),
+                    "z": float(center[2]),
+                },
+                "bounding_box": bbox,
+                "residues": residues,
+                "n_residues": len(residues),
+                "raw_metrics": {
+                    k: v for k, v in entry.items() if not k.startswith("_")
+                },
+            }
+        )
 
     # Rank by druggability score (fpocket's headline number); tie-break on volume.
     results.sort(
@@ -426,7 +457,10 @@ def _collect_p2rank_results(
     with open(csv_path) as fh:
         reader = csv.DictReader(fh, skipinitialspace=True)
         for row in reader:
-            row = {k.strip(): (v.strip() if isinstance(v, str) else v) for k, v in row.items()}
+            row = {
+                k.strip(): (v.strip() if isinstance(v, str) else v)
+                for k, v in row.items()
+            }
             try:
                 rank = int(row["rank"])
                 cx = float(row["center_x"])
@@ -436,10 +470,14 @@ def _collect_p2rank_results(
             except (KeyError, ValueError):
                 continue
             probability = (
-                float(row["probability"]) if row.get("probability") not in (None, "") else None
+                float(row["probability"])
+                if row.get("probability") not in (None, "")
+                else None
             )
             sas_points = (
-                int(float(row["sas_points"])) if row.get("sas_points") not in (None, "") else None
+                int(float(row["sas_points"]))
+                if row.get("sas_points") not in (None, "")
+                else None
             )
 
             # Prefer the residues P2Rank itself reports; fall back to a geometric
@@ -455,22 +493,22 @@ def _collect_p2rank_results(
                 )
                 residue_source = "geometric_shell"
 
-            results.append({
-                "rank": rank,
-                "id": row.get("name") or f"pocket_{rank}",
-                "p2rank_score": score,
-                "druggability_score": probability,  # P2Rank's calibrated probability
-                "n_sas_points": sas_points,
-                "volume_a3": None,  # P2Rank does not report pocket volume
-                "center": {"x": cx, "y": cy, "z": cz},
-                "bounding_box": None,
-                "residues": residues,
-                "residue_source": residue_source,
-                "n_residues": len(residues),
-                "raw_metrics": {
-                    k: v for k, v in row.items() if k != "rank"
-                },
-            })
+            results.append(
+                {
+                    "rank": rank,
+                    "id": row.get("name") or f"pocket_{rank}",
+                    "p2rank_score": score,
+                    "druggability_score": probability,  # P2Rank's calibrated probability
+                    "n_sas_points": sas_points,
+                    "volume_a3": None,  # P2Rank does not report pocket volume
+                    "center": {"x": cx, "y": cy, "z": cz},
+                    "bounding_box": None,
+                    "residues": residues,
+                    "residue_source": residue_source,
+                    "n_residues": len(residues),
+                    "raw_metrics": {k: v for k, v in row.items() if k != "rank"},
+                }
+            )
 
     results.sort(key=lambda p: p["rank"])
     if top_n is not None:
@@ -482,46 +520,74 @@ def _collect_p2rank_results(
 # Driver
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Identify and rank ligandable pockets on a protein structure."
     )
-    parser.add_argument("--protein", required=True, help="Receptor PDB (prepared, no waters/ions ideally).")
     parser.add_argument(
-        "--backend", choices=["fpocket", "p2rank"], default="fpocket",
+        "--protein",
+        required=True,
+        help="Receptor PDB (prepared, no waters/ions ideally).",
+    )
+    parser.add_argument(
+        "--backend",
+        choices=["fpocket", "p2rank"],
+        default="fpocket",
         help="Pocket detection backend (default: fpocket).",
     )
-    parser.add_argument("--output_json", required=True, help="Output JSON file with ranked pockets.")
     parser.add_argument(
-        "--top_n", type=int, default=10,
+        "--output_json", required=True, help="Output JSON file with ranked pockets."
+    )
+    parser.add_argument(
+        "--top_n",
+        type=int,
+        default=10,
         help="Keep at most this many pockets in the output (default: 10).",
     )
     parser.add_argument(
-        "--residue_cutoff", type=float, default=5.0,
+        "--residue_cutoff",
+        type=float,
+        default=5.0,
         help="Distance (A) from pocket points used to define lining residues "
-             "(default: 5.0). For P2Rank, only used as a fallback when the "
-             "predictions CSV lacks a residue_ids column.",
+        "(default: 5.0). For P2Rank, only used as a fallback when the "
+        "predictions CSV lacks a residue_ids column.",
     )
     parser.add_argument(
-        "--work_dir", default=None,
+        "--work_dir",
+        default=None,
         help="Directory for backend scratch files (default: temp dir, deleted on exit).",
     )
     # fpocket-only knobs (passed through if set; otherwise fpocket's own
     # compiled defaults apply, currently -m 3.4 -M 6.2 -D 2.4 in fpocket 4.x)
-    parser.add_argument("--fp_min_radius", type=float, default=None,
-                        help="fpocket -m: minimum alpha-sphere radius (A). Unset = use fpocket default.")
-    parser.add_argument("--fp_max_radius", type=float, default=None,
-                        help="fpocket -M: maximum alpha-sphere radius (A). Unset = use fpocket default.")
-    parser.add_argument("--fp_min_clust_radius", type=float, default=None,
-                        help="fpocket -D: clustering distance for alpha spheres (A). Unset = use fpocket default.")
-    # P2Rank-only knobs
     parser.add_argument(
-        "--p2rank_config", default=None,
-        help="P2Rank `-c` config/profile, e.g. 'alphafold' for predicted "
-             "structures. Unset = P2Rank default profile.",
+        "--fp_min_radius",
+        type=float,
+        default=None,
+        help="fpocket -m: minimum alpha-sphere radius (A). Unset = use fpocket default.",
     )
     parser.add_argument(
-        "--p2rank_visualizations", action="store_true",
+        "--fp_max_radius",
+        type=float,
+        default=None,
+        help="fpocket -M: maximum alpha-sphere radius (A). Unset = use fpocket default.",
+    )
+    parser.add_argument(
+        "--fp_min_clust_radius",
+        type=float,
+        default=None,
+        help="fpocket -D: clustering distance for alpha spheres (A). Unset = use fpocket default.",
+    )
+    # P2Rank-only knobs
+    parser.add_argument(
+        "--p2rank_config",
+        default=None,
+        help="P2Rank `-c` config/profile, e.g. 'alphafold' for predicted "
+        "structures. Unset = P2Rank default profile.",
+    )
+    parser.add_argument(
+        "--p2rank_visualizations",
+        action="store_true",
         help="Keep P2Rank visualization files (slower). Default: disabled.",
     )
     args = parser.parse_args()
@@ -555,19 +621,31 @@ def main() -> None:
     try:
         if args.backend == "fpocket":
             out_dir, backend_cmd = _run_fpocket(
-                protein, work_dir,
-                args.fp_min_radius, args.fp_max_radius, args.fp_min_clust_radius,
+                protein,
+                work_dir,
+                args.fp_min_radius,
+                args.fp_max_radius,
+                args.fp_min_clust_radius,
             )
             pockets = _collect_fpocket_results(
-                protein, out_dir, args.residue_cutoff, args.top_n,
+                protein,
+                out_dir,
+                args.residue_cutoff,
+                args.top_n,
             )
             backend_version = _backend_version("fpocket")
         else:
             out_dir, backend_cmd = _run_p2rank(
-                protein, work_dir, args.p2rank_config, args.p2rank_visualizations,
+                protein,
+                work_dir,
+                args.p2rank_config,
+                args.p2rank_visualizations,
             )
             pockets = _collect_p2rank_results(
-                protein, out_dir, args.residue_cutoff, args.top_n,
+                protein,
+                out_dir,
+                args.residue_cutoff,
+                args.top_n,
             )
             backend_version = _backend_version("prank")
 

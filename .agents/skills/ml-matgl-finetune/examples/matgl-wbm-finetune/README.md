@@ -7,7 +7,7 @@ To document a functional 10-epoch fine-tuning workflow on challenging high-energ
 
 ## Instructions
 
-### 1. Prepare Training Data 
+### 1. Prepare Training Data
 The dataset is processed using the `prepare_matgl_data.py` script. The training data must contain `structure` (pymatgen dict or ASE atoms), `energy` (or `vasp_e`), `forces` (or `vasp_f`), and `stress` (or `vasp_s`).
 
 Because the raw `vasp_s` labels in this dataset are recorded in `kB`, we MUST pass the `--vasp-stress-conversion` flag to multiply them by `-1/1602.1766208` during extraction, converting them to `eV/Å³` and matching standard convention.
@@ -48,5 +48,5 @@ This directory contains the artifacts generated from a localized run splitting 8
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

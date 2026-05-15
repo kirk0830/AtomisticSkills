@@ -114,5 +114,5 @@ The tool returns a JSON with:
 - **Clustering algorithm**: Butina (leader-picker style); cutoff = similarity threshold (not distance)
 ---
 
-**Author:** Matthew Cox  
+**Author:** Matthew Cox
 **Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

@@ -44,7 +44,11 @@ def generate_conformer(smiles, add_hs=True, optimize=True, random_seed=0):
     z = torch.tensor([atom.GetAtomicNum() for atom in mol.GetAtoms()], dtype=torch.long)
     pos = torch.tensor(
         [
-            [conf.GetAtomPosition(i).x, conf.GetAtomPosition(i).y, conf.GetAtomPosition(i).z]
+            [
+                conf.GetAtomPosition(i).x,
+                conf.GetAtomPosition(i).y,
+                conf.GetAtomPosition(i).z,
+            ]
             for i in range(mol.GetNumAtoms())
         ],
         dtype=torch.float32,
@@ -54,10 +58,16 @@ def generate_conformer(smiles, add_hs=True, optimize=True, random_seed=0):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate a simple RDKit 3D conformer from SMILES.")
+    parser = argparse.ArgumentParser(
+        description="Generate a simple RDKit 3D conformer from SMILES."
+    )
     parser.add_argument("smiles", help="Input SMILES string")
-    parser.add_argument("--seed", type=int, default=0, help="Random seed for RDKit embedding")
-    parser.add_argument("--no-optimize", action="store_true", help="Skip MMFF/UFF optimization")
+    parser.add_argument(
+        "--seed", type=int, default=0, help="Random seed for RDKit embedding"
+    )
+    parser.add_argument(
+        "--no-optimize", action="store_true", help="Skip MMFF/UFF optimization"
+    )
     args = parser.parse_args()
 
     z, pos = generate_conformer(

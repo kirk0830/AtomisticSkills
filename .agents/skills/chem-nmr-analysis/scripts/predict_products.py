@@ -20,12 +20,15 @@ import sys
 
 import requests
 
-_HF_API_URL = "https://router.huggingface.co/hf-inference/models/sagawa/ReactionT5v2-forward"
+_HF_API_URL = (
+    "https://router.huggingface.co/hf-inference/models/sagawa/ReactionT5v2-forward"
+)
 
 
 def _valid_smiles(s: str) -> bool:
     try:
         from rdkit import Chem
+
         return Chem.MolFromSmiles(s) is not None
     except Exception:
         return False
@@ -78,7 +81,9 @@ def predict_products(
         # ReactionT5 returns the full input prompt + completion; extract the
         # product portion that follows the last ">" delimiter.
         parts_by_arrow = text.split(">")
-        product_str = parts_by_arrow[-1].strip() if len(parts_by_arrow) > 1 else text.strip()
+        product_str = (
+            parts_by_arrow[-1].strip() if len(parts_by_arrow) > 1 else text.strip()
+        )
         for part in product_str.split("."):
             part = part.strip()
             if part and _valid_smiles(part) and part not in seen:
@@ -92,22 +97,42 @@ def main():
     ap = argparse.ArgumentParser(
         description="Predict reaction products via ReactionT5 (HuggingFace API)."
     )
-    ap.add_argument("--reactant_smiles", nargs="+", required=True,
-                    help="Reactant SMILES (substrates that are transformed)")
-    ap.add_argument("--reagent_smiles", nargs="+", default=[],
-                    help="Reagent SMILES (facilitate reaction, not transformed)")
-    ap.add_argument("--hf_token", default=os.environ.get("HF_TOKEN", ""),
-                    help="HuggingFace API token (or set HF_TOKEN env var)")
-    ap.add_argument("--n_best", type=int, default=5,
-                    help="Number of predictions to return (default: 5)")
-    ap.add_argument("--output", default=None,
-                    help="Output JSON file path (default: print to stdout)")
+    ap.add_argument(
+        "--reactant_smiles",
+        nargs="+",
+        required=True,
+        help="Reactant SMILES (substrates that are transformed)",
+    )
+    ap.add_argument(
+        "--reagent_smiles",
+        nargs="+",
+        default=[],
+        help="Reagent SMILES (facilitate reaction, not transformed)",
+    )
+    ap.add_argument(
+        "--hf_token",
+        default=os.environ.get("HF_TOKEN", ""),
+        help="HuggingFace API token (or set HF_TOKEN env var)",
+    )
+    ap.add_argument(
+        "--n_best",
+        type=int,
+        default=5,
+        help="Number of predictions to return (default: 5)",
+    )
+    ap.add_argument(
+        "--output",
+        default=None,
+        help="Output JSON file path (default: print to stdout)",
+    )
     ap.add_argument("--quiet", action="store_true")
     args = ap.parse_args()
 
     if not args.hf_token:
-        print("ERROR: HF_TOKEN not set. Get one at https://huggingface.co/settings/tokens",
-              file=sys.stderr)
+        print(
+            "ERROR: HF_TOKEN not set. Get one at https://huggingface.co/settings/tokens",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     if not args.quiet:
@@ -116,8 +141,10 @@ def main():
         print(f"Predicting products (n_best={args.n_best})...")
 
     products = predict_products(
-        args.reactant_smiles, args.reagent_smiles,
-        args.hf_token, n_best=args.n_best,
+        args.reactant_smiles,
+        args.reagent_smiles,
+        args.hf_token,
+        n_best=args.n_best,
     )
 
     result = {
@@ -141,6 +168,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

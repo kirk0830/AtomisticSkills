@@ -26,7 +26,7 @@ export PYTHONPATH=$(pwd)
 echo "PYTHONPATH set to $PYTHONPATH"
 
 # Run the specific test file
-# Note: This might fail on specific hardware if the model download fails or needs CUDA, 
+# Note: This might fail on specific hardware if the model download fails or needs CUDA,
 # but we are verifying the environment capability to run the code.
 pytest tests/mace/test_mace_server.py -v
 

@@ -62,7 +62,7 @@ class PrepResult:
     state_index: Optional[int] = None
     protomer_index: Optional[int] = None
     tautomer_index: Optional[int] = None
-    
+
     # outputs
     sdf_file: Optional[str] = None
 
@@ -214,13 +214,17 @@ def embed_conformers(
     params.pruneRmsThresh = float(prune_rms)
     params.numThreads = 0
 
-    conf_ids = list(AllChem.EmbedMultipleConfs(mol, numConfs=int(num_confs), params=params))
+    conf_ids = list(
+        AllChem.EmbedMultipleConfs(mol, numConfs=int(num_confs), params=params)
+    )
     if conf_ids:
         return conf_ids
 
     # fallback: random coordinates
     params.useRandomCoords = True
-    conf_ids = list(AllChem.EmbedMultipleConfs(mol, numConfs=max(1, int(num_confs)), params=params))
+    conf_ids = list(
+        AllChem.EmbedMultipleConfs(mol, numConfs=max(1, int(num_confs)), params=params)
+    )
     return conf_ids
 
 
@@ -245,10 +249,14 @@ def optimize_conformers_mmff(
         return None
 
 
-def optimize_conformers_uff(mol: Chem.Mol, max_iters: int) -> Optional[List[Tuple[int, float]]]:
+def optimize_conformers_uff(
+    mol: Chem.Mol, max_iters: int
+) -> Optional[List[Tuple[int, float]]]:
     """Optimize all conformers with UFF. Returns list of (status, energy) or None if fails."""
     try:
-        res = AllChem.UFFOptimizeMoleculeConfs(mol, numThreads=0, maxIters=int(max_iters))
+        res = AllChem.UFFOptimizeMoleculeConfs(
+            mol, numThreads=0, maxIters=int(max_iters)
+        )
         return [(int(status), float(energy)) for status, energy in res]
     except Exception:
         return None
@@ -266,7 +274,9 @@ def select_best_conformer(
     return conf_id, float(best_e), bool(converged_any)
 
 
-def write_best_sdf(mol: Chem.Mol, out_path: Path, conf_id: int, name: str, energy: Optional[float]) -> None:
+def write_best_sdf(
+    mol: Chem.Mol, out_path: Path, conf_id: int, name: str, energy: Optional[float]
+) -> None:
     mol.SetProp("_Name", name)
     if energy is not None:
         mol.SetProp("RDKit_BestEnergy_kcal_mol", f"{energy:.6f}")
@@ -372,28 +382,72 @@ def prepare_one_state(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Prepare ligands for docking/analysis (SDF + optional PDBQT).")
+    p = argparse.ArgumentParser(
+        description="Prepare ligands for docking/analysis (SDF + optional PDBQT)."
+    )
     inp = p.add_mutually_exclusive_group(required=True)
     inp.add_argument("--smiles", help="SMILES string for a single molecule")
     inp.add_argument("--sdf", help="Path to input SDF file (multi-molecule supported)")
-    inp.add_argument("--smiles_file", help="File with one SMILES per line (optionally with name)")
+    inp.add_argument(
+        "--smiles_file", help="File with one SMILES per line (optionally with name)"
+    )
 
-    p.add_argument("--name", default="ligand", help="Name for single-molecule inputs (SMILES or single SDF record)")
+    p.add_argument(
+        "--name",
+        default="ligand",
+        help="Name for single-molecule inputs (SMILES or single SDF record)",
+    )
     p.add_argument("--output_dir", default="ligand_prep", help="Output directory")
 
     # chemistry options
-    p.add_argument("--keep_largest_fragment", action="store_true", help="Keep only the largest fragment (salt stripping)")
-    p.add_argument("--enumerate_tautomers", action="store_true", help="Enumerate tautomers (heuristic, RDKit MolStandardize)")
-    p.add_argument("--max_tautomers", type=int, default=8, help="Max tautomers per protomer to consider")
+    p.add_argument(
+        "--keep_largest_fragment",
+        action="store_true",
+        help="Keep only the largest fragment (salt stripping)",
+    )
+    p.add_argument(
+        "--enumerate_tautomers",
+        action="store_true",
+        help="Enumerate tautomers (heuristic, RDKit MolStandardize)",
+    )
+    p.add_argument(
+        "--max_tautomers",
+        type=int,
+        default=8,
+        help="Max tautomers per protomer to consider",
+    )
 
-    p.add_argument("--enumerate_protomers", action="store_true", help="Enumerate ionization states in pH window (Dimorphite-DL)")
-    p.add_argument("--ph_min", type=float, default=6.8, help="Min pH for protomer enumeration")
-    p.add_argument("--ph_max", type=float, default=7.4, help="Max pH for protomer enumeration")
-    p.add_argument("--precision", type=float, default=1.0, help="Dimorphite-DL pKa precision factor")
-    p.add_argument("--max_variants", type=int, default=16, help="Max protomers per input (Dimorphite-DL)")
+    p.add_argument(
+        "--enumerate_protomers",
+        action="store_true",
+        help="Enumerate ionization states in pH window (Dimorphite-DL)",
+    )
+    p.add_argument(
+        "--ph_min", type=float, default=6.8, help="Min pH for protomer enumeration"
+    )
+    p.add_argument(
+        "--ph_max", type=float, default=7.4, help="Max pH for protomer enumeration"
+    )
+    p.add_argument(
+        "--precision",
+        type=float,
+        default=1.0,
+        help="Dimorphite-DL pKa precision factor",
+    )
+    p.add_argument(
+        "--max_variants",
+        type=int,
+        default=16,
+        help="Max protomers per input (Dimorphite-DL)",
+    )
 
     # outputs
-    p.add_argument("--log_level", default="info", choices=["debug", "info", "warning", "error"], help="Logging level")
+    p.add_argument(
+        "--log_level",
+        default="info",
+        choices=["debug", "info", "warning", "error"],
+        help="Logging level",
+    )
 
     args = p.parse_args()
     configure_logging(args.log_level)
@@ -416,7 +470,9 @@ def main() -> None:
                 precision=args.precision,
                 max_variants=args.max_variants,
             )
-            LOGGER.info("Enumerated %d protomer(s) for %s", len(protomer_smiles), base_name)
+            LOGGER.info(
+                "Enumerated %d protomer(s) for %s", len(protomer_smiles), base_name
+            )
         else:
             protomer_smiles = [smiles]
 
@@ -425,8 +481,17 @@ def main() -> None:
         for pidx, psmi in enumerate(protomer_smiles):
             pmol = mol_from_smiles(psmi, sanitize=True)
             if pmol is None:
-                r = PrepResult(name=f"{base_name}_p{pidx:02d}", success=False, input_smiles=psmi, warnings=[])
-                r.error = "Invalid SMILES after protomer enumeration" if args.enumerate_protomers else "Invalid SMILES"
+                r = PrepResult(
+                    name=f"{base_name}_p{pidx:02d}",
+                    success=False,
+                    input_smiles=psmi,
+                    warnings=[],
+                )
+                r.error = (
+                    "Invalid SMILES after protomer enumeration"
+                    if args.enumerate_protomers
+                    else "Invalid SMILES"
+                )
                 results.append(r)
                 continue
 
@@ -437,7 +502,12 @@ def main() -> None:
             tautomers: List[Chem.Mol]
             if args.enumerate_tautomers:
                 tautomers = enumerate_tautomers(pmol, max_tautomers=args.max_tautomers)
-                LOGGER.info("Enumerated %d tautomer(s) for %s protomer %d", len(tautomers), base_name, pidx)
+                LOGGER.info(
+                    "Enumerated %d tautomer(s) for %s protomer %d",
+                    len(tautomers),
+                    base_name,
+                    pidx,
+                )
             else:
                 tautomers = [pmol]
 
@@ -495,7 +565,9 @@ def main() -> None:
                     smi = None
                 if smi is None:
                     r = PrepResult(name=nm, success=False, warnings=[])
-                    r.error = "Cannot derive SMILES from SDF record for protomer enumeration"
+                    r.error = (
+                        "Cannot derive SMILES from SDF record for protomer enumeration"
+                    )
                     results.append(r)
                     continue
                 run_for_smiles(smi, nm, state_index_base=i * 1000)
@@ -505,7 +577,11 @@ def main() -> None:
             if args.keep_largest_fragment:
                 m = keep_largest_fragment(m)
 
-            tautomers = enumerate_tautomers(m, max_tautomers=args.max_tautomers) if args.enumerate_tautomers else [m]
+            tautomers = (
+                enumerate_tautomers(m, max_tautomers=args.max_tautomers)
+                if args.enumerate_tautomers
+                else [m]
+            )
             for tidx, tmol in enumerate(tautomers):
                 state_name = nm + (f"_t{tidx:02d}" if args.enumerate_tautomers else "")
                 if state_name == nm:
@@ -526,12 +602,15 @@ def main() -> None:
 
         # Save input configs for reproducibility
         from src.utils.config_utils import save_skill_inputs
+
         save_skill_inputs(args, args.output_dir)
         _params_path.parent.mkdir(parents=True, exist_ok=True)
         _params_path.write_text(json.dumps(_config, indent=2, default=str))
 
     ok = sum(1 for r in results if r.success)
-    LOGGER.info("Done. %d/%d succeeded. Summary: %s", ok, len(results), str(summary_path))
+    LOGGER.info(
+        "Done. %d/%d succeeded. Summary: %s", ok, len(results), str(summary_path)
+    )
 
 
 if __name__ == "__main__":

@@ -5,13 +5,15 @@ from typing import TYPE_CHECKING, Literal, Callable
 import numpy as np
 from ase import Atoms, units
 from ase.md import Langevin
-from ase.md.andersen import Andersen
-from ase.md.bussi import Bussi
-from ase.md.nose_hoover_chain import MTKNPT, IsotropicMTKNPT, NoseHooverChainNVT
+from ase.md.nose_hoover_chain import MTKNPT, NoseHooverChainNVT
 from ase.md.npt import NPT
 from ase.md.nptberendsen import Inhomogeneous_NPTBerendsen, NPTBerendsen
 from ase.md.nvtberendsen import NVTBerendsen
-from ase.md.velocitydistribution import MaxwellBoltzmannDistribution, Stationary, ZeroRotation
+from ase.md.velocitydistribution import (
+    MaxwellBoltzmannDistribution,
+    Stationary,
+    ZeroRotation,
+)
 from ase.md.verlet import VelocityVerlet
 
 from matcalc._base import PropCalc
@@ -118,8 +120,14 @@ class CustomMDCalc(PropCalc):
         timestep_fs = self.timestep * units.fs
         taut = self.taut if self.taut is not None else 100 * self.timestep * units.fs
         taup = self.taup if self.taup is not None else 1000 * self.timestep * units.fs
-        mask = self.mask if self.mask is not None else np.array([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
-        external_stress = self.external_stress if self.external_stress is not None else 0.0
+        mask = (
+            self.mask
+            if self.mask is not None
+            else np.array([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
+        )
+        external_stress = (
+            self.external_stress if self.external_stress is not None else 0.0
+        )
         ensemble = self.ensemble.lower()
 
         if ensemble == "nve":
@@ -132,9 +140,9 @@ class CustomMDCalc(PropCalc):
                 append_trajectory=self.append_trajectory,
             )
         # ... Other ensembles can be added as needed, but for now copying key ones ...
-        # If needed, I can copy the full list from matcalc source. 
+        # If needed, I can copy the full list from matcalc source.
         # For brevity, I'll implement NVT and NPT variants commonly used.
-        
+
         if ensemble in ("nvt", "nvt_nose_hoover"):
             self._upper_triangular_cell(atoms)
             return NoseHooverChainNVT(
@@ -205,7 +213,7 @@ class CustomMDCalc(PropCalc):
                 temperature_K=self.temperature,
                 externalstress=self.pressure,
                 ttime=self.ttime * units.fs,
-                pfactor=self.pfactor * units.GPa * (units.fs ** 2), 
+                pfactor=self.pfactor * units.GPa * (units.fs**2),
                 mask=mask,
                 trajectory=self.trajfile,
                 logfile=self.logfile,
@@ -214,13 +222,13 @@ class CustomMDCalc(PropCalc):
             )
         # The full implementation is long, so I'll trust standard ones are enough for now. The user uses nvt/npt mostly.
         # But to be safe, I should probably copy the full logic if I can.
-        
-        # NOTE: For brevity in this tool call, I implemented common ones. 
+
+        # NOTE: For brevity in this tool call, I implemented common ones.
         # If the user uses a niche ensemble, this might fail unless I add it.
         # The user was using NVT/NPT Berendsen mostly.
-        
+
         if ensemble == "npt_mtk":
-             return MTKNPT(
+            return MTKNPT(
                 atoms,
                 timestep=timestep_fs,
                 temperature_K=self.temperature,
@@ -236,9 +244,11 @@ class CustomMDCalc(PropCalc):
                 loginterval=self.loginterval,
                 append_trajectory=self.append_trajectory,
             )
-            
+
         # Raise error if not supported in this custom impl
-        raise ValueError(f"Ensemble {ensemble} not fully supported in CustomMDCalc yet. Please add it.")
+        raise ValueError(
+            f"Ensemble {ensemble} not fully supported in CustomMDCalc yet. Please add it."
+        )
 
     def _upper_triangular_cell(self, atoms: Atoms) -> None:
         """Helper to ensure upper triangular cell."""
@@ -262,7 +272,7 @@ class CustomMDCalc(PropCalc):
         velocities = None
         if hasattr(structure, "get_velocities"):
             velocities = structure.get_velocities()
-            
+
         result = super().calc(structure)
         structure_in = result["final_structure"]
 
@@ -279,7 +289,7 @@ class CustomMDCalc(PropCalc):
             structure_in = result["final_structure"]
 
         atoms = to_ase_atoms(structure_in)
-        
+
         # Apply preserved velocities or initialize new ones
         if velocities is not None and not self.relax_structure:
             atoms.set_velocities(velocities)
@@ -292,7 +302,7 @@ class CustomMDCalc(PropCalc):
             ZeroRotation(atoms)
 
         md = self._initialize_md(atoms)
-        
+
         traj = TrajectoryObserver(atoms)
         md.attach(traj, interval=self.loginterval)
 
@@ -308,13 +318,18 @@ class CustomMDCalc(PropCalc):
         finally:
             if self.additional_callbacks:
                 for callback, _ in self.additional_callbacks:
-                    if hasattr(callback, "finalize") and callable(getattr(callback, "finalize")):
+                    if hasattr(callback, "finalize") and callable(
+                        getattr(callback, "finalize")
+                    ):
                         try:
                             callback.finalize()
                         except Exception as e:
                             import logging
-                            logging.getLogger(__name__).warning(f"Error finalizing callback {callback}: {e}")
-        
+
+                            logging.getLogger(__name__).warning(
+                                f"Error finalizing callback {callback}: {e}"
+                            )
+
         final_atoms = Atoms(
             traj.atoms.get_chemical_symbols(),
             positions=traj.atom_positions[-1],
@@ -322,9 +337,9 @@ class CustomMDCalc(PropCalc):
             pbc=traj.atoms.get_pbc(),
         )
         result["final_structure"] = to_pmg_structure(final_atoms)
-        
+
         traj = traj.get_slice(slice(-self.frames, len(traj), 1))
-        
+
         energy_pot = sum(traj.potential_energies) / self.frames
         energy_kin = sum(traj.kinetic_energies) / self.frames
         energy_tot = sum(traj.total_energies) / self.frames

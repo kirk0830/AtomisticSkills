@@ -124,5 +124,5 @@ mcp_drugdisc_convert_to_pdbqt(
 * **PDBQT**: PDBQT conversion is delegated to the `mcp_drugdisc_convert_to_pdbqt` tool (which uses Meeko).
 ---
 
-**Author:** Matthew Cox  
+**Author:** Matthew Cox
 **Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

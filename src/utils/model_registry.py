@@ -23,8 +23,6 @@ notes           : str   — optional free-text notes
 
 from __future__ import annotations
 
-import os
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -38,6 +36,7 @@ REGISTRY_PATH = Path.home() / ".config" / "atomistic_skills" / "model_registry.y
 # ---------------------------------------------------------------------------
 # Low-level I/O
 # ---------------------------------------------------------------------------
+
 
 def _load_raw() -> Dict[str, Any]:
     """Load raw registry dict from disk; return empty structure if missing."""
@@ -54,12 +53,15 @@ def _save_raw(data: Dict[str, Any]) -> None:
     """Persist registry dict to disk."""
     REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(REGISTRY_PATH, "w") as f:
-        yaml.dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        yaml.dump(
+            data, f, default_flow_style=False, allow_unicode=True, sort_keys=False
+        )
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _normalise_chemsys(chemsys: str) -> str:
     """Sort and deduplicate elements in a hyphen-separated chemical system string.
@@ -94,6 +96,7 @@ def _generate_id(backend: str, chemical_system: str, existing_ids: List[str]) ->
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def register_model(
     checkpoint_path: str,
@@ -130,7 +133,9 @@ def register_model(
     """
     backend = backend.lower().strip()
     if backend not in {"mace", "matgl", "fairchem"}:
-        raise ValueError(f"backend must be 'mace', 'matgl', or 'fairchem'; got '{backend}'")
+        raise ValueError(
+            f"backend must be 'mace', 'matgl', or 'fairchem'; got '{backend}'"
+        )
 
     norm_chemsys = _normalise_chemsys(chemical_system)
 
@@ -262,11 +267,12 @@ def delete_model(model_id: str) -> bool:
 # Formatting helpers (used by MCP tools)
 # ---------------------------------------------------------------------------
 
+
 def _format_entry(entry: Dict[str, Any]) -> str:
     """Render a single registry entry as a human-readable markdown block."""
     perf = entry.get("performance", {})
     e_mae = f"{perf['energy_mae']} meV/atom" if "energy_mae" in perf else "N/A"
-    f_mae = f"{perf['force_mae']} meV/Å"    if "force_mae"  in perf else "N/A"
+    f_mae = f"{perf['force_mae']} meV/Å" if "force_mae" in perf else "N/A"
     ckpt_status = "✓ exists" if entry.get("checkpoint_exists") else "✗ missing"
     tags = ", ".join(entry.get("tags", [])) or "—"
 

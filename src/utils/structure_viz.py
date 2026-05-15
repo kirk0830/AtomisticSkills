@@ -1,20 +1,14 @@
-
 from __future__ import annotations
 
-import math
-import warnings
-from typing import TYPE_CHECKING, Any, Callable, Literal, Sequence
+from typing import Any, Callable, Literal, Sequence
 
 import numpy as np
 import plotly.graph_objects as go
 from pymatgen.analysis.local_env import CrystalNN, NearNeighbors
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from pymatgen.core import PeriodicSite, Structure
 
 from pymatviz.enums import ElemColorScheme, SiteCoords
-from pymatviz.colors import ELEM_COLORS_VESTA
 from pymatviz.structure.helpers import (
-    NO_SYM_MSG,
     draw_bonds,
     draw_cell,
     draw_vector,
@@ -23,7 +17,6 @@ from pymatviz.structure.helpers import (
     get_first_matching_site_prop,
     get_image_sites,
     generate_site_label,
-    get_subplot_title,
 )
 from pymatviz.typing import ColorType
 from plotly.subplots import make_subplots
@@ -159,15 +152,18 @@ def draw_site_custom(
     row: int | None = None,
     col: int | None = None,
     scene: str | None = None,
-    hover_text: SiteCoords | Callable[[PeriodicSite], str] = SiteCoords.cartesian_fractional,
+    hover_text: SiteCoords
+    | Callable[[PeriodicSite], str] = SiteCoords.cartesian_fractional,
     **kwargs: Any,
 ) -> None:
     """Add a site (regular or image) to the plot with custom 3D lighting."""
     species = getattr(site, "specie", site.species)
     # Handle Composition objects (disordered structures)
     # Use symbol of majority species for radius lookup
-    symbol = species.elements[0].symbol if hasattr(species, "elements") else species.symbol
-    
+    symbol = (
+        species.elements[0].symbol if hasattr(species, "elements") else species.symbol
+    )
+
     site_radius = _atomic_radii.get(symbol, 1.0) * scale
     color = _elem_colors.get(symbol, "gray")
 
@@ -175,18 +171,22 @@ def draw_site_custom(
     coords_cart = site.coords
     coords_frac = site.frac_coords if hasattr(site, "frac_coords") else None
     hover_parts = [f"<b>{symbol}</b>"]
-    hover_parts.append(f"Cart: ({coords_cart[0]:.3f}, {coords_cart[1]:.3f}, {coords_cart[2]:.3f})")
+    hover_parts.append(
+        f"Cart: ({coords_cart[0]:.3f}, {coords_cart[1]:.3f}, {coords_cart[2]:.3f})"
+    )
     if coords_frac is not None:
-        hover_parts.append(f"Frac: ({coords_frac[0]:.3f}, {coords_frac[1]:.3f}, {coords_frac[2]:.3f})")
+        hover_parts.append(
+            f"Frac: ({coords_frac[0]:.3f}, {coords_frac[1]:.3f}, {coords_frac[2]:.3f})"
+        )
     site_hover_text = "<br>".join(hover_parts)
 
     # Re-derive majority species for label generation if needed, or just pass species
     # Helpers.generate_site_label expects majority_species (Species object)
     # Let's simplify and use species directly if it's a Species, else majority.
-    if hasattr(species, "elements"): # Composition
-         majority_species = max(species, key=species.get)
+    if hasattr(species, "elements"):  # Composition
+        majority_species = max(species, key=species.get)
     else:
-         majority_species = species
+        majority_species = species
 
     txt = generate_site_label(site_labels, site_idx, site)
 
@@ -194,15 +194,15 @@ def draw_site_custom(
     marker = dict(
         size=site_radius * atom_size,
         color=color,
-        opacity=1.0 if not is_image else 0.6, # Make images more transparent
-        line=dict(width=0), # Remove outline for 3D effect
+        opacity=1.0 if not is_image else 0.6,  # Make images more transparent
+        line=dict(width=0),  # Remove outline for 3D effect
     )
     marker.update(site_kwargs)
 
     # Calculate text color based on background color (pymatviz helper uses picking function, we skip for now or import)
     # from pymatviz.utils.plotting import pick_max_contrast_color
     # text_color = pick_max_contrast_color(color)
-    text_color = "black" # Default or compute if really needed
+    text_color = "black"  # Default or compute if really needed
 
     scatter_kwargs = dict(
         x=[coords[0]],
@@ -232,24 +232,29 @@ def structure_3d_custom(
     struct: Structure | Sequence[Structure],
     *,
     atomic_radii: float | dict[str, float] | None = None,
-    atom_size: float = 5, # Reduced for multi-view layout
+    atom_size: float = 5,  # Reduced for multi-view layout
     elem_colors: ElemColorScheme | dict[str, ColorType] = ELEM_COLORS_MATTERVIZ,
     scale: float = 1,
     show_unit_cell: bool | dict[str, Any] = True,
     show_sites: bool | dict[str, Any] = True,
-    show_image_sites: bool | dict[str, Any] = False, # Disabled for cleaner multi-view
-    show_bonds: bool | NearNeighbors = True, # Enable bonds by default
-    site_labels: Literal["symbol", "species", False] | dict[str, str] | Sequence[str] = "symbol",
+    show_image_sites: bool | dict[str, Any] = False,  # Disabled for cleaner multi-view
+    show_bonds: bool | NearNeighbors = True,  # Enable bonds by default
+    site_labels: Literal["symbol", "species", False]
+    | dict[str, str]
+    | Sequence[str] = "symbol",
     standardize_struct: bool | None = None,
-    n_cols: int = 3, # Only used if struct is a sequence
-    subplot_title: Callable[[Structure, str | int], str | dict[str, Any]] | None | Literal[False] = None,
+    n_cols: int = 3,  # Only used if struct is a sequence
+    subplot_title: Callable[[Structure, str | int], str | dict[str, Any]]
+    | None
+    | Literal[False] = None,
     show_site_vectors: str | Sequence[str] = ("force", "magmom"),
     vector_kwargs: dict[str, dict[str, Any]] | None = None,
-    hover_text: SiteCoords | Callable[[PeriodicSite], str] = SiteCoords.cartesian_fractional,
+    hover_text: SiteCoords
+    | Callable[[PeriodicSite], str] = SiteCoords.cartesian_fractional,
     bond_kwargs: dict[str, Any] | None = None,
 ) -> go.Figure:
     """Plot pymatgen structures in 3D with Plotly using custom styling."""
-    
+
     # If single structure, use 2x2 multi-view layout
     if isinstance(struct, Structure):
         # We will create 4 copies of the struct for the 4 views
@@ -263,13 +268,16 @@ def structure_3d_custom(
             cols=n_cols,
             specs=specs,
             horizontal_spacing=0.0,  # Zero spacing
-            vertical_spacing=0.0,    # Zero spacing
+            vertical_spacing=0.0,  # Zero spacing
         )
     else:
         # Sequence of structures (legacy/batch mode)
         structs = list(struct) if not isinstance(struct, Structure) else [struct]
         if standardize_struct:
-            structs = [s.get_primitive_structure() if standardize_struct is True else s for s in structs]
+            structs = [
+                s.get_primitive_structure() if standardize_struct is True else s
+                for s in structs
+            ]
         n_rows = (len(structs) - 1) // n_cols + 1
         specs = [[{"type": "scene"}] * n_cols] * n_rows
         fig = make_subplots(
@@ -280,7 +288,9 @@ def structure_3d_custom(
         )
 
     # Default bond kwargs to look better
-    default_bond_kwargs = dict(width=5, color=True) # Thicker bonds (relative to smaller atoms)
+    default_bond_kwargs = dict(
+        width=5, color=True
+    )  # Thicker bonds (relative to smaller atoms)
     if bond_kwargs:
         default_bond_kwargs.update(bond_kwargs)
     bond_kwargs = default_bond_kwargs
@@ -299,11 +309,10 @@ def structure_3d_custom(
         filter_callback=lambda _prop, value: (np.array(value).shape or [None])[-1] == 3,
     )
 
-
     for idx, struct_i in enumerate(structs):
         row = (idx // n_cols) + 1
         col = (idx % n_cols) + 1
-        
+
         # We need to call drawing functions with row/col or scene name.
         scene_name = f"scene{idx+1}" if idx > 0 else "scene"
 
@@ -387,7 +396,7 @@ def structure_3d_custom(
             uc_kwargs = dict(color="gray", width=3)
             if isinstance(show_unit_cell, dict):
                 uc_kwargs.update(show_unit_cell)
-            
+
             draw_cell(
                 fig,
                 struct_i,
@@ -400,7 +409,7 @@ def structure_3d_custom(
     axes_kwargs = dict(
         showticklabels=False, showgrid=False, zeroline=False, visible=False
     )
-    
+
     # Common scene layout
     scene_base = dict(
         xaxis=axes_kwargs,
@@ -419,19 +428,19 @@ def structure_3d_custom(
         # View 1 (Top-Left): Along a-axis (looking from x)
         # In Plotly, eye=(x,y,z). If a is x-axis, we want large x.
         camera_a = dict(eye=dict(x=2, y=0, z=0), up=dict(x=0, y=0, z=1))
-        
+
         # View 2 (Top-Right): Along b-axis (looking from y)
         camera_b = dict(eye=dict(x=0, y=2, z=0), up=dict(x=0, y=0, z=1))
-        
+
         # View 3 (Bottom-Left): Along c-axis (looking from z)
         camera_c = dict(eye=dict(x=0, y=0, z=2), up=dict(x=0, y=1, z=0))
-        
+
         # View 4 (Bottom-Right): Default perspective (angular)
         camera_d = dict(eye=dict(x=1.25, y=1.25, z=1.25))
 
         # Update specific scenes
         # scene1 (1,1), scene2 (1,2), scene3 (2,1), scene4 (2,2)
-        fig.update_layout(scene_camera=camera_a) # scene 1
+        fig.update_layout(scene_camera=camera_a)  # scene 1
         # For other scenes, property is sceneN_camera
         fig.update_layout(scene2=dict(camera=camera_b))
         fig.update_layout(scene3=dict(camera=camera_c))
@@ -448,23 +457,21 @@ def structure_3d_custom(
     fig.layout.plot_bgcolor = "rgba(0,0,0,0)"
     # Minimal margins to maximize subplot area (no bottom margin needed without subplot titles)
     fig.layout.margin = dict(l=5, r=5, t=60, b=5)
-    
+
     # Add structure metadata and axis labels for single-structure multi-view
     if isinstance(struct, Structure):
         try:
             from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
+
             sga = SpacegroupAnalyzer(struct)
             spacegroup = sga.get_space_group_symbol()
         except Exception:
             spacegroup = "Unknown"
-        
+
         formula = struct.composition.reduced_formula
         title_text = f"{formula} | Space Group: {spacegroup} | Views: a-axis, b-axis, c-axis, Default"
         fig.layout.title = dict(
-            text=title_text,
-            x=0.5,
-            xanchor='center',
-            font=dict(size=16)
+            text=title_text, x=0.5, xanchor="center", font=dict(size=16)
         )
 
     return fig

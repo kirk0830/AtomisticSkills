@@ -44,9 +44,9 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 - **Avoid r2SCAN for metallic ferromagnets**: r2SCAN significantly overestimates magnetic moments in itinerant ferromagnets like Fe (by ~24% compared to experimental values)[2].
 
 **References**:
-[1] PBE underestimates Fe magnetization by only 1.8%: Zhang et al., *Phys. Rev. Materials* **6**, 013801 (2022). DOI: [10.1103/PhysRevMaterials.6.013801](https://doi.org/10.1103/PhysRevMaterials.6.013801)  
-[2] r2SCAN and SCAN overestimate Fe magnetization by 24% and 17% respectively: ibid.  
-[3] PBE+U opens band gaps and corrects ground state in transition metal oxides: Kulik, *J. Chem. Phys.* **142**, 240901 (2015). DOI: [10.1063/1.4922693](https://doi.org/10.1063/1.4922693)  
+[1] PBE underestimates Fe magnetization by only 1.8%: Zhang et al., *Phys. Rev. Materials* **6**, 013801 (2022). DOI: [10.1103/PhysRevMaterials.6.013801](https://doi.org/10.1103/PhysRevMaterials.6.013801)
+[2] r2SCAN and SCAN overestimate Fe magnetization by 24% and 17% respectively: ibid.
+[3] PBE+U opens band gaps and corrects ground state in transition metal oxides: Kulik, *J. Chem. Phys.* **142**, 240901 (2015). DOI: [10.1063/1.4922693](https://doi.org/10.1063/1.4922693)
 [4] CoO magnetic moments: PBE+U underestimates due to missing orbital contributions: Radi et al., *Z. Naturforsch. A* **70**, 789 (2015). DOI: [10.1515/zna-2015-0216](https://doi.org/10.1515/zna-2015-0216)
 
 See the "Functional Selection Guide" section below for detailed recommendations.
@@ -222,5 +222,5 @@ Choosing the right exchange-correlation functional is critical for accurate magn
 ---
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

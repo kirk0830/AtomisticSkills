@@ -1,9 +1,9 @@
 # Methanol BDE — Homolytic vs Heterolytic (FairChem UMA omol)
 
-**Molecule:** Methanol (CH₄O, SMILES: `CO`)  
-**Model:** FairChem `uma-s-1p1`, task `omol`  
-**Cleavage mode:** `both` (homolytic + heterolytic, all bonds)  
-**Includes H bonds:** Yes  
+**Molecule:** Methanol (CH₄O, SMILES: `CO`)
+**Model:** FairChem `uma-s-1p1`, task `omol`
+**Cleavage mode:** `both` (homolytic + heterolytic, all bonds)
+**Includes H bonds:** Yes
 
 ![BDE Comparison](bde_comparison.png)
 

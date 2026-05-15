@@ -12,15 +12,11 @@ from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server
 mcp_pipe_binary = setup_mcp_stdout()
 
 import logging
-import io
 import warnings
-import json
-from pathlib import Path
 from mcp.server.fastmcp import FastMCP
 from typing import Dict, Any, Optional, Union, List
 from src.utils.serialization_utils import recursive_tolist
 from src.utils.research_utils import get_current_research_dir
-import traceback
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
@@ -40,10 +36,14 @@ wrapper: Optional[Any] = None
 
 
 @mcp.tool()
-def load_model(model_name: str = "MACE-OMAT-0-small", device: str = "auto", task_name: Optional[str] = None) -> str:
+def load_model(
+    model_name: str = "MACE-OMAT-0-small",
+    device: str = "auto",
+    task_name: Optional[str] = None,
+) -> str:
     """
     Load a MACE model.
-    
+
     Supported models include:
     - MACE-MH (Multi-Head): 'MACE-MH-1' (latest), 'MACE-MH-0'
     - MACE-MP (Materials Project): 'MACE-MP-small', 'MACE-MP-medium', 'MACE-MP-large'
@@ -51,97 +51,102 @@ def load_model(model_name: str = "MACE-OMAT-0-small", device: str = "auto", task
     - MACE-MATPES: 'MACE-MATPES-PBE-0', 'MACE-MATPES-R2SCAN-0'
     - MACE-OFF (Organic): 'MACE-OFF23-small', 'MACE-OFF23-medium', 'MACE-OFF23-large'
     - Special: 'MACE-ANI-CC', 'MACE-OMOL-extra-large'
-    
+
     Args:
         model_name: Name of the model to load (default: "MACE-OMAT-0-small").
         device: Device to use ("auto", "cpu", "cuda").
-        task_name: Optional task name that sets the model's head. 
-                  Supported options for multi-head models (MACE-MH): 
+        task_name: Optional task name that sets the model's head.
+                  Supported options for multi-head models (MACE-MH):
                   'omat_pbe' (default), 'matpes_r2scan', 'omol', 'spice_wB97M', 'oc20_usemppbe'.
-        
+
     Returns:
         Confirmation message.
-    
+
     CRITICAL: This tool must be called before using any other tool to load the model into memory.
     """
     global wrapper
-    import contextlib
-    
+
     # Isolate execution from stdout/stderr to prevent MCP protocol violation
     # We redirect stdout to sys.stderr (which logs to file) so we don't lose the output,
     # but we keep the actual stdout (MCP pipe) clean.
     # Note: sys.stderr is already redirected to a log file in the header of this script.
     try:
         from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+
         wrapper = MACEWrapper(model_name=model_name, device=device, head=task_name)
         # Load the model - this might take a while and produce output
         wrapper.load(model_path=model_name if os.path.exists(model_name) else None)
-        
+
         # If task_name is provided, set the head
         if task_name:
             # Set head if the wrapper supports it
             if hasattr(wrapper, "set_head"):
                 wrapper.set_head(task_name)
             else:
-                logger.warning(f"Model wrapper does not support setting head to {task_name}")
-        
+                logger.warning(
+                    f"Model wrapper does not support setting head to {task_name}"
+                )
+
         return f"Successfully loaded MACE model: {model_name}"
     except Exception as e:
         logger.error(f"Failed to load model {model_name}: {e}")
         return f"Error loading model: {str(e)}"
 
+
 @mcp.tool()
-def predict_structure(structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]]) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+def predict_structure(
+    structure_data: Union[Dict[str, Any], str, List[Union[Dict[str, Any], str]]],
+) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
     """
     Predict energy, forces, and stress for a structure or a batch of structures.
-    
+
     Args:
         structure_data: Single structure or batch (directory path, list of dicts/paths).
-    
+
     Returns:
         Dict: {'energy': eV, 'forces': eV/A, 'stress': eV/A^3}
     """
     global wrapper
-    import contextlib
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
-    
+
     return recursive_tolist(wrapper.static_calculation(structure_data))
 
+
 @mcp.tool()
-def predict_atomic_features(structure_data: Union[Dict[str, Any], str], output_path: Optional[str] = None) -> Dict[str, Any]:
+def predict_atomic_features(
+    structure_data: Union[Dict[str, Any], str], output_path: Optional[str] = None
+) -> Dict[str, Any]:
     """
     Predict atomic latent features (descriptors) for a structure.
     Automatically saves features to the current research directory.
-    
+
     Args:
         structure_data: Single structure or batch (directory path, list of dicts/paths).
         output_path: Optional custom path for saving features. If not provided, auto-generates
                      based on structure filename (e.g., 'solid.cif' -> 'solid_features.json').
-    
+
     Returns:
         Dict: {
-            'atomic_features': [[...], ...], 
-            'feature_dim': int, 
+            'atomic_features': [[...], ...],
+            'feature_dim': int,
             'num_atoms': int,
             'saved_path': str  # Path to saved JSON file
         }
     """
     global wrapper
-    import contextlib
     import json
-    from pathlib import Path
     from src.utils.research_utils import get_current_research_dir
-    
+
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
-    
+
     # Get features
     result = wrapper.predict_atomic_features(structure_data)
-    
+
     if "error" in result:
         return result
-    
+
     # Save to research directory
     try:
         # Use custom path if provided, otherwise auto-generate
@@ -149,33 +154,34 @@ def predict_atomic_features(structure_data: Union[Dict[str, Any], str], output_p
             save_path = Path(output_path)
         else:
             research_dir = get_current_research_dir()
-            
+
             # Generate filename based on structure path or use generic name
             if isinstance(structure_data, str):
                 struct_path = Path(structure_data)
                 feature_filename = f"{struct_path.stem}_features.json"
             else:
                 feature_filename = "atomic_features.json"
-            
+
             save_path = research_dir / feature_filename
-        
+
         # Save features
-        with open(save_path, 'w') as f:
+        with open(save_path, "w") as f:
             json.dump(recursive_tolist(result), f)
-        
+
         # Add saved path to result
         result["saved_path"] = str(save_path)
-        
+
         # Remove heavy data from return value
         if "atomic_features" in result:
             del result["atomic_features"]
-        
+
         return result
-        
+
     except Exception as e:
         # If saving fails, still return the features but with error info
         result["save_error"] = f"Failed to save features: {str(e)}"
         return result
+
 
 @mcp.tool()
 def relax_structure(
@@ -185,11 +191,11 @@ def relax_structure(
     optimizer: str = "FIRE",
     relax_cell: bool = True,
     output_dir: Optional[str] = None,
-    fixed_atoms: Optional[List[int]] = None
+    fixed_atoms: Optional[List[int]] = None,
 ) -> Dict[str, Any]:
     """
     Relax one or multiple structures using the loaded MACE model.
-    
+
     Args:
         structure_data: Single structure or batch (directory path, list of dicts/paths).
         fmax: Force convergence criterion (eV/Ang).
@@ -198,7 +204,7 @@ def relax_structure(
         relax_cell: Whether to relax the unit cell.
         output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
         fixed_atoms: List of indices of atoms to keep fixed during relaxation.
-        
+
     Returns:
         For single: Dict with energy, trajectory_path, cif_path, json_path
         For batch: Dict with mode="batch", total_structures, successful, failed, results list
@@ -206,17 +212,20 @@ def relax_structure(
     global wrapper
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
-    
+
     # Simply delegate to base wrapper's unified relax_structure method
-    return recursive_tolist(wrapper.relax_structure(
-        structure_data=structure_data,
-        fmax=fmax,
-        steps=steps,
-        optimizer=optimizer,
-        relax_cell=relax_cell,
-        output_dir=output_dir,
-        fixed_atoms=fixed_atoms
-    ))
+    return recursive_tolist(
+        wrapper.relax_structure(
+            structure_data=structure_data,
+            fmax=fmax,
+            steps=steps,
+            optimizer=optimizer,
+            relax_cell=relax_cell,
+            output_dir=output_dir,
+            fixed_atoms=fixed_atoms,
+        )
+    )
+
 
 @mcp.tool()
 def run_md(
@@ -232,11 +241,11 @@ def run_md(
     monitor: bool = False,
     monitor_type: Optional[Union[str, List[str]]] = None,
     monitor_params: Optional[Dict[str, Any]] = None,
-    supercell_min_length: Optional[float] = None
+    supercell_min_length: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
-    
+
     Args:
         structure_data: Single structure or batch (directory path, list of dicts/paths).
         temperature: Temperature in Kelvin.
@@ -249,12 +258,12 @@ def run_md(
         pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).
         output_dir: Directory to save results.
         monitor: Whether to enable automatic MD monitoring.
-        monitor_type: Type of monitor ("melting", "explosion", "overshoot", "volume") 
+        monitor_type: Type of monitor ("melting", "explosion", "overshoot", "volume")
                      or a list of types.
-        monitor_params: Optional dictionary of parameters for the monitors 
+        monitor_params: Optional dictionary of parameters for the monitors
                         (e.g., {"upper_limit_ratio": 4.0}).
         supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell.
-        
+
     Returns:
         Dictionary with MD results.
     """
@@ -266,10 +275,9 @@ def run_md(
         output_dir = str(get_current_research_dir() / "mace" / "md")
     os.makedirs(output_dir, exist_ok=True)
 
-    import contextlib
     import traceback
-    import sys # Added for sys.stderr
-    
+    import sys  # Added for sys.stderr
+
     try:
         # Run MD via wrapper's unified run_md (supports monitoring callbacks)
         result = wrapper.run_md(
@@ -285,38 +293,42 @@ def run_md(
             monitor=monitor,
             monitor_type=monitor_type,
             monitor_params=monitor_params,
-            supercell_min_length=supercell_min_length
+            supercell_min_length=supercell_min_length,
         )
-        
+
         if "error" in result:
             return result
-            
+
         return recursive_tolist(result)
-            
+
     except Exception as e:
-        traceback.print_exc(file=sys.stderr) # Reverted to original traceback.print_exc
-        return {"error": f"MD execution failed: {str(e)}", "traceback": traceback.format_exc()}
+        traceback.print_exc(file=sys.stderr)  # Reverted to original traceback.print_exc
+        return {
+            "error": f"MD execution failed: {str(e)}",
+            "traceback": traceback.format_exc(),
+        }
+
 
 @mcp.tool()
 def get_info() -> Dict[str, Any]:
     """
     Get information about the current loaded model.
-    
+
     Returns:
         Dictionary with model status, name, device, and head.
     """
     global wrapper
-    import contextlib
     if wrapper is None:
         return {"status": "no model loaded"}
-    
+
     return {
         "status": "loaded",
         "model_name": wrapper.model_name,
         "device": str(wrapper.device),
         "head": wrapper.head,
-        "is_mh": getattr(wrapper, "is_mh", False)
+        "is_mh": getattr(wrapper, "is_mh", False),
     }
+
 
 if __name__ == "__main__":
     run_fastmcp_server(mcp, mcp_pipe_binary)

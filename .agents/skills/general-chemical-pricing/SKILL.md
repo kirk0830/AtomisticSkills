@@ -7,7 +7,7 @@ category: [general, materials, chemistry]
 # General Chemical Pricing
 
 ## Goal
-To programmatically query averaged bulk commodity prices for pure chemical elements (in USD/kg) and to retrieve direct chemical vendor links for ordering specific precursor compounds or elemental forms. 
+To programmatically query averaged bulk commodity prices for pure chemical elements (in USD/kg) and to retrieve direct chemical vendor links for ordering specific precursor compounds or elemental forms.
 
 ## Instructions
 
@@ -36,5 +36,5 @@ See [examples/lithium-carbonate/README.md](examples/lithium-carbonate/README.md)
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

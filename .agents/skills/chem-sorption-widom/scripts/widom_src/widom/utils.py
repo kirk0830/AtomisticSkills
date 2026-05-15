@@ -89,13 +89,15 @@ def check_accessibility(
         gas_coords = gas_positions.reshape(-1, 3)
 
     # Use find_points_in_spheres to check overlaps in batch
-    center_indices, all_coords_indices, offset_vectors, distances = find_points_in_spheres(
-        all_coords=gas_coords,
-        center_coords=framework_coords.astype(np.float64),
-        r=float(cutoff_distance),
-        pbc=pbc_array,
-        lattice=lattice_matrix.astype(np.float64),
-        tol=1e-8,
+    center_indices, all_coords_indices, offset_vectors, distances = (
+        find_points_in_spheres(
+            all_coords=gas_coords,
+            center_coords=framework_coords.astype(np.float64),
+            r=float(cutoff_distance),
+            pbc=pbc_array,
+            lattice=lattice_matrix.astype(np.float64),
+            tol=1e-8,
+        )
     )
 
     # Determine which insertions have overlaps
@@ -105,7 +107,9 @@ def check_accessibility(
         # all_coords_indices corresponds to gas atoms, divide by num_gas_atoms to get insertion index
         overlapping_insertions = set(all_coords_indices // num_gas_atoms)
 
-    is_accessible = np.array([i not in overlapping_insertions for i in range(num_insertions)])
+    is_accessible = np.array(
+        [i not in overlapping_insertions for i in range(num_insertions)]
+    )
 
     return is_accessible
 
@@ -180,7 +184,9 @@ def optimize_atoms(
     return opt_atoms
 
 
-def create_supercell_if_needed(structure: Atoms, min_interplanar_distance: float = 6.0) -> Atoms:
+def create_supercell_if_needed(
+    structure: Atoms, min_interplanar_distance: float = 6.0
+) -> Atoms:
     """Create a supercell if the interplanar distance is too small.
 
     The code in this function is derived from
@@ -265,7 +271,9 @@ def calculate_atomic_density(atoms: Atoms) -> float:
         Atomic density of the atoms in kg/m³.
     """
     volume = atoms.get_volume() * 1e-30  # Convert Å³ to m³
-    total_mass = np.sum(atoms.get_masses()) * units._amu  # Convert amu to kg # type: ignore
+    total_mass = (
+        np.sum(atoms.get_masses()) * units._amu
+    )  # Convert amu to kg # type: ignore
     return total_mass / volume
 
 

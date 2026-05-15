@@ -87,5 +87,5 @@ python .agents/skills/chem-react-ot/scripts/generate_ts.py \
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

@@ -16,6 +16,7 @@ Usage:
 Requirements:
     - numpy
 """
+
 from __future__ import annotations
 
 import argparse

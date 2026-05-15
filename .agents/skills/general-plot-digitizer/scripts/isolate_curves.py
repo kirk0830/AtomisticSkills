@@ -27,9 +27,7 @@ from plot_utils import load_metadata
 HSVRange = tuple[tuple[int, int, int], tuple[int, int, int]]
 
 
-def _hsv_ranges(
-    h: int, s: int, v: int, tolerance: int = 30
-) -> list[HSVRange]:
+def _hsv_ranges(h: int, s: int, v: int, tolerance: int = 30) -> list[HSVRange]:
     """Build HSV range(s) from center (H,S,V) and tolerance.
 
     Returns 1 range normally, or 2 ranges when the hue wraps around
@@ -57,9 +55,7 @@ def _hsv_ranges(
         return [((h_lo, s_lo, v_lo), (h_hi, s_hi, v_hi))]
 
 
-def _hsv_mask(
-    hsv_img: np.ndarray, hsv_ranges: list[HSVRange]
-) -> np.ndarray:
+def _hsv_mask(hsv_img: np.ndarray, hsv_ranges: list[HSVRange]) -> np.ndarray:
     """Create combined binary mask from one or more HSV ranges (handles red wraparound)."""
     mask = np.zeros(hsv_img.shape[:2], dtype=np.uint8)
     for lower, upper in hsv_ranges:
@@ -69,9 +65,7 @@ def _hsv_mask(
     return mask
 
 
-def hex_to_hsv_ranges(
-    hex_color: str, tolerance: int = 30
-) -> list[HSVRange]:
+def hex_to_hsv_ranges(hex_color: str, tolerance: int = 30) -> list[HSVRange]:
     """
     Convert hex color to HSV range(s) for masking.
 
@@ -192,6 +186,7 @@ def _mask_to_cluster_centroids(mask: np.ndarray, gap: int = 3) -> np.ndarray:
     raw_y = np.array([raw[x] for x in sorted_x])
     try:
         from scipy.ndimage import median_filter
+
         ref_y = median_filter(raw_y, size=min(15, max(3, len(raw_y))))
     except ImportError:
         ref_y = raw_y
@@ -283,11 +278,15 @@ def _smooth_and_interpolate(
     return np.column_stack([clean_x, clean_y])
 
 
-def _apply_spatial_filter(mask: np.ndarray, min_aspect_ratio: float = 3.0) -> np.ndarray:
+def _apply_spatial_filter(
+    mask: np.ndarray, min_aspect_ratio: float = 3.0
+) -> np.ndarray:
     """Keep only the largest connected component with line-like aspect ratio.
     Removes axes (frame-like) and isolated label blobs.
     """
-    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(mask, connectivity=8)
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(
+        mask, connectivity=8
+    )
     best_label = 0
     best_area = 0
     for i in range(1, num_labels):
@@ -593,6 +592,7 @@ def main() -> None:
     mask_regions: list[dict] = []
     if args.text_mask:
         import json as _json
+
         mask_regions = _json.loads(Path(args.text_mask).read_text())
     else:
         mask_regions = list(meta.get("text_regions") or [])
@@ -664,7 +664,9 @@ def main() -> None:
                         f"from rows {y_start}-{y_end} of crop",
                         file=sys.stderr,
                     )
-            h, s, v = detect_dominant_curve_color(color_detect_region, allow_black=args.allow_black)
+            h, s, v = detect_dominant_curve_color(
+                color_detect_region, allow_black=args.allow_black
+            )
             hsv_ranges = _hsv_ranges(h, s, v, tolerance)
 
         if method == "edge+color":
@@ -736,6 +738,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

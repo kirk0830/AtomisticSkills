@@ -16,6 +16,7 @@ sys.path.insert(0, str(skill_scripts))
 from feature_calculators import MatGLCrystalFeatureCalculator
 from sampler import OffEquilibriumSampler
 
+
 def sample_limno2_matgl():
     # 1. Get Structure (LiMnO2)
     print("Fetching LiMnO2 structure from Materials Project...")
@@ -33,7 +34,10 @@ def sample_limno2_matgl():
     # CHGNet-MatPES is a state-of-the-art model for inorganic materials
     print("Loading MatGL model (CHGNet-MatPES-PBE)...")
     from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
-    wrapper = MatGLWrapper(model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="auto")
+
+    wrapper = MatGLWrapper(
+        model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="auto"
+    )
     wrapper.load()
     pes_calc = wrapper.create_calculator()
 
@@ -41,7 +45,7 @@ def sample_limno2_matgl():
     # MatGLCrystalFeatureCalculator uses return_all_layer_output=True for single-pass calculation
     print("Setting up optimized calculator and sampler...")
     calc = MatGLCrystalFeatureCalculator(potential=pes_calc)
-    
+
     # 4. Run Off-Equilibrium Sampling
     print("Starting sampling (10 ps, 2000K, 10 samples)...")
     output_dir = "LiMnO2_matgl_results"
@@ -54,17 +58,18 @@ def sample_limno2_matgl():
         temperature=2000,
         n_clusters=10,
         output_dir=output_dir,
-        target_atoms=50
+        target_atoms=50,
     )
-    
+
     sampled_structures, metadata = sampler.sample()
 
     print("\n--- MatGL Sampling Results ---")
     print(f"Total MD steps: {metadata['total_steps']}")
-    steps = metadata['sampled_md_steps']
-    times_ps = [round(s * metadata['time_step'] / 1000.0, 3) for s in steps]
+    steps = metadata["sampled_md_steps"]
+    times_ps = [round(s * metadata["time_step"] / 1000.0, 3) for s in steps]
     print(f"Sampled timestamps (ps): {times_ps}")
     print(f"Sampled structures saved to: {output_dir}/")
+
 
 if __name__ == "__main__":
     sample_limno2_matgl()

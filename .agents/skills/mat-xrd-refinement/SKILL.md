@@ -143,5 +143,5 @@ You can independently edit `plot.py` directly to adjust any of the `matplotlib`/
 
 ---
 
-**Author:** Nofit Segal  
+**Author:** Nofit Segal
 **Contact:** [GitHub @nofitsegal](https://github.com/nofitsegal)

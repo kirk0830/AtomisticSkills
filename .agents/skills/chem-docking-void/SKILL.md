@@ -74,5 +74,5 @@ python .agents/skills/chem-docking-void/scripts/run_docking.py \
 3. RDKit cheminformatics (MMFF94 structural optimization)
 
 ---
-**Author:** Mingrou Xie 
+**Author:** Mingrou Xie
 **Contact:** [GitHub @mingrouxie](https://github.com/mingrouxie)

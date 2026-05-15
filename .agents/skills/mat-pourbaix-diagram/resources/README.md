@@ -9,14 +9,14 @@ Water molecule in 15Å cubic cell
 - Geometry: O-H bond ~0.96 Å, H-O-H angle ~104.5°
 - Use: Calculate E(H₂O) for water correction
 
-### H2.cif  
+### H2.cif
 Hydrogen molecule in 15Å cubic cell
 - Geometry: H-H bond ~0.74 Å
 - Use: Calculate E(H₂) for water correction
 
 ### O2.cif
 Oxygen molecule in 15Å cubic cell
-- Geometry: O-O bond ~1.21 Å  
+- Geometry: O-O bond ~1.21 Å
 - Use: Calculate E(O₂) for water correction
 
 ## Usage

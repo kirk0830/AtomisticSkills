@@ -37,7 +37,9 @@ def _extract_coords(pdbqt_path: Path) -> List[Tuple[float, float, float]]:
     return coords
 
 
-def compute_box(coords: List[Tuple[float, float, float]], padding: float, min_size: float) -> Dict[str, float]:
+def compute_box(
+    coords: List[Tuple[float, float, float]], padding: float, min_size: float
+) -> Dict[str, float]:
     xs = [c[0] for c in coords]
     ys = [c[1] for c in coords]
     zs = [c[2] for c in coords]
@@ -67,11 +69,30 @@ def compute_box(coords: List[Tuple[float, float, float]], padding: float, min_si
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Compute docking box from a reference PDBQT.")
-    parser.add_argument("pdbqt", help="Reference PDBQT file (e.g., co-crystal ligand) in receptor coordinates.")
-    parser.add_argument("--padding", type=float, default=6.0, help="Padding added to ligand bounds (Angstrom).")
-    parser.add_argument("--min_size", type=float, default=20.0, help="Minimum box edge length per axis (Angstrom).")
-    parser.add_argument("--output_json", default=None, help="Optional output JSON path. If omitted, prints to stdout.")
+    parser = argparse.ArgumentParser(
+        description="Compute docking box from a reference PDBQT."
+    )
+    parser.add_argument(
+        "pdbqt",
+        help="Reference PDBQT file (e.g., co-crystal ligand) in receptor coordinates.",
+    )
+    parser.add_argument(
+        "--padding",
+        type=float,
+        default=6.0,
+        help="Padding added to ligand bounds (Angstrom).",
+    )
+    parser.add_argument(
+        "--min_size",
+        type=float,
+        default=20.0,
+        help="Minimum box edge length per axis (Angstrom).",
+    )
+    parser.add_argument(
+        "--output_json",
+        default=None,
+        help="Optional output JSON path. If omitted, prints to stdout.",
+    )
     args = parser.parse_args()
 
     pdbqt_path = Path(args.pdbqt)
@@ -89,6 +110,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

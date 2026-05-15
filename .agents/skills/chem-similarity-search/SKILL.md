@@ -12,7 +12,7 @@ To programmatically find chemical analogs, alternative precursors, and structura
 ## Instructions
 
 ### 1. Search by SMILES String
-Search for similar compounds by providing the canonical or isomeric SMILES. 
+Search for similar compounds by providing the canonical or isomeric SMILES.
 Adjust the `--threshold` (similarity cutoff 0-100, default is 95) to widen or narrow the search radius. Higher threshold equals higher similarity.
 Adjust `--max_records` to limit the output length.
 
@@ -61,5 +61,5 @@ python .agents/skills/chem-similarity-search/scripts/similarity_search.py \
 ---
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

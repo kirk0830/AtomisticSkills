@@ -15,7 +15,7 @@ This skill provides tools for calculating vibrational properties of materials us
 
 ## 2. Choosing a Foundation Potential
 
-Phonon calculations are highly sensitive to the quality of the potential energy surface (PES). 
+Phonon calculations are highly sensitive to the quality of the potential energy surface (PES).
 
 > [!IMPORTANT]
 > - **Use OMAT or MatPES trained models**: These models (e.g., `MACE-OMAT-0-small`, `TensorNet-MatPES-r2SCAN`) are specifically optimized for forces and vibrational stability.
@@ -93,5 +93,5 @@ python .agents/skills/mat-phonon/scripts/get_mp_phonon.py \
 See `examples/` for detailed usage scenarios.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

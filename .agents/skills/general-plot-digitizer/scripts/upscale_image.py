@@ -96,7 +96,9 @@ def main() -> None:
     if args.output:
         output_path = Path(args.output)
     else:
-        output_path = image_path.parent / f"{image_path.stem}_upscaled{image_path.suffix}"
+        output_path = (
+            image_path.parent / f"{image_path.stem}_upscaled{image_path.suffix}"
+        )
 
     try:
         out_path = upscale_image(args.image, output_path, factor=args.factor)

@@ -51,6 +51,7 @@ def get_script_dir() -> Path:
 def run_upscale_image(image_path: Path, output_path: Path, factor: float = 2.0) -> Path:
     """Upscale image and save. Returns path to upscaled image."""
     import cv2
+
     img = cv2.imread(str(image_path))
     if img is None:
         raise RuntimeError(f"Could not load image: {image_path}")
@@ -97,6 +98,7 @@ def run_metadata_extraction(
 def _sanitize_label(label: str) -> str:
     """Sanitize curve label for use in filenames."""
     import re
+
     s = re.sub(r"[^\w\-]", "_", label.strip().lower())
     return re.sub(r"_+", "_", s).strip("_") or "curve"
 
@@ -206,8 +208,16 @@ def prepend_header_metadata(
     """Prepend commented metadata lines to a CSV file for traceability."""
     from datetime import date
 
-    x_range = f"{meta.get('x_tick_min')}-{meta.get('x_tick_max')}" if "x_tick_min" in meta else "calibrated"
-    y_range = f"{meta.get('y_tick_min')}-{meta.get('y_tick_max')}" if "y_tick_min" in meta else "calibrated"
+    x_range = (
+        f"{meta.get('x_tick_min')}-{meta.get('x_tick_max')}"
+        if "x_tick_min" in meta
+        else "calibrated"
+    )
+    y_range = (
+        f"{meta.get('y_tick_min')}-{meta.get('y_tick_max')}"
+        if "y_tick_min" in meta
+        else "calibrated"
+    )
 
     header_lines = [
         f"# source: {Path(image_path).name}",
@@ -233,9 +243,17 @@ def write_markdown_summary(
 ) -> None:
     """Write markdown summary for Obsidian/Zotero."""
     md_path = output_path.with_suffix(".md")
-    x_range = f"{meta.get('x_tick_min')} - {meta.get('x_tick_max')}" if "x_tick_min" in meta else "custom calibrated points"
-    y_range = f"{meta.get('y_tick_min')} - {meta.get('y_tick_max')}" if "y_tick_min" in meta else "custom calibrated points"
-    
+    x_range = (
+        f"{meta.get('x_tick_min')} - {meta.get('x_tick_max')}"
+        if "x_tick_min" in meta
+        else "custom calibrated points"
+    )
+    y_range = (
+        f"{meta.get('y_tick_min')} - {meta.get('y_tick_max')}"
+        if "y_tick_min" in meta
+        else "custom calibrated points"
+    )
+
     lines = [
         f"# Digitized: {meta.get('plot_title', 'Plot')}",
         "",
@@ -439,10 +457,25 @@ def main() -> None:
         ),
     )
     # Deprecated aliases (hidden) — mapped to --upscale-strategy after parse
-    parser.add_argument("--low-res", action="store_true", dest="low_res", help=argparse.SUPPRESS)
-    parser.add_argument("--no-low-res", action="store_true", dest="no_low_res", help=argparse.SUPPRESS)
-    parser.add_argument("--upscale", type=float, default=1.0, dest="_legacy_upscale", help=argparse.SUPPRESS)
-    parser.add_argument("--auto-lowres", action="store_true", dest="_legacy_auto_lowres", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--low-res", action="store_true", dest="low_res", help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        "--no-low-res", action="store_true", dest="no_low_res", help=argparse.SUPPRESS
+    )
+    parser.add_argument(
+        "--upscale",
+        type=float,
+        default=1.0,
+        dest="_legacy_upscale",
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--auto-lowres",
+        action="store_true",
+        dest="_legacy_auto_lowres",
+        help=argparse.SUPPRESS,
+    )
     parser.add_argument(
         "--text-mask",
         default=None,
@@ -503,16 +536,25 @@ def main() -> None:
 
     # Handle deprecated aliases
     if args.low_res:
-        print("Warning: --low-res is deprecated; use --upscale-strategy force", file=sys.stderr)
+        print(
+            "Warning: --low-res is deprecated; use --upscale-strategy force",
+            file=sys.stderr,
+        )
         args.upscale_strategy = "force"
     if args.no_low_res:
-        print("Warning: --no-low-res is deprecated; use --upscale-strategy none", file=sys.stderr)
+        print(
+            "Warning: --no-low-res is deprecated; use --upscale-strategy none",
+            file=sys.stderr,
+        )
         args.upscale_strategy = "none"
     if args._legacy_upscale > 1.0 and args.crop_upscale == 1.0:
         print("Warning: --upscale is deprecated; use --crop-upscale", file=sys.stderr)
         args.crop_upscale = args._legacy_upscale
     if args._legacy_auto_lowres:
-        print("Warning: --auto-lowres is deprecated; use --upscale-strategy auto (the default)", file=sys.stderr)
+        print(
+            "Warning: --auto-lowres is deprecated; use --upscale-strategy auto (the default)",
+            file=sys.stderr,
+        )
 
     image_path = Path(args.image)
     if not image_path.exists():
@@ -641,7 +683,9 @@ def main() -> None:
         upscaled_path = output_dir / f"{image_path.stem}_upscaled.png"
         try:
             run_upscale_image(image_path, upscaled_path, factor=args.upscale_factor)
-            print(f"Pre-upscaled image ({args.upscale_factor}x) saved to {upscaled_path}")
+            print(
+                f"Pre-upscaled image ({args.upscale_factor}x) saved to {upscaled_path}"
+            )
         except RuntimeError as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
@@ -653,9 +697,7 @@ def main() -> None:
 
         use_vlm_upscale = bool(
             getattr(args, "vlm_metadata_on_upscale", False)
-            and (
-                os.environ.get("GOOGLE_API_KEY") or os.environ.get("OPENAI_API_KEY")
-            )
+            and (os.environ.get("GOOGLE_API_KEY") or os.environ.get("OPENAI_API_KEY"))
         )
         if use_vlm_upscale:
             try:
@@ -667,7 +709,9 @@ def main() -> None:
                     gemini_model=args.gemini_model,
                 )
                 meta = json.loads(working_metadata.read_text())
-                print("Re-extracted metadata on upscaled image via VLM (--vlm-metadata-on-upscale)")
+                print(
+                    "Re-extracted metadata on upscaled image via VLM (--vlm-metadata-on-upscale)"
+                )
             except RuntimeError as e:
                 print(
                     f"VLM re-extraction failed ({e}); falling back to scaled metadata.",
@@ -738,7 +782,9 @@ def main() -> None:
                 continue
             csv_path = output_dir / csv_name
             try:
-                run_pixel_to_data(px_path, working_metadata, csv_path, y_calibration=y_cal)
+                run_pixel_to_data(
+                    px_path, working_metadata, csv_path, y_calibration=y_cal
+                )
             except RuntimeError as e:
                 msg = f"Calibration failed for curve {i} ({label}): {e}"
                 print(msg, file=sys.stderr)
@@ -747,21 +793,33 @@ def main() -> None:
             if args.output_format in ("xy", "both"):
                 write_xy_output(csv_path)
             if args.header_metadata and args.output_format != "xy":
-                prepend_header_metadata(csv_path, meta, str(image_path), curve_label=c.get("label"))
+                prepend_header_metadata(
+                    csv_path, meta, str(image_path), curve_label=c.get("label")
+                )
             if args.output_format == "xy":
                 csv_path.unlink()
             write_markdown_summary(csv_path, meta, csv_path, str(working_image))
             if args.overlay:
-                create_overlay_image(str(working_image), px_path, working_metadata, csv_path)
+                create_overlay_image(
+                    str(working_image), px_path, working_metadata, csv_path
+                )
             # Count data points for summary
-            n_pts = len(np.loadtxt(csv_path, delimiter=",", skiprows=1)) if csv_path.exists() else 0
-            summary["curves"].append({
-                "label": c.get("label", f"curve_{i}"),
-                "n_points": n_pts,
-                "csv_path": str(csv_path),
-            })
+            n_pts = (
+                len(np.loadtxt(csv_path, delimiter=",", skiprows=1))
+                if csv_path.exists()
+                else 0
+            )
+            summary["curves"].append(
+                {
+                    "label": c.get("label", f"curve_{i}"),
+                    "n_points": n_pts,
+                    "csv_path": str(csv_path),
+                }
+            )
             csv_paths.append(csv_path)
-        print(f"\nDone. Digitized {len(csv_paths)} curves: {[str(p) for p in csv_paths]}")
+        print(
+            f"\nDone. Digitized {len(csv_paths)} curves: {[str(p) for p in csv_paths]}"
+        )
     else:
         # Single-curve extraction
         try:
@@ -769,7 +827,8 @@ def main() -> None:
                 str(working_image),
                 working_metadata,
                 output_dir,
-                curve_color=args.curve_color or (curves[0].get("color_hint") if curves else None),
+                curve_color=args.curve_color
+                or (curves[0].get("color_hint") if curves else None),
                 curve_tolerance=args.curve_tolerance,
                 skeletonize=args.skeletonize,
                 morph_open=args.morph_open,
@@ -792,7 +851,9 @@ def main() -> None:
         csv_path = output_dir / csv_name
 
         try:
-            run_pixel_to_data(pixels_path, working_metadata, csv_path, y_calibration=y_cal)
+            run_pixel_to_data(
+                pixels_path, working_metadata, csv_path, y_calibration=y_cal
+            )
         except RuntimeError as e:
             print(f"Error: {e}", file=sys.stderr)
             sys.exit(1)
@@ -807,14 +868,22 @@ def main() -> None:
         write_markdown_summary(csv_path, meta, csv_path, str(working_image))
 
         if args.overlay:
-            create_overlay_image(str(working_image), pixels_path, working_metadata, csv_path)
+            create_overlay_image(
+                str(working_image), pixels_path, working_metadata, csv_path
+            )
 
-        n_pts = len(np.loadtxt(csv_path, delimiter=",", skiprows=1)) if csv_path.exists() else 0
-        summary["curves"].append({
-            "label": curves[0].get("label", "curve") if curves else "curve",
-            "n_points": n_pts,
-            "csv_path": str(csv_path),
-        })
+        n_pts = (
+            len(np.loadtxt(csv_path, delimiter=",", skiprows=1))
+            if csv_path.exists()
+            else 0
+        )
+        summary["curves"].append(
+            {
+                "label": curves[0].get("label", "curve") if curves else "curve",
+                "n_points": n_pts,
+                "csv_path": str(csv_path),
+            }
+        )
         print(f"\nDone. Digitized data: {csv_path}")
 
     # Emit machine-readable summary for coding agents
@@ -828,6 +897,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

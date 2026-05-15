@@ -71,5 +71,5 @@ Use the `analyze_amorphous.py` script to verify the results:
 See `.agents/skills/mat-amorphization/examples/` for validated amorphous structures.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

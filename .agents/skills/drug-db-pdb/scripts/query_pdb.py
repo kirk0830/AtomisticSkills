@@ -260,7 +260,9 @@ def get_entry_info(
 
         for ent_id in lig_entity_ids:
             try:
-                lig = _get_json(f"{DATA_CORE}/nonpolymer_entity/{entry_id}/{ent_id}", **http_kw)
+                lig = _get_json(
+                    f"{DATA_CORE}/nonpolymer_entity/{entry_id}/{ent_id}", **http_kw
+                )
                 ent = lig.get("pdbx_entity_nonpoly", {}) or {}
                 ligands.append(
                     {
@@ -332,34 +334,74 @@ def download_validation_report(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Query the RCSB PDB Search/Data APIs and download files.")
+    parser = argparse.ArgumentParser(
+        description="Query the RCSB PDB Search/Data APIs and download files."
+    )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--search", help="Full-text search query (e.g. 'HIV-1 protease').")
+    group.add_argument(
+        "--search", help="Full-text search query (e.g. 'HIV-1 protease')."
+    )
     group.add_argument("--pdb_id", help="Look up a specific PDB ID (e.g. 1HSG).")
 
-    parser.add_argument("--organism", help="Filter by source organism scientific name (exact match).")
-    parser.add_argument("--resolution", type=float, help="Maximum resolution in Angstroms (<=).")
+    parser.add_argument(
+        "--organism", help="Filter by source organism scientific name (exact match)."
+    )
+    parser.add_argument(
+        "--resolution", type=float, help="Maximum resolution in Angstroms (<=)."
+    )
     parser.add_argument(
         "--method",
         action="append",
         help="Experimental method filter (repeatable or comma-separated), e.g. --method 'X-RAY DIFFRACTION'.",
     )
-    parser.add_argument("--max_results", type=int, default=10, help="Maximum number of search hits.")
-    parser.add_argument("--ids_only", action="store_true", help="Only return PDB IDs (skip Data API lookups).")
-    parser.add_argument("--no_ligands", action="store_true", help="Skip ligand retrieval (fewer API calls).")
+    parser.add_argument(
+        "--max_results", type=int, default=10, help="Maximum number of search hits."
+    )
+    parser.add_argument(
+        "--ids_only",
+        action="store_true",
+        help="Only return PDB IDs (skip Data API lookups).",
+    )
+    parser.add_argument(
+        "--no_ligands",
+        action="store_true",
+        help="Skip ligand retrieval (fewer API calls).",
+    )
 
-    parser.add_argument("--download", choices=["pdb", "mmcif"], help="Download coordinate file format.")
-    parser.add_argument("--download_validation", action="store_true", help="Download wwPDB validation report PDF.")
-    parser.add_argument("--download_dir", default=".", help="Directory for downloaded files (default: .).")
+    parser.add_argument(
+        "--download", choices=["pdb", "mmcif"], help="Download coordinate file format."
+    )
+    parser.add_argument(
+        "--download_validation",
+        action="store_true",
+        help="Download wwPDB validation report PDF.",
+    )
+    parser.add_argument(
+        "--download_dir",
+        default=".",
+        help="Directory for downloaded files (default: .).",
+    )
 
     parser.add_argument("--timeout", type=int, default=30, help="HTTP timeout seconds.")
-    parser.add_argument("--min_interval", type=float, default=0.25, help="Minimum seconds between HTTP requests.")
-    parser.add_argument("--retries", type=int, default=5, help="Max retries on transient errors (429/5xx).")
+    parser.add_argument(
+        "--min_interval",
+        type=float,
+        default=0.25,
+        help="Minimum seconds between HTTP requests.",
+    )
+    parser.add_argument(
+        "--retries",
+        type=int,
+        default=5,
+        help="Max retries on transient errors (429/5xx).",
+    )
     parser.add_argument("--output", help="Write JSON results to this path.")
 
     args = parser.parse_args()
 
-    http_kw = dict(timeout_s=args.timeout, retries=args.retries, min_interval_s=args.min_interval)
+    http_kw = dict(
+        timeout_s=args.timeout, retries=args.retries, min_interval_s=args.min_interval
+    )
 
     methods = _parse_methods(args.method)
 
@@ -378,7 +420,9 @@ def main() -> None:
         results: List[Dict[str, Any]] = []
         if not args.ids_only:
             for pid, score in hits:
-                info = get_entry_info(pid, include_ligands=not args.no_ligands, **http_kw)
+                info = get_entry_info(
+                    pid, include_ligands=not args.no_ligands, **http_kw
+                )
                 if info:
                     info["search_score"] = score
                     results.append(info)
@@ -417,17 +461,23 @@ def main() -> None:
     if args.output:
         out_path = Path(args.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(payload, indent=4, ensure_ascii=False), encoding="utf-8")
+        out_path.write_text(
+            json.dumps(payload, indent=4, ensure_ascii=False), encoding="utf-8"
+        )
 
     print(
         json.dumps(
-            {"pdb_ids": payload.get("pdb_ids", []), "n_results": len(payload.get("results", []))},
+            {
+                "pdb_ids": payload.get("pdb_ids", []),
+                "n_results": len(payload.get("results", [])),
+            },
             indent=4,
         )
     )
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

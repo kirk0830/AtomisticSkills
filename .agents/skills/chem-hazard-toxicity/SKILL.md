@@ -41,5 +41,5 @@ python .agents/skills/chem-hazard-toxicity/scripts/get_safety_data.py \
 ---
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

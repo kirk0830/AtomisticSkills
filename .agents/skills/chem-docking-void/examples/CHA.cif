@@ -3,7 +3,7 @@ data_CHA
 #
 # CIF taken from the IZA-SC Database of Zeolite Structures
 # Ch. Baerlocher and L.B. McCusker
-# Database of Zeolite Structures: http://www.iza-structure.org/databases/ 
+# Database of Zeolite Structures: http://www.iza-structure.org/databases/
 #
 # The atom coordinates and the cell parameters were optimized with DLS76
 # assuming a pure SiO2 composition.
@@ -71,4 +71,3 @@ _atom_site_fract_z
     O3    O     0.1203    0.2405    0.1315
     O4    O     0.0000    0.2577    0.0000
     T1    Si    0.9997    0.2264    0.1051
-

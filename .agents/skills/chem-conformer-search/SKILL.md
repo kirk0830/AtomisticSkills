@@ -110,5 +110,5 @@ See `examples/aspirin` for a complete example run on Acetylsalicylic acid.
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

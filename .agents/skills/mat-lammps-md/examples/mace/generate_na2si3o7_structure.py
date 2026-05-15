@@ -45,15 +45,23 @@ def _build_seed_structure(seed: int = 17) -> Atoms:
         else:
             raise RuntimeError("Failed to generate non-overlapping seed structure.")
 
-    atoms = Atoms(symbols=symbols, scaled_positions=scaled_positions, cell=cell, pbc=True)
+    atoms = Atoms(
+        symbols=symbols, scaled_positions=scaled_positions, cell=cell, pbc=True
+    )
     atoms = atoms.repeat((2, 2, 2))
     return atoms
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate Na2Si3O7 CIF for LAMMPS example.")
-    parser.add_argument("--out", default="./na2si3o7_initial.cif", help="Output structure path.")
-    parser.add_argument("--seed", type=int, default=17, help="Random seed for reproducibility.")
+    parser = argparse.ArgumentParser(
+        description="Generate Na2Si3O7 CIF for LAMMPS example."
+    )
+    parser.add_argument(
+        "--out", default="./na2si3o7_initial.cif", help="Output structure path."
+    )
+    parser.add_argument(
+        "--seed", type=int, default=17, help="Random seed for reproducibility."
+    )
     args = parser.parse_args()
 
     out_path = Path(args.out)

@@ -60,4 +60,3 @@ python .agents/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
 - **optimized_structure.xyz**: XYZ file for optimized structure.
 - **tsopt/tsopt.tsopt.trj.xyz**: Multi XYZ file of the optimization trajectory.
 - ***-*-*-*/orca_calc.***: Directory with ORCA input and output files.
-

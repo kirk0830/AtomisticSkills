@@ -27,7 +27,7 @@ Below is the expected canonical Dendrite Growth behavior output produced by our 
 
 ## Implementation Note: Numerical Stability
 
-Proper discretization of the highly anisotropic Laplacian is critical to prevent catastrophic simulation divergence. 
+Proper discretization of the highly anisotropic Laplacian is critical to prevent catastrophic simulation divergence.
 Naively expanding the anisotropic divergence term $\nabla \cdot (\epsilon^2 \nabla \phi)$ using repeated central finite differences (e.g. `grad_x(eps2 * grad_x(phi))`) applies a 2h-stencil step twice. This creates **odd-even grid decoupling**, a notoriously fatal numerical artifact where adjacent cells no longer interact directly, causing the model to instantly shatter into high-frequency horizontal/vertical checkerboard stripes before true dendritic splitting can manifest.
 
 To strictly enforce numerical stability within explicit explicit integration boundaries, we mathematically enforce the chain rule $\nabla \cdot (\epsilon^2 \nabla \phi) = \epsilon^2 \nabla^2 \phi + \nabla(\epsilon^2) \cdot \nabla \phi$ and compute the native diagonal $\nabla^2 \phi$ using a strictly coupled, **compact cross-shaped 3-point stencil** (`laplacian(phi)`). This definitively guarantees local cell-to-cell coupling against extreme spatial-energy gradients. In addition, the explicit timestep $\Delta t$ explicitly enforces the rigid 2D phase-field Von Neumann restriction.

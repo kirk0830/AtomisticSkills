@@ -17,9 +17,9 @@ This explicitly implements the standard thermodynamic approach for solid electro
 
 ## Methodology
 
-The electrochemical stability window of a phase represents the voltage range over which it is thermodynamically stable against reduction by (e.g., lithiation) or oxidation (e.g., delithiation) of the target ion. 
+The electrochemical stability window of a phase represents the voltage range over which it is thermodynamically stable against reduction by (e.g., lithiation) or oxidation (e.g., delithiation) of the target ion.
 
-In `pymatgen`, this exact analytical bounding is extracted using `PhaseDiagram.get_transition_chempots(mobile_element)`. 
+In `pymatgen`, this exact analytical bounding is extracted using `PhaseDiagram.get_transition_chempots(mobile_element)`.
 
 1. **Calculate Global Phase Diagram boundaries**: For the composition of the target phase, identifying the critical chemical potentials ($\mu_{\text{Li}}$) where stable facets on the phase diagram intersect.
 2. **Identify the stable Region**: Evaluating an intermediary point in each discrete chemical potential band on the `GrandPotentialPhaseDiagram` to check if the exact composition is structurally present on the extended hull. If the material is metastable (E_hull > 0), its intrinsic ECW is always exactly `[0.0 V, 0.0 V]`.
@@ -65,5 +65,5 @@ python .agents/skills/mat-electrochemical-window/scripts/reproduce_table1.py
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

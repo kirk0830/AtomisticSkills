@@ -12,6 +12,7 @@ Usage:
 Requirements:
     - numpy
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,8 +32,7 @@ def main() -> None:
     )
     ap.add_argument("--config", required=True, help="Path to KMC config JSON")
     ap.add_argument(
-        "--tol", type=float, default=1e-6,
-        help="Tolerance on detailed balance residual"
+        "--tol", type=float, default=1e-6, help="Tolerance on detailed balance residual"
     )
     args = ap.parse_args()
 
@@ -73,7 +73,9 @@ def main() -> None:
                 bad_edges.append((i, j, s, s2))
 
     if bad_edges:
-        print("WARNING: Neighbor graph is not strictly bidirectional with opposite shifts.")
+        print(
+            "WARNING: Neighbor graph is not strictly bidirectional with opposite shifts."
+        )
         print("First few problematic edges:")
         for item in bad_edges[:10]:
             print(f"  edge {item}")
@@ -92,7 +94,7 @@ def main() -> None:
 
     # detailed balance residuals
     residuals = []
-    for (i, j) in edge_shift:
+    for i, j in edge_shift:
         if (j, i) not in edge_shift:
             continue
         kij = k_ij(i, j)

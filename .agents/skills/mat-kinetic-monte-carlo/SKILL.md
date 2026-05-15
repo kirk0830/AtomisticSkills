@@ -333,5 +333,5 @@ See `examples/literature_validation/README.md` for full details.
 
 ---
 
-**Author:** Matthew Cox  
+**Author:** Matthew Cox
 **Contact:** [GitHub @mcox3406](https://github.com/mcox3406)

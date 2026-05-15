@@ -4,11 +4,11 @@ This example provides an overview of setting up a Solid-Liquid Coexistence workf
 
 ### Overview
 
-1. **Phase Generation (Solid & Liquid)**  
+1. **Phase Generation (Solid & Liquid)**
    We start by creating an expanded molten liquid supercell alongside a stable solid crystal supercell.
-2. **Interface Construction**  
+2. **Interface Construction**
    Concatenate the relaxed liquid supercell with the solid supercell. **Crucially, the interface geometry is relaxed with constant volume to preserve the expanded density of the liquid.**
-3. **Continuous MD Coexistence**  
+3. **Continuous MD Coexistence**
    We run an NVT equilibration at an estimated high temperature, preserving molecular velocities (`.traj`), and seamlessly switch to an NVE production run to let the interface self-equilibrate without boundary interference. The resulting temperature describes the true $T_m$.
 
 ### Literature Comparison
@@ -37,4 +37,3 @@ These are visual snapshots of the sequence progression showing the solid structu
 | 1. Interface | 2. Post-NVT Equil (1074K) | 3. Post-NVE Coexistence (910K) |
 |---|---|---|
 | ![Initial](interface_structure.png) | ![NVT](nvt_structure.png) | ![NVE](coexistence_structure.png) |
-

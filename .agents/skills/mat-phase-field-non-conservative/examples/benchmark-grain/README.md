@@ -12,7 +12,7 @@ For a phase separating a single circular grain, the local curvature $K$ causes m
 ## Literature Validation
 
 Our simulated results successfully recover the exact analytical metrics of 2D curvature-driven boundary migration proven for the Allen-Cahn formulation:
-- **Curvature Velocity Law:** The theoretical normal border velocity is $v_n = M \gamma K$. For a shrinking 2D circular boundary, this prescribes that the boundary rate of change $dR/dt \propto -1/R$. 
+- **Curvature Velocity Law:** The theoretical normal border velocity is $v_n = M \gamma K$. For a shrinking 2D circular boundary, this prescribes that the boundary rate of change $dR/dt \propto -1/R$.
 - **Area Decay Metric:** Integrating this velocity yields a strictly linear decay in the total grain area: $A(t) = A_0 - 2 \pi M \gamma t$. Our provided metric output, `grain_growth_area_decay.png`, precisely plots the topological boundary phase area sweeping linearly to zero with a constant slope $dA/dt = \text{const}$. Validating this strict linear metric is the classical gold standard for calibrating capillarity forces in phase-field frameworks.
 
 **Reference:**

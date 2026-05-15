@@ -123,7 +123,11 @@ def collect(results_path: Path, library_csv: Path, output_dir: Path) -> None:
     present_passthrough = [
         col for col in PASSTHROUGH_COLS if any(col in r for r in rows)
     ]
-    fieldnames = ["rank", "compound_id", "best_affinity"] + present_passthrough + ["n_poses", "runtime_s"]
+    fieldnames = (
+        ["rank", "compound_id", "best_affinity"]
+        + present_passthrough
+        + ["n_poses", "runtime_s"]
+    )
 
     csv_path = output_dir / "docking_ranked.csv"
     with open(csv_path, "w", newline="") as f:
@@ -141,7 +145,11 @@ def collect(results_path: Path, library_csv: Path, output_dir: Path) -> None:
     }
     if rows:
         summary["top_10"] = [
-            {"rank": i + 1, "compound_id": r["compound_id"], "best_affinity": r["best_affinity"]}
+            {
+                "rank": i + 1,
+                "compound_id": r["compound_id"],
+                "best_affinity": r["best_affinity"],
+            }
             for i, r in enumerate(rows[:10])
         ]
     if missing_in_library:
@@ -187,6 +195,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

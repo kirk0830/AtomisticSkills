@@ -30,7 +30,9 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("TS-Sella")
 
 
-def _select_supported_kwargs(callable_obj: Any, candidates: Dict[str, Any]) -> Dict[str, Any]:
+def _select_supported_kwargs(
+    callable_obj: Any, candidates: Dict[str, Any]
+) -> Dict[str, Any]:
     """Filter kwargs to only those supported by callable_obj signature."""
     sig = inspect.signature(callable_obj)
     accepts_var_kwargs = any(
@@ -69,7 +71,6 @@ def _to_relpath(path_str: str) -> str:
 def run_ts_optimization(args: argparse.Namespace) -> Dict[str, Any]:
     """Execute TS optimization + vibrational validation."""
     from ase.io import read, write
-    from ase.optimize import FIRE
     from ase.vibrations import Vibrations
     from sella import Sella
 
@@ -160,7 +161,9 @@ def run_ts_optimization(args: argparse.Namespace) -> Dict[str, Any]:
         "n_imag_below_cutoff": n_imag_below_cutoff,
         "is_first_order_saddle": bool(is_first_order_saddle),
         "keep_vib_cache": bool(args.keep_vib_cache),
-        "vib_cache_dir": _to_relpath(os.path.dirname(vib_prefix)) if args.keep_vib_cache else None,
+        "vib_cache_dir": _to_relpath(os.path.dirname(vib_prefix))
+        if args.keep_vib_cache
+        else None,
         "optimized_ts_file": os.path.basename(ts_xyz_path),
         "trajectory_file": os.path.basename(traj_path),
     }
@@ -174,7 +177,11 @@ def run_ts_optimization(args: argparse.Namespace) -> Dict[str, Any]:
 
     logger.info("TS optimization complete")
     logger.info("Converged: %s (max|F|=%.6f eV/A)", converged, max_force)
-    logger.info("Imaginary modes below %.1f cm^-1: %d", args.imag_cutoff_cm1, n_imag_below_cutoff)
+    logger.info(
+        "Imaginary modes below %.1f cm^-1: %d",
+        args.imag_cutoff_cm1,
+        n_imag_below_cutoff,
+    )
     logger.info("First-order saddle: %s", is_first_order_saddle)
     logger.info("Results written to %s", json_path)
 
@@ -186,22 +193,48 @@ def build_parser() -> argparse.ArgumentParser:
         description="Optimize a TS guess with Sella and validate with vibrational analysis.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--ts_guess", required=True, help="Path to TS guess structure file")
-    parser.add_argument("--model_type", required=True, choices=["mace", "fairchem"], help="MLIP backend")
-    parser.add_argument("--model_name", default=None, help="Specific model name/checkpoint")
+    parser.add_argument(
+        "--ts_guess", required=True, help="Path to TS guess structure file"
+    )
+    parser.add_argument(
+        "--model_type", required=True, choices=["mace", "fairchem"], help="MLIP backend"
+    )
+    parser.add_argument(
+        "--model_name", default=None, help="Specific model name/checkpoint"
+    )
     parser.add_argument("--task_name", default=None, help="Task/head name (e.g., omol)")
     parser.add_argument("--device", default="auto", help="Device: cpu/cuda/auto")
-    parser.add_argument("--fmax", type=float, default=0.02, help="Force convergence criterion (eV/A)")
-    parser.add_argument("--steps", type=int, default=500, help="Maximum optimization steps")
-    parser.add_argument("--vib_delta", type=float, default=0.01, help="Vibration finite displacement (A)")
-    parser.add_argument("--vib_nfree", type=int, default=2, choices=[2, 4], help="Number of finite displacements")
+    parser.add_argument(
+        "--fmax", type=float, default=0.02, help="Force convergence criterion (eV/A)"
+    )
+    parser.add_argument(
+        "--steps", type=int, default=500, help="Maximum optimization steps"
+    )
+    parser.add_argument(
+        "--vib_delta",
+        type=float,
+        default=0.01,
+        help="Vibration finite displacement (A)",
+    )
+    parser.add_argument(
+        "--vib_nfree",
+        type=int,
+        default=2,
+        choices=[2, 4],
+        help="Number of finite displacements",
+    )
     parser.add_argument(
         "--keep_vib_cache",
         action="store_true",
         default=False,
         help="Keep ASE vibration cache files under output_dir/vib",
     )
-    parser.add_argument("--imag_cutoff_cm1", type=float, default=-50.0, help="Imaginary mode cutoff in cm^-1")
+    parser.add_argument(
+        "--imag_cutoff_cm1",
+        type=float,
+        default=-50.0,
+        help="Imaginary mode cutoff in cm^-1",
+    )
     parser.add_argument("--output_dir", required=True, help="Directory for outputs")
     return parser
 
@@ -213,6 +246,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

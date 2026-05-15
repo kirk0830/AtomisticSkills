@@ -18,10 +18,10 @@ examples/
 ## Examples by Category
 
 ### 1. Framework Relaxation (`test_relax.sh`)
-**Script**: `test_relax.sh`  
+**Script**: `test_relax.sh`
 **Function**: Builds a supercell to satisfy minimum interplanar distance requirements, then optimization via Fairchem/UMA.
 
-**Input**: `test_structure.cif` (an unrelaxed porous framework)  
+**Input**: `test_structure.cif` (an unrelaxed porous framework)
 **Outputs**:
 - `test_structure_supercell.cif`
 - `test_structure_supercell.relaxed.cif`

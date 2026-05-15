@@ -47,5 +47,5 @@ For an example of decomposing a high-level goal into a Detailed Action Plan usin
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @Bowen-BD](https://github.com/Bowen-BD)

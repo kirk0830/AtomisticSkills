@@ -126,5 +126,5 @@ energy_kcal_per_mol = energy_eV * units.kcal / units.mol
 - When reporting MAE in papers/docs, specify the unit explicitly (e.g., "Force MAE: 50 meV/Å").
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

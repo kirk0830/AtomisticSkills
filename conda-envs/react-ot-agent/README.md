@@ -50,16 +50,16 @@ If you need to install manually, follow these steps which mirror the script:
    # Clone repo to a sibling directory
    cd ../..
    git clone https://github.com/deepprinciple/react-ot.git react-ot
-   
+
    # Patch 1: Add missing __init__.py to submodule
    touch react-ot/reactot/trainer/__init__.py
-   
+
    # Patch 2: Enable namespace packages in pyproject.toml
    # (Edit pyproject.toml: set "namespaces = true" and "include-package-data = true")
-   
+
    # Patch 3: Fix deprecated ASE import
    # (Edit reactot/diffusion/_utils.py: replace "from ase.neb import NEB" with "from ase.mep import NEB")
-   
+
    # Install from local source
    pip install -e react-ot
    ```

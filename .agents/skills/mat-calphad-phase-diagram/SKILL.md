@@ -12,7 +12,7 @@ To plot macroscopic metallurgical Temperature-composition ($T-x$) binary phase d
 ## Instructions
 
 ### 1. Identify Thermodynamic Database
-You must obtain a legitimate `.tdb` (Thermodynamic Data Base) file for the chemical system of interest. 
+You must obtain a legitimate `.tdb` (Thermodynamic Data Base) file for the chemical system of interest.
 - You can find databases in published literature or open repositories (like PyCalphad's databases).
 
 ### 2. Plot the Phase Diagram
@@ -38,7 +38,7 @@ python .agents/skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py .a
 ```
 
 ## Constraints
-- **Databases**: This skill strictly requires a valid `.tdb` file. 
+- **Databases**: This skill strictly requires a valid `.tdb` file.
 - **Environments**: Scripts require the `calphad-agent` Conda environment because it isolates `pycalphad`.
 - **Multicomponent**: This specific plotting script focuses on Binary Systems. Ternary isotherms require a separate script not yet implemented.
 
@@ -48,5 +48,5 @@ python .agents/skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py .a
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

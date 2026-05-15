@@ -27,6 +27,7 @@ Usage:
 Requirements:
     phonopy, numpy (base-agent env)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -118,8 +119,7 @@ def filter_real_modes(
     return filtered, n_imaginary
 
 
-def vineyard_prefactor(freqs_eq_thz: np.ndarray,
-                       freqs_ts_thz: np.ndarray) -> float:
+def vineyard_prefactor(freqs_eq_thz: np.ndarray, freqs_ts_thz: np.ndarray) -> float:
     """Compute the Vineyard hTST prefactor.
 
     nu_hTST = prod(nu_eq) / prod(nu_ts)
@@ -139,22 +139,40 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description="Compute hTST prefactor from phonon calculations (Vineyard formula)."
     )
-    ap.add_argument("--phonon_eq", required=True,
-                    help="Path to equilibrium phonon.yaml")
-    ap.add_argument("--phonon_ts", required=True,
-                    help="Path to saddle point phonon.yaml")
-    ap.add_argument("--neb_results", default=None,
-                    help="Path to neb_results.json (for barrier)")
-    ap.add_argument("--barrier_eV", type=float, default=None,
-                    help="Override barrier (eV), used if --neb_results not given")
-    ap.add_argument("--acoustic_threshold", type=float, default=0.3,
-                    help="Threshold (THz) below which modes are considered acoustic/translational")
-    ap.add_argument("--output", default="htst_results.json",
-                    help="Output JSON path")
-    ap.add_argument("--strict", dest="strict", action="store_true",
-                    help="Abort if equilibrium has imaginary modes or TS is not first-order saddle")
-    ap.add_argument("--no-strict", dest="strict", action="store_false",
-                    help="Warn instead of aborting on unstable phonons (not recommended)")
+    ap.add_argument(
+        "--phonon_eq", required=True, help="Path to equilibrium phonon.yaml"
+    )
+    ap.add_argument(
+        "--phonon_ts", required=True, help="Path to saddle point phonon.yaml"
+    )
+    ap.add_argument(
+        "--neb_results", default=None, help="Path to neb_results.json (for barrier)"
+    )
+    ap.add_argument(
+        "--barrier_eV",
+        type=float,
+        default=None,
+        help="Override barrier (eV), used if --neb_results not given",
+    )
+    ap.add_argument(
+        "--acoustic_threshold",
+        type=float,
+        default=0.3,
+        help="Threshold (THz) below which modes are considered acoustic/translational",
+    )
+    ap.add_argument("--output", default="htst_results.json", help="Output JSON path")
+    ap.add_argument(
+        "--strict",
+        dest="strict",
+        action="store_true",
+        help="Abort if equilibrium has imaginary modes or TS is not first-order saddle",
+    )
+    ap.add_argument(
+        "--no-strict",
+        dest="strict",
+        action="store_false",
+        help="Warn instead of aborting on unstable phonons (not recommended)",
+    )
     ap.set_defaults(strict=True)
     args = ap.parse_args()
 
@@ -203,8 +221,10 @@ def main() -> None:
     expected_eq = n_3N - 3
     expected_ts = n_3N - 4
     if len(freqs_eq) != expected_eq:
-        msg = (f"Expected {expected_eq} equilibrium modes, got {len(freqs_eq)}. "
-               f"Adjust --acoustic_threshold if needed (current: {threshold} THz).")
+        msg = (
+            f"Expected {expected_eq} equilibrium modes, got {len(freqs_eq)}. "
+            f"Adjust --acoustic_threshold if needed (current: {threshold} THz)."
+        )
         if args.strict:
             raise RuntimeError(msg)
         print(f"  WARNING: {msg}")
@@ -218,7 +238,7 @@ def main() -> None:
     prefactor_thz = vineyard_prefactor(freqs_eq, freqs_ts)
     prefactor_hz = prefactor_thz * 1e12
 
-    print(f"\nVineyard hTST prefactor:")
+    print("\nVineyard hTST prefactor:")
     print(f"  nu = {prefactor_thz:.4f} THz = {prefactor_hz:.4e} Hz")
     print(f"  log10(nu/Hz) = {math.log10(prefactor_hz):.2f}")
     print(f"  Barrier: {barrier_eV:.4f} eV")
@@ -233,7 +253,7 @@ def main() -> None:
     a_W = 3.165  # Angstrom
     D0_m2_s = (a_W**2 * 1e-20 / 12.0) * prefactor_hz
     print(f"\n  D0 = (a^2/12) * nu = {D0_m2_s:.4e} m^2/s")
-    print(f"  (Compare: Yang et al. = 8.45e-7 m^2/s, Frauenfelder = 4.1e-7 m^2/s)")
+    print("  (Compare: Yang et al. = 8.45e-7 m^2/s, Frauenfelder = 4.1e-7 m^2/s)")
 
     results = {
         "system": "H in BCC W (T-site migration, hTST)",

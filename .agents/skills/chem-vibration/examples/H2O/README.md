@@ -33,4 +33,3 @@ H2O is a nonlinear molecule with 3 atoms → 3 vibrational modes expected.
 Experimental vibrational frequencies (1595, 3657, 3756 cm⁻¹) from:
 - T. Shimanouchi, "Tables of Molecular Vibrational Frequencies Consolidated Volume I", National Bureau of Standards, 1972, 1-160.
 - Available via NIST Computational Chemistry Comparison and Benchmark Database (CCCBDB): https://cccbdb.nist.gov/expvibs1x.asp (search for H2O)
-

@@ -96,12 +96,12 @@ Skills are **modular, self-contained capabilities** that combine multiple tools 
    ) -> dict:
        """
        Brief description of what this tool does.
-       
+
        Args:
            structure_data: Structure in dictionary format.
            parameter1: Description of parameter.
            parameter2: Another parameter.
-           
+
        Returns:
            Dictionary with results.
        """

@@ -11,17 +11,17 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 
 ## Instructions
 
-1.  **MD Preparation**: Run NVT or NPT MD simulations at multiple temperatures (typically 4-6 points between 600K and 1200K). 
+1.  **MD Preparation**: Run NVT or NPT MD simulations at multiple temperatures (typically 4-6 points between 600K and 1200K).
     - Use the `run_md` tool from a relevant potential skill (e.g., [mace](../mace/SKILL.md) or [matgl](../matgl/SKILL.md)).
     - **Batch Processing**: You can pass a directory or a list of CIF paths to `structure_data` to run multiple MD simulations concurrently via the MCP tool.
     - **Supercell Expansion**: Ensure supercells are sufficiently large (> 10 Å in all dimensions). The `run_md` tool natively supports this via the `supercell_min_length` argument (defaults to 10.0 Å) which performs orthogonal expansion automatically.
     - **Optimization**: Use the `diffusion` monitor (see [mat-md-monitors](../mat-md-monitors/SKILL.md)) to automatically stop simulations once the transport properties have converged.
         ```python
         mace.run_md(
-            structure_data=["candidates/A.cif", "candidates/B.cif"], 
+            structure_data=["candidates/A.cif", "candidates/B.cif"],
             temperature=600,
             supercell_min_length=10.0,
-            monitor=True, 
+            monitor=True,
             monitor_type="diffusion",
             monitor_params={"specie": "Li", "threshold": 0.05, "check_interval_ps": 5.0}
         )
@@ -64,5 +64,5 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 - [mat-md-monitors](../mat-md-monitors/SKILL.md): Real-time monitoring tools for MD simulations.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

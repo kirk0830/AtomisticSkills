@@ -41,7 +41,9 @@ class TestOptimizationCalculatorSetup:
         assert calc.settings["basis_set"] == "def2-SVP"
         assert len(atoms) == 3
 
-    def test_ts_settings_with_dispersion(self, skip_if_wrong_env, monkeypatch, tmp_path):
+    def test_ts_settings_with_dispersion(
+        self, skip_if_wrong_env, monkeypatch, tmp_path
+    ):
         from src.utils.dft.orca_utils import setup_orca_calculator
 
         xyz = self._setup(monkeypatch, tmp_path)
@@ -97,9 +99,7 @@ class TestPositionConversion:
         monkeypatch.setenv("ORCA_BINARY_PATH", str(fake_bin))
 
         xyz_file = tmp_path / "mol.xyz"
-        xyz_file.write_text(
-            "2\nH2\nH  0.0  0.0  0.0\nH  0.0  0.0  0.74\n"
-        )
+        xyz_file.write_text("2\nH2\nH  0.0  0.0  0.0\nH  0.0  0.0  0.74\n")
 
         atom_collection, atoms = load_structure(str(xyz_file))
 

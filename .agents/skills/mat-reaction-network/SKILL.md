@@ -59,5 +59,5 @@ python .agents/skills/mat-reaction-network/scripts/find_pathways.py \
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

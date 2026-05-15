@@ -223,5 +223,5 @@ Experimental BDEs for ethanol (Blanksby & Ellison, 2003):
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

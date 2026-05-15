@@ -18,7 +18,7 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
 1.  **Prepare Structures**:
     - Obtain the fully intercalated structure (e.g., LiFePO$_4$)
     - Create the de-intercalated structure by removing intercalating ions:
-    
+
     ```bash
     # Env: base-agent
     python .agents/skills/mat-intercalation-voltage/scripts/remove_atoms.py \
@@ -26,32 +26,32 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
         --remove Li \
         --output FePO4.cif
     ```
-    
+
     - Get the bulk metal structure from `resources/` (e.g., `Li_metal.cif`)
 
 2.  **Select Foundation Potential**:
     Choose an appropriate MLIP based on the system (see [foundation-potentials.md](../../skills/ml-foundation-potentials/SKILL.md)). For cathode materials, `MACE-MH-1` with `matpes_r2scan` head or `CHGNet-MatPES-r2SCAN` are recommended.
 
 3.  **Relax Structures Using MCP Tools**:
-    
+
     Load the model and relax all three structures:
 
     ```bash
     # Load the model (example with MACE)
     mcp_mace_load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
-    
+
     # Relax full structure
     mcp_mace_relax_structure(
         structure_data="LiFePO4.cif",
         output_dir="voltage_calc/full_relax"
     )
-    
+
     # Relax empty structure
     mcp_mace_relax_structure(
         structure_data="FePO4.cif",
         output_dir="voltage_calc/empty_relax"
     )
-    
+
     # Relax bulk metal
     mcp_mace_relax_structure(
         structure_data=".agents/skills/mat-intercalation-voltage/resources/Li_metal.cif",
@@ -68,7 +68,7 @@ where $E$ is the total energy, $n$ is the number of intercalated ions, and $\mu_
     - `n_ions`: Count difference of intercalating ions between full and empty structures
 
 5.  **Calculate Voltage**:
-    
+
     ```bash
     # Env: base-agent
     python .agents/skills/mat-intercalation-voltage/scripts/calculate_voltage.py \
@@ -113,5 +113,5 @@ See [examples/LiFePO4/](examples/LiFePO4/) for a complete worked example (MACE-M
 - **Temperature**: This calculation provides the 0K OCV; entropy effects are neglected
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

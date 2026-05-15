@@ -123,5 +123,5 @@ This unified framework handles both periodic (crystals) and non-periodic (molecu
 ---
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

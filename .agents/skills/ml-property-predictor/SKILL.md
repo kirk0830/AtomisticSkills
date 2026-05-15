@@ -12,14 +12,14 @@ To leverage pre-trained GNN representations from MLIPs to train an independent r
 
 ## Overview
 
-This skill allows you to leverage pre-trained GNN representations from MLIPs to train an independent readout head for any custom scalar target property, such as bulk modulus, bandgap, formation energy, or spin states. 
+This skill allows you to leverage pre-trained GNN representations from MLIPs to train an independent readout head for any custom scalar target property, such as bulk modulus, bandgap, formation energy, or spin states.
 
 To keep the core MLIP wrappers clean, property prediction in AtomisticSkills is handled by standalone training scripts located in the `.agents/skills/ml-property-predictor/scripts/` directory.
 
 ## Workflow
 
 1. **Prepare Data**: Build a `.json` or `.xyz` dataset containing structures and the corresponding scalar property labels. JSON datasets should be lists of dicts containing a `structure` key (Pymatgen format) and your target property key.
-2. **Determine Property Type**: Determine if the property is `"intensive"` (e.g. Bandgap, Bulk Modulus) or `"extensive"` (e.g. Total Energy). 
+2. **Determine Property Type**: Determine if the property is `"intensive"` (e.g. Bandgap, Bulk Modulus) or `"extensive"` (e.g. Total Energy).
    - *MatGL logic*: For intensive targets, node features undergo a global graph readout (like `Set2Set`) before passing through an MLP. For extensive targets, the MLP outputs atomic properties which are then sum-pooled.
    - *MACE logic*: MACE natively supports extensive targets by predicting site-wise scalar outputs and sum-pooling them. When intensive properties are targeted, MACE still sum-pools site-wise outputs, forcing the model to internally learn the intensive invariant.
 3. **Execute Script**: Run the MACE or MatGL property prediction script in their respective Conda environments.
@@ -88,5 +88,5 @@ python .agents/skills/ml-property-predictor/scripts/train_matgl_property.py \
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

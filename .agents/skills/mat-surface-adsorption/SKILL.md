@@ -170,26 +170,26 @@ The `adsorption_results.json` file contains:
 
 ## Constraints
 
-- **Structure Requirements**: 
+- **Structure Requirements**:
   - The bulk structure should be a well-relaxed crystalline structure
   - Adsorbate should be a gas-phase molecule (not periodic)
-  
+
 - **Miller Indices**:
   - Must be provided as a JSON list: `'[h,k,l]'`
   - Use conventional cell Miller indices for accurate slab generation
-  
+
 - **Slab Size**:
   - Default `min_slab_size=10.0 Å` is usually sufficient
   - For layered materials or weak interlayer bonding, may need to increase
-  
+
 - **Vacuum Size**:
   - Default `min_vacuum_size=20.0 Å` prevents periodic image interactions
   - Critical for accurate energy calculations
-  
+
 - **Environments**:
   - Scripts require specific Conda environments (mace-agent, matgl-agent, or fairchem-agent)
   - **Each code block MUST specify the environment** using `# Env:` annotation
-  
+
 - **Computational Cost**:
   - Multiple adsorption sites are calculated automatically
   - Cost scales with number of sites and slab size
@@ -202,5 +202,5 @@ The `adsorption_results.json` file contains:
 - [ml-foundation-potentials](../ml-foundation-potentials/SKILL.md): Guide for MLIP selection
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

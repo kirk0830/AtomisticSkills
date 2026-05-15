@@ -17,11 +17,11 @@ examples/
 ## Examples by Category
 
 ### 1. Query MP (`query_mp/`)
-**Script**: `li_s_stability.sh`  
+**Script**: `li_s_stability.sh`
 **Function**: Basic Materials Project querying with stability filtering
 
-**Query**: Li-S chemical system, energy_above_hull < 0.05 eV/atom  
-**Output**: `li_s_stable.json` (2 materials)  
+**Query**: Li-S chemical system, energy_above_hull < 0.05 eV/atom
+**Output**: `li_s_stable.json` (2 materials)
 **Properties**: energy_above_hull, formation_energy_per_atom, band_gap
 
 ```bash
@@ -32,7 +32,7 @@ bash examples/query_mp/li_s_stability.sh
 ---
 
 ### 2. Elasticity (`elasticity/`)
-**Script**: `elasticity_query.sh`  
+**Script**: `elasticity_query.sh`
 **Function**: Elastic modulus and tensor queries
 
 **Queries**:
@@ -53,7 +53,7 @@ bash examples/elasticity/elasticity_query.sh
 ---
 
 ### 3. Magnetism (`magnetism/`)
-**Script**: `magnetism_query.sh`  
+**Script**: `magnetism_query.sh`
 **Function**: Magnetic ordering and magnetization queries
 
 **Queries**:
@@ -74,7 +74,7 @@ bash examples/magnetism/magnetism_query.sh
 ---
 
 ### 4. Similarity Search (`similarity/`)
-**Script**: `similarity_search.sh`  
+**Script**: `similarity_search.sh`
 **Function**: Crystal structure similarity search
 
 **Queries**:
@@ -95,7 +95,7 @@ bash examples/similarity/similarity_search.sh
 ---
 
 ### 5. Structure Retrieval (`get_structure/`)
-**Script**: `structure_retrieval.sh`  
+**Script**: `structure_retrieval.sh`
 **Function**: Retrieve crystal structures by Materials Project ID
 
 **Queries**:

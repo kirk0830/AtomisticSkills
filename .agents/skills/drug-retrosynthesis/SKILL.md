@@ -53,5 +53,5 @@ python .agents/skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py "FC(F)(F)C
 
 ---
 
-**Author:** Sathya Edamadaka  
+**Author:** Sathya Edamadaka
 **Contact:** [GitHub @snme](https://github.com/snme)

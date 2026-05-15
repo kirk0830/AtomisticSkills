@@ -13,25 +13,33 @@ Requirements:
 import sys
 import os
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", ".."))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, ".agents", "skills", "general-presentation", "scripts"))
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", ".."
+    )
+)
+sys.path.insert(
+    0,
+    os.path.join(PROJECT_ROOT, ".agents", "skills", "general-presentation", "scripts"),
+)
 from slide_utils import (
     create_presentation,
     add_image_slide,
     add_table_slide,
     add_bullets_slide,
     add_section_slide,
-    add_image_and_text_slide,
     save_presentation,
-    THEME,
-    RGBColor,
 )
 
 
 # Paths
 EXAMPLE_DIR = os.path.join(
-    PROJECT_ROOT, ".agents", "skills",
-    "mat-amorphorization", "examples", "LiCl",
+    PROJECT_ROOT,
+    ".agents",
+    "skills",
+    "mat-amorphorization",
+    "examples",
+    "LiCl",
 )
 RDF_PLOT = os.path.join(EXAMPLE_DIR, "rdf_plot.png")
 CRYST_IMG = os.path.join(os.path.dirname(__file__), "LiCl_crystalline.png")
@@ -69,9 +77,27 @@ def main() -> None:
         title="3-Stage Melt-Quench Protocol",
         headers=["Stage", "Temperature", "Duration", "Thermostat", "Purpose"],
         rows=[
-            ["1. Melting", "3000 K", "10 ps (5000 steps)", "NVT Langevin", "Destroy crystalline order"],
-            ["2. Quenching", "3000 K -> 300 K", "10 ps (5000 steps)", "NVT Langevin", "Freeze disordered state"],
-            ["3. Equilibration", "300 K", "5 ps (2500 steps)", "NVT Bussi", "Relax to equilibrium"],
+            [
+                "1. Melting",
+                "3000 K",
+                "10 ps (5000 steps)",
+                "NVT Langevin",
+                "Destroy crystalline order",
+            ],
+            [
+                "2. Quenching",
+                "3000 K -> 300 K",
+                "10 ps (5000 steps)",
+                "NVT Langevin",
+                "Freeze disordered state",
+            ],
+            [
+                "3. Equilibration",
+                "300 K",
+                "5 ps (2500 steps)",
+                "NVT Bussi",
+                "Relax to equilibrium",
+            ],
         ],
     )
 

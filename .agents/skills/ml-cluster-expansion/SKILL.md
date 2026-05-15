@@ -62,7 +62,7 @@ result = mcp_smol_sample_ordered_structures(
 
 ### Step 3: Label Structures (Agent/MCP)
 
-Use the appropriate MLIP MCP tool to **relax** the structures. 
+Use the appropriate MLIP MCP tool to **relax** the structures.
 
 > [!IMPORTANT]
 > **Fixed Cell**: Always set `relax_cell=False` during MLIP relaxation for cluster expansion training. The cluster expansion model is built on a fixed lattice.
@@ -88,7 +88,7 @@ The `mcp_smol_train_cluster_expansion` tool can directly accept the directory co
 ```python
 result = mcp_smol_train_cluster_expansion(
     disordered_structure="primordial.cif",
-    training_data="ce_project/iter_0/results", 
+    training_data="ce_project/iter_0/results",
     cutoffs={2: 5.0, 3: 4.0},
     ce_file="ce_project/cluster_expansion.json"
 )
@@ -126,7 +126,7 @@ result = mcp_smol_fit_feature_matrix(
 ```python
 mc_result = mcp_smol_run_monte_carlo(
     supercell_matrix=[[2,0,0], [0,2,0], [0,0,2]],
-    temperature=2000, 
+    temperature=2000,
     steps=100000,
     ce_file="./ce_project/cluster_expansion.json",
     trajectory_file="./ce_project/iter_1/mc_trajectory.h5"
@@ -151,7 +151,7 @@ python .agents/skills/ml-cluster-expansion/scripts/extract_mc_structures.py \
 ## Energy Format for Training Data
 
 > [!IMPORTANT]
-> **Use Total Energy (Extensive Property)**  
+> **Use Total Energy (Extensive Property)**
 > Training structures should include the **total energy** for the entire supercell (not per-atom energy).
 > Smol automatically normalizes energies by the primitive cell size during training via `get_property_vector('energy', normalize=True)`.
 
@@ -170,5 +170,5 @@ python .agents/skills/ml-cluster-expansion/scripts/extract_mc_structures.py \
 -   **Simulations**: For finite-temperature MC simulations using your trained model, refer to the [mat-disorder](../mat-disorder/SKILL.md) skill.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

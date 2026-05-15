@@ -173,24 +173,34 @@ def parse_output(output_path: str, properties: list[str]) -> dict:
     if parse_all or "energy" in properties:
         result["energy"] = parse_energy(content)
         if result["energy"]:
-            logger.info(f"Energy: {result['energy'].get('final_energy_hartree', 'N/A')} Hartree")
+            logger.info(
+                f"Energy: {result['energy'].get('final_energy_hartree', 'N/A')} Hartree"
+            )
 
     if parse_all or "orbitals" in properties:
         result["orbitals"] = parse_orbital_energies(content)
         if result["orbitals"].get("homo_lumo_gap_eV"):
-            logger.info(f"HOMO-LUMO gap: {result['orbitals']['homo_lumo_gap_eV']:.4f} eV")
+            logger.info(
+                f"HOMO-LUMO gap: {result['orbitals']['homo_lumo_gap_eV']:.4f} eV"
+            )
 
     if parse_all or "frequencies" in properties:
         result["frequencies"] = parse_frequencies(content)
         if result["frequencies"]["frequencies_cm1"]:
-            logger.info(f"Found {len(result['frequencies']['frequencies_cm1'])} vibrational modes")
+            logger.info(
+                f"Found {len(result['frequencies']['frequencies_cm1'])} vibrational modes"
+            )
             if result["frequencies"]["n_imaginary"] > 0:
-                logger.warning(f"  {result['frequencies']['n_imaginary']} imaginary frequencies found")
+                logger.warning(
+                    f"  {result['frequencies']['n_imaginary']} imaginary frequencies found"
+                )
 
     if parse_all or "thermochemistry" in properties:
         result["thermochemistry"] = parse_thermochemistry(content)
         if result["thermochemistry"].get("gibbs_energy_hartree"):
-            logger.info(f"Gibbs energy: {result['thermochemistry']['gibbs_energy_hartree']:.10f} Hartree")
+            logger.info(
+                f"Gibbs energy: {result['thermochemistry']['gibbs_energy_hartree']:.10f} Hartree"
+            )
 
     return result
 
@@ -210,7 +220,9 @@ def main():
         choices=["energy", "orbitals", "frequencies", "thermochemistry", "all"],
         help="Properties to parse",
     )
-    parser.add_argument("--output_dir", default=None, help="Directory to save parsed JSON")
+    parser.add_argument(
+        "--output_dir", default=None, help="Directory to save parsed JSON"
+    )
 
     args = parser.parse_args()
 
@@ -227,6 +239,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

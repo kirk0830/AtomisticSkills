@@ -11,10 +11,9 @@ schema, and PR-EOS conventions).
 """
 
 from pathlib import Path
-from typing import Any, Callable, Optional, Tuple, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 import json
 import logging
-import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,11 +22,11 @@ from ase.io import read
 from ase.io.trajectory import Trajectory
 from ase_mc import Moveset
 
-from src.utils.serialization_utils import format_temperature_key, finite_or_none
+from src.utils.serialization_utils import finite_or_none
 
 # Energy/temperature conversion constants for Qst calculations
 EV_TO_KJMOL = 96.4853321233  # 1 eV per molecule = 96.485... kJ/mol
-KB_EVK = 8.617333262145e-5   # Boltzmann constant in eV/K
+KB_EVK = 8.617333262145e-5  # Boltzmann constant in eV/K
 
 LOGGER = logging.getLogger(__name__)
 
@@ -37,6 +36,7 @@ TAtoms = TypeVar("TAtoms")
 # -----------------------------------------------------------------------------
 # Gas parameters (Peng–Robinson) shared across scripts
 # -----------------------------------------------------------------------------
+
 
 def _default_pr_gas_params() -> dict[str, dict[str, float | str]]:
     """Built-in PR parameters for core gases (CO2, N2).
@@ -85,7 +85,9 @@ def _load_pr_gas_db_from_resources() -> dict[str, dict[str, float | str]]:
 
         for name, params in raw.items():
             if not isinstance(params, dict):
-                LOGGER.warning("Skipping non-dict gas entry for %s in %s", name, json_path)
+                LOGGER.warning(
+                    "Skipping non-dict gas entry for %s in %s", name, json_path
+                )
                 continue
             merged = dict(base.get(name, {}))
             merged.update(params)
@@ -99,7 +101,9 @@ def _load_pr_gas_db_from_resources() -> dict[str, dict[str, float | str]]:
 # Public gas database used by GCMC scripts.
 # Historically named GAS_PR_PARAMS_CO2_N2, but now may contain additional
 # species loaded from the external JSON file.
-GAS_PR_PARAMS_CO2_N2: dict[str, dict[str, float | str]] = _load_pr_gas_db_from_resources()
+GAS_PR_PARAMS_CO2_N2: dict[str, dict[str, float | str]] = (
+    _load_pr_gas_db_from_resources()
+)
 
 
 # -----------------------------------------------------------------------------
@@ -141,7 +145,9 @@ def load_host_atoms(
     return host, host_natoms, restart_label
 
 
-def load_restart_atoms(cif_path: Path, restart_traj: Path, restart_frame: int) -> tuple[Atoms, int]:
+def load_restart_atoms(
+    cif_path: Path, restart_traj: Path, restart_frame: int
+) -> tuple[Atoms, int]:
     """Return (atoms_start, host_natoms) where host_natoms is taken from CIF."""
     host_ref = read(str(cif_path))
     host_natoms = len(host_ref)
@@ -158,8 +164,12 @@ def load_restart_atoms(cif_path: Path, restart_traj: Path, restart_frame: int) -
 
     # Light sanity check: host composition/order vs CIF
     try:
-        if not np.array_equal(atoms.get_atomic_numbers()[:host_natoms], host_ref.get_atomic_numbers()):
-            LOGGER.warning("Restart frame host atoms do not match CIF ordering/composition.")
+        if not np.array_equal(
+            atoms.get_atomic_numbers()[:host_natoms], host_ref.get_atomic_numbers()
+        ):
+            LOGGER.warning(
+                "Restart frame host atoms do not match CIF ordering/composition."
+            )
             LOGGER.warning("If ordering differs, host/guest masking may be wrong.")
     except Exception:
         pass
@@ -179,7 +189,9 @@ def load_restart_atoms(cif_path: Path, restart_traj: Path, restart_frame: int) -
 # -----------------------------------------------------------------------------
 
 
-def mc_traj_log_paths(*, out_dir: Path, restarting: bool, stub: str = "mc") -> tuple[Path, Path]:
+def mc_traj_log_paths(
+    *, out_dir: Path, restarting: bool, stub: str = "mc"
+) -> tuple[Path, Path]:
     """Return (traj_path, log_path) with the canonical fresh/continue naming."""
     traj_path = out_dir / (f"{stub}_continue.traj" if restarting else f"{stub}.traj")
     log_path = out_dir / (f"{stub}_continue.log" if restarting else f"{stub}.log")
@@ -195,7 +207,9 @@ def maybe_record_starting_config(dyn: Any) -> None:
         pass
 
 
-def run_mc_with_timing(*, dyn: Any, steps: int, perf_counter: Callable[[], float]) -> tuple[float, float]:
+def run_mc_with_timing(
+    *, dyn: Any, steps: int, perf_counter: Callable[[], float]
+) -> tuple[float, float]:
     """Run MC and return (wall_time_seconds, steps_per_second)."""
     t0 = perf_counter()
     dyn.run(int(steps))
@@ -223,7 +237,9 @@ def run_mc(
 
     Returns (traj_path, log_path, wall_time_s, steps_per_s).
     """
-    traj_path, log_path = mc_traj_log_paths(out_dir=out_dir, restarting=restarting, stub=io_stub)
+    traj_path, log_path = mc_traj_log_paths(
+        out_dir=out_dir, restarting=restarting, stub=io_stub
+    )
 
     dyn = MonteCarlo_cls(
         atoms=atoms,
@@ -247,7 +263,9 @@ def run_mc(
         log_path.name,
     )
 
-    dt, steps_per_sec = run_mc_with_timing(dyn=dyn, steps=steps, perf_counter=perf_counter)
+    dt, steps_per_sec = run_mc_with_timing(
+        dyn=dyn, steps=steps, perf_counter=perf_counter
+    )
     return traj_path, log_path, dt, steps_per_sec
 
 
@@ -565,7 +583,9 @@ def build_moveset_bvt(ensemble: Any, scheme: str) -> Moveset:
     return Moveset(moves)
 
 
-def count_probe_molecules_by_blocks(atoms: Atoms, host_natoms: int, probe: Atoms) -> int:
+def count_probe_molecules_by_blocks(
+    atoms: Atoms, host_natoms: int, probe: Atoms
+) -> int:
     """Count probe molecules assuming guests are appended as contiguous blocks."""
     len_probe = len(probe)
     probe_numbers = probe.get_atomic_numbers()
@@ -587,7 +607,9 @@ def count_probe_molecules_by_blocks(atoms: Atoms, host_natoms: int, probe: Atoms
     return nm
 
 
-def count_molecules_by_tag(atoms: Atoms, host_natoms: int, tag: int, len_probe: int) -> int:
+def count_molecules_by_tag(
+    atoms: Atoms, host_natoms: int, tag: int, len_probe: int
+) -> int:
     """Count molecules by tag, dividing tagged atom count by len(probe)."""
     if len(atoms) <= host_natoms:
         return 0
@@ -612,7 +634,9 @@ def _safe_energy(atoms: Atoms) -> float:
     return float("nan")
 
 
-def print_restart_sanity_single(atoms: Atoms, host_natoms: int, probe: Atoms, label: str = "") -> None:
+def print_restart_sanity_single(
+    atoms: Atoms, host_natoms: int, probe: Atoms, label: str = ""
+) -> None:
     total = len(atoms)
     extra = total - host_natoms
     nmols = count_probe_molecules_by_blocks(atoms, host_natoms, probe)
@@ -683,7 +707,9 @@ def print_restart_sanity_multicomponent(
     LOGGER.info("==================================================")
 
 
-def analyze_and_plot_single(traj_path: Path, probe: Atoms, out_dir: Path, host_natoms: int) -> None:
+def analyze_and_plot_single(
+    traj_path: Path, probe: Atoms, out_dir: Path, host_natoms: int
+) -> None:
     traj = Trajectory(str(traj_path))
     nframes = len(traj)
     if nframes == 0:
@@ -741,7 +767,9 @@ def analyze_and_plot_multicomponent(
     for frame_idx, atoms in enumerate(traj):
         t_energy[frame_idx] = _safe_energy(atoms)
         for name, tag in zip(species_names, species_tags):
-            nmols[name][frame_idx] = count_molecules_by_tag(atoms, host_natoms, tag, lens[name])
+            nmols[name][frame_idx] = count_molecules_by_tag(
+                atoms, host_natoms, tag, lens[name]
+            )
 
     # Per-species plots
     for name in species_names:
@@ -887,7 +915,9 @@ def compute_eq_loading_from_traj_single(
         nmols[i] = count_probe_molecules_by_blocks(atoms, host_natoms, probe)
     eq_nmols = _eq_nmols_from_array(nmols, frac_tail=frac_tail)
     host_mass_kg = _host_mass_kg(host, host_natoms)
-    return _mol_per_kg_from_nmols(eq_nmols, host_mass_kg)  # mol/kg == mmol/g (numerically equal)
+    return _mol_per_kg_from_nmols(
+        eq_nmols, host_mass_kg
+    )  # mol/kg == mmol/g (numerically equal)
 
 
 def _host_mass_kg(host: Atoms, host_natoms: int) -> float:
@@ -933,7 +963,9 @@ def update_properties_json_gcmc_single(
     iso_key = f"{adsorbate}@{temp_key}:simulation"
 
     try:
-        run_relpath = str(Path(out_dir).resolve().relative_to(properties_path.parent.resolve()))
+        run_relpath = str(
+            Path(out_dir).resolve().relative_to(properties_path.parent.resolve())
+        )
     except Exception:
         run_relpath = str(out_dir)
 
@@ -1026,7 +1058,9 @@ def update_properties_json_gcmc_multicomponent(
     iso_key = f"{mix_key}@{temp_key}:simulation"
 
     try:
-        run_relpath = str(Path(out_dir).resolve().relative_to(properties_path.parent.resolve()))
+        run_relpath = str(
+            Path(out_dir).resolve().relative_to(properties_path.parent.resolve())
+        )
     except Exception:
         run_relpath = str(out_dir)
 
@@ -1075,6 +1109,7 @@ def update_properties_json_gcmc_multicomponent(
         }
 
     _write_properties_json(properties_path, data)
+
 
 def _tail_blockify_fixed_nblocks(
     arrays_1d: list[np.ndarray],
@@ -1125,6 +1160,7 @@ def _tail_blockify_fixed_nblocks(
     out = [a[:trim].reshape(n_blocks, block_size) for a in arrs]
     return out, int(n_blocks), int(block_size)
 
+
 def qst_single_fluctuation_from_series(
     *,
     energy_eV: np.ndarray,
@@ -1132,7 +1168,7 @@ def qst_single_fluctuation_from_series(
     temperature_K: float,
     frac_tail: float = 0.8,
     n_blocks_target: int = 30,
-    mol_energy_eV: float = 0
+    mol_energy_eV: float = 0,
 ) -> tuple[float | None, float | None, int, int]:
     """Single-component Qst via Qst = kBT - Cov(U,N)/Var(N), with block-averaged uncertainty.
 
@@ -1204,10 +1240,15 @@ def qst_multicomponent_fluctuation_from_series(
         arrays, frac_tail=frac_tail, n_blocks_target=n_blocks_target
     )
     if n_blocks <= 0 or block_size <= 0:
-        return ({nm: None for nm in species_names}, {nm: None for nm in species_names}, 0, 0)
+        return (
+            {nm: None for nm in species_names},
+            {nm: None for nm in species_names},
+            0,
+            0,
+        )
 
-    U_blk = blocked[0]      # (B, M)
-    N_blks = blocked[1:]    # list of (B, M)
+    U_blk = blocked[0]  # (B, M)
+    N_blks = blocked[1:]  # list of (B, M)
 
     kBT_eV = float(KB_EVK * float(temperature_K))
     S = len(species_names)
@@ -1239,8 +1280,8 @@ def qst_multicomponent_fluctuation_from_series(
         if M <= 0:
             continue
 
-        C = (Nc.T @ Nc) / M     # (S,S)
-        c = (Nc.T @ Uc) / M     # (S,)
+        C = (Nc.T @ Nc) / M  # (S,S)
+        c = (Nc.T @ Uc) / M  # (S,)
 
         try:
             x = np.linalg.solve(C, c)
@@ -1260,7 +1301,9 @@ def qst_multicomponent_fluctuation_from_series(
             q_std[nm] = None
         else:
             q_mean[nm] = finite_or_none(float(np.mean(vals)))
-            q_std[nm] = finite_or_none(float(np.std(vals, ddof=1))) if vals.size >= 2 else None
+            q_std[nm] = (
+                finite_or_none(float(np.std(vals, ddof=1))) if vals.size >= 2 else None
+            )
 
     return q_mean, q_std, int(n_blocks), int(block_size)
 
@@ -1289,7 +1332,9 @@ def compute_eq_loading_from_traj_multicomponent(
     for name in species_names:
         eq_nmols = _eq_nmols_from_array(nmols[name], frac_tail=frac_tail)
         mol_per_kg = _mol_per_kg_from_nmols(eq_nmols, host_mass_kg)
-        q_by_adsorbate[name] = finite_or_none(mol_per_kg) if np.isfinite(mol_per_kg) else None  # mol/kg == mmol/g
+        q_by_adsorbate[name] = (
+            finite_or_none(mol_per_kg) if np.isfinite(mol_per_kg) else None
+        )  # mol/kg == mmol/g
     finite_vals = [v for v in q_by_adsorbate.values() if v is not None]
     q_total = float(np.sum(finite_vals)) if finite_vals else None
     return q_by_adsorbate, q_total
@@ -1340,8 +1385,14 @@ def gcmc_standalone_payload_single(
     point = {
         "p_total": float(pressure_bar),
         "p_partial": {adsorbate: float(pressure_bar)},
-        "q_total": finite_or_none(q_total_mmol_g) if q_total_mmol_g is not None else None,
-        "q_by_adsorbate": {adsorbate: finite_or_none(q_total_mmol_g) if q_total_mmol_g is not None else None},
+        "q_total": finite_or_none(q_total_mmol_g)
+        if q_total_mmol_g is not None
+        else None,
+        "q_by_adsorbate": {
+            adsorbate: finite_or_none(q_total_mmol_g)
+            if q_total_mmol_g is not None
+            else None
+        },
     }
     return {
         "adsorbates": [adsorbate],

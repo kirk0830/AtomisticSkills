@@ -1,4 +1,3 @@
-import json
 import numpy as np
 from ase.parallel import world, DummyMPI
 
@@ -104,4 +103,3 @@ class Moveset:
             setattr(self.moves[move_idx], parameter, value)
             if normalize_probabilities:
                 self.normalize_move_probabilities()
-

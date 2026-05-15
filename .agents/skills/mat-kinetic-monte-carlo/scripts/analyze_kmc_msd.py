@@ -21,11 +21,11 @@ Usage:
 Requirements:
     - numpy
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-import math
 from pathlib import Path
 
 import numpy as np
@@ -36,7 +36,9 @@ def main() -> None:
         description="Compute diffusivity from KMC trace (single-point Einstein relation)."
     )
     ap.add_argument("--trace", required=True, help="Path to kmc_trace.npz")
-    ap.add_argument("--dim", type=int, default=3, help="Diffusion dimensionality (1, 2, or 3)")
+    ap.add_argument(
+        "--dim", type=int, default=3, help="Diffusion dimensionality (1, 2, or 3)"
+    )
     ap.add_argument("--out", default="", help="Optional output JSON path")
     args = ap.parse_args()
 
@@ -45,21 +47,21 @@ def main() -> None:
     if t_final <= 0:
         raise RuntimeError("Simulated time is zero; cannot compute D.")
 
-    r = data["carrier_r_A"].astype(float)    # (n_carriers, 3) final positions
+    r = data["carrier_r_A"].astype(float)  # (n_carriers, 3) final positions
     r0 = data["carrier_r0_A"].astype(float)  # (n_carriers, 3) initial positions
-    disp = r - r0                            # (n_carriers, 3)
+    disp = r - r0  # (n_carriers, 3)
     n_carriers = disp.shape[0]
 
     d = int(args.dim)
 
     # D_tracer: mean of per-carrier squared displacements
-    disp_sq = np.sum(disp ** 2, axis=1)  # per-carrier |dr|^2
+    disp_sq = np.sum(disp**2, axis=1)  # per-carrier |dr|^2
     msd_tracer = float(np.mean(disp_sq))
     D_tracer_A2_s = msd_tracer / (2.0 * d * t_final)
 
     # D_J: squared displacement of center-of-mass (collective)
     total_disp = np.sum(disp, axis=0)  # sum of all carrier displacements
-    msd_collective = float(np.sum(total_disp ** 2))
+    msd_collective = float(np.sum(total_disp**2))
     D_J_A2_s = msd_collective / (2.0 * d * t_final * n_carriers)
 
     # Haven ratio
@@ -97,6 +99,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.out)
 
 

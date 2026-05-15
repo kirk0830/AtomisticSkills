@@ -247,7 +247,7 @@ Stage 2 — Isotherm Validation
 
 ## References
 
-- Majumdar, S. et al., "A Database of Porous Rigid Metal-Organic Frameworks", *AIP Advances*, 2021. 
+- Majumdar, S. et al., "A Database of Porous Rigid Metal-Organic Frameworks", *AIP Advances*, 2021.
 - Widom, B., "Some Topics in the Theory of Fluids", *J. Chem. Phys.*, 1963. [DOI](https://doi.org/10.1063/1.1734110)
 - Perdew, J. P. et al., "PBE + Dispersion for MOF Screening", *J. Phys. Chem. Lett.*, 2022.
 - Tong, L. et al., "FAIRChem Universal Models (UMA)", *arXiv*, 2025.

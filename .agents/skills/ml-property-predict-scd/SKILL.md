@@ -185,5 +185,5 @@ Check the detailed, reproducible examples in the `examples/` directory:
 
 ---
 
-**Author:** Ty Perez  
+**Author:** Ty Perez
 **Contact:** [tyjperez@gmail.com](mailto:tyjperez@gmail.com)

@@ -34,6 +34,7 @@ from src.utils.mlips.loader import load_wrapper
 def select_device(device: str) -> str:
     if device == "auto":
         import torch
+
         return "cuda" if torch.cuda.is_available() else "cpu"
     return device
 
@@ -58,9 +59,15 @@ def normalize_charge_spin(atoms) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Relax a framework structure using a generic MLIP calculator.")
-    p.add_argument("--structure", type=Path, required=True, help="Input structure (.cif or .xyz)")
-    p.add_argument("--name", type=str, required=True, help="Identifier for output files")
+    p = argparse.ArgumentParser(
+        description="Relax a framework structure using a generic MLIP calculator."
+    )
+    p.add_argument(
+        "--structure", type=Path, required=True, help="Input structure (.cif or .xyz)"
+    )
+    p.add_argument(
+        "--name", type=str, required=True, help="Identifier for output files"
+    )
     p.add_argument(
         "--calculator",
         type=str,
@@ -68,7 +75,9 @@ def parse_args() -> argparse.Namespace:
         choices=["mace", "fairchem", "matgl"],
         help="Backend MLIP calculator to use.",
     )
-    p.add_argument("--model-name", type=str, required=True, help="Model name or path to checkpoint")
+    p.add_argument(
+        "--model-name", type=str, required=True, help="Model name or path to checkpoint"
+    )
     p.add_argument(
         "--task-name",
         type=str,
@@ -82,7 +91,9 @@ def parse_args() -> argparse.Namespace:
         choices=["LBFGS", "FIRE"],
         help="ASE optimizer to use",
     )
-    p.add_argument("--fmax", type=float, default=0.05, help="Force convergence threshold (eV/Å)")
+    p.add_argument(
+        "--fmax", type=float, default=0.05, help="Force convergence threshold (eV/Å)"
+    )
     p.add_argument("--steps", type=int, default=500, help="Maximum optimization steps")
     p.add_argument(
         "--relax-cell",
@@ -103,7 +114,12 @@ def parse_args() -> argparse.Namespace:
         choices=["auto", "cuda", "cpu"],
         help="Device to use ('auto' picks CUDA if available)",
     )
-    p.add_argument("--output-dir", type=Path, default=None, help="Directory to save relaxed structure and results")
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        default=None,
+        help="Directory to save relaxed structure and results",
+    )
     return p.parse_args()
 
 
@@ -119,7 +135,9 @@ def main() -> int:
     print(f"Loaded structure: {args.name} ({len(atoms)} atoms) from {args.structure}")
 
     # Load MLIP
-    print(f"Loading {args.calculator} model: {args.model_name} (task={args.task_name}, device={device})")
+    print(
+        f"Loading {args.calculator} model: {args.model_name} (task={args.task_name}, device={device})"
+    )
     wrapper = load_wrapper(
         args.calculator,
         model_name=args.model_name,
@@ -179,6 +197,7 @@ def main() -> int:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
     return 0

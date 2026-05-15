@@ -113,5 +113,5 @@ Expected H2O vibrational modes (experimental reference):
   - `fairchem-agent` for FairChem/UMA models
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

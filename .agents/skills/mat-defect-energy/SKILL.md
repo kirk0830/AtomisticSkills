@@ -116,5 +116,5 @@ Expected: O vacancy formation energy ~6–8 eV (DFT reference: ~7.2 eV for neutr
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

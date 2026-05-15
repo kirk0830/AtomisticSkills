@@ -21,8 +21,7 @@ import os
 import sys
 import json
 import logging
-import shutil
-from typing import Optional, Any
+from typing import Any
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
@@ -44,6 +43,7 @@ TRANSLATION_ROTATION_THRESHOLD = 50.0
 
 
 from src.utils.mlips.loader import load_wrapper
+
 
 def check_linearity(atoms, tol: float = 5.0) -> bool:
     """
@@ -101,18 +101,24 @@ def run_vibrations(args: argparse.Namespace, wrapper: Any, atoms) -> dict:
         logger.info(f"Relaxing structure with fmax={args.fmax} eV/Å ...")
         opt = LBFGS(atoms, logfile=os.path.join(args.output_dir, "relax.log"))
         opt.run(fmax=args.fmax)
-        logger.info(f"Relaxation converged in {opt.nsteps} steps. Energy: {atoms.get_potential_energy():.6f} eV")
+        logger.info(
+            f"Relaxation converged in {opt.nsteps} steps. Energy: {atoms.get_potential_energy():.6f} eV"
+        )
 
     # Check linearity
     is_linear = check_linearity(atoms)
     n_atoms = len(atoms)
     n_expected_modes = 3 * n_atoms - 5 if is_linear else 3 * n_atoms - 6
-    logger.info(f"Molecule: {atoms.get_chemical_formula()}, {n_atoms} atoms, linear={is_linear}")
+    logger.info(
+        f"Molecule: {atoms.get_chemical_formula()}, {n_atoms} atoms, linear={is_linear}"
+    )
     logger.info(f"Expected vibrational modes: {n_expected_modes}")
 
     # Run vibration analysis
     vib_name = os.path.join(args.output_dir, "vib")
-    vib = Vibrations(atoms, indices=None, delta=args.delta, name=vib_name, nfree=args.nfree)
+    vib = Vibrations(
+        atoms, indices=None, delta=args.delta, name=vib_name, nfree=args.nfree
+    )
     vib.clean()  # Remove any cached data
     vib.run()
 
@@ -131,26 +137,32 @@ def run_vibrations(args: argparse.Namespace, wrapper: Any, atoms) -> dict:
         energy_mev = float(np.real(e_ev)) * 1000.0
 
         if abs(freq_imag) > TRANSLATION_ROTATION_THRESHOLD:
-            imaginary_modes.append({
-                "index": i,
-                "frequency_cm1": -abs(freq_imag),
-                "energy_meV": energy_mev,
-                "type": "imaginary"
-            })
+            imaginary_modes.append(
+                {
+                    "index": i,
+                    "frequency_cm1": -abs(freq_imag),
+                    "energy_meV": energy_mev,
+                    "type": "imaginary",
+                }
+            )
         elif abs(freq_real) < TRANSLATION_ROTATION_THRESHOLD:
-            translational_rotational.append({
-                "index": i,
-                "frequency_cm1": freq_real,
-                "energy_meV": energy_mev,
-                "type": "translation/rotation"
-            })
+            translational_rotational.append(
+                {
+                    "index": i,
+                    "frequency_cm1": freq_real,
+                    "energy_meV": energy_mev,
+                    "type": "translation/rotation",
+                }
+            )
         else:
-            real_modes.append({
-                "index": i,
-                "frequency_cm1": freq_real,
-                "energy_meV": energy_mev,
-                "type": "vibration"
-            })
+            real_modes.append(
+                {
+                    "index": i,
+                    "frequency_cm1": freq_real,
+                    "energy_meV": energy_mev,
+                    "type": "vibration",
+                }
+            )
 
     # Get ZPE
     zpe_ev = float(vib.get_zero_point_energy())
@@ -224,22 +236,53 @@ if __name__ == "__main__":
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--molecule", help="ASE built-in molecule name (e.g., H2O, CO2, CH4, NH3)")
-    group.add_argument("--structure", help="Path to structure file (.xyz, .cif, POSCAR, etc.)")
+    group.add_argument(
+        "--molecule", help="ASE built-in molecule name (e.g., H2O, CO2, CH4, NH3)"
+    )
+    group.add_argument(
+        "--structure", help="Path to structure file (.xyz, .cif, POSCAR, etc.)"
+    )
 
-    parser.add_argument("--model_type", required=True, choices=["mace", "fairchem", "matgl"],
-                        help="MLIP type")
-    parser.add_argument("--model_name", default=None, help="Specific model name (optional)")
-    parser.add_argument("--delta", type=float, default=0.01,
-                        help="Finite-difference displacement in Angstrom")
-    parser.add_argument("--nfree", type=int, default=2, choices=[2, 4],
-                        help="Number of displacements per degree of freedom (2 or 4)")
-    parser.add_argument("--relax", action="store_true", default=True,
-                        help="Relax structure before vibration analysis")
-    parser.add_argument("--no_relax", action="store_true", default=False,
-                        help="Skip structure relaxation")
-    parser.add_argument("--fmax", type=float, default=0.001,
-                        help="Force convergence for relaxation (eV/Angstrom)")
+    parser.add_argument(
+        "--model_type",
+        required=True,
+        choices=["mace", "fairchem", "matgl"],
+        help="MLIP type",
+    )
+    parser.add_argument(
+        "--model_name", default=None, help="Specific model name (optional)"
+    )
+    parser.add_argument(
+        "--delta",
+        type=float,
+        default=0.01,
+        help="Finite-difference displacement in Angstrom",
+    )
+    parser.add_argument(
+        "--nfree",
+        type=int,
+        default=2,
+        choices=[2, 4],
+        help="Number of displacements per degree of freedom (2 or 4)",
+    )
+    parser.add_argument(
+        "--relax",
+        action="store_true",
+        default=True,
+        help="Relax structure before vibration analysis",
+    )
+    parser.add_argument(
+        "--no_relax",
+        action="store_true",
+        default=False,
+        help="Skip structure relaxation",
+    )
+    parser.add_argument(
+        "--fmax",
+        type=float,
+        default=0.001,
+        help="Force convergence for relaxation (eV/Angstrom)",
+    )
     parser.add_argument("--output_dir", help="Output directory")
     parser.add_argument("--device", default="auto", help="Device (cpu, cuda, auto)")
 
@@ -264,4 +307,5 @@ if __name__ == "__main__":
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)

@@ -46,7 +46,7 @@ To perform random structure searching (RSS) for a given chemical composition —
        output_dir="relaxed_NaCl/"
    )
    ```
-   
+
    Or with MatGL/FairChem — use the same MLIP consistently.
 
 3. **Rank by energy**: The lowest-energy relaxed structures are the most promising candidates. Check for duplicate structures using pymatgen's `StructureMatcher`.
@@ -90,5 +90,5 @@ python .agents/skills/mat-random-structure-search/scripts/generate_random_struct
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

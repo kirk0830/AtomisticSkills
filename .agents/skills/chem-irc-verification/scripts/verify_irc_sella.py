@@ -28,7 +28,9 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("IRC-Sella")
 
 
-def _select_supported_kwargs(callable_obj: Any, candidates: Dict[str, Any]) -> Dict[str, Any]:
+def _select_supported_kwargs(
+    callable_obj: Any, candidates: Dict[str, Any]
+) -> Dict[str, Any]:
     """Filter kwargs to only those supported by callable_obj signature."""
     sig = inspect.signature(callable_obj)
     accepts_var_kwargs = any(
@@ -43,7 +45,9 @@ def _select_supported_kwargs(callable_obj: Any, candidates: Dict[str, Any]) -> D
     return supported
 
 
-def _kabsch_rmsd(reference_positions: np.ndarray, candidate_positions: np.ndarray) -> float:
+def _kabsch_rmsd(
+    reference_positions: np.ndarray, candidate_positions: np.ndarray
+) -> float:
     """Compute Kabsch-aligned RMSD between two coordinate sets."""
     ref = reference_positions - reference_positions.mean(axis=0)
     cand = candidate_positions - candidate_positions.mean(axis=0)
@@ -86,7 +90,9 @@ def _connectivity_match(candidate: Any, target: Any) -> bool:
     return _connectivity_edges(candidate) == _connectivity_edges(target)
 
 
-def _endpoint_metrics(endpoint: Any, target: Any, rmsd_threshold: float) -> Dict[str, Any]:
+def _endpoint_metrics(
+    endpoint: Any, target: Any, rmsd_threshold: float
+) -> Dict[str, Any]:
     """Compute endpoint-to-target metrics used for assignment."""
     if len(endpoint) != len(target):
         return {
@@ -116,7 +122,9 @@ def _to_relpath(path_str: str) -> str:
         return path_str
 
 
-def _relax_endpoint(atoms: Any, wrapper: Any, fmax: float, max_steps: int = 500) -> Dict[str, Any]:
+def _relax_endpoint(
+    atoms: Any, wrapper: Any, fmax: float, max_steps: int = 500
+) -> Dict[str, Any]:
     """Optionally relax IRC endpoint before comparison."""
     from ase.optimize import FIRE
 
@@ -237,8 +245,12 @@ def run_irc_verification(args: argparse.Namespace) -> Dict[str, Any]:
     reverse_endpoint = reverse_meta["endpoint"]
 
     if args.relax_endpoints:
-        relaxed_forward = _relax_endpoint(forward_endpoint, wrapper, fmax=args.endpoint_relax_fmax)
-        relaxed_reverse = _relax_endpoint(reverse_endpoint, wrapper, fmax=args.endpoint_relax_fmax)
+        relaxed_forward = _relax_endpoint(
+            forward_endpoint, wrapper, fmax=args.endpoint_relax_fmax
+        )
+        relaxed_reverse = _relax_endpoint(
+            reverse_endpoint, wrapper, fmax=args.endpoint_relax_fmax
+        )
         forward_endpoint = relaxed_forward["atoms"]
         reverse_endpoint = relaxed_reverse["atoms"]
         endpoint_relaxation = {
@@ -264,15 +276,23 @@ def run_irc_verification(args: argparse.Namespace) -> Dict[str, Any]:
         {
             "endpoint_mapping": {"forward": "reactant", "reverse": "product"},
             "metrics": {
-                "forward_to_reactant": _endpoint_metrics(forward_endpoint, reactant, args.rmsd_threshold),
-                "reverse_to_product": _endpoint_metrics(reverse_endpoint, product, args.rmsd_threshold),
+                "forward_to_reactant": _endpoint_metrics(
+                    forward_endpoint, reactant, args.rmsd_threshold
+                ),
+                "reverse_to_product": _endpoint_metrics(
+                    reverse_endpoint, product, args.rmsd_threshold
+                ),
             },
         },
         {
             "endpoint_mapping": {"forward": "product", "reverse": "reactant"},
             "metrics": {
-                "forward_to_product": _endpoint_metrics(forward_endpoint, product, args.rmsd_threshold),
-                "reverse_to_reactant": _endpoint_metrics(reverse_endpoint, reactant, args.rmsd_threshold),
+                "forward_to_product": _endpoint_metrics(
+                    forward_endpoint, product, args.rmsd_threshold
+                ),
+                "reverse_to_reactant": _endpoint_metrics(
+                    reverse_endpoint, reactant, args.rmsd_threshold
+                ),
             },
         },
     ]
@@ -353,16 +373,36 @@ def build_parser() -> argparse.ArgumentParser:
         description="Verify IRC connectivity from TS to reactant/product using Sella.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--reactant", required=True, help="Optimized reactant structure")
+    parser.add_argument(
+        "--reactant", required=True, help="Optimized reactant structure"
+    )
     parser.add_argument("--product", required=True, help="Optimized product structure")
-    parser.add_argument("--ts", required=True, help="Saddle-point optimized TS structure")
-    parser.add_argument("--model_type", required=True, choices=["mace", "fairchem"], help="MLIP backend")
-    parser.add_argument("--model_name", default=None, help="Specific model name/checkpoint")
+    parser.add_argument(
+        "--ts", required=True, help="Saddle-point optimized TS structure"
+    )
+    parser.add_argument(
+        "--model_type", required=True, choices=["mace", "fairchem"], help="MLIP backend"
+    )
+    parser.add_argument(
+        "--model_name", default=None, help="Specific model name/checkpoint"
+    )
     parser.add_argument("--task_name", default=None, help="Task/head name (e.g., omol)")
     parser.add_argument("--device", default="auto", help="Device: cpu/cuda/auto")
-    parser.add_argument("--fmax", type=float, default=0.02, help="IRC force convergence criterion (eV/A)")
-    parser.add_argument("--steps", type=int, default=1000, help="Maximum IRC optimization steps")
-    parser.add_argument("--rmsd_threshold", type=float, default=0.20, help="RMSD threshold for endpoint match (A)")
+    parser.add_argument(
+        "--fmax",
+        type=float,
+        default=0.02,
+        help="IRC force convergence criterion (eV/A)",
+    )
+    parser.add_argument(
+        "--steps", type=int, default=1000, help="Maximum IRC optimization steps"
+    )
+    parser.add_argument(
+        "--rmsd_threshold",
+        type=float,
+        default=0.20,
+        help="RMSD threshold for endpoint match (A)",
+    )
     parser.add_argument(
         "--relax_endpoints",
         type=_str_to_bool,
@@ -386,6 +426,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

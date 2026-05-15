@@ -5,10 +5,8 @@ Reads SKILL.md + example READMEs from .agents/skills/, writes HTML to site/skill
 Run from the project root: python site/build_skills.py
 """
 
-import os
 import re
 import json
-import shutil
 import base64
 import ast
 from pathlib import Path
@@ -26,18 +24,50 @@ WORKFLOWS_OUT_DIR = SITE_DIR / "workflows"
 SERVERS_OUT_DIR = SITE_DIR / "servers"
 
 CAT_COLORS = {
-    "materials":        {"bg": "#eff6ff", "border": "#bfdbfe", "text": "#1d4ed8", "dot": "#3b82f6"},
-    "chemistry":        {"bg": "#f0fdf4", "border": "#bbf7d0", "text": "#15803d", "dot": "#22c55e"},
-    "machine-learning": {"bg": "#f3f0ff", "border": "#d4c8ff", "text": "#5b3de8", "dot": "#816cff"},
-    "drug-discovery":   {"bg": "#fdf2f8", "border": "#f5d0fe", "text": "#a21caf", "dot": "#d946ef"},
-    "general":          {"bg": "#fffbeb", "border": "#fde68a", "text": "#92400e", "dot": "#f59e0b"},
-    "thermodynamics":   {"bg": "#ecfeff", "border": "#a5f3fc", "text": "#0e7490", "dot": "#06b6d4"},
+    "materials": {
+        "bg": "#eff6ff",
+        "border": "#bfdbfe",
+        "text": "#1d4ed8",
+        "dot": "#3b82f6",
+    },
+    "chemistry": {
+        "bg": "#f0fdf4",
+        "border": "#bbf7d0",
+        "text": "#15803d",
+        "dot": "#22c55e",
+    },
+    "machine-learning": {
+        "bg": "#f3f0ff",
+        "border": "#d4c8ff",
+        "text": "#5b3de8",
+        "dot": "#816cff",
+    },
+    "drug-discovery": {
+        "bg": "#fdf2f8",
+        "border": "#f5d0fe",
+        "text": "#a21caf",
+        "dot": "#d946ef",
+    },
+    "general": {
+        "bg": "#fffbeb",
+        "border": "#fde68a",
+        "text": "#92400e",
+        "dot": "#f59e0b",
+    },
+    "thermodynamics": {
+        "bg": "#ecfeff",
+        "border": "#a5f3fc",
+        "text": "#0e7490",
+        "dot": "#06b6d4",
+    },
 }
+
 
 def read_file(path):
     if path.exists():
         return path.read_text(encoding="utf-8", errors="replace")
     return ""
+
 
 def parse_frontmatter(content):
     """Extract YAML frontmatter from markdown."""
@@ -52,23 +82,32 @@ def parse_frontmatter(content):
                     meta.update(fm)
             except Exception as e:
                 print(f"Error parsing frontmatter: {e}")
-            content = content[end+3:].strip()
+            content = content[end + 3 :].strip()
     return meta, content
+
 
 def encode_image(img_path: Path) -> str | None:
     """Return base64 data URI for an image, or None if not found."""
     if not img_path.exists():
         return None
     ext = img_path.suffix.lower()
-    mime = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
-            "gif": "image/gif", "svg": "image/svg+xml", "webp": "image/webp"}.get(ext[1:])
+    mime = {
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "gif": "image/gif",
+        "svg": "image/svg+xml",
+        "webp": "image/webp",
+    }.get(ext[1:])
     if not mime:
         return None
     data = base64.b64encode(img_path.read_bytes()).decode()
     return f"data:{mime};base64,{data}"
 
+
 def process_markdown_images(md: str, base_dir: Path) -> str:
     """Replace file:/// image paths and relative paths with base64 data URIs."""
+
     def replace_img(m):
         alt = m.group(1)
         src = m.group(2)
@@ -86,19 +125,20 @@ def process_markdown_images(md: str, base_dir: Path) -> str:
 
     return re.sub(r"!\[([^\]]*)\]\(([^)]+)\)", replace_img, md)
 
+
 def process_markdown_structures(md: str, base_dir: Path) -> str:
     """Replace relative .cif and .xyz links with a 3Dmol.js interactive viewer while keeping the link."""
     import base64
     import uuid
-    
+
     def replace_struct(m):
         alt = m.group(1)
         src = m.group(2)
-        
+
         # resolve path
         if src.startswith("http://") or src.startswith("https://"):
             return m.group(0)  # skip remote
-            
+
         struct_path = base_dir / src
         if not struct_path.exists():
             # Try from project root, since markdown links might be relative to the root (e.g. examples/...)
@@ -107,7 +147,7 @@ def process_markdown_structures(md: str, base_dir: Path) -> str:
             skill_base_path = base_dir.parent.parent / src
             # Try just the filename in the current directory
             filename_path = base_dir / Path(src).name
-            
+
             if root_path.exists():
                 struct_path = root_path
             elif skill_base_path.exists():
@@ -116,29 +156,35 @@ def process_markdown_structures(md: str, base_dir: Path) -> str:
                 struct_path = filename_path
             else:
                 # Try to find it recursively in the skill directory
-                skill_dir = base_dir.parent if base_dir.name == "examples" else base_dir.parent.parent
+                skill_dir = (
+                    base_dir.parent
+                    if base_dir.name == "examples"
+                    else base_dir.parent.parent
+                )
                 found = list(skill_dir.rglob(Path(src).name))
                 if found:
                     struct_path = found[0]
                 else:
-                    print(f"Skipping {src}: could not find at {struct_path} or recursively in {skill_dir}")
+                    print(
+                        f"Skipping {src}: could not find at {struct_path} or recursively in {skill_dir}"
+                    )
                     return m.group(0)
-            
+
         try:
             content = read_file(struct_path)
         except Exception as e:
             print(f"Failed to read structure file {struct_path}: {e}")
             return m.group(0)
-            
+
         # generate random id for textarea
         el_id = f"struct_{uuid.uuid4().hex[:8]}"
-        
+
         b64_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
-        
+
         # Determine format
         datatype = "cif" if src.lower().endswith(".cif") else "xyz"
-        unitcell_attr = 'data-unitcell="true"' if datatype == "cif" else ''
-        
+        unitcell_attr = 'data-unitcell="true"' if datatype == "cif" else ""
+
         # Create HTML elements manually encoded to prevent markdown escaping issues entirely
         # We don't inject straight HTML here since marked.js sometimes eats it if it's mixed with links,
         # but <div> tags usually survive.
@@ -149,10 +195,14 @@ def process_markdown_structures(md: str, base_dir: Path) -> str:
         )
         return html
 
-    return re.sub(r"\[([^\]]*)\]\(([^)]+\.(?:cif|xyz))\)", replace_struct, md, flags=re.IGNORECASE)
+    return re.sub(
+        r"\[([^\]]*)\]\(([^)]+\.(?:cif|xyz))\)", replace_struct, md, flags=re.IGNORECASE
+    )
+
 
 def strip_carousel_syntax(md: str) -> str:
     """Convert carousel blocks to plain image list."""
+
     def replace_carousel(m):
         inner = m.group(1)
         # Remove <!-- slide --> separators
@@ -161,7 +211,10 @@ def strip_carousel_syntax(md: str) -> str:
 
     return re.sub(r"````carousel\s*(.*?)````", replace_carousel, md, flags=re.DOTALL)
 
-def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dict], out_path: Path):
+
+def make_skill_page(
+    skill_id: str, meta: dict, skill_md: str, examples: list[dict], out_path: Path
+):
     cats = meta.get("category", [])
     primary_cat = cats[0] if cats else "materials"
     colors = CAT_COLORS.get(primary_cat, CAT_COLORS["materials"])
@@ -170,15 +223,19 @@ def make_skill_page(skill_id: str, meta: dict, skill_md: str, examples: list[dic
         "chemistry": "CHEM",
         "machine-learning": "ML",
         "drug-discovery": "DRUG",
-        "general": "GENERAL"
+        "general": "GENERAL",
     }
     cat_label = CAT_SHORT_LABEL.get(primary_cat, primary_cat.replace("-", " ").upper())
 
     # Extract title server-side from first H1 (never show 'Loading...')
-    title_match = re.search(r'^#\s+(.+)$', skill_md, re.MULTILINE)
-    page_title = title_match.group(1).strip() if title_match else meta.get('name', skill_id)
+    title_match = re.search(r"^#\s+(.+)$", skill_md, re.MULTILINE)
+    page_title = (
+        title_match.group(1).strip() if title_match else meta.get("name", skill_id)
+    )
     # Remove the H1 from body markdown since we display it in the hero
-    body_md_no_h1 = re.sub(r'^#\s+.+\n?', '', skill_md, count=1, flags=re.MULTILINE).lstrip()
+    body_md_no_h1 = re.sub(
+        r"^#\s+.+\n?", "", skill_md, count=1, flags=re.MULTILINE
+    ).lstrip()
 
     # Build examples HTML
     examples_html = ""
@@ -385,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {{
     if (!md) return;
     const mathBlocks = [];
     const placeholder = (i) => `MATHPLACEHOLDER${{i}}X`;
-    
+
     // Protect block math $$...$$
     let safe = md.replace(/\\$\\$([\\s\\S]+?)\\$\\$/g, (_, m) => {{
       mathBlocks.push(`$$${{m}}$$`);
@@ -455,9 +512,15 @@ document.addEventListener('DOMContentLoaded', function() {{
 def make_generic_page(doc_id: str, meta: dict, body_md: str, out_path: Path):
     """Template for generic documentation pages (no category, no examples)."""
     # Extract title from H1
-    title_match = re.search(r'^#\s+(.+)$', body_md, re.MULTILINE)
-    page_title = title_match.group(1).strip() if title_match else meta.get('name', doc_id.replace('_', ' ').title())
-    body_md_no_h1 = re.sub(r'^#\s+.+\n?', '', body_md, count=1, flags=re.MULTILINE).lstrip()
+    title_match = re.search(r"^#\s+(.+)$", body_md, re.MULTILINE)
+    page_title = (
+        title_match.group(1).strip()
+        if title_match
+        else meta.get("name", doc_id.replace("_", " ").title())
+    )
+    body_md_no_h1 = re.sub(
+        r"^#\s+.+\n?", "", body_md, count=1, flags=re.MULTILINE
+    ).lstrip()
 
     html = f"""<!doctype html>
 <html lang="en">
@@ -556,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {{
     if (!md) return;
     const mathBlocks = [];
     const placeholder = (i) => `MATHPLACEHOLDER${{i}}X`;
-    
+
     // Protect block math $$...$$
     let safe = md.replace(/\\$\\$([\\s\\S]+?)\\$\\$/g, (_, m) => {{
       mathBlocks.push(`$$${{m}}$$`);
@@ -608,7 +671,6 @@ document.addEventListener('DOMContentLoaded', function() {{
     out_path.write_text(html, encoding="utf-8")
 
 
-
 def render_example_readme(readme_path: Path) -> str:
     """Render example README as HTML fragment using marked.js (returns md string for injection)."""
     content = read_file(readme_path)
@@ -628,25 +690,32 @@ def build_generic_docs():
         # Skip technical system files or non-site docs
         if doc_id in ["README", "CODE_OF_CONDUCT", "CONTRIBUTING"]:
             continue
-        
+
         raw = read_file(md_file)
         # generic docs might not have fm, but let's try
         meta, body_md = parse_frontmatter(raw)
-        
+
         # Process images (relative to docs/ folder)
         body_md = process_markdown_images(body_md, DOCS_SRC_DIR)
-        
+
         out_path = SITE_DIR / f"{doc_id}.html"
         make_generic_page(doc_id, meta, body_md, out_path)
         print(f"  Built: {doc_id}.html")
 
+
 def make_workflow_page(workflow_id: str, meta: dict, body_md: str, out_path: Path):
-    title_match = re.search(r'^#\s+(.+)$', body_md, re.MULTILINE)
-    page_title = title_match.group(1).strip() if title_match else meta.get('name', workflow_id.replace('-', ' ').title())
-    body_md_no_h1 = re.sub(r'^#\s+.+\n?', '', body_md, count=1, flags=re.MULTILINE).lstrip()
+    title_match = re.search(r"^#\s+(.+)$", body_md, re.MULTILINE)
+    page_title = (
+        title_match.group(1).strip()
+        if title_match
+        else meta.get("name", workflow_id.replace("-", " ").title())
+    )
+    body_md_no_h1 = re.sub(
+        r"^#\s+.+\n?", "", body_md, count=1, flags=re.MULTILINE
+    ).lstrip()
 
     github_link = f"https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/workflows/{workflow_id}.md"
-    html = f'''<!doctype html>
+    html = f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -716,8 +785,9 @@ def make_workflow_page(workflow_id: str, meta: dict, body_md: str, out_path: Pat
   document.getElementById('workflow-body').innerHTML = marked.parse({json.dumps(body_md_no_h1)});
 </script>
 </body>
-</html>'''
+</html>"""
     out_path.write_text(html, encoding="utf-8")
+
 
 def build_workflows():
     print("\nBuilding workflow pages...")
@@ -727,16 +797,19 @@ def build_workflows():
             wf_id = wf_file.stem
             raw = read_file(wf_file)
             meta, body_md = parse_frontmatter(raw)
-            
+
             out_path = WORKFLOWS_OUT_DIR / f"{wf_id}.html"
             make_workflow_page(wf_id, meta, body_md, out_path)
-            workflows_index.append({
-                "id": wf_id,
-                "title": meta.get("name") or wf_id.replace('-', ' ').title(),
-                "description": meta.get("description", ""),
-            })
+            workflows_index.append(
+                {
+                    "id": wf_id,
+                    "title": meta.get("name") or wf_id.replace("-", " ").title(),
+                    "description": meta.get("description", ""),
+                }
+            )
             print(f"  Built: workflows/{wf_id}.html")
     return workflows_index
+
 
 def build_skills():
     """Build skill-specific pages."""
@@ -746,7 +819,7 @@ def build_skills():
         if not skill_dir.is_dir():
             continue
         skill_id = skill_dir.name
-        if skill_id.startswith('private-'):
+        if skill_id.startswith("private-"):
             continue
         skill_md_path = skill_dir / "SKILL.md"
         if not skill_md_path.exists():
@@ -777,24 +850,28 @@ def build_skills():
                     readme = sub / "README.md"
                     if readme.exists():
                         md = render_example_readme(readme)
-                        examples.append({
-                            "title": sub.name.replace("_", " ").replace("-", " "),
-                            "md": md
-                        })
+                        examples.append(
+                            {
+                                "title": sub.name.replace("_", " ").replace("-", " "),
+                                "md": md,
+                            }
+                        )
 
         out_path = SKILLS_OUT_DIR / f"{skill_id}.html"
         make_skill_page(skill_id, meta, body_md, examples, out_path)
         print(f"  Built: skills/{skill_id}.html  ({len(examples)} examples)")
 
         cats = meta.get("category", ["materials"])
-        skill_index.append({
-            "id": skill_id,
-            "name": meta["name"],
-            "description": meta["description"],
-            "category": cats,
-            "has_examples": len(examples) > 0,
-            "num_examples": len(examples),
-        })
+        skill_index.append(
+            {
+                "id": skill_id,
+                "name": meta["name"],
+                "description": meta["description"],
+                "category": cats,
+                "has_examples": len(examples) > 0,
+                "num_examples": len(examples),
+            }
+        )
 
     # Add workflows
     workflows_index = build_workflows()
@@ -803,12 +880,12 @@ def build_skills():
     tools_count = 0
     servers_count = 0
     server_tools_count = {}
-    
+
     # Count conda envs
     conda_envs_dir = PROJECT_ROOT / "conda-envs"
     if conda_envs_dir.exists():
         servers_count = len([d for d in conda_envs_dir.iterdir() if d.is_dir()])
-        
+
     mcp_dir = PROJECT_ROOT / "src" / "mcp_server"
     if mcp_dir.exists():
         py_files = list(mcp_dir.glob("*_server.py"))
@@ -822,11 +899,7 @@ def build_skills():
             except Exception:
                 pass
 
-    stats = {
-        "skills": len(skill_index),
-        "tools": tools_count,
-        "servers": servers_count
-    }
+    stats = {"skills": len(skill_index), "tools": tools_count, "servers": servers_count}
 
     # Write updated skills index
     index_out = SITE_DIR / "skills_index.js"
@@ -834,8 +907,11 @@ def build_skills():
     wf_data = json.dumps(workflows_index, indent=2, ensure_ascii=False)
     stats_data = json.dumps(stats, indent=2, ensure_ascii=False)
     server_data = json.dumps(server_tools_count, indent=2, ensure_ascii=False)
-    index_out.write_text(f"window.SKILLS_DATA = {json_data};\nwindow.WORKFLOWS_DATA = {wf_data};\nwindow.ATOMISTIC_STATS = {stats_data};\nwindow.SERVER_TOOLS_COUNT = {server_data};", encoding="utf-8")
-    print(f"\n✅ Index written to site/skills_index.js")
+    index_out.write_text(
+        f"window.SKILLS_DATA = {json_data};\nwindow.WORKFLOWS_DATA = {wf_data};\nwindow.ATOMISTIC_STATS = {stats_data};\nwindow.SERVER_TOOLS_COUNT = {server_data};",
+        encoding="utf-8",
+    )
+    print("\n✅ Index written to site/skills_index.js")
 
 
 def extract_mcp_tools(file_path):
@@ -844,13 +920,13 @@ def extract_mcp_tools(file_path):
         tree = ast.parse(source)
     except Exception:
         return []
-    
+
     tools = []
     for node in ast.iter_child_nodes(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             is_tool = False
             for dec in node.decorator_list:
-                if isinstance(dec, ast.Attribute) and dec.attr == "tool": 
+                if isinstance(dec, ast.Attribute) and dec.attr == "tool":
                     is_tool = True
                 elif isinstance(dec, ast.Name) and dec.id == "tool":
                     is_tool = True
@@ -859,14 +935,17 @@ def extract_mcp_tools(file_path):
                         is_tool = True
                     elif isinstance(dec.func, ast.Name) and dec.func.id == "tool":
                         is_tool = True
-            
+
             if is_tool:
                 docstring = ast.get_docstring(node)
-                tools.append({
-                    "name": node.name,
-                    "docstring": docstring or "No description provided."
-                })
+                tools.append(
+                    {
+                        "name": node.name,
+                        "docstring": docstring or "No description provided.",
+                    }
+                )
     return tools
+
 
 def make_server_page(server_id, tools, out_path):
     tool_cards = ""
@@ -875,17 +954,17 @@ def make_server_page(server_id, tools, out_path):
         safe_md = json.dumps(md_text)
         # Replace unescaped backslashes with double backslashes in JSON so the HTML dataset parser doesn't break
         safe_md = safe_md.replace("'", "&#39;")
-        tool_cards += f'''
+        tool_cards += f"""
         <div class="tool-card">
           <h3 class="tool-name">📎 {t["name"]}</h3>
           <div class="tool-doc rendered-md" data-md='{safe_md}'></div>
         </div>
-        '''
+        """
 
     page_title = f"{server_id} Server Tools"
     github_link = f"https://github.com/bowen-bd/AtomisticSkills/tree/main/src/mcp_server/{server_id}_server.py"
 
-    html = f'''<!doctype html>
+    html = f"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -964,8 +1043,9 @@ def make_server_page(server_id, tools, out_path):
   }});
 </script>
 </body>
-</html>'''
+</html>"""
     out_path.write_text(html, encoding="utf-8")
+
 
 def build_servers():
     print("\nBuilding server pages...")
@@ -985,9 +1065,7 @@ def build_all():
     SKILLS_OUT_DIR.mkdir(parents=True, exist_ok=True)
     WORKFLOWS_OUT_DIR.mkdir(parents=True, exist_ok=True)
     SERVERS_OUT_DIR.mkdir(parents=True, exist_ok=True)
-    
-    import shutil
-    
+
     # 0. Copy logo assets inside site/ for self-contained deployment
     logo_src = PROJECT_ROOT / "logo"
     logo_dst = SITE_DIR / "logo"
@@ -998,13 +1076,13 @@ def build_all():
 
     # 1. Build skills
     build_skills()
-    
+
     # 2. Build generic docs
     build_generic_docs()
-    
+
     # 3. Build servers
     build_servers()
-    
+
     print("\n✨ Build complete!")
 
 

@@ -22,6 +22,7 @@ import os
 
 import numpy as np
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -93,7 +94,9 @@ def plot_stacked(
     for i, ((ppm, intensity), label) in enumerate(zip(spectra, labels)):
         offset = i * (intensity.max() - intensity.min()) * 1.2
         ax.plot(ppm, intensity + offset, linewidth=2.5, color=f"C{i % 10}", label=label)
-        ax.text(ppm.max() + 0.05, offset + intensity.mean(), label, fontsize=10, va="center")
+        ax.text(
+            ppm.max() + 0.05, offset + intensity.mean(), label, fontsize=10, va="center"
+        )
     ax.invert_xaxis()
     ax.set_xlabel("Chemical shift (ppm)", fontweight="bold")
     ax.set_title(title)
@@ -174,8 +177,13 @@ def plot_deconvolution(
     # Component panels
     for i, (name, sc, color) in enumerate(zip(names, scaled, colors)):
         ax = axes[1 + i]
-        ax.plot(mix_ppm, sc, color=color, lw=2.5,
-                label=f"{name}  ({proportions[i] * 100:.1f}%)")
+        ax.plot(
+            mix_ppm,
+            sc,
+            color=color,
+            lw=2.5,
+            label=f"{name}  ({proportions[i] * 100:.1f}%)",
+        )
         ax.axhline(0, color="gray", lw=0.4)
         ax.set_ylabel("Intensity", fontweight="bold")
         ax.legend(frameon=False)
@@ -196,7 +204,9 @@ def plot_deconvolution(
     ax_fit.set_xlabel("Chemical shift (ppm)", fontweight="bold")
     ax_fit.legend(frameon=False)
     ax_fit.grid(True, linestyle="--", alpha=0.6)
-    ax_fit.set_title(f"Fit vs Crude  (Wasserstein distance = {wasserstein_distance:.5f})")
+    ax_fit.set_title(
+        f"Fit vs Crude  (Wasserstein distance = {wasserstein_distance:.5f})"
+    )
     ax_fit.invert_xaxis()
     fig2.tight_layout()
     fit_path = out_path.with_name(out_path.stem + "_fit")
@@ -206,15 +216,22 @@ def plot_deconvolution(
 def main():
     ap = argparse.ArgumentParser(description="Plot and compare NMR spectra.")
     ap.add_argument("spectra", nargs="+", help="Input .csv or .xy spectrum files")
-    ap.add_argument("--labels", nargs="+", help="Legend labels (defaults to file stems)")
+    ap.add_argument(
+        "--labels", nargs="+", help="Legend labels (defaults to file stems)"
+    )
     ap.add_argument("--title", default="NMR Spectra", help="Plot title")
     ap.add_argument("--output", default="nmr_plot.png", help="Output file path")
     ap.add_argument(
-        "--stacked", action="store_true",
+        "--stacked",
+        action="store_true",
         help="Use stacked (offset) layout instead of overlay",
     )
-    ap.add_argument("--ppm_min", type=float, default=None, help="Minimum ppm to display")
-    ap.add_argument("--ppm_max", type=float, default=None, help="Maximum ppm to display")
+    ap.add_argument(
+        "--ppm_min", type=float, default=None, help="Minimum ppm to display"
+    )
+    ap.add_argument(
+        "--ppm_max", type=float, default=None, help="Maximum ppm to display"
+    )
     args = ap.parse_args()
 
     spectra = [load_spectrum(p) for p in args.spectra]
@@ -234,10 +251,13 @@ def main():
         plot_stacked(spectra, labels, args.title, out_path, ppm_range)
     else:
         plot_overlay(spectra, labels, args.title, out_path, ppm_range)
-    print(f"Plot saved -> {out_path.with_suffix('.png')}, {out_path.with_suffix('.svg')}")
+    print(
+        f"Plot saved -> {out_path.with_suffix('.png')}, {out_path.with_suffix('.svg')}"
+    )
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output)
 
 

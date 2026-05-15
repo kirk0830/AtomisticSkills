@@ -53,5 +53,5 @@ To initiate this workflow, users should provide an anchor dataset and instructio
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

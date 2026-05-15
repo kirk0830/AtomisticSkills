@@ -67,4 +67,3 @@ python .agents/skills/chem-solution-md/scripts/analyze_solution_md.py \
 - Soper, A.K., "The radial distribution functions of water and ice from 220 to 673 K and at pressures up to 400 MPa", *Chem. Phys.*, **258**(2–3), 121–137, 2000. [DOI](https://doi.org/10.1016/S0301-0104(00)00179-8)
 - Skinner, L.B. et al., "Benchmark oxygen-oxygen pair-distribution function of ambient water from x-ray diffraction measurements", *J. Chem. Phys.*, **138**, 074506, 2013. [DOI](https://doi.org/10.1063/1.4790861)
 - Soper, A.K. & Benmore, C.J., "Quantum Differences between Heavy and Light Water", *Phys. Rev. Lett.*, **101**, 065502, 2008. [DOI](https://doi.org/10.1103/PhysRevLett.101.065502)
-

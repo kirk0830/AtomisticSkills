@@ -191,6 +191,7 @@ def main():
 
     if not args.output_dir:
         from src.utils.research_utils import get_current_research_dir
+
         args.output_dir = str(get_current_research_dir() / "orca_advanced")
     os.makedirs(args.output_dir, exist_ok=True)
 
@@ -203,6 +204,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

@@ -21,16 +21,16 @@ python .agents/skills/mat-electrochemical-window/scripts/reproduce_table1.py
 ## Expected Output
 
 ```
-Name            Formula                   Reported ECW         Calculated ECW       Status         
+Name            Formula                   Reported ECW         Calculated ECW       Status
 ----------------------------------------------------------------------------------------------------
-Li2S            Li2S                      [0.00, 2.01]         [0.00, 2.14]         Exact          
-LGPS            Li10Ge(PS6)2              [1.71, 2.14]         [1.72, 2.30]         Exact          
-Li3PS4          Li3PS4                    [1.71, 2.31]         [1.72, 2.36]         Exact          
-Li4GeS4         Li4GeS4                   [1.62, 2.14]         [1.62, 2.30]         Exact          
-Li7P3S11        Li7P3S11                  [2.28, 2.31]         [2.27, 2.30]         Exact          
-Li6PS5Cl        Li6PS5Cl                  [1.71, 2.01]         [1.72, 2.14]         Exact          
+Li2S            Li2S                      [0.00, 2.01]         [0.00, 2.14]         Exact
+LGPS            Li10Ge(PS6)2              [1.71, 2.14]         [1.72, 2.30]         Exact
+Li3PS4          Li3PS4                    [1.71, 2.31]         [1.72, 2.36]         Exact
+Li4GeS4         Li4GeS4                   [1.62, 2.14]         [1.62, 2.30]         Exact
+Li7P3S11        Li7P3S11                  [2.28, 2.31]         [2.27, 2.30]         Exact
+Li6PS5Cl        Li6PS5Cl                  [1.71, 2.01]         [1.72, 2.14]         Exact
 Li7P2S8I        Li48P16S61                [1.71, 2.31]         [0.00, 0.00]         Approx (dist: 0.12)
-LLZO            Li7La3Zr2O12              [0.05, 2.91]         [0.05, 2.88]         Exact          
+LLZO            Li7La3Zr2O12              [0.05, 2.91]         [0.05, 2.88]         Exact
 LLTO            LiLaTi2O6                 [1.75, 3.71]         [1.74, 3.68]         Approx (dist: 0.06)
 LATP            LiTi2(PO4)3               [2.17, 4.21]         [2.17, 4.64]         Approx (dist: 0.06)
 LAGP            LiGe2(PO4)3               [2.70, 4.27]         [2.72, 4.29]         Approx (dist: 0.11)

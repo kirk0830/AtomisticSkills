@@ -18,7 +18,7 @@ import os
 import sys
 import json
 import logging
-from typing import Optional, Any
+from typing import Any
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
@@ -28,7 +28,6 @@ if project_root not in sys.path:
 from src.utils.serialization_utils import recursive_tolist
 from src.utils.research_utils import get_current_research_dir
 from ase.io import read
-import numpy as np
 
 # Conversion factors
 EV_PER_A3_TO_GPA = 160.2176634  # 1 eV/ų = 160.2176634 GPa
@@ -39,6 +38,7 @@ logger = logging.getLogger("Elasticity-Skill")
 
 
 from src.utils.mlips.loader import load_wrapper
+
 
 def run_elasticity(args: argparse.Namespace, wrapper: Any, atoms) -> dict:
     """
@@ -146,24 +146,59 @@ if __name__ == "__main__":
         description="Calculate elastic tensor and mechanical properties with MLIPs",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    parser.add_argument("--structure", required=True, help="Path to structure file (CIF, POSCAR, etc.)")
-    parser.add_argument("--model_type", required=True, choices=["mace", "fairchem", "matgl"],
-                        help="MLIP type")
-    parser.add_argument("--model_name", default=None, help="Specific model name (optional)")
-    parser.add_argument("--norm_strains", nargs="+", type=float, default=[-0.01, -0.005, 0.005, 0.01],
-                        help="Normal strain magnitudes")
-    parser.add_argument("--shear_strains", nargs="+", type=float, default=[-0.06, -0.03, 0.03, 0.06],
-                        help="Shear strain magnitudes")
-    parser.add_argument("--fmax", type=float, default=0.1,
-                        help="Force convergence tolerance (eV/Å)")
-    parser.add_argument("--relax_structure", action="store_true", default=True,
-                        help="Relax the structure before applying strains")
-    parser.add_argument("--no_relax_structure", action="store_true", default=False,
-                        help="Skip structure relaxation")
-    parser.add_argument("--relax_deformed", action="store_true", default=False,
-                        help="Relax atomic positions in deformed structures")
-    parser.add_argument("--symmetry", action="store_true", default=False,
-                        help="Use symmetry to reduce number of deformations")
+    parser.add_argument(
+        "--structure", required=True, help="Path to structure file (CIF, POSCAR, etc.)"
+    )
+    parser.add_argument(
+        "--model_type",
+        required=True,
+        choices=["mace", "fairchem", "matgl"],
+        help="MLIP type",
+    )
+    parser.add_argument(
+        "--model_name", default=None, help="Specific model name (optional)"
+    )
+    parser.add_argument(
+        "--norm_strains",
+        nargs="+",
+        type=float,
+        default=[-0.01, -0.005, 0.005, 0.01],
+        help="Normal strain magnitudes",
+    )
+    parser.add_argument(
+        "--shear_strains",
+        nargs="+",
+        type=float,
+        default=[-0.06, -0.03, 0.03, 0.06],
+        help="Shear strain magnitudes",
+    )
+    parser.add_argument(
+        "--fmax", type=float, default=0.1, help="Force convergence tolerance (eV/Å)"
+    )
+    parser.add_argument(
+        "--relax_structure",
+        action="store_true",
+        default=True,
+        help="Relax the structure before applying strains",
+    )
+    parser.add_argument(
+        "--no_relax_structure",
+        action="store_true",
+        default=False,
+        help="Skip structure relaxation",
+    )
+    parser.add_argument(
+        "--relax_deformed",
+        action="store_true",
+        default=False,
+        help="Relax atomic positions in deformed structures",
+    )
+    parser.add_argument(
+        "--symmetry",
+        action="store_true",
+        default=False,
+        help="Use symmetry to reduce number of deformations",
+    )
     parser.add_argument("--output_dir", help="Output directory")
     parser.add_argument("--device", default="auto", help="Device (cpu, cuda, auto)")
 
@@ -183,4 +218,5 @@ if __name__ == "__main__":
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)

@@ -7,11 +7,8 @@ Mocks only the ORCA binary (not SCINE/ASE).
 Run in: orca-agent environment
 """
 
-import json
-import os
 import pytest
 import numpy as np
-from unittest.mock import patch, MagicMock
 
 
 @pytest.mark.orca
@@ -53,7 +50,9 @@ class TestSinglepointSetup:
         props = [su.Property.Energy, su.Property.Gradients, su.Property.Hessian]
         calc.set_required_properties(props)
 
-    def test_hybrid_functional_with_dispersion(self, skip_if_wrong_env, monkeypatch, tmp_path):
+    def test_hybrid_functional_with_dispersion(
+        self, skip_if_wrong_env, monkeypatch, tmp_path
+    ):
         from src.utils.dft.orca_utils import setup_orca_calculator
 
         xyz = self._setup(monkeypatch, tmp_path)
@@ -90,7 +89,11 @@ class TestSinglepointSetup:
             functional="PBE0",
             solvation="SMD",
             solvent="water",
-            extra_calculator_settings={'max_scf_iterations': 200, 'solvent': 'ethanol', 'enforce_scf_criterion': True},
+            extra_calculator_settings={
+                "max_scf_iterations": 200,
+                "solvent": "ethanol",
+                "enforce_scf_criterion": True,
+            },
         )
 
         assert calc.settings["method"] == "PBE0"
@@ -119,7 +122,9 @@ class TestSinglepointUnitConversions:
         forces_ev_ang = -1.0 * gradient_au * HARTREE_TO_EV * BOHR_PER_ANGSTROM
 
         assert forces_ev_ang.shape == (1, 3)
-        assert forces_ev_ang[0, 0] < 0  # Negative gradient -> positive force direction flipped
+        assert (
+            forces_ev_ang[0, 0] < 0
+        )  # Negative gradient -> positive force direction flipped
 
     def test_hessian_conversion(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import HARTREE_TO_EV, BOHR_PER_ANGSTROM

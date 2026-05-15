@@ -14,10 +14,10 @@ plt.rcParams.update({'font.size': 14})
 ```
 
 ## Figure Size and Layout
-- **Aspect Ratio & Size**: 
+- **Aspect Ratio & Size**:
   - **Rectangular Plots (Standard Landscape)**: MUST use `figsize=(6, 5)`.
   - **Square Plots (Correlations / Parity)**: MUST use `figsize=(5, 5)`.
-- **Layout**: Always enforce tight bounding boxes before saving to prevent cut-off labels: 
+- **Layout**: Always enforce tight bounding boxes before saving to prevent cut-off labels:
   `plt.tight_layout()` and `plt.savefig(..., bbox_inches="tight")`.
 
 ## Data Series and Line Styles

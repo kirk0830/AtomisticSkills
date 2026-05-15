@@ -1,9 +1,9 @@
 # Methanol BDE — Homolytic vs Heterolytic (MACE-OMOL)
 
-**Molecule:** Methanol (CH₄O, SMILES: `CO`)  
-**Model:** `MACE-OMOL-extra-large`  
-**Cleavage mode:** `both` (homolytic + heterolytic)  
-**Includes H bonds:** Yes  
+**Molecule:** Methanol (CH₄O, SMILES: `CO`)
+**Model:** `MACE-OMOL-extra-large`
+**Cleavage mode:** `both` (homolytic + heterolytic)
+**Includes H bonds:** Yes
 
 ## How to Reproduce
 

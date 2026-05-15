@@ -137,5 +137,5 @@ mcp_base_register_model(
 
 ---
 
-**Author:** Yu Yao  
+**Author:** Yu Yao
 **Contact:** [GitHub @AI4SciDisc](https://github.com/AI4SciDisc)

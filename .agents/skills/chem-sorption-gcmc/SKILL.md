@@ -79,11 +79,11 @@ python .agents/skills/chem-sorption-gcmc/scripts/run_gcmc.py \
 ```
 
 ## Constraints
-- **Simulation Time**: GCMC with MLIPs can be computationally intensive. Use GPUs when available (`--device cuda`). 
+- **Simulation Time**: GCMC with MLIPs can be computationally intensive. Use GPUs when available (`--device cuda`).
 - **Equilibration**: You MUST check the generated `nmols.png` and `energy.png` inside the `output-dir` to visually confirm that the number of molecules and energy have plateaued (equilibrated). If the trend is still rising/falling at the end of the simulation, you must re-run with more `--steps` (or restart the trajectory).
 - **Restarting**: You can pass `--restart-traj ./out/mc.traj` to continue a previous run.
 
 ---
 
-**Author:** Artur Lyssenko  
+**Author:** Artur Lyssenko
 **Contact:** [GitHub @arturlyssenko12](https://github.com/arturlyssenko12)

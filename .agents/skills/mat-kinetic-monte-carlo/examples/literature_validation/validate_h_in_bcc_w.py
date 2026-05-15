@@ -32,6 +32,7 @@ Requirements:
     - numpy, matplotlib
     - run_lattice_kmc.py from ../../scripts/
 """
+
 from __future__ import annotations
 
 import argparse
@@ -43,6 +44,7 @@ from pathlib import Path
 from typing import Tuple
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -100,15 +102,17 @@ def build_bcc_tsite_lattice(a: float, nx: int, ny: int, nz: int) -> dict:
                         cart_b2 = fb2_img * a
                         dist = np.linalg.norm(cart_b2 - cart_b)
                         if abs(dist - d_hop) < tol:
-                            neighbor_template[b].append({
-                                "basis": b2,
-                                "cell_offset": [dx, dy, dz],
-                            })
+                            neighbor_template[b].append(
+                                {
+                                    "basis": b2,
+                                    "cell_offset": [dx, dy, dz],
+                                }
+                            )
 
     for b in range(n_basis):
-        assert len(neighbor_template[b]) == 4, (
-            f"Basis site {b} has {len(neighbor_template[b])} neighbors, expected 4"
-        )
+        assert (
+            len(neighbor_template[b]) == 4
+        ), f"Basis site {b} has {len(neighbor_template[b])} neighbors, expected 4"
 
     # tile the supercell
     n_sites = n_basis * nx * ny * nz
@@ -121,11 +125,13 @@ def build_bcc_tsite_lattice(a: float, nx: int, ny: int, nz: int) -> dict:
         for cy in range(ny):
             for cz in range(nz):
                 for b in range(n_basis):
-                    frac_coords.append([
-                        (cx + basis_arr[b, 0]) / nx,
-                        (cy + basis_arr[b, 1]) / ny,
-                        (cz + basis_arr[b, 2]) / nz,
-                    ])
+                    frac_coords.append(
+                        [
+                            (cx + basis_arr[b, 0]) / nx,
+                            (cy + basis_arr[b, 1]) / ny,
+                            (cz + basis_arr[b, 2]) / nz,
+                        ]
+                    )
                     index_map[(cx, cy, cz, b)] = idx
                     idx += 1
 
@@ -156,9 +162,9 @@ def build_bcc_tsite_lattice(a: float, nx: int, ny: int, nz: int) -> dict:
 
     # validate: z=4 for all sites, bidirectionality
     for i in range(n_sites):
-        assert len(neighbors[i]) == 4, (
-            f"site {i} has {len(neighbors[i])} neighbors, expected 4"
-        )
+        assert (
+            len(neighbors[i]) == 4
+        ), f"site {i} has {len(neighbors[i])} neighbors, expected 4"
 
     # check bidirectionality: for each edge i->j with shift s,
     # there must be an edge j->i with shift -s
@@ -171,9 +177,7 @@ def build_bcc_tsite_lattice(a: float, nx: int, ny: int, nz: int) -> dict:
                 if nb2["j"] == i and nb2["shift"] == [-s[0], -s[1], -s[2]]:
                     reverse_found = True
                     break
-            assert reverse_found, (
-                f"No reverse edge for {i}->{j} shift={s}"
-            )
+            assert reverse_found, f"No reverse edge for {i}->{j} shift={s}"
 
     return {
         "cell_A": supercell,
@@ -231,12 +235,20 @@ def main() -> None:
         description="Validate KMC engine: H diffusion on BCC W T-site sublattice."
     )
     ap.add_argument("--max_steps", type=int, default=500000)
-    ap.add_argument("--n_replicas", type=int, default=20,
-                    help="Independent replicas per temperature for error bars")
+    ap.add_argument(
+        "--n_replicas",
+        type=int,
+        default=20,
+        help="Independent replicas per temperature for error bars",
+    )
     ap.add_argument("--out_dir", default=".")
-    ap.add_argument("--from_mlip", default=None, metavar="HTST_JSON",
-                    help="Path to htst_results.json from compute_htst_prefactor.py. "
-                         "Uses MLIP-derived barrier and prefactor instead of Yang et al. parameters.")
+    ap.add_argument(
+        "--from_mlip",
+        default=None,
+        metavar="HTST_JSON",
+        help="Path to htst_results.json from compute_htst_prefactor.py. "
+        "Uses MLIP-derived barrier and prefactor instead of Yang et al. parameters.",
+    )
     args = ap.parse_args()
 
     out_dir = Path(args.out_dir)
@@ -322,7 +334,8 @@ def main() -> None:
 
             res = subprocess.run(
                 [sys.executable, str(KMC_SCRIPT), "--config", str(cfg_path)],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
             if res.returncode != 0:
                 print(f"  rep {rep} FAILED:\n{res.stderr[:200]}")
@@ -348,18 +361,22 @@ def main() -> None:
         ratio = D_mean / D_ana
         pct_err = (ratio - 1.0) * 100
 
-        results.append({
-            "T_K": T,
-            "D_kmc_A2_s": D_mean,
-            "D_kmc_std_A2_s": D_std,
-            "D_kmc_sem_A2_s": D_sem,
-            "D_analytical_A2_s": D_ana,
-            "ratio": ratio,
-            "pct_error": pct_err,
-            "n_replicas": len(D_replicas),
-        })
+        results.append(
+            {
+                "T_K": T,
+                "D_kmc_A2_s": D_mean,
+                "D_kmc_std_A2_s": D_std,
+                "D_kmc_sem_A2_s": D_sem,
+                "D_analytical_A2_s": D_ana,
+                "ratio": ratio,
+                "pct_error": pct_err,
+                "n_replicas": len(D_replicas),
+            }
+        )
 
-        print(f"  D_kmc        = {D_mean:.6e} +/- {D_sem:.2e} A^2/s  ({len(D_replicas)} reps)")
+        print(
+            f"  D_kmc        = {D_mean:.6e} +/- {D_sem:.2e} A^2/s  ({len(D_replicas)} reps)"
+        )
         print(f"  D_analytical = {D_ana:.6e} A^2/s")
         print(f"  ratio        = {ratio:.4f}  ({pct_err:+.2f}%)")
 
@@ -368,7 +385,9 @@ def main() -> None:
         return
 
     print("\n" + "=" * 88)
-    print(f"{'T (K)':>8} {'D_kmc (A^2/s)':>16} {'D_anal (A^2/s)':>16} {'ratio':>8} {'err%':>8} {'reps':>5}")
+    print(
+        f"{'T (K)':>8} {'D_kmc (A^2/s)':>16} {'D_anal (A^2/s)':>16} {'ratio':>8} {'err%':>8} {'reps':>5}"
+    )
     print("-" * 88)
     for r in results:
         print(
@@ -432,22 +451,44 @@ def main() -> None:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.5))
 
         # left panel: Arrhenius with 3 lines
-        ax1.errorbar(inv_T, D_kmc_m2, yerr=D_sem_m2 * 1.96, fmt="s", color="C3",
-                     markersize=8, capsize=4, label=f"MLIP KMC (Eb={barrier_eV:.3f} eV)")
+        ax1.errorbar(
+            inv_T,
+            D_kmc_m2,
+            yerr=D_sem_m2 * 1.96,
+            fmt="s",
+            color="C3",
+            markersize=8,
+            capsize=4,
+            label=f"MLIP KMC (Eb={barrier_eV:.3f} eV)",
+        )
 
         # MLIP analytical line
-        D_mlip_fine = np.array([d_analytical(a, nu, barrier_eV, t) for t in T_fine]) * 1e-20
+        D_mlip_fine = (
+            np.array([d_analytical(a, nu, barrier_eV, t) for t in T_fine]) * 1e-20
+        )
         ax1.semilogy(inv_T_fine, D_mlip_fine, "-", color="C3", linewidth=1.5, alpha=0.5)
 
         # Yang et al. literature line
         D_yang_fine = np.array([d_yang(t) for t in T_fine])
-        ax1.semilogy(inv_T_fine, D_yang_fine, "-", color="C1", linewidth=1.5,
-                     label="Yang et al. (2016) hTST KMC")
+        ax1.semilogy(
+            inv_T_fine,
+            D_yang_fine,
+            "-",
+            color="C1",
+            linewidth=1.5,
+            label="Yang et al. (2016) hTST KMC",
+        )
 
         # Frauenfelder experimental
         D_frau_fine = np.array([d_frauenfelder(t) for t in T_fine])
-        ax1.semilogy(inv_T_fine, D_frau_fine, "-.", color="C2", linewidth=1.5,
-                     label="Frauenfelder (1969) expt.")
+        ax1.semilogy(
+            inv_T_fine,
+            D_frau_fine,
+            "-.",
+            color="C2",
+            linewidth=1.5,
+            label="Frauenfelder (1969) expt.",
+        )
 
         ax1.set_xlabel("1000/T (1/K)")
         ax1.set_ylabel(r"D (m$^2$/s)")
@@ -463,15 +504,28 @@ def main() -> None:
         ax2.axhline(1.0, color="gray", linestyle="--", linewidth=1)
         ax2.axhspan(0.5, 2.0, color="yellow", alpha=0.1, label="within 2x")
         ax2.axhspan(0.8, 1.25, color="green", alpha=0.15, label=r"$\pm$25%")
-        ax2.errorbar(temps, ratio_to_yang, yerr=ratio_sem_yang * 1.96,
-                     fmt="s-", color="C3", markersize=8, capsize=4,
-                     label="MLIP / Yang")
+        ax2.errorbar(
+            temps,
+            ratio_to_yang,
+            yerr=ratio_sem_yang * 1.96,
+            fmt="s-",
+            color="C3",
+            markersize=8,
+            capsize=4,
+            label="MLIP / Yang",
+        )
 
         # also show ratio to Frauenfelder
         D_frau_at_T = np.array([d_frauenfelder(t) for t in temps])
         ratio_to_frau = D_kmc_m2 / D_frau_at_T
-        ax2.plot(temps, ratio_to_frau, "d--", color="C2", markersize=6,
-                 label="MLIP / Frauenfelder")
+        ax2.plot(
+            temps,
+            ratio_to_frau,
+            "d--",
+            color="C2",
+            markersize=6,
+            label="MLIP / Frauenfelder",
+        )
 
         ax2.set_xlabel("T (K)")
         ax2.set_ylabel(r"$D_{\mathrm{MLIP\text{-}KMC}} / D_{\mathrm{lit.}}$")
@@ -488,16 +542,38 @@ def main() -> None:
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.5))
 
         # left panel: Arrhenius plot (D in m^2/s)
-        ax1.errorbar(inv_T, D_kmc_m2, yerr=D_sem_m2 * 1.96, fmt="o", color="C0",
-                     markersize=8, capsize=4, label="KMC (this engine)")
+        ax1.errorbar(
+            inv_T,
+            D_kmc_m2,
+            yerr=D_sem_m2 * 1.96,
+            fmt="o",
+            color="C0",
+            markersize=8,
+            capsize=4,
+            label="KMC (this engine)",
+        )
 
-        D_ana_fine = np.array([d_analytical(a, nu, barrier_eV, t) for t in T_fine]) * 1e-20
-        ax1.semilogy(inv_T_fine, D_ana_fine, "-", color="C1", linewidth=1.5,
-                     label="Analytical / Yang et al. (2016)")
+        D_ana_fine = (
+            np.array([d_analytical(a, nu, barrier_eV, t) for t in T_fine]) * 1e-20
+        )
+        ax1.semilogy(
+            inv_T_fine,
+            D_ana_fine,
+            "-",
+            color="C1",
+            linewidth=1.5,
+            label="Analytical / Yang et al. (2016)",
+        )
 
         D_frau_fine = np.array([d_frauenfelder(t) for t in T_fine])
-        ax1.semilogy(inv_T_fine, D_frau_fine, "-.", color="C2", linewidth=1.5,
-                     label="Frauenfelder (1969) expt.")
+        ax1.semilogy(
+            inv_T_fine,
+            D_frau_fine,
+            "-.",
+            color="C2",
+            linewidth=1.5,
+            label="Frauenfelder (1969) expt.",
+        )
 
         ax1.set_xlabel("1000/T (1/K)")
         ax1.set_ylabel(r"D (m$^2$/s)")
@@ -509,8 +585,15 @@ def main() -> None:
         ratio_sem = D_sem_arr / D_ana_arr
         ax2.axhline(1.0, color="gray", linestyle="--", linewidth=1)
         ax2.axhspan(0.95, 1.05, color="green", alpha=0.15, label=r"$\pm$5%")
-        ax2.errorbar(temps, ratios, yerr=ratio_sem * 1.96, fmt="o-", color="C0",
-                     markersize=8, capsize=4)
+        ax2.errorbar(
+            temps,
+            ratios,
+            yerr=ratio_sem * 1.96,
+            fmt="o-",
+            color="C0",
+            markersize=8,
+            capsize=4,
+        )
         ax2.set_xlabel("T (K)")
         ax2.set_ylabel(r"$D_{\mathrm{KMC}} / D_{\mathrm{analytical}}$")
         ax2.set_title("Accuracy: KMC / Analytical")

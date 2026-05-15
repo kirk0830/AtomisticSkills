@@ -73,12 +73,12 @@ python .agents/skills/mat-disorder/scripts/iterative_ce_training.py \
 6.  **Coverage Check**: Identifies if MC-sampled structures are "new" (uncovered by training set) and adds them to the next iteration loop.
 
 ## Constraints
-- **Environment**: 
+- **Environment**:
     - `base-agent` for basic sampling.
     - `smol-agent` for iterative training and smol-based analysis.
 - **Fractional Occupancies**: The input must be a format that carries occupancy information (like CIF with `_atom_site_occupancy`).
 - **Algorithm**: Uses `ALGO_FAST` for efficiency; while fast, it may not find the global Ewald minimum for extremely large cells.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

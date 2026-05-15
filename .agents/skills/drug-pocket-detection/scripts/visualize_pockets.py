@@ -28,8 +28,16 @@ from pymol import cmd
 
 
 PALETTE = [
-    "red", "tv_orange", "yellow", "green", "cyan",
-    "blue", "magenta", "deepteal", "wheat", "salmon",
+    "red",
+    "tv_orange",
+    "yellow",
+    "green",
+    "cyan",
+    "blue",
+    "magenta",
+    "deepteal",
+    "wheat",
+    "salmon",
 ]
 
 
@@ -60,7 +68,9 @@ def main() -> None:
     parser.add_argument("--protein", required=True, help="Protein structure file.")
     parser.add_argument("--pockets", required=True, help="JSON from detect_pockets.py.")
     parser.add_argument("--output", required=True, help="Output PNG path.")
-    parser.add_argument("--top_n", type=int, default=3, help="Number of pockets to render (default: 3).")
+    parser.add_argument(
+        "--top_n", type=int, default=3, help="Number of pockets to render (default: 3)."
+    )
     parser.add_argument("--width", type=int, default=1200, help="Image width (px).")
     parser.add_argument("--height", type=int, default=900, help="Image height (px).")
     args = parser.parse_args()

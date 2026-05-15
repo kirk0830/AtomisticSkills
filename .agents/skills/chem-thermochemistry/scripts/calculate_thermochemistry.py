@@ -38,7 +38,6 @@ from ase.build import molecule as ase_molecule
 from ase.vibrations import Vibrations
 from ase.thermochemistry import IdealGasThermo
 from ase.optimize import LBFGS
-from ase.units import kJ, mol
 import numpy as np
 
 # Configure logging
@@ -54,13 +53,13 @@ EV_TO_KJMOL = 96.4853
 # Lookup table for spin (S, not 2S+1) and symmetry number of common molecules
 # spin = number of unpaired electrons / 2 (e.g., O2 triplet -> spin=1)
 MOLECULE_PROPERTIES: dict[str, dict[str, Any]] = {
-    "H2":  {"spin": 0, "symmetrynumber": 2},
-    "O2":  {"spin": 1, "symmetrynumber": 2},
-    "N2":  {"spin": 0, "symmetrynumber": 2},
+    "H2": {"spin": 0, "symmetrynumber": 2},
+    "O2": {"spin": 1, "symmetrynumber": 2},
+    "N2": {"spin": 0, "symmetrynumber": 2},
     "H2O": {"spin": 0, "symmetrynumber": 2},
     "CO2": {"spin": 0, "symmetrynumber": 2},
-    "CO":  {"spin": 0, "symmetrynumber": 1},
-    "NO":  {"spin": 0.5, "symmetrynumber": 1},
+    "CO": {"spin": 0, "symmetrynumber": 1},
+    "NO": {"spin": 0.5, "symmetrynumber": 1},
     "NO2": {"spin": 0.5, "symmetrynumber": 2},
     "NH3": {"spin": 0, "symmetrynumber": 3},
     "CH4": {"spin": 0, "symmetrynumber": 12},
@@ -68,8 +67,8 @@ MOLECULE_PROPERTIES: dict[str, dict[str, Any]] = {
     "C2H4": {"spin": 0, "symmetrynumber": 4},
     "C2H6": {"spin": 0, "symmetrynumber": 6},
     "HCl": {"spin": 0, "symmetrynumber": 1},
-    "HF":  {"spin": 0, "symmetrynumber": 1},
-    "F2":  {"spin": 0, "symmetrynumber": 2},
+    "HF": {"spin": 0, "symmetrynumber": 1},
+    "F2": {"spin": 0, "symmetrynumber": 2},
     "Cl2": {"spin": 0, "symmetrynumber": 2},
     "SO2": {"spin": 0, "symmetrynumber": 2},
     "H2S": {"spin": 0, "symmetrynumber": 2},
@@ -78,6 +77,7 @@ MOLECULE_PROPERTIES: dict[str, dict[str, Any]] = {
 
 
 from src.utils.mlips.loader import load_wrapper
+
 
 def check_linearity(atoms, tol: float = 0.01) -> bool:
     """
@@ -117,7 +117,9 @@ def get_geometry_string(atoms) -> str:
     return "nonlinear"
 
 
-def get_molecule_properties(name: str, spin_overrides: dict, sym_overrides: dict) -> tuple[float, int]:
+def get_molecule_properties(
+    name: str, spin_overrides: dict, sym_overrides: dict
+) -> tuple[float, int]:
     """
     Get spin and symmetry number for a molecule.
 
@@ -149,7 +151,9 @@ def get_molecule_properties(name: str, spin_overrides: dict, sym_overrides: dict
     return float(spin), int(symmetrynumber)
 
 
-def parse_reaction(reaction_str: str) -> tuple[list[tuple[int, str]], list[tuple[int, str]]]:
+def parse_reaction(
+    reaction_str: str,
+) -> tuple[list[tuple[int, str]], list[tuple[int, str]]]:
     """
     Parse a reaction string into reactants and products.
 
@@ -272,7 +276,9 @@ def compute_species_thermo(
     all_frequencies_cm1 = []
     real_mode_info = []
 
-    for i, (e_ev, f_cm1) in enumerate(zip(vib_energies_complex, frequencies_cm1_complex)):
+    for i, (e_ev, f_cm1) in enumerate(
+        zip(vib_energies_complex, frequencies_cm1_complex)
+    ):
         freq_real = float(np.real(f_cm1))
         freq_imag = float(np.imag(f_cm1))
 
@@ -283,11 +289,13 @@ def compute_species_thermo(
         else:
             all_frequencies_cm1.append(round(freq_real, 1))
             real_vib_energies.append(float(np.real(e_ev)))
-            real_mode_info.append({
-                "index": i,
-                "frequency_cm1": freq_real,
-                "energy_meV": float(np.real(e_ev)) * 1000.0,
-            })
+            real_mode_info.append(
+                {
+                    "index": i,
+                    "frequency_cm1": freq_real,
+                    "energy_meV": float(np.real(e_ev)) * 1000.0,
+                }
+            )
 
     logger.info(f"  Found {len(real_vib_energies)} real vibrational modes")
 
@@ -308,12 +316,22 @@ def compute_species_thermo(
 
     # Compute thermodynamic quantities
     enthalpy = thermo.get_enthalpy(temperature=temperature, verbose=False)
-    entropy = thermo.get_entropy(temperature=temperature, pressure=pressure, verbose=False)
-    gibbs = thermo.get_gibbs_energy(temperature=temperature, pressure=pressure, verbose=False)
+    entropy = thermo.get_entropy(
+        temperature=temperature, pressure=pressure, verbose=False
+    )
+    gibbs = thermo.get_gibbs_energy(
+        temperature=temperature, pressure=pressure, verbose=False
+    )
 
-    logger.info(f"  H({temperature} K) = {enthalpy:.6f} eV = {enthalpy * EV_TO_KJMOL:.2f} kJ/mol")
-    logger.info(f"  S({temperature} K) = {entropy:.6e} eV/K = {entropy * EV_TO_KJMOL * 1000:.2f} J/(mol·K)")
-    logger.info(f"  G({temperature} K) = {gibbs:.6f} eV = {gibbs * EV_TO_KJMOL:.2f} kJ/mol")
+    logger.info(
+        f"  H({temperature} K) = {enthalpy:.6f} eV = {enthalpy * EV_TO_KJMOL:.2f} kJ/mol"
+    )
+    logger.info(
+        f"  S({temperature} K) = {entropy:.6e} eV/K = {entropy * EV_TO_KJMOL * 1000:.2f} J/(mol·K)"
+    )
+    logger.info(
+        f"  G({temperature} K) = {gibbs:.6f} eV = {gibbs * EV_TO_KJMOL:.2f} kJ/mol"
+    )
 
     result = {
         "species": species_name,
@@ -370,37 +388,75 @@ def main():
 
     # Input mode
     mode_group = parser.add_mutually_exclusive_group(required=True)
-    mode_group.add_argument("--molecule", help="ASE built-in molecule name (e.g., H2O, CO2)")
-    mode_group.add_argument("--structure", help="Path to structure file (.xyz, .cif, etc.)")
-    mode_group.add_argument("--reaction", help="Balanced reaction string (e.g., '2H2 + O2 -> 2H2O')")
+    mode_group.add_argument(
+        "--molecule", help="ASE built-in molecule name (e.g., H2O, CO2)"
+    )
+    mode_group.add_argument(
+        "--structure", help="Path to structure file (.xyz, .cif, etc.)"
+    )
+    mode_group.add_argument(
+        "--reaction", help="Balanced reaction string (e.g., '2H2 + O2 -> 2H2O')"
+    )
 
     # Thermodynamic parameters
-    parser.add_argument("--temperature", type=float, default=298.15,
-                        help="Temperature in Kelvin")
-    parser.add_argument("--pressure", type=float, default=101325,
-                        help="Pressure in Pascals (default: 1 atm)")
+    parser.add_argument(
+        "--temperature", type=float, default=298.15, help="Temperature in Kelvin"
+    )
+    parser.add_argument(
+        "--pressure",
+        type=float,
+        default=101325,
+        help="Pressure in Pascals (default: 1 atm)",
+    )
 
     # Model parameters
-    parser.add_argument("--model_type", required=True, choices=["mace", "fairchem", "matgl"],
-                        help="MLIP type")
-    parser.add_argument("--model_name", default=None,
-                        help="Specific model name (optional)")
-    parser.add_argument("--task", default=None,
-                        help="Task/Head name (e.g. omol, omat) for multi-task models")
+    parser.add_argument(
+        "--model_type",
+        required=True,
+        choices=["mace", "fairchem", "matgl"],
+        help="MLIP type",
+    )
+    parser.add_argument(
+        "--model_name", default=None, help="Specific model name (optional)"
+    )
+    parser.add_argument(
+        "--task",
+        default=None,
+        help="Task/Head name (e.g. omol, omat) for multi-task models",
+    )
 
     # Override parameters
-    parser.add_argument("--spin", default=None,
-                        help="Spin override as name:value pairs (e.g., 'O2:1,NO:0.5')")
-    parser.add_argument("--symmetry_number", default=None,
-                        help="Symmetry number override as name:value pairs (e.g., 'H2:2,CH4:12')")
+    parser.add_argument(
+        "--spin",
+        default=None,
+        help="Spin override as name:value pairs (e.g., 'O2:1,NO:0.5')",
+    )
+    parser.add_argument(
+        "--symmetry_number",
+        default=None,
+        help="Symmetry number override as name:value pairs (e.g., 'H2:2,CH4:12')",
+    )
 
     # Vibration parameters
-    parser.add_argument("--delta", type=float, default=0.01,
-                        help="Finite-difference displacement in Angstrom")
-    parser.add_argument("--nfree", type=int, default=2, choices=[2, 4],
-                        help="Number of displacements per DOF")
-    parser.add_argument("--fmax", type=float, default=0.01,
-                        help="Force convergence for relaxation (eV/Angstrom)")
+    parser.add_argument(
+        "--delta",
+        type=float,
+        default=0.01,
+        help="Finite-difference displacement in Angstrom",
+    )
+    parser.add_argument(
+        "--nfree",
+        type=int,
+        default=2,
+        choices=[2, 4],
+        help="Number of displacements per DOF",
+    )
+    parser.add_argument(
+        "--fmax",
+        type=float,
+        default=0.01,
+        help="Force convergence for relaxation (eV/Angstrom)",
+    )
 
     # Output
     parser.add_argument("--output_dir", help="Output directory")
@@ -410,7 +466,9 @@ def main():
 
     # Parse overrides
     spin_overrides = parse_overrides(args.spin)
-    sym_overrides = {k: int(v) for k, v in parse_overrides(args.symmetry_number).items()}
+    sym_overrides = {
+        k: int(v) for k, v in parse_overrides(args.symmetry_number).items()
+    }
 
     # Determine output directory
     if not args.output_dir:
@@ -418,7 +476,9 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     # Load MLIP
-    wrapper = load_wrapper(args.model_type, args.model_name, device=args.device, task=args.task)
+    wrapper = load_wrapper(
+        args.model_type, args.model_name, device=args.device, task=args.task
+    )
 
     if args.reaction:
         # ===== Reaction mode =====
@@ -475,7 +535,9 @@ def main():
         logger.info(f"Temperature: {args.temperature} K, Pressure: {args.pressure} Pa")
         logger.info(f"{'='*60}")
         logger.info(f"  ΔH = {delta_h_ev:.6f} eV = {delta_h_kjmol:.2f} kJ/mol")
-        logger.info(f"  ΔS = {delta_s_ev_per_k:.6e} eV/K = {delta_s_jmolk:.2f} J/(mol·K)")
+        logger.info(
+            f"  ΔS = {delta_s_ev_per_k:.6e} eV/K = {delta_s_jmolk:.2f} J/(mol·K)"
+        )
         logger.info(f"  ΔG = {delta_g_ev:.6f} eV = {delta_g_kjmol:.2f} kJ/mol")
         logger.info(f"{'='*60}")
 
@@ -502,7 +564,9 @@ def main():
 
     else:
         # ===== Single molecule mode =====
-        species_name = args.molecule if args.molecule else os.path.basename(args.structure)
+        species_name = (
+            args.molecule if args.molecule else os.path.basename(args.structure)
+        )
         result = compute_species_thermo(
             species_name=args.molecule or species_name,
             wrapper=wrapper,
@@ -533,6 +597,7 @@ def main():
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

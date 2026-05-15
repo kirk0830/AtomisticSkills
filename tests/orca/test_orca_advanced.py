@@ -8,7 +8,6 @@ consistency with the skill's environment.
 Run in: orca-agent environment
 """
 
-import json
 import os
 import pytest
 from importlib import util as importlib_util
@@ -79,7 +78,9 @@ def _load_module(script_name):
         f"../../.agent/skills/chem-dft-orca-advanced-calculation/scripts/{script_name}",
     )
     script_path = os.path.abspath(script_path)
-    spec = importlib_util.spec_from_file_location(script_name.replace(".py", ""), script_path)
+    spec = importlib_util.spec_from_file_location(
+        script_name.replace(".py", ""), script_path
+    )
     mod = importlib_util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -115,7 +116,9 @@ class TestInputValidation:
 
     def test_missing_maxcore(self, tmp_path):
         inp_file = tmp_path / "nomem.inp"
-        inp_file.write_text("! B3LYP def2-TZVP\n%pal nprocs 4 end\n* xyz 0 1\nH 0 0 0\n*\n")
+        inp_file.write_text(
+            "! B3LYP def2-TZVP\n%pal nprocs 4 end\n* xyz 0 1\nH 0 0 0\n*\n"
+        )
         warnings = self.runner.validate_input_file(str(inp_file))
 
         assert any("maxcore" in w.lower() for w in warnings)
@@ -157,7 +160,9 @@ class TestRunnerEnergyParser:
         result = self.runner.parse_final_energy(str(out_file))
 
         assert result["energy_hartree"] == pytest.approx(-76.342978150000)
-        assert result["energy_eV"] == pytest.approx(-76.342978150000 * 27.211386245988, rel=1e-6)
+        assert result["energy_eV"] == pytest.approx(
+            -76.342978150000 * 27.211386245988, rel=1e-6
+        )
         assert result["scf_converged"] is True
         assert result["scf_cycles"] == 12
         assert "2 min 34 sec" in result["total_run_time"]
@@ -192,7 +197,9 @@ class TestOutputParser:
         result = self.parser.parse_energy(SAMPLE_ORCA_OUTPUT)
 
         assert result["final_energy_hartree"] == pytest.approx(-76.342978150000)
-        assert result["final_energy_eV"] == pytest.approx(-76.342978150000 * 27.211386245988, rel=1e-6)
+        assert result["final_energy_eV"] == pytest.approx(
+            -76.342978150000 * 27.211386245988, rel=1e-6
+        )
         assert result["nuclear_repulsion_hartree"] == pytest.approx(9.08734440)
         assert result["dispersion_correction_hartree"] == pytest.approx(-0.003412)
 
@@ -238,7 +245,9 @@ class TestOutputParser:
         )
 
     def test_parse_all(self, tmp_path):
-        combined = SAMPLE_ORCA_OUTPUT + "\n" + SAMPLE_FREQ_OUTPUT + "\n" + SAMPLE_THERMO_OUTPUT
+        combined = (
+            SAMPLE_ORCA_OUTPUT + "\n" + SAMPLE_FREQ_OUTPUT + "\n" + SAMPLE_THERMO_OUTPUT
+        )
         out_file = tmp_path / "full.out"
         out_file.write_text(combined)
 

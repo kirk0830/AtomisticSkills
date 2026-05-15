@@ -1,13 +1,13 @@
 # FAIRChem Fine-Tuning Example: Softening Dataset
 
-This example demonstrates how to fine-tune the `uma-s-1p1` foundation model on a [softening dataset](https://figshare.com/articles/dataset/WBM_high_energy_states/27307776?file=50005317) containing high-energy crystal structures. 
+This example demonstrates how to fine-tune the `uma-s-1p1` foundation model on a [softening dataset](https://figshare.com/articles/dataset/WBM_high_energy_states/27307776?file=50005317) containing high-energy crystal structures.
 
 ## Goal
 To document a functional 10-epoch fine-tuning workflow on challenging high-energy VASP data, proving the stability of the FAIRChem fine-tuning when thermodynamic constraints (energy, forces, and particularly stress units) are aligned correctly.
 
 ## Instructions
 
-### 1. Prepare Training Data 
+### 1. Prepare Training Data
 The dataset is processed using the `prepare_fairchem_data.py` script. The training data must contain `structure` (pymatgen dict) or `atoms`, along with labeled properties.
 
 Because the raw `vasp_s` labels in this WBM extraction are recorded in `kB`, we MUST pass the `--vasp-stress-conversion` flag to multiply them by `-1/1602.1766208` during extraction. The script also automatically unravels multi-layer dictionaries (e.g., `{wbm_id: [{config_id: {data}}]}`).
@@ -63,5 +63,5 @@ This directory contains the artifacts generated from a 10-epoch execution of the
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

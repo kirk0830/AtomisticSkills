@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # Dataset index mapping used by ADiT
 # 0 -> MP20 (periodic crystals), 1 -> QM9 (non-periodic molecules)
 GENERATION_TYPE_TO_DATASET_IDX = {
-    "crystals": 0,   # MP20
+    "crystals": 0,  # MP20
     "molecules": 1,  # QM9
 }
 
@@ -79,9 +79,7 @@ class ADiTWrapper:
         # Find the AADT repo path
         if adit_repo_path is None:
             # Try common locations
-            project_root = os.environ.get(
-                "PYTHONPATH", ""
-            ).split(":")[0]
+            project_root = os.environ.get("PYTHONPATH", "").split(":")[0]
             # Look for the AADT repo as a sibling of the project root,
             # or in common locations relative to the project.
             project_dir = os.path.dirname(project_root) if project_root else ""
@@ -113,7 +111,9 @@ class ADiTWrapper:
         sys.path.insert(0, self.adit_repo_path)
 
         # Remove any cached 'src' module so Python re-discovers it from the new path order
-        modules_to_remove = [k for k in sys.modules if k == "src" or k.startswith("src.")]
+        modules_to_remove = [
+            k for k in sys.modules if k == "src" or k.startswith("src.")
+        ]
         for mod_key in modules_to_remove:
             del sys.modules[mod_key]
         importlib.invalidate_caches()
@@ -129,7 +129,6 @@ class ADiTWrapper:
 
         self.is_loaded = True
         logger.info("ADiT model loaded successfully")
-
 
     def _download_checkpoints(self) -> None:
         """Download pretrained checkpoints from HuggingFace Hub."""
@@ -148,9 +147,13 @@ class ADiTWrapper:
                 local_dir=ckpt_dir,
             )
             self.diffusion_ckpt_path = downloaded_path
-            logger.info(f"Downloaded diffusion checkpoint to: {self.diffusion_ckpt_path}")
+            logger.info(
+                f"Downloaded diffusion checkpoint to: {self.diffusion_ckpt_path}"
+            )
         else:
-            logger.info(f"Using cached diffusion checkpoint: {self.diffusion_ckpt_path}")
+            logger.info(
+                f"Using cached diffusion checkpoint: {self.diffusion_ckpt_path}"
+            )
 
         # Download VAE checkpoint (vae.ckpt at HF repo root)
         self.vae_ckpt_path = os.path.join(ckpt_dir, "vae.ckpt")
@@ -185,7 +188,9 @@ class ADiTWrapper:
         # Load the diffusion checkpoint
         # The checkpoint stores denoiser and interpolant as pre-instantiated nn.Module
         # objects in hyper_parameters, while the trained weights are in state_dict.
-        ckpt = torch.load(self.diffusion_ckpt_path, map_location="cpu", weights_only=False)
+        ckpt = torch.load(
+            self.diffusion_ckpt_path, map_location="cpu", weights_only=False
+        )
         hparams = ckpt.get("hyper_parameters", {})
         state_dict = ckpt.get("state_dict", {})
 
@@ -193,6 +198,7 @@ class ADiTWrapper:
         denoiser = hparams.get("denoiser")
         if denoiser is None:
             from src.models.denoisers.dit import DiT
+
             denoiser = DiT(d_x=8, d_model=768, nhead=12, num_layers=12, num_datasets=2)
         self.denoiser = denoiser
 
@@ -211,9 +217,13 @@ class ADiTWrapper:
         interpolant = hparams.get("interpolant")
         if interpolant is None:
             from src.models.interpolants.flow_matching import FlowMatchingInterpolant
+
             interpolant = FlowMatchingInterpolant(
-                min_t=1e-2, corrupt=True, num_timesteps=100,
-                self_condition=True, self_condition_prob=0.5
+                min_t=1e-2,
+                corrupt=True,
+                num_timesteps=100,
+                self_condition=True,
+                self_condition_prob=0.5,
             )
         self.interpolant = interpolant
 
@@ -273,6 +283,7 @@ class ADiTWrapper:
     def _load_distribution_from_data(self, dataset_name: str, data_path: str) -> None:
         """Load atom count distribution from processed PyG dataset files."""
         import glob
+
         # Try to load from processed .pt files
         pt_files = glob.glob(os.path.join(data_path, "*.pt"))
         if pt_files:
@@ -351,8 +362,10 @@ class ADiTWrapper:
             # Create dataset_idx tensor
             # NOTE: 0 -> null class within DiT, while 0 -> MP20 elsewhere, so +1
             dataset_idx_tensor = torch.full(
-                (current_batch_size,), dataset_idx + 1,
-                dtype=torch.int64, device=self.device
+                (current_batch_size,),
+                dataset_idx + 1,
+                dtype=torch.int64,
+                device=self.device,
             )
 
             # No spacegroup conditioning
@@ -363,8 +376,7 @@ class ADiTWrapper:
             # Create token mask
             max_tokens = max(sample_lengths).item()
             token_mask = torch.zeros(
-                current_batch_size, max_tokens,
-                dtype=torch.bool, device=self.device
+                current_batch_size, max_tokens, dtype=torch.bool, device=self.device
             )
             for idx, length in enumerate(sample_lengths):
                 token_mask[idx, :length] = True
@@ -389,11 +401,11 @@ class ADiTWrapper:
                 "num_atoms": sample_lengths,
                 "batch": torch.repeat_interleave(
                     torch.arange(len(sample_lengths), device=self.device),
-                    sample_lengths
+                    sample_lengths,
                 ),
-                "token_idx": (
-                    torch.cumsum(token_mask, dim=-1, dtype=torch.int64) - 1
-                )[token_mask],
+                "token_idx": (torch.cumsum(token_mask, dim=-1, dtype=torch.int64) - 1)[
+                    token_mask
+                ],
             }
 
             # Decode latents to atomic structures using frozen VAE decoder
@@ -402,12 +414,16 @@ class ADiTWrapper:
             # Extract per-structure predictions
             start_idx = 0
             for idx_in_batch, num_atom in enumerate(sample_lengths.tolist()):
-                atom_types = out["atom_types"].narrow(0, start_idx, num_atom).argmax(dim=1)
+                atom_types = (
+                    out["atom_types"].narrow(0, start_idx, num_atom).argmax(dim=1)
+                )
                 atom_types[atom_types == 0] = 1  # atom type 0 -> 1 (H) to prevent crash
 
                 pos = out["pos"].narrow(0, start_idx, num_atom) * 10.0  # nm to Angstrom
                 frac_coords = out["frac_coords"].narrow(0, start_idx, num_atom)
-                lengths = out["lengths"][idx_in_batch] * float(num_atom) ** (1 / 3)  # unscale
+                lengths = out["lengths"][idx_in_batch] * float(num_atom) ** (
+                    1 / 3
+                )  # unscale
                 angles = torch.rad2deg(out["angles"][idx_in_batch])
 
                 pred = {
@@ -422,9 +438,7 @@ class ADiTWrapper:
                 start_idx += num_atom
 
             structures_generated += current_batch_size
-            logger.info(
-                f"  Generated batch: {structures_generated}/{num_structures}"
-            )
+            logger.info(f"  Generated batch: {structures_generated}/{num_structures}")
 
         # Convert predictions to structure files
         structure_paths = []

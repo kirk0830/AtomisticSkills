@@ -80,7 +80,7 @@ This gate catches bad receptor prep, incorrect protonation, poor box placement, 
 
 ## 4. Compound Library Assembly and Pre-filtering
 
-Build the set of compounds to screen, applying cheap filters early to reduce the docking set. 
+Build the set of compounds to screen, applying cheap filters early to reduce the docking set.
 
 Note: If the user has manually provided a library to screen (e.g., a subset of Enamine REAL that they have downloaded), then you may the querying part and only do the pre-filtering in this stage.
 

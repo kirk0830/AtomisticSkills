@@ -3,8 +3,6 @@ import os
 import sys
 import json
 import logging
-from typing import Dict, Any, Optional, Union, List
-from pathlib import Path
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../"))
@@ -23,15 +21,16 @@ logger = logging.getLogger("Phonon-Skill")
 
 from src.utils.mlips.loader import load_wrapper
 
+
 def run_phonon(args, wrapper, atoms):
     from matcalc import PhononCalc
-    
+
     if not args.output_dir:
         args.output_dir = str(get_current_research_dir() / "vibrational" / "phonon")
     os.makedirs(args.output_dir, exist_ok=True)
-    
+
     calc = wrapper.create_calculator()
-    
+
     # Parse supercell matrix
     if args.supercell_matrix:
         try:
@@ -40,7 +39,7 @@ def run_phonon(args, wrapper, atoms):
             else:
                 s_matrix = args.supercell_matrix
         except Exception:
-             s_matrix = [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
+            s_matrix = [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
     else:
         s_matrix = [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
 
@@ -52,46 +51,68 @@ def run_phonon(args, wrapper, atoms):
         t_min=args.t_min,
         write_phonon=os.path.join(args.output_dir, "phonon.yaml"),
         write_band_structure=os.path.join(args.output_dir, "band_structure.yaml"),
-        write_total_dos=os.path.join(args.output_dir, "total_dos.dat")
+        write_total_dos=os.path.join(args.output_dir, "total_dos.dat"),
     )
-    
+
     logger.info("Starting phonon calculation...")
     result = phonon_calc.calc(atoms)
-    
+
     summary = {
         "thermal_properties_summary": {
-            "temp_300K": {k: v[30] if len(v) > 30 else v[-1] for k, v in result.get("thermal_properties", {}).items() if isinstance(v, (list, np.ndarray))} 
-            if "thermal_properties" in result else "N/A"
+            "temp_300K": {
+                k: v[30] if len(v) > 30 else v[-1]
+                for k, v in result.get("thermal_properties", {}).items()
+                if isinstance(v, (list, np.ndarray))
+            }
+            if "thermal_properties" in result
+            else "N/A"
         },
         "output_dir": args.output_dir,
-        "saved_files": ["phonon.yaml", "band_structure.yaml", "total_dos.dat"]
+        "saved_files": ["phonon.yaml", "band_structure.yaml", "total_dos.dat"],
     }
-    
+
     with open(os.path.join(args.output_dir, "phonon_results.json"), "w") as f:
         json.dump(recursive_tolist(summary), f, indent=4)
-        
+
     logger.info(f"Phonon calculation completed. Results saved to {args.output_dir}")
     return summary
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Calculate phonon properties with MLIPs")
+    parser = argparse.ArgumentParser(
+        description="Calculate phonon properties with MLIPs"
+    )
     parser.add_argument("--structure", required=True, help="Path to structure file")
-    parser.add_argument("--model_type", required=True, choices=["mace", "fairchem", "matgl"], help="Model type")
+    parser.add_argument(
+        "--model_type",
+        required=True,
+        choices=["mace", "fairchem", "matgl"],
+        help="Model type",
+    )
     parser.add_argument("--model_name", default=None, help="Specific model name")
-    parser.add_argument("--supercell_matrix", help="Supercell matrix (JSON string, e.g. [[2,0,0],[0,2,0],[0,0,2]])")
-    parser.add_argument("--t_min", type=float, default=0.0, help="Minimum temperature (K)")
-    parser.add_argument("--t_max", type=float, default=1000.0, help="Maximum temperature (K)")
-    parser.add_argument("--t_step", type=float, default=10.0, help="Temperature step (K)")
+    parser.add_argument(
+        "--supercell_matrix",
+        help="Supercell matrix (JSON string, e.g. [[2,0,0],[0,2,0],[0,0,2]])",
+    )
+    parser.add_argument(
+        "--t_min", type=float, default=0.0, help="Minimum temperature (K)"
+    )
+    parser.add_argument(
+        "--t_max", type=float, default=1000.0, help="Maximum temperature (K)"
+    )
+    parser.add_argument(
+        "--t_step", type=float, default=10.0, help="Temperature step (K)"
+    )
     parser.add_argument("--output_dir", help="Output directory")
     parser.add_argument("--device", default="auto", help="Device (cpu, cuda, auto)")
-    
+
     args = parser.parse_args()
-    
+
     wrapper = load_wrapper(args.model_type, args.model_name, device=args.device)
     atoms = read(args.structure)
     run_phonon(args, wrapper, atoms)
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)

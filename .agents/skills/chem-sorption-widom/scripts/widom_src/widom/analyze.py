@@ -109,11 +109,15 @@ def analyze_widom_insertions(
     # U = < E * exp(-E/RT) > / <exp(-E/RT)> # [eV]
     # If we only hit large interaction energies, we don't get a good estimator due to numerics.
     # Correct for this by shifting the interaction energies.
-    interaction_energies_shift = interaction_energies_valid - interaction_energies_valid.min()
+    interaction_energies_shift = (
+        interaction_energies_valid - interaction_energies_valid.min()
+    )
     boltzmann_factor_shift = np.exp(
         -interaction_energies_shift / (temperature * units._k / units._e)
     )
-    u = (interaction_energies_valid * boltzmann_factor_shift).sum() / boltzmann_factor_shift.sum()
+    u = (
+        interaction_energies_valid * boltzmann_factor_shift
+    ).sum() / boltzmann_factor_shift.sum()
 
     u_std = bootstrap_ratio_std(
         interaction_energies_valid * boltzmann_factor_shift,

@@ -46,9 +46,13 @@ class NewAtomisticDataset(Dataset):
 
         # Add periodic metadata for materials datasets.
         if "cell" in raw:
-            data_kwargs["cell"] = torch.tensor(raw["cell"], dtype=torch.float32).reshape(1, 3, 3)
+            data_kwargs["cell"] = torch.tensor(
+                raw["cell"], dtype=torch.float32
+            ).reshape(1, 3, 3)
         if "pbc" in raw:
-            data_kwargs["pbc"] = torch.tensor(raw["pbc"], dtype=torch.bool).reshape(1, 3)
+            data_kwargs["pbc"] = torch.tensor(raw["pbc"], dtype=torch.bool).reshape(
+                1, 3
+            )
 
         data = Data(**data_kwargs)
 

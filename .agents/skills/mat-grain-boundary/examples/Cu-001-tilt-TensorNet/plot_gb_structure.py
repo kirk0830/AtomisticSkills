@@ -1,5 +1,4 @@
 import argparse
-from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -53,10 +52,10 @@ def plot_gb_structure(cif_path: str, output_path: str):
         fontsize=12,
         fontweight="bold",
     )
-    
+
     # Position the legend outside the core structure visual
     ax.legend(fontsize=11, frameon=False, loc="upper right")
-    
+
     # Adjust ranges to show a bit of padding around the unit cell
     ax.set_xlim(-0.5, x.max() + 0.5)
     ax.set_ylim(-1, lc + 1)
@@ -68,9 +67,21 @@ def plot_gb_structure(cif_path: str, output_path: str):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Plot grain boundary structure projection.")
-    parser.add_argument("--cif-path", type=str, required=True, help="Path to the relaxed grain boundary CIF file.")
-    parser.add_argument("--output-path", type=str, default="gb_structure.png", help="Path to save the output PNG.")
+    parser = argparse.ArgumentParser(
+        description="Plot grain boundary structure projection."
+    )
+    parser.add_argument(
+        "--cif-path",
+        type=str,
+        required=True,
+        help="Path to the relaxed grain boundary CIF file.",
+    )
+    parser.add_argument(
+        "--output-path",
+        type=str,
+        default="gb_structure.png",
+        help="Path to save the output PNG.",
+    )
     args = parser.parse_args()
-    
+
     plot_gb_structure(args.cif_path, args.output_path)

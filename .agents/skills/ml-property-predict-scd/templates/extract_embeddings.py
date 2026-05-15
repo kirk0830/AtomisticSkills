@@ -106,12 +106,30 @@ class FrozenSCDEmbedder:
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description="Load a frozen SCD checkpoint for live embedding inference.")
-    parser.add_argument("--repo-root", default=None, help="Path to SelfConditionedDenoisingAtoms.")
-    parser.add_argument("--model-name", default="ct-scd-pcq", help="Public checkpoint name.")
-    parser.add_argument("--checkpoint-path", default=None, help="Local checkpoint path. Overrides --model-name.")
-    parser.add_argument("--allow-periodic", action="store_true", help="Use periodic/materials graph mode.")
-    parser.add_argument("--noise-in-loader", action="store_true", help="Use loader-side graph mode. Required for periodic data.")
+    parser = argparse.ArgumentParser(
+        description="Load a frozen SCD checkpoint for live embedding inference."
+    )
+    parser.add_argument(
+        "--repo-root", default=None, help="Path to SelfConditionedDenoisingAtoms."
+    )
+    parser.add_argument(
+        "--model-name", default="ct-scd-pcq", help="Public checkpoint name."
+    )
+    parser.add_argument(
+        "--checkpoint-path",
+        default=None,
+        help="Local checkpoint path. Overrides --model-name.",
+    )
+    parser.add_argument(
+        "--allow-periodic",
+        action="store_true",
+        help="Use periodic/materials graph mode.",
+    )
+    parser.add_argument(
+        "--noise-in-loader",
+        action="store_true",
+        help="Use loader-side graph mode. Required for periodic data.",
+    )
     parser.add_argument("--device", default=None, help="Torch device, default auto.")
     return parser
 
@@ -132,7 +150,9 @@ def main():
 
     print(f"Loaded frozen checkpoint from {embedder.checkpoint_path}")
     print(f"emb_dim={embedder.model.emb_dim}")
-    print("Import FrozenSCDEmbedder from this template and call encode_batch(batch) inside your downstream ML pipeline.")
+    print(
+        "Import FrozenSCDEmbedder from this template and call encode_batch(batch) inside your downstream ML pipeline."
+    )
 
 
 if __name__ == "__main__":

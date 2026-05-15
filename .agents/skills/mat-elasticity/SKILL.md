@@ -95,5 +95,5 @@ python .agents/skills/mat-elasticity/scripts/calculate_elasticity.py \
 - **Symmetry**: By default, symmetry reduction is disabled (`--symmetry` flag enables it). This means all 21 independent components are fitted independently.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

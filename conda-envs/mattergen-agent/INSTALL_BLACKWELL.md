@@ -97,7 +97,7 @@ Edit the dependencies section:
 
 ```diff
 # Replace these lines (around line 71-76):
--"torch==2.2.1+cu118; sys_platform == 'linux'", 
+-"torch==2.2.1+cu118; sys_platform == 'linux'",
 -"torchvision==0.17.1+cu118; sys_platform == 'linux'",
 -"torchaudio==2.2.1+cu118; sys_platform == 'linux'",
 -"torch==2.4.1; sys_platform == 'darwin'",
@@ -272,7 +272,7 @@ python -c "import mattergen, torch, torch_geometric, torch_scatter; print('✓ I
 
 ---
 
-**Last Updated**: 2026-02-13  
-**Tested On**: NVIDIA DGX Spark with GB10 GPU (ARM/aarch64)  
-**Author**: Bowen Deng  
+**Last Updated**: 2026-02-13
+**Tested On**: NVIDIA DGX Spark with GB10 GPU (ARM/aarch64)
+**Author**: Bowen Deng
 **Contact**: github.com/bowen-bd

@@ -7,7 +7,6 @@ loading, and calculator setup.
 Run in: orca-agent environment
 """
 
-import os
 import pytest
 import numpy as np
 
@@ -126,7 +125,9 @@ class TestSetupOrcaCalculator:
         assert calc.settings["molecular_charge"] == -1
         assert calc.settings["spin_multiplicity"] == 2
 
-    def test_dispersion_appended_to_method(self, skip_if_wrong_env, monkeypatch, tmp_path):
+    def test_dispersion_appended_to_method(
+        self, skip_if_wrong_env, monkeypatch, tmp_path
+    ):
         from src.utils.dft.orca_utils import setup_orca_calculator
 
         xyz = self._setup(monkeypatch, tmp_path)
@@ -157,14 +158,14 @@ class TestSetupOrcaCalculator:
         assert calc.settings["solvation"] == "CPCM"
         assert calc.settings["solvent"] == "water"
 
-    def test_solvation_without_solvent_raises(self, skip_if_wrong_env, monkeypatch, tmp_path):
+    def test_solvation_without_solvent_raises(
+        self, skip_if_wrong_env, monkeypatch, tmp_path
+    ):
         from src.utils.dft.orca_utils import setup_orca_calculator
 
         xyz = self._setup(monkeypatch, tmp_path)
         with pytest.raises(ValueError, match="requires --solvent"):
-            setup_orca_calculator(
-                structure_path=xyz, solvation="SMD", solvent=None
-            )
+            setup_orca_calculator(structure_path=xyz, solvation="SMD", solvent=None)
 
     def test_nprocs_setting(self, skip_if_wrong_env, monkeypatch, tmp_path):
         from src.utils.dft.orca_utils import setup_orca_calculator
@@ -203,14 +204,14 @@ class TestSetupOrcaCalculator:
 
         assert calc.settings["special_option"] == "TIGHTSCF"
 
-    def test_special_option_empty_not_set(self, skip_if_wrong_env, monkeypatch, tmp_path):
+    def test_special_option_empty_not_set(
+        self, skip_if_wrong_env, monkeypatch, tmp_path
+    ):
         """Empty string should not set special_option."""
         from src.utils.dft.orca_utils import setup_orca_calculator
 
         xyz = self._setup(monkeypatch, tmp_path)
-        calc_empty, _, _ = setup_orca_calculator(
-            structure_path=xyz, special_option=""
-        )
+        calc_empty, _, _ = setup_orca_calculator(structure_path=xyz, special_option="")
         calc_default, _, _ = setup_orca_calculator(
             structure_path=xyz, special_option="NOSOSCF"
         )
@@ -224,42 +225,50 @@ class TestParseJsonSettings:
 
     def test_none_returns_empty(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import parse_json_settings
+
         assert parse_json_settings(None) == {}
 
     def test_empty_string_returns_empty(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import parse_json_settings
+
         assert parse_json_settings("") == {}
 
     def test_valid_json_int(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import parse_json_settings
+
         result = parse_json_settings('{"max_scf_iterations": 128}')
         assert result == {"max_scf_iterations": 128}
         assert isinstance(result["max_scf_iterations"], int)
 
     def test_valid_json_float(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import parse_json_settings
+
         result = parse_json_settings('{"convergence_delta_value": 1e-8}')
         assert result == {"convergence_delta_value": 1e-8}
         assert isinstance(result["convergence_delta_value"], float)
 
     def test_valid_json_string(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import parse_json_settings
+
         result = parse_json_settings('{"auxiliary_basis_set": "def2/J"}')
         assert result == {"auxiliary_basis_set": "def2/J"}
         assert isinstance(result["auxiliary_basis_set"], str)
 
     def test_multiple_keys(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import parse_json_settings
+
         result = parse_json_settings('{"a": 1, "b": 2.5, "c": "x"}')
         assert result == {"a": 1, "b": 2.5, "c": "x"}
 
     def test_invalid_json_raises(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import parse_json_settings
+
         with pytest.raises(ValueError, match="Invalid JSON"):
             parse_json_settings("{not valid json}")
 
     def test_non_dict_raises(self, skip_if_wrong_env):
         from src.utils.dft.orca_utils import parse_json_settings
+
         with pytest.raises(ValueError, match="flat object"):
             parse_json_settings("[1, 2, 3]")
 
@@ -288,7 +297,9 @@ class TestExtraCalculatorSettings:
         )
         assert calc.settings["max_scf_iterations"] == 200
 
-    def test_extra_settings_invalid_key_raises(self, skip_if_wrong_env, monkeypatch, tmp_path):
+    def test_extra_settings_invalid_key_raises(
+        self, skip_if_wrong_env, monkeypatch, tmp_path
+    ):
         """SCINE Settings rejects keys that are not registered."""
         from src.utils.dft.orca_utils import setup_orca_calculator
 

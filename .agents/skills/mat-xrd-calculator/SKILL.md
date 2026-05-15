@@ -54,5 +54,5 @@ Since XRD is a purely geometric property of the crystal structure, it does not r
 For recommendations on relaxation models, see the [ml-foundation-potentials](file:///home/bdeng/projects/AtomisticSkills/.agents/skills/ml-foundation-potentials/SKILL.md) skill.
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

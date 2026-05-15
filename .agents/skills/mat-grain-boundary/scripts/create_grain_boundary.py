@@ -94,11 +94,16 @@ def generate_gb_structures(
         for angle in angles:
             try:
                 # Find symmetric tilt and twist planes up to a logical cutoff
-                possible_planes_dict = GrainBoundaryGenerator.enum_possible_plane_cubic(4, rotation_axis, angle)
+                possible_planes_dict = GrainBoundaryGenerator.enum_possible_plane_cubic(
+                    4, rotation_axis, angle
+                )
                 planes_to_test = []
-                
+
                 for gb_type in ["Symmetric tilt", "Twist"]:
-                    if gb_type in possible_planes_dict and possible_planes_dict[gb_type]:
+                    if (
+                        gb_type in possible_planes_dict
+                        and possible_planes_dict[gb_type]
+                    ):
                         for p_pair in possible_planes_dict[gb_type]:
                             p = tuple(int(x) for x in p_pair[0])
                             p_canon = tuple(sorted([abs(x) for x in p]))
@@ -137,7 +142,7 @@ def generate_gb_structures(
                     else:
                         filename = f"sigma{sigma:03d}_{angle:.2f}deg_{axis_str}.cif"
                         label_str = f"{angle:.2f}°"
-                        
+
                     filepath = output_path / filename
                     with open(filepath, "wt") as fh:
                         fh.write(gb.to(fmt="cif"))
@@ -163,8 +168,10 @@ def generate_gb_structures(
                     )
 
             except Exception as exc:
-                p_err = plane if 'plane' in locals() else 'None'
-                logger.warning(f"  Σ{sigma} angle={angle:.2f}° plane={p_err} failed: {exc}")
+                p_err = plane if "plane" in locals() else "None"
+                logger.warning(
+                    f"  Σ{sigma} angle={angle:.2f}° plane={p_err} failed: {exc}"
+                )
                 continue
 
     logger.info(f"\nGenerated {n_generated} grain boundary structures in {output_path}")
@@ -252,10 +259,13 @@ def main():
 
     print(f"\nSummary: {len(metadata)} GB structures saved to {args.output_dir}")
     print(f"Metadata: {meta_path}")
-    print("Next step: relax with MLIP using relax_cell=False, then run calculate_gb_energy.py")
+    print(
+        "Next step: relax with MLIP using relax_cell=False, then run calculate_gb_energy.py"
+    )
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

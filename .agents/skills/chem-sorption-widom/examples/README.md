@@ -16,10 +16,10 @@ examples/
 ## Examples by Category
 
 ### 1. Widom Insertion (`test_widom.sh`)
-**Script**: `test_widom.sh`  
+**Script**: `test_widom.sh`
 **Function**: Calculates the Henry coefficient and isosteric heat of adsorption of CO2 via random Widom test particle insertions in an MLIP surrogate model.
 
-**Input**: `test_structure_supercell.relaxed.cif` (A pre-relaxed porous framework)  
+**Input**: `test_structure_supercell.relaxed.cif` (A pre-relaxed porous framework)
 **Outputs**:
 - `widom_results.json` (~2KB)
 - `input_configs.yaml`

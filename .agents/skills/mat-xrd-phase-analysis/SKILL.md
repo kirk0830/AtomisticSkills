@@ -8,7 +8,7 @@ category: [materials]
 
 ## Goal
 
-Identify crystalline phases present in an XRD pattern by using DARA's phase search (parallelized tree search with BGMN), following the DARA tutorial  
+Identify crystalline phases present in an XRD pattern by using DARA's phase search (parallelized tree search with BGMN), following the DARA tutorial
 ([Tutorial 2: Phase analysis with tree search](https://cedergrouphub.github.io/dara/notebooks/phase_search.html)).
 
 This skill:
@@ -19,7 +19,7 @@ This skill:
 ## Database Sources
 
 DARA searches for structures in experimental databases. It supports:
-1. **CODDatabase** (default, `--database cod`): Open-access. DARA will attempt to download CIFs from `crystallography.net`. If the website is offline or unreachable, DARA will automatically look for a local copy at `~/COD_2024` (or the path defined in `~/.dara.yaml`). 
+1. **CODDatabase** (default, `--database cod`): Open-access. DARA will attempt to download CIFs from `crystallography.net`. If the website is offline or unreachable, DARA will automatically look for a local copy at `~/COD_2024` (or the path defined in `~/.dara.yaml`).
 2. **ICSDDatabase** (`--database icsd`): Commercial database. Requires a local copy, default path `~/ICSD_2024` (or configured in `~/.dara.yaml`). Online download is not supported for ICSD.
 
 ## Requirements
@@ -142,5 +142,5 @@ All outputs go under `<output_dir>` (default: `phase_analysis_results/` under th
 
 ---
 
-**Author:** Nofit Segal  
+**Author:** Nofit Segal
 **Contact:** [GitHub @nofitsegal](https://github.com/nofitsegal)

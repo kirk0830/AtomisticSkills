@@ -35,22 +35,125 @@ AVAILABLE_MODELS = {
 
 # Chemical symbols table (same as DiffCSP++)
 CHEMICAL_SYMBOLS = [
-    'X',
-    'H', 'He',
-    'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
-    'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
-    'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
-    'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
-    'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
-    'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
-    'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
-    'Ho', 'Er', 'Tm', 'Yb', 'Lu',
-    'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi',
-    'Po', 'At', 'Rn',
-    'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk',
-    'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr',
-    'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc',
-    'Lv', 'Ts', 'Og',
+    "X",
+    "H",
+    "He",
+    "Li",
+    "Be",
+    "B",
+    "C",
+    "N",
+    "O",
+    "F",
+    "Ne",
+    "Na",
+    "Mg",
+    "Al",
+    "Si",
+    "P",
+    "S",
+    "Cl",
+    "Ar",
+    "K",
+    "Ca",
+    "Sc",
+    "Ti",
+    "V",
+    "Cr",
+    "Mn",
+    "Fe",
+    "Co",
+    "Ni",
+    "Cu",
+    "Zn",
+    "Ga",
+    "Ge",
+    "As",
+    "Se",
+    "Br",
+    "Kr",
+    "Rb",
+    "Sr",
+    "Y",
+    "Zr",
+    "Nb",
+    "Mo",
+    "Tc",
+    "Ru",
+    "Rh",
+    "Pd",
+    "Ag",
+    "Cd",
+    "In",
+    "Sn",
+    "Sb",
+    "Te",
+    "I",
+    "Xe",
+    "Cs",
+    "Ba",
+    "La",
+    "Ce",
+    "Pr",
+    "Nd",
+    "Pm",
+    "Sm",
+    "Eu",
+    "Gd",
+    "Tb",
+    "Dy",
+    "Ho",
+    "Er",
+    "Tm",
+    "Yb",
+    "Lu",
+    "Hf",
+    "Ta",
+    "W",
+    "Re",
+    "Os",
+    "Ir",
+    "Pt",
+    "Au",
+    "Hg",
+    "Tl",
+    "Pb",
+    "Bi",
+    "Po",
+    "At",
+    "Rn",
+    "Fr",
+    "Ra",
+    "Ac",
+    "Th",
+    "Pa",
+    "U",
+    "Np",
+    "Pu",
+    "Am",
+    "Cm",
+    "Bk",
+    "Cf",
+    "Es",
+    "Fm",
+    "Md",
+    "No",
+    "Lr",
+    "Rf",
+    "Db",
+    "Sg",
+    "Bh",
+    "Hs",
+    "Mt",
+    "Ds",
+    "Rg",
+    "Cn",
+    "Nh",
+    "Fl",
+    "Mc",
+    "Lv",
+    "Ts",
+    "Og",
 ]
 
 REV_CHEMICAL_SYMBOLS = {ch: i for i, ch in enumerate(CHEMICAL_SYMBOLS)}
@@ -130,13 +233,13 @@ class DiffCSPWrapper:
         import torch
         from hydra import initialize_config_dir
         from hydra.core.global_hydra import GlobalHydra
-        from omegaconf import OmegaConf
 
         # Clear any existing Hydra state
         GlobalHydra.instance().clear()
 
         with initialize_config_dir(str(model_path)):
             from hydra import compose
+
             cfg = compose(config_name="hparams")
 
             model = hydra.utils.instantiate(
@@ -155,24 +258,30 @@ class DiffCSPWrapper:
                     ckpt = str(ck)
                     break
             if ckpt is None and ckpts:
-                ckpt_epochs = np.array([
-                    int(ck.name.split("-")[0].split("=")[1])
-                    for ck in ckpts
-                    if "last" not in ck.name
-                ])
+                ckpt_epochs = np.array(
+                    [
+                        int(ck.name.split("-")[0].split("=")[1])
+                        for ck in ckpts
+                        if "last" not in ck.name
+                    ]
+                )
                 ckpt = str(ckpts[ckpt_epochs.argsort()[-1]])
 
             if ckpt is None:
                 raise FileNotFoundError(f"No checkpoint found in {model_path}")
 
             hparams_file = str(model_path / "hparams.yaml")
-            model = model.load_from_checkpoint(ckpt, hparams_file=hparams_file, strict=True)
+            model = model.load_from_checkpoint(
+                ckpt, hparams_file=hparams_file, strict=True
+            )
 
             # Try to load scalers
             lattice_scaler_path = model_path / "lattice_scaler.pt"
             prop_scaler_path = model_path / "prop_scaler.pt"
             if lattice_scaler_path.exists():
-                model.lattice_scaler = torch.load(lattice_scaler_path, weights_only=False)
+                model.lattice_scaler = torch.load(
+                    lattice_scaler_path, weights_only=False
+                )
             if prop_scaler_path.exists():
                 model.scaler = torch.load(prop_scaler_path, weights_only=False)
 
@@ -207,7 +316,6 @@ class DiffCSPWrapper:
         Returns:
             Dictionary with num_generated, output_dir, structures, metadata_path.
         """
-        import torch
         from pymatgen.io.cif import CifWriter
 
         output_path = Path(output_dir)
@@ -431,7 +539,9 @@ class DiffCSPWrapper:
 
         lengths, angles = self._lattices_to_params(lattices)
 
-        crystal_list = self._get_crystals_list(frac_coords, atom_types, lengths, angles, num_atoms)
+        crystal_list = self._get_crystals_list(
+            frac_coords, atom_types, lengths, angles, num_atoms
+        )
         structures = self._crystals_to_pymatgen(crystal_list)
 
         # Save structures
@@ -572,7 +682,9 @@ class DiffCSPWrapper:
         lattices = torch.cat(lattices_all, dim=0)
 
         lengths, angles = self._lattices_to_params(lattices)
-        crystal_list = self._get_crystals_list(frac_coords, atom_types, lengths, angles, num_atoms)
+        crystal_list = self._get_crystals_list(
+            frac_coords, atom_types, lengths, angles, num_atoms
+        )
         return self._crystals_to_pymatgen(crystal_list)
 
     @staticmethod
@@ -588,7 +700,7 @@ class DiffCSPWrapper:
         import numpy as np
         import torch
 
-        lengths = torch.sqrt(torch.sum(lattices ** 2, dim=-1))
+        lengths = torch.sqrt(torch.sum(lattices**2, dim=-1))
         angles = torch.zeros_like(lengths)
         for i in range(3):
             j = (i + 1) % 3
@@ -619,12 +731,20 @@ class DiffCSPWrapper:
         start_idx = 0
         crystal_list = []
         for batch_idx, num_atom in enumerate(num_atoms.tolist()):
-            crystal_list.append({
-                "frac_coords": frac_coords.narrow(0, start_idx, num_atom).detach().cpu().numpy(),
-                "atom_types": atom_types.narrow(0, start_idx, num_atom).detach().cpu().numpy(),
-                "lengths": lengths[batch_idx].detach().cpu().numpy(),
-                "angles": angles[batch_idx].detach().cpu().numpy(),
-            })
+            crystal_list.append(
+                {
+                    "frac_coords": frac_coords.narrow(0, start_idx, num_atom)
+                    .detach()
+                    .cpu()
+                    .numpy(),
+                    "atom_types": atom_types.narrow(0, start_idx, num_atom)
+                    .detach()
+                    .cpu()
+                    .numpy(),
+                    "lengths": lengths[batch_idx].detach().cpu().numpy(),
+                    "angles": angles[batch_idx].detach().cpu().numpy(),
+                }
+            )
             start_idx += num_atom
         return crystal_list
 

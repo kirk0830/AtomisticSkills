@@ -127,7 +127,9 @@ def dock_one(
         v.set_ligand_from_file(str(ligand_path))
 
         if not maps_ready:
-            v.compute_vina_maps(center=cfg.center, box_size=cfg.box_size, spacing=cfg.spacing)
+            v.compute_vina_maps(
+                center=cfg.center, box_size=cfg.box_size, spacing=cfg.spacing
+            )
 
         t0 = time.time()
         v.dock(
@@ -171,22 +173,40 @@ def dock_one(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Molecular docking with AutoDock Vina (Python API).")
+    parser = argparse.ArgumentParser(
+        description="Molecular docking with AutoDock Vina (Python API)."
+    )
 
     parser.add_argument("--receptor", required=True, help="Rigid receptor PDBQT file")
-    parser.add_argument("--flex_receptor", default=None, help="Flexible residues PDBQT file (optional)")
+    parser.add_argument(
+        "--flex_receptor", default=None, help="Flexible residues PDBQT file (optional)"
+    )
 
     ligand_group = parser.add_mutually_exclusive_group(required=True)
     ligand_group.add_argument("--ligand", help="Single ligand PDBQT file")
-    ligand_group.add_argument("--ligand_dir", help="Directory containing ligand PDBQT files")
+    ligand_group.add_argument(
+        "--ligand_dir", help="Directory containing ligand PDBQT files"
+    )
 
-    parser.add_argument("--center_x", type=float, required=True, help="Box center X (Angstrom)")
-    parser.add_argument("--center_y", type=float, required=True, help="Box center Y (Angstrom)")
-    parser.add_argument("--center_z", type=float, required=True, help="Box center Z (Angstrom)")
+    parser.add_argument(
+        "--center_x", type=float, required=True, help="Box center X (Angstrom)"
+    )
+    parser.add_argument(
+        "--center_y", type=float, required=True, help="Box center Y (Angstrom)"
+    )
+    parser.add_argument(
+        "--center_z", type=float, required=True, help="Box center Z (Angstrom)"
+    )
 
-    parser.add_argument("--size_x", type=float, default=20.0, help="Box size X (Angstrom)")
-    parser.add_argument("--size_y", type=float, default=20.0, help="Box size Y (Angstrom)")
-    parser.add_argument("--size_z", type=float, default=20.0, help="Box size Z (Angstrom)")
+    parser.add_argument(
+        "--size_x", type=float, default=20.0, help="Box size X (Angstrom)"
+    )
+    parser.add_argument(
+        "--size_y", type=float, default=20.0, help="Box size Y (Angstrom)"
+    )
+    parser.add_argument(
+        "--size_z", type=float, default=20.0, help="Box size Z (Angstrom)"
+    )
 
     parser.add_argument(
         "--scoring",
@@ -195,20 +215,55 @@ def main() -> None:
         help="Scoring function (vina, vinardo, ad4)",
     )
 
-    parser.add_argument("--spacing", type=float, default=0.375, help="Grid spacing (Angstrom)")
-    parser.add_argument("--exhaustiveness", type=int, default=8, help="Search exhaustiveness")
-    parser.add_argument("--n_poses", type=int, default=5, help="Number of poses to generate")
-    parser.add_argument("--energy_range", type=float, default=3.0, help="Energy range for retrieving/writing poses")
-    parser.add_argument("--min_rmsd", type=float, default=1.0, help="Minimum RMSD between poses (Angstrom)")
-    parser.add_argument("--max_evals", type=int, default=0, help="Max evaluations (0 = heuristic default)")
+    parser.add_argument(
+        "--spacing", type=float, default=0.375, help="Grid spacing (Angstrom)"
+    )
+    parser.add_argument(
+        "--exhaustiveness", type=int, default=8, help="Search exhaustiveness"
+    )
+    parser.add_argument(
+        "--n_poses", type=int, default=5, help="Number of poses to generate"
+    )
+    parser.add_argument(
+        "--energy_range",
+        type=float,
+        default=3.0,
+        help="Energy range for retrieving/writing poses",
+    )
+    parser.add_argument(
+        "--min_rmsd",
+        type=float,
+        default=1.0,
+        help="Minimum RMSD between poses (Angstrom)",
+    )
+    parser.add_argument(
+        "--max_evals",
+        type=int,
+        default=0,
+        help="Max evaluations (0 = heuristic default)",
+    )
 
     parser.add_argument("--seed", type=int, default=42, help="Random seed (0 = random)")
-    parser.add_argument("--cpu", type=int, default=0, help="CPU threads (0 = all available)")
-    parser.add_argument("--verbosity", type=int, default=1, choices=[0, 1, 2], help="Vina verbosity level")
-    parser.add_argument("--no_refine", action="store_true", help="Disable explicit receptor refinement steps")
+    parser.add_argument(
+        "--cpu", type=int, default=0, help="CPU threads (0 = all available)"
+    )
+    parser.add_argument(
+        "--verbosity",
+        type=int,
+        default=1,
+        choices=[0, 1, 2],
+        help="Vina verbosity level",
+    )
+    parser.add_argument(
+        "--no_refine",
+        action="store_true",
+        help="Disable explicit receptor refinement steps",
+    )
 
     parser.add_argument("--output_dir", default=".", help="Output directory")
-    parser.add_argument("--overwrite", action="store_true", help="Overwrite existing pose files")
+    parser.add_argument(
+        "--overwrite", action="store_true", help="Overwrite existing pose files"
+    )
 
     args = parser.parse_args()
 
@@ -273,7 +328,9 @@ def main() -> None:
     # single: compute maps after loading ligand (only needed atom types)
     maps_ready = False
     if args.ligand_dir:
-        v.compute_vina_maps(center=cfg.center, box_size=cfg.box_size, spacing=cfg.spacing)
+        v.compute_vina_maps(
+            center=cfg.center, box_size=cfg.box_size, spacing=cfg.spacing
+        )
         maps_ready = True
 
     all_results: List[Dict[str, Any]] = []
@@ -319,6 +376,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

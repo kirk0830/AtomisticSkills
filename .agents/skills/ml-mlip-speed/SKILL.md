@@ -19,7 +19,7 @@ Run the script within the appropriate conda environment for the models being tes
 
 ### Multi-Environment Benchmarking
 
-Because different MLIPs require isolated Conda environments (e.g., `mace-agent`, `matgl-agent`, `fairchem-agent`), the benchmark results are built incrementally. 
+Because different MLIPs require isolated Conda environments (e.g., `mace-agent`, `matgl-agent`, `fairchem-agent`), the benchmark results are built incrementally.
 
 1. **Run the script in each environment:** The script gracefully skips models whose libraries are missing while preserving and updating the central `speed_benchmark.yaml` file.
 2. **Consolidate:** Run the script in any environment (that has `matplotlib`) with the `--only_plot` flag to generate the combined graphs from the accumulated total data.
@@ -70,5 +70,5 @@ Performance benchmarks conducted on **NVIDIA GB10** reveal distinct performance 
 - [Example Benchmark Data (NVIDIA GB10)](resources/speed_benchmark_dgx_spark.yaml)
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

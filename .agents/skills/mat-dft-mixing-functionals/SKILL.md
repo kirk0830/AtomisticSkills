@@ -10,7 +10,7 @@ category: [materials]
 To apply [Materials Project 2020 Compatibility](https://pymatgen.org/pymatgen.entries.compatibility.html) schemes to MLIP-predicted energies. This is required for models trained on GGA/GGA+U mixed data (e.g., MPtrj data) when constructing convex hulls or phase diagrams to ensure compatibility with the Materials Project database.
 
 > [!IMPORTANT]
-> **Do NOT apply this to r2SCAN models.** 
+> **Do NOT apply this to r2SCAN models.**
 > Only use this for models trained on GGA/GGA+U mixed data.
 
 ## Scientific Context
@@ -79,5 +79,5 @@ For referencing or phase diagram generation, apply this correction to every entr
 - **Input Energy**: Must be the *total energy* in eV (not per atom).
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

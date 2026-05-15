@@ -16,7 +16,7 @@ python .agents/skills/drug-bioactivity-assay/scripts/get_assays.py \
 
 ## Results Overview
 
-Imatinib is a famous tyrosine kinase inhibitor (Gleevec). 
+Imatinib is a famous tyrosine kinase inhibitor (Gleevec).
 Filtering strictly for "Active" outcomes returned massive evidence of target specific activity (1105 positive assays).
 
 The JSON output contains details including:

@@ -45,7 +45,7 @@ conda run -n matgl-agent python .agents/skills/ml-matgl-finetune/scripts/train_m
 
 ## Training Configuration
 
-MatGL fine-tuning is divided into a data preparation step (formatting nested dictionaries and converting lists) and a native training run utilizing PyTorch Lightning. 
+MatGL fine-tuning is divided into a data preparation step (formatting nested dictionaries and converting lists) and a native training run utilizing PyTorch Lightning.
 
 ### Data Preparation Arguments (`prepare_matgl_data.py`)
 
@@ -86,5 +86,5 @@ MatGL fine-tuning is divided into a data preparation step (formatting nested dic
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

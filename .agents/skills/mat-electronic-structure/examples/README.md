@@ -51,7 +51,7 @@ Same as the band structure example (silicon, Fd-3m).
 
 ![Si DOS](Si_dos.png)
 
-**Band Gap**: 0.496 eV  
+**Band Gap**: 0.496 eV
 **Fermi Level**: 5.604 eV
 
 The DOS plot shows the distribution of electronic states as a function of energy. The gap between the valence and conduction bands is clearly visible.

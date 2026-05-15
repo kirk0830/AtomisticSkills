@@ -19,7 +19,7 @@ To rigorously evaluate a research plan, manuscript, or simulation workflow prior
    The agent initializes the review process by loading the target document into memory. This can be done by standard reading tools like `view_file`.
 
 2. **Literature-Based Validation**
-   The agent utilizes skills like `general-query-literature-database` or `general-deep-research` to ground the review in established scientific facts. 
+   The agent utilizes skills like `general-query-literature-database` or `general-deep-research` to ground the review in established scientific facts.
    - Perform a literature search regarding the specific materials, methodologies, or baseline properties stated in the text.
    - Point out discrepancies between the proposed approach and standard practices found in high-impact journals.
 
@@ -72,5 +72,5 @@ To see how the reviewer evaluates a proposed Action Plan for scientific methodol
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @Bowen-BD](https://github.com/Bowen-BD)

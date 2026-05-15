@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 from pptx import Presentation
-from pptx.util import Inches, Pt, Emu
+from pptx.util import Inches, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.enum.shapes import MSO_SHAPE
@@ -32,18 +32,17 @@ from PIL import Image
 
 THEME = {
     # Colors
-    "primary": RGBColor(0x1B, 0x3A, 0x5C),       # dark navy
-    "secondary": RGBColor(0x2E, 0x86, 0xAB),      # teal accent
-    "accent": RGBColor(0xA2, 0x3B, 0x72),          # magenta accent
-    "background": RGBColor(0xFF, 0xFF, 0xFF),       # white
-    "text_dark": RGBColor(0x2D, 0x2D, 0x2D),       # near-black
-    "text_light": RGBColor(0xFF, 0xFF, 0xFF),       # white
-    "text_muted": RGBColor(0x88, 0x88, 0x88),       # grey
-    "header_bg": RGBColor(0x1B, 0x3A, 0x5C),       # same as primary
+    "primary": RGBColor(0x1B, 0x3A, 0x5C),  # dark navy
+    "secondary": RGBColor(0x2E, 0x86, 0xAB),  # teal accent
+    "accent": RGBColor(0xA2, 0x3B, 0x72),  # magenta accent
+    "background": RGBColor(0xFF, 0xFF, 0xFF),  # white
+    "text_dark": RGBColor(0x2D, 0x2D, 0x2D),  # near-black
+    "text_light": RGBColor(0xFF, 0xFF, 0xFF),  # white
+    "text_muted": RGBColor(0x88, 0x88, 0x88),  # grey
+    "header_bg": RGBColor(0x1B, 0x3A, 0x5C),  # same as primary
     "table_header_bg": RGBColor(0x1B, 0x3A, 0x5C),
-    "table_row_alt": RGBColor(0xF2, 0xF6, 0xFA),   # light blue-grey
+    "table_row_alt": RGBColor(0xF2, 0xF6, 0xFA),  # light blue-grey
     "bullet_color": RGBColor(0x2E, 0x86, 0xAB),
-
     # Fonts
     "font_family": "Calibri",
     "title_size": Pt(32),
@@ -52,11 +51,9 @@ THEME = {
     "body_size": Pt(20),
     "caption_size": Pt(14),
     "table_size": Pt(14),
-
     # Slide dimensions (default 16:9)
     "width": Inches(13.333),
     "height": Inches(7.5),
-
     # Layout margins
     "margin_left": Inches(0.6),
     "margin_right": Inches(0.6),
@@ -68,6 +65,7 @@ THEME = {
 # ---------------------------------------------------------------------------
 # Presentation lifecycle
 # ---------------------------------------------------------------------------
+
 
 def create_presentation(
     title: str = "Presentation",
@@ -173,6 +171,7 @@ def save_presentation(prs: Presentation, path: str) -> str:
 # ---------------------------------------------------------------------------
 # Slide builders — each returns the Slide object for further customization
 # ---------------------------------------------------------------------------
+
 
 def add_title_slide(
     prs: Presentation,
@@ -347,12 +346,20 @@ def add_two_image_slide(
     caption_reserve = Inches(0.5) if (caption_left or caption_right) else Inches(0)
     max_img_height = prs.slide_height - content_top - Inches(0.4) - caption_reserve
 
-    for i, (img_path, caption) in enumerate([
-        (image_path_left, caption_left),
-        (image_path_right, caption_right),
-    ]):
-        offset = THEME["margin_left"] if i == 0 else THEME["margin_left"] + half_width + Inches(0.4)
-        _, _, img_w, img_h = _fit_image(img_path, max_width=half_width, max_height=max_img_height)
+    for i, (img_path, caption) in enumerate(
+        [
+            (image_path_left, caption_left),
+            (image_path_right, caption_right),
+        ]
+    ):
+        offset = (
+            THEME["margin_left"]
+            if i == 0
+            else THEME["margin_left"] + half_width + Inches(0.4)
+        )
+        _, _, img_w, img_h = _fit_image(
+            img_path, max_width=half_width, max_height=max_img_height
+        )
         img_left = offset + (half_width - img_w) // 2
         slide.shapes.add_picture(img_path, img_left, content_top, img_w, img_h)
 
@@ -409,14 +416,21 @@ def add_table_slide(
     table_width = min(content_width, Inches(2.0) * num_cols)
     table_left = THEME["margin_left"] + (content_width - table_width) // 2
 
-    shape = slide.shapes.add_table(num_rows, num_cols, table_left, content_top, table_width, table_height)
+    shape = slide.shapes.add_table(
+        num_rows, num_cols, table_left, content_top, table_width, table_height
+    )
     table = shape.table
 
     # Style header row
     for col_idx, header in enumerate(headers):
         cell = table.cell(0, col_idx)
         cell.text = str(header)
-        _style_cell(cell, bold=True, font_color=THEME["text_light"], fill_color=THEME["table_header_bg"])
+        _style_cell(
+            cell,
+            bold=True,
+            font_color=THEME["text_light"],
+            fill_color=THEME["table_header_bg"],
+        )
 
     # Style data rows
     for row_idx, row_data in enumerate(rows):
@@ -507,9 +521,15 @@ def add_image_and_text_slide(
     content_height = prs.slide_height - content_top - Inches(0.5)
 
     # Image side
-    img_left = THEME["margin_left"] if image_on_left else THEME["margin_left"] + half_width + Inches(0.4)
+    img_left = (
+        THEME["margin_left"]
+        if image_on_left
+        else THEME["margin_left"] + half_width + Inches(0.4)
+    )
     caption_reserve = Inches(0.4) if caption else Inches(0)
-    _, _, img_w, img_h = _fit_image(image_path, max_width=half_width, max_height=content_height - caption_reserve)
+    _, _, img_w, img_h = _fit_image(
+        image_path, max_width=half_width, max_height=content_height - caption_reserve
+    )
     centered_left = img_left + (half_width - img_w) // 2
     slide.shapes.add_picture(image_path, centered_left, content_top, img_w, img_h)
 
@@ -528,7 +548,11 @@ def add_image_and_text_slide(
         )
 
     # Text side
-    text_left = THEME["margin_left"] + half_width + Inches(0.4) if image_on_left else THEME["margin_left"]
+    text_left = (
+        THEME["margin_left"] + half_width + Inches(0.4)
+        if image_on_left
+        else THEME["margin_left"]
+    )
     _add_textbox(
         slide,
         left=text_left,
@@ -546,6 +570,7 @@ def add_image_and_text_slide(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
 
 def _new_slide(prs: Presentation) -> "pptx.slide.Slide":
     """Add a blank slide to the presentation."""
@@ -612,6 +637,7 @@ def _add_textbox(
         txBox.text_frame.auto_size = None
         # Set vertical centering via XML (python-pptx exposes this)
         from pptx.oxml.ns import qn
+
         txBody = txBox.text_frame._txBody
         bodyPr = txBody.find(qn("a:bodyPr"))
         anchor_map = {
@@ -644,8 +670,10 @@ def _add_line(
     """Add a horizontal line to a slide."""
     connector = slide.shapes.add_connector(
         1,  # straight connector
-        left, top,
-        left + width, top,
+        left,
+        top,
+        left + width,
+        top,
     )
     connector.line.color.rgb = color
     connector.line.width = weight
@@ -708,19 +736,21 @@ def _style_cell(
         cell.fill.solid()
         cell.fill.fore_color.rgb = fill_color
 
+
 def get_approx_text_width_inches(text: str, font_size: int = 10) -> float:
     """Estimate the physical width of text in inches.
-    
+
     Args:
         text: The string to measure.
         font_size: Font size in points.
-        
+
     Returns:
         Estimated width in inches.
     """
     base_char_width = 0.08 * (font_size / 10.0)
     padding = 0.15
     return (len(text) * base_char_width) + padding
+
 
 def add_autofit_box(
     slide: "pptx.slide.Slide",
@@ -735,7 +765,7 @@ def add_autofit_box(
     bold: bool = False,
 ) -> tuple["pptx.shapes.autoshape.Shape", float]:
     """Add a colored box that automatically scales its width to fit the text.
-    
+
     Args:
         slide: The Slide object.
         left: Left position in EMU.
@@ -747,19 +777,19 @@ def add_autofit_box(
         font_size: Font size in points.
         is_rounded: If True, uses rounded rectangle.
         bold: If True, makes text bold.
-        
+
     Returns:
         A tuple of (Shape object, calculated width in inches).
     """
     width_inches = get_approx_text_width_inches(text, font_size)
     width = Inches(width_inches)
-    
+
     shape_type = MSO_SHAPE.ROUNDED_RECTANGLE if is_rounded else MSO_SHAPE.RECTANGLE
     shape = slide.shapes.add_shape(shape_type, left, top, width, height)
     shape.fill.solid()
     shape.fill.fore_color.rgb = bg_color
     shape.line.color.rgb = bg_color
-    
+
     tf = shape.text_frame
     tf.word_wrap = False
     p = tf.paragraphs[0]
@@ -769,5 +799,5 @@ def add_autofit_box(
     p.font.bold = bold
     p.alignment = PP_ALIGN.CENTER
     shape.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-    
+
     return shape, width_inches

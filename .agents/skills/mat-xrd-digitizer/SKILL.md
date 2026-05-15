@@ -8,7 +8,7 @@ category: [materials]
 
 ## Goal
 
-To convert an image or screenshot of an X-Ray Diffraction (XRD) pattern into a digitized, numeric `.xy` data file, which can then be used by downstream analysis tools like `mat-xrd-phase-analysis`. 
+To convert an image or screenshot of an X-Ray Diffraction (XRD) pattern into a digitized, numeric `.xy` data file, which can then be used by downstream analysis tools like `mat-xrd-phase-analysis`.
 
 This skill leverages the AI Agent's built-in Vision/Language Model (VLM) capabilities. The Agent will visually parse the provided image to extract key peak positions (2-theta) and approximate relative intensities, and then use a provided script to mathematically generate a representative pseudo-Voigt profile.
 
@@ -79,5 +79,5 @@ python .agents/skills/mat-xrd-digitizer/scripts/digitize_plot.py .agents/skills/
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

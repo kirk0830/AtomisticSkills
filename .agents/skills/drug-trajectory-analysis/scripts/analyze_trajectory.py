@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -86,11 +87,13 @@ def compute_ligand_rmsd(
 
     results = []
     for row in R.results.rmsd:
-        results.append({
-            "frame": int(row[0]),
-            "time_ps": round(float(row[1]), 4),
-            "rmsd_angstrom": round(float(row[3]), 4),
-        })
+        results.append(
+            {
+                "frame": int(row[0]),
+                "time_ps": round(float(row[1]), 4),
+                "rmsd_angstrom": round(float(row[3]), 4),
+            }
+        )
 
     return results
 
@@ -115,14 +118,16 @@ def compute_ligand_com(
         rel = lig_com - prot_com
         if box is not None and np.all(box > 0):
             rel -= box * np.round(rel / box)
-        results.append({
-            "frame": i + skip,
-            "time_ps": ts.time,
-            "rel_com_x": round(float(rel[0]), 4),
-            "rel_com_y": round(float(rel[1]), 4),
-            "rel_com_z": round(float(rel[2]), 4),
-            "distance_to_protein_com": round(float(np.linalg.norm(rel)), 4),
-        })
+        results.append(
+            {
+                "frame": i + skip,
+                "time_ps": ts.time,
+                "rel_com_x": round(float(rel[0]), 4),
+                "rel_com_y": round(float(rel[1]), 4),
+                "rel_com_z": round(float(rel[2]), 4),
+                "distance_to_protein_com": round(float(np.linalg.norm(rel)), 4),
+            }
+        )
     return results
 
 
@@ -156,7 +161,10 @@ def compute_pocket_rmsf(
 
     # Step 1: compute average structure
     avg = align.AverageStructure(
-        universe, universe, select=protein_sel, ref_frame=skip,
+        universe,
+        universe,
+        select=protein_sel,
+        ref_frame=skip,
     ).run(start=skip)
     ref = avg.results.universe
 
@@ -169,12 +177,14 @@ def compute_pocket_rmsf(
 
     results = []
     for atom, rmsf_val in zip(pocket_ca.atoms, rmsf_values):
-        results.append({
-            "resname": atom.resname,
-            "resid": int(atom.resid),
-            "chain": atom.segid if hasattr(atom, "segid") else "",
-            "rmsf_angstrom": round(float(rmsf_val), 4),
-        })
+        results.append(
+            {
+                "resname": atom.resname,
+                "resid": int(atom.resid),
+                "chain": atom.segid if hasattr(atom, "segid") else "",
+                "rmsf_angstrom": round(float(rmsf_val), 4),
+            }
+        )
 
     return results
 
@@ -225,12 +235,14 @@ def compute_hbonds(
     for (donor, acceptor), count in sorted(hbond_counts.items(), key=lambda x: -x[1]):
         occupancy = count / n_frames
         if occupancy >= 0.05:  # only report if >5% occupancy
-            results.append({
-                "donor": donor,
-                "acceptor": acceptor,
-                "occupancy": round(occupancy, 4),
-                "count": count,
-            })
+            results.append(
+                {
+                    "donor": donor,
+                    "acceptor": acceptor,
+                    "occupancy": round(occupancy, 4),
+                    "count": count,
+                }
+            )
 
     return results
 
@@ -255,8 +267,10 @@ def compute_contacts_occupancy(
     for ts in universe.trajectory[skip:]:
         n_frames += 1
         pairs = mda.lib.distances.capped_distance(
-            ligand.positions, protein.positions,
-            max_cutoff=pocket_cutoff, box=ts.dimensions,
+            ligand.positions,
+            protein.positions,
+            max_cutoff=pocket_cutoff,
+            box=ts.dimensions,
             return_distances=False,
         )
         # pairs is an (N_pairs, 2) array of [ligand_idx, protein_idx]
@@ -271,10 +285,12 @@ def compute_contacts_occupancy(
     for reskey, count in sorted(residue_contacts.items(), key=lambda x: -x[1]):
         occupancy = count / n_frames if n_frames > 0 else 0
         if occupancy >= 0.1:  # report residues in contact >10% of the time
-            results.append({
-                "residue": reskey,
-                "occupancy": round(occupancy, 4),
-            })
+            results.append(
+                {
+                    "residue": reskey,
+                    "occupancy": round(occupancy, 4),
+                }
+            )
 
     return results
 
@@ -407,6 +423,7 @@ def plot_binding_snapshots(
 
     try:
         import pymol
+
         pymol.finish_launching(["pymol", "-cq"])
         from pymol import cmd
     except ImportError:
@@ -502,6 +519,7 @@ def plot_binding_snapshots(
 
     # Clean up temp files
     import shutil
+
     shutil.rmtree(tmpdir, ignore_errors=True)
 
 
@@ -510,13 +528,32 @@ def main() -> None:
         description="Analyze protein-ligand MD trajectory."
     )
     parser.add_argument("--topology", required=True, help="Topology PDB file.")
-    parser.add_argument("--trajectory", required=True, help="Trajectory file (DCD, XTC, etc.).")
-    parser.add_argument("--ligand_resname", default="UNL", help="Ligand residue name (default: UNL).")
-    parser.add_argument("--pocket_cutoff", type=float, default=5.0, help="Pocket definition cutoff in A (default: 5.0).")
-    parser.add_argument("--skip_frames", type=int, default=0, help="Skip first N frames (default: 0).")
-    parser.add_argument("--stride", type=int, default=1, help="Frame stride for IFP (default: 1).")
-    parser.add_argument("--rmsd_only", action="store_true", help="Only compute ligand RMSD.")
-    parser.add_argument("--snapshots", action="store_true", help="Render PyMOL binding pocket snapshots (requires pymol-open-source).")
+    parser.add_argument(
+        "--trajectory", required=True, help="Trajectory file (DCD, XTC, etc.)."
+    )
+    parser.add_argument(
+        "--ligand_resname", default="UNL", help="Ligand residue name (default: UNL)."
+    )
+    parser.add_argument(
+        "--pocket_cutoff",
+        type=float,
+        default=5.0,
+        help="Pocket definition cutoff in A (default: 5.0).",
+    )
+    parser.add_argument(
+        "--skip_frames", type=int, default=0, help="Skip first N frames (default: 0)."
+    )
+    parser.add_argument(
+        "--stride", type=int, default=1, help="Frame stride for IFP (default: 1)."
+    )
+    parser.add_argument(
+        "--rmsd_only", action="store_true", help="Only compute ligand RMSD."
+    )
+    parser.add_argument(
+        "--snapshots",
+        action="store_true",
+        help="Render PyMOL binding pocket snapshots (requires pymol-open-source).",
+    )
     parser.add_argument("--output_dir", required=True, help="Output directory.")
     args = parser.parse_args()
 
@@ -580,15 +617,31 @@ def main() -> None:
     plot_com(com_data, plots_dir / "ligand_com.png")
 
     if com_data:
-        first_rel = np.array([com_data[0]["rel_com_x"], com_data[0]["rel_com_y"], com_data[0]["rel_com_z"]])
-        last_rel = np.array([com_data[-1]["rel_com_x"], com_data[-1]["rel_com_y"], com_data[-1]["rel_com_z"]])
-        summary["ligand_com_drift_A"] = round(float(np.linalg.norm(last_rel - first_rel)), 4)
+        first_rel = np.array(
+            [
+                com_data[0]["rel_com_x"],
+                com_data[0]["rel_com_y"],
+                com_data[0]["rel_com_z"],
+            ]
+        )
+        last_rel = np.array(
+            [
+                com_data[-1]["rel_com_x"],
+                com_data[-1]["rel_com_y"],
+                com_data[-1]["rel_com_z"],
+            ]
+        )
+        summary["ligand_com_drift_A"] = round(
+            float(np.linalg.norm(last_rel - first_rel)), 4
+        )
 
     # Pocket RMSF
     print("Computing pocket RMSF...")
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        rmsf_data = compute_pocket_rmsf(u, ligand_sel, args.pocket_cutoff, skip=args.skip_frames)
+        rmsf_data = compute_pocket_rmsf(
+            u, ligand_sel, args.pocket_cutoff, skip=args.skip_frames
+        )
     write_csv(rmsf_data, output_dir / "pocket_rmsf.csv")
     plot_rmsf(rmsf_data, plots_dir / "pocket_rmsf.png")
     summary["n_pocket_residues"] = len(rmsf_data)
@@ -601,7 +654,9 @@ def main() -> None:
 
     # Contacts
     print("Computing contact occupancy...")
-    contacts_data = compute_contacts_occupancy(u, ligand_sel, args.pocket_cutoff, skip=args.skip_frames)
+    contacts_data = compute_contacts_occupancy(
+        u, ligand_sel, args.pocket_cutoff, skip=args.skip_frames
+    )
     write_csv(contacts_data, output_dir / "contacts.csv")
     plot_contacts(contacts_data, plots_dir / "contacts.png")
     summary["n_contact_residues"] = len(contacts_data)
@@ -609,8 +664,11 @@ def main() -> None:
     # Interaction fingerprints (optional)
     print("Computing interaction fingerprints...")
     ifp_data = compute_interaction_fingerprints(
-        str(topo_path), str(traj_path), args.ligand_resname,
-        skip=args.skip_frames, stride=args.stride,
+        str(topo_path),
+        str(traj_path),
+        args.ligand_resname,
+        skip=args.skip_frames,
+        stride=args.stride,
     )
     if ifp_data is not None:
         write_csv(ifp_data, output_dir / "interaction_fingerprints.csv")
@@ -623,7 +681,9 @@ def main() -> None:
     # multiprocessing-based analyses like ProLIF.
     if args.snapshots:
         print("Rendering binding pocket snapshots...")
-        plot_binding_snapshots(u, ligand_sel, plots_dir / "binding_snapshots.png", skip=args.skip_frames)
+        plot_binding_snapshots(
+            u, ligand_sel, plots_dir / "binding_snapshots.png", skip=args.skip_frames
+        )
 
     summary_path = output_dir / "analysis_summary.json"
     with open(summary_path, "w") as f:
@@ -638,6 +698,7 @@ def main() -> None:
 
     # Save input configs for reproducibility
     from src.utils.config_utils import save_skill_inputs
+
     save_skill_inputs(args, args.output_dir)
 
 

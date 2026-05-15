@@ -9,7 +9,7 @@ Typically, you run an MD simulation at elevate temperature (e.g., 500K-1000K) to
 - `Br48Er12Li12_500.0K_nvt.traj`
 
 ### 2. Calculate Probability Density
-Execute the probability density extraction script. This maps the fractional coordinates of Li ions over the trajectory into a unified crystal grid and aggregates occupation probabilities. 
+Execute the probability density extraction script. This maps the fractional coordinates of Li ions over the trajectory into a unified crystal grid and aggregates occupation probabilities.
 
 Because this is a relatively short trajectory, it contains "sparse" hopping events. We utilize the `--log` compression flag to mathematically enhance the visibility of intermediate saddle points in the diffusion pathway without diluting the background noise.
 

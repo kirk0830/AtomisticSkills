@@ -1,6 +1,6 @@
 #!/bin/bash
 # Installation script for torch-scatter on NVIDIA DGX Spark (ARM/aarch64)
-# 
+#
 # This script installs PyG ecosystem packages (torch-scatter, torch-cluster, torch-sparse)
 # for use with MatterGen on ARM-based systems like DGX Spark.
 #

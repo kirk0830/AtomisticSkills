@@ -53,27 +53,27 @@ Add this to your `~/.bashrc` on your **local machine**:
 # NERSC MongoDB Auto-tunnel with Key Expiration Check
 nersc_tunnel_start() {
     local NERSC_KEY="$HOME/.ssh/nersc"
-    
+
     # Check if key exists
     if [[ ! -f "$NERSC_KEY" ]]; then
         echo "⚠️  NERSC SSH key not found. Run: sshproxy -u <username>" >&2
         return 1
     fi
-    
+
     # Check key age (< 24 hours)
     local key_age_seconds=$(($(date +%s) - $(stat -c %Y "$NERSC_KEY" 2>/dev/null || stat -f %m "$NERSC_KEY")))
     local key_age_hours=$((key_age_seconds / 3600))
-    
+
     if [[ $key_age_hours -ge 24 ]]; then
         echo "⚠️  NERSC SSH key expired ($key_age_hours hours old). Run: sshproxy -u <username>" >&2
         return 1
     fi
-    
+
     # Check if tunnel already running
     if pgrep -f "ssh.*mongodb05.*27017" > /dev/null 2>&1; then
         return 0
     fi
-    
+
     # Create tunnel
     ssh -f -N -L 27017:mongodb05.nersc.gov:27017 -i "$NERSC_KEY" <username>@perlmutter-p1.nersc.gov 2>/dev/null
 }
@@ -147,5 +147,5 @@ Once this setup is complete, you can submit jobs from your **local machine** and
 - **Runner Logs**: `~/.jfremote/remote_perlmutter/log/runner.log`
 
 ---
-*Setup completed/verified on 2026-01-15.*  
+*Setup completed/verified on 2026-01-15.*
 *SSH tunnel auto-configuration added on 2026-01-22.*

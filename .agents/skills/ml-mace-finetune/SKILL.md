@@ -60,7 +60,7 @@ MACE fine-tuning is divided into a data preparation step, a configuration genera
 ### Advanced Parameters (Manual YAML Injection)
 
 > [!IMPORTANT]
-> The following parameters govern Optimizer, Regularization, and Scheduling. They are **NOT** exposed via the `prepare_mace_data.py` CLI. Note that `prepare_mace_data.py` exposes `--energy-weight`, `--forces-weight` (default 10.0), and `--stress-weight` which inject cleanly into the initial YAML. For all other properties below, you must manually append the keys to the generated `finetune_config.yaml` file prior to running `mace_run_train`. 
+> The following parameters govern Optimizer, Regularization, and Scheduling. They are **NOT** exposed via the `prepare_mace_data.py` CLI. Note that `prepare_mace_data.py` exposes `--energy-weight`, `--forces-weight` (default 10.0), and `--stress-weight` which inject cleanly into the initial YAML. For all other properties below, you must manually append the keys to the generated `finetune_config.yaml` file prior to running `mace_run_train`.
 
 #### Optimizer & Regularization
 
@@ -155,5 +155,5 @@ See the [mace-wbm-finetune](examples/mace-wbm-finetune/README.md) directory for 
 
 ---
 
-**Author:** Bowen Deng  
+**Author:** Bowen Deng
 **Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)

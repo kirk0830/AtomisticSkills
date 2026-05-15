@@ -4,7 +4,7 @@ This directory contains a complete example workflow demonstrating how to extract
 
 ## Workflow Overview
 
-1. **`fetch_r2scan.py`**: A customized Materials Project API ingestion script that combines the `thermo` and `summary` endpoints to seamlessly pair structural geometries with their uncorrected `r2SCAN` energy computations. 
+1. **`fetch_r2scan.py`**: A customized Materials Project API ingestion script that combines the `thermo` and `summary` endpoints to seamlessly pair structural geometries with their uncorrected `r2SCAN` energy computations.
 2. **`run_benchmark.py`**: The main execution engine under `../scripts/` orchestrates `load_wrapper` instantiations to perform inference testing on identical structures.
 3. **`plot_benchmark.py`**: Renders numerical MAE/RMSE results mapped to visual `.png` parity distributions out of the resulting prediction data arrays.
 
