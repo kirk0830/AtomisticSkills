@@ -41,7 +41,7 @@ bash examples/query_mp/li_s_stability.sh
 
 **Outputs**:
 - `si_elasticity.json` (1 material, ~18KB)
-- `high_bulk_modulus.json` (1387 materials, ~38MB)
+- `high_bulk_modulus.json` (1387 materials, note: example file truncated to 3 entries to save space)
 
 **Properties**: bulk_modulus (VRH), shear_modulus (VRH), elastic_tensor
 
@@ -62,7 +62,7 @@ bash examples/elasticity/elasticity_query.sh
 
 **Outputs**:
 - `fe2o3_magnetism.json` (1 material, ~2KB)
-- `ferromagnetic_materials.json` (23,121 materials, ~62MB)
+- `ferromagnetic_materials.json` (23,121 materials, note: example file truncated to 3 entries to save space)
 
 **Properties**: ordering (FM/AFM/FiM/NM), total_magnetization, magnetic_moments
 
@@ -120,8 +120,8 @@ bash examples/get_structure/structure_retrieval.sh
 | Category | Output Files | Total Size | Materials Count |
 |----------|--------------|------------|-----------------|
 | Query MP | 1 | ~2KB | 2 |
-| Elasticity | 2 | ~38MB | 1,388 |
-| Magnetism | 2 | ~62MB | 23,122 |
+| Elasticity | 2 | ~20KB | 1,388 (file truncated) |
+| Magnetism | 2 | ~10KB | 23,122 (file truncated) |
 | Similarity | 2 | ~2KB | 15 |
 | Get Structure | 4 | ~4KB | 4 (CIF files) |
 
