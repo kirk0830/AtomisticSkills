@@ -18,7 +18,11 @@ try:
     from ase.md.nptberendsen import Inhomogeneous_NPTBerendsen, NPTBerendsen
     from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
     from ase.optimize import BFGS
-    from ase.constraints import ExpCellFilter
+
+    try:
+        from ase.filters import ExpCellFilter
+    except ImportError:
+        from ase.constraints import ExpCellFilter
     from ase.calculators.calculator import Calculator
 
     ASE_MD_AVAILABLE = True

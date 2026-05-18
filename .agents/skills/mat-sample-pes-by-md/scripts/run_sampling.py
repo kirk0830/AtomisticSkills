@@ -26,7 +26,7 @@ project_root = Path(__file__).parents[4].absolute()
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from ase.io import read
+from ase.io import read  # noqa: E402
 
 # Set MatGL backend
 os.environ["MATGL_BACKEND"] = "DGL"
@@ -110,6 +110,19 @@ def run_sampling():
 
     setup_logging(args.output_dir)
     logger = logging.getLogger("RunSampling")
+
+    # Serialize and save all input parameters to output_dir/sampling_parameters.json for high traceability
+    if args.output_dir:
+        os.makedirs(args.output_dir, exist_ok=True)
+        import json
+
+        params_path = os.path.join(args.output_dir, "sampling_parameters.json")
+        try:
+            with open(params_path, "w") as f:
+                json.dump(vars(args), f, indent=2)
+            logger.info(f"Saved simulation parameters to {params_path}")
+        except Exception as e:
+            logger.warning(f"Could not save sampling_parameters.json: {e}")
 
     logger.info(f"Loading structure from {args.input}")
     atoms = read(args.input)
