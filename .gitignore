@@ -87,7 +87,11 @@ dara_downloaded_cifs/
 
 # Generated documentation site (rebuilt by site/build_skills.py)
 site/skills/
+site/workflows/
+site/servers/
+site/skills_index.js
 site/skills_index.json
+
 
 # Private agent skills
 .agents/skills/private-*/
