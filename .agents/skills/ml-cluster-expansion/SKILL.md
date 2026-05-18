@@ -171,4 +171,4 @@ python .agents/skills/ml-cluster-expansion/scripts/extract_mc_structures.py \
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

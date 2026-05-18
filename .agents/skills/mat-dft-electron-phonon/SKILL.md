@@ -49,4 +49,4 @@ python ../../scripts/generate_inputs.py --output si_flow.json
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub](https://github.com/bowen-bd)
+**Contact:** [GitHub](https://github.com/learningmatter-mit)

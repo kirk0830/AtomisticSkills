@@ -204,4 +204,4 @@ For production calculations, **always use DFT** (this skill) and choose the appr
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

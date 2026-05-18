@@ -91,3 +91,6 @@ site/skills_index.json
 
 # Private agent skills
 .agents/skills/private-*/
+
+# Local IDE / MCP Server configuration
+.mcp.json

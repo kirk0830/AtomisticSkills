@@ -49,4 +49,4 @@ python .agents/skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py .a
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

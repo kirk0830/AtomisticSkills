@@ -71,4 +71,4 @@ Performance benchmarks conducted on **NVIDIA GB10** reveal distinct performance 
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

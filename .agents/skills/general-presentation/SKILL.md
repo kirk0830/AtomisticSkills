@@ -98,4 +98,4 @@ See [amorphorization example](examples/amorphorization/) for a complete runnable
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

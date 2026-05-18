@@ -142,4 +142,4 @@ We also provide a stored record of this example run in `examples/li3ps4_stabilit
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

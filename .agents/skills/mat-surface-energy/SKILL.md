@@ -100,4 +100,4 @@ python .agents/skills/mat-surface-energy/scripts/generate_wulff.py --energies_js
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

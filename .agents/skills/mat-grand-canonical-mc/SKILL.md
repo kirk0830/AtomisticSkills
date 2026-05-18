@@ -163,4 +163,4 @@ By sweeping Δμ, we can map out the entire compositional range and identify:
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

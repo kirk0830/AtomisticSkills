@@ -62,4 +62,4 @@ python .agents/skills/chem-similarity-search/scripts/similarity_search.py \
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

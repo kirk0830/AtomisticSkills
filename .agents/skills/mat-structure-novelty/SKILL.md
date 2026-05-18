@@ -66,4 +66,4 @@ python .agents/skills/mat-structure-novelty/scripts/match_structure.py generated
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

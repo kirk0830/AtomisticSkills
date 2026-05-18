@@ -86,4 +86,4 @@ conda run -n fairchem-agent python .agents/skills/ml-fairchem-finetune/scripts/e
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

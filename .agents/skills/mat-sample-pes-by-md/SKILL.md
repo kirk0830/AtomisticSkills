@@ -77,4 +77,4 @@ Sampling 10 representative configurations from a 10 ps MD trajectory of LiMnO2 a
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

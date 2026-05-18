@@ -48,4 +48,4 @@ To visualize the spatial probability density of mobile ions (e.g., Li, Na) from 
 
 ---
 **Author**: Bowen Deng
-**Contact**: [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact**: [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

@@ -156,4 +156,4 @@ See the [mace-wbm-finetune](examples/mace-wbm-finetune/README.md) directory for 
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

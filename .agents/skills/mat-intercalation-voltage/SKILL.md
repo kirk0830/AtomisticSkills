@@ -114,4 +114,4 @@ See [examples/LiFePO4/](examples/LiFePO4/) for a complete worked example (MACE-M
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

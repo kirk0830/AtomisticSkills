@@ -77,4 +77,4 @@ Monitoring stability is handled automatically by the ASE callbacks. When a monit
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

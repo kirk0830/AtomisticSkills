@@ -66,4 +66,4 @@ python .agents/skills/mat-electrochemical-window/scripts/reproduce_table1.py
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

@@ -32,4 +32,4 @@ As of **2026-01-30**, the library is fully expanded and contains **89 elements**
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

@@ -134,4 +134,4 @@ python .agents/skills/chem-thermochemistry/scripts/calculate_thermochemistry.py 
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

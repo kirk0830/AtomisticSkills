@@ -121,4 +121,4 @@ The synthesis recipes are extracted from scientific literature using natural lan
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

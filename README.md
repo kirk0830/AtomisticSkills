@@ -126,7 +126,7 @@ AtomisticSkills is designed to be installed and operated by AI agents. For the f
 1. **Clone the repository**:
    *(Optional: Fork the repository on GitHub first if you plan to contribute, then clone your fork instead)*
    ```bash
-   git clone git@github.com:bowen-bd/AtomisticSkills.git
+   git clone git@github.com:learningmatter-mit/AtomisticSkills.git
    cd AtomisticSkills
    ```
 2. **Open the repository** as a workspace in your preferred agentic IDE (e.g., Cursor, Claude Code, Roo, Antigravity, VS Code).

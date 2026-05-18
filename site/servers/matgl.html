@@ -44,7 +44,7 @@
   <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.svg" height="24" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
-    <a class="gh-link" href="https://github.com/bowen-bd/AtomisticSkills/tree/main/src/mcp_server/matgl_server.py" target="_blank">View on GitHub</a>
+    <a class="gh-link" href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/src/mcp_server/matgl_server.py" target="_blank">View on GitHub</a>
   </div>
 </nav>
 <div class="hero">
@@ -59,7 +59,7 @@
 
         <div class="tool-card">
           <h3 class="tool-name">📎 load_model</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nLoad a MatGL model.\n\nSupported models include:\n- PES Models: &#39;CHGNet-MatPES-PBE-2025.2.10-2.7M-PES&#39;, &#39;CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES&#39;, &#39;CHGNet-MPtrj-2024.2.13-11M-PES&#39;, &#39;CHGNet-MPtrj-2023.12.1-2.7M-PES&#39;\n- PES Models: &#39;M3GNet-MP-2021.2.8-PES&#39;, &#39;M3GNet-MatPES-PBE-v2025.1-PES&#39;, &#39;M3GNet-MatPES-r2SCAN-v2025.1-PES&#39;, &#39;M3GNet-MP-2021.2.8-DIRECT-PES&#39;\n- PES Models: &#39;TensorNet-MatPES-PBE-v2025.1-PES&#39;, &#39;TensorNet-MatPES-r2SCAN-v2025.1-PES&#39;, &#39;M3GNet-ANI-1x-Subset-PES&#39;, &#39;SO3Net-ANI-1x-Subset-PES&#39;\n\nArgs:\n    model_name: Name of the model to load.\n    device: Device to use (\"auto\", \"cpu\", \"cuda\").\n    \nReturns:\n    Confirmation message.\n\nCRITICAL: This tool must be called before using any other tool (except predict_bandgap) to load the model into memory.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nLoad a MatGL model.\n\nSupported models include:\n- PES Models: &#39;CHGNet-MatPES-PBE-2025.2.10-2.7M-PES&#39;, &#39;CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES&#39;, &#39;CHGNet-MPtrj-2024.2.13-11M-PES&#39;, &#39;CHGNet-MPtrj-2023.12.1-2.7M-PES&#39;\n- PES Models: &#39;M3GNet-MP-2021.2.8-PES&#39;, &#39;M3GNet-MatPES-PBE-v2025.1-PES&#39;, &#39;M3GNet-MatPES-r2SCAN-v2025.1-PES&#39;, &#39;M3GNet-MP-2021.2.8-DIRECT-PES&#39;\n- PES Models: &#39;TensorNet-MatPES-PBE-v2025.1-PES&#39;, &#39;TensorNet-MatPES-r2SCAN-v2025.1-PES&#39;, &#39;M3GNet-ANI-1x-Subset-PES&#39;, &#39;SO3Net-ANI-1x-Subset-PES&#39;\n\nArgs:\n    model_name: Name of the model to load.\n    device: Device to use (\"auto\", \"cpu\", \"cuda\").\n\nReturns:\n    Confirmation message.\n\nCRITICAL: This tool must be called before using any other tool (except predict_bandgap) to load the model into memory.\n```"'></div>
         </div>
 
         <div class="tool-card">
@@ -69,7 +69,7 @@
 
         <div class="tool-card">
           <h3 class="tool-name">📎 predict_atomic_features</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nPredict atomic latent features (descriptors) for a structure.\nAutomatically saves features to the current research directory.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    output_path: Optional custom path for saving features. If not provided, auto-generates\n                 based on structure filename (e.g., &#39;solid.cif&#39; -> &#39;solid_features.json&#39;).\n\nReturns:\n    Dict: {\n        &#39;atomic_features&#39;: [[...], ...], \n        &#39;feature_dim&#39;: int, \n        &#39;num_atoms&#39;: int,\n        &#39;saved_path&#39;: str  # Path to saved JSON file\n    }\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nPredict atomic latent features (descriptors) for a structure.\nAutomatically saves features to the current research directory.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    output_path: Optional custom path for saving features. If not provided, auto-generates\n                 based on structure filename (e.g., &#39;solid.cif&#39; -> &#39;solid_features.json&#39;).\n\nReturns:\n    Dict: {\n        &#39;atomic_features&#39;: [[...], ...],\n        &#39;feature_dim&#39;: int,\n        &#39;num_atoms&#39;: int,\n        &#39;saved_path&#39;: str  # Path to saved JSON file\n    }\n```"'></div>
         </div>
 
         <div class="tool-card">
@@ -84,7 +84,7 @@
 
         <div class="tool-card">
           <h3 class="tool-name">📎 relax_structure</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nRelax one or multiple structures using the loaded MatGL model.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    fmax: Force convergence criterion (eV/Ang).\n    steps: Maximum number of optimization steps.\n    optimizer: Optimizer to use (\"FIRE\", \"BFGS\", \"LBFGS\").\n    relax_cell: Whether to relax the unit cell.\n    output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.\n    \nReturns:\n    For single: Dict with energy, trajectory_path, cif_path, json_path\n    For batch: Dict with mode=\"batch\", total_structures, successful, failed, results list\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nRelax one or multiple structures using the loaded MatGL model.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    fmax: Force convergence criterion (eV/Ang).\n    steps: Maximum number of optimization steps.\n    optimizer: Optimizer to use (\"FIRE\", \"BFGS\", \"LBFGS\").\n    relax_cell: Whether to relax the unit cell.\n    output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.\n\nReturns:\n    For single: Dict with energy, trajectory_path, cif_path, json_path\n    For batch: Dict with mode=\"batch\", total_structures, successful, failed, results list\n```"'></div>
         </div>
 
         <div class="tool-card">

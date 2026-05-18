@@ -31,7 +31,7 @@ DATA_CORE = "https://data.rcsb.org/rest/v1/core"
 DOWNLOAD_BASE = "https://files.rcsb.org/download"
 VALIDATION_BASE = "https://files.rcsb.org/validation/view"
 
-USER_AGENT = "AtomisticSkills-db-pdb/0.2 (github: bowen-bd)"
+USER_AGENT = "AtomisticSkills-db-pdb/0.2 (github: learningmatter-mit)"
 
 _LAST_REQUEST_T = 0.0
 

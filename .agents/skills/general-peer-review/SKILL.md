@@ -73,4 +73,4 @@ To see how the reviewer evaluates a proposed Action Plan for scientific methodol
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @Bowen-BD](https://github.com/Bowen-BD)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

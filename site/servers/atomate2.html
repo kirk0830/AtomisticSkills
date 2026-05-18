@@ -44,7 +44,7 @@
   <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.svg" height="24" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
-    <a class="gh-link" href="https://github.com/bowen-bd/AtomisticSkills/tree/main/src/mcp_server/atomate2_server.py" target="_blank">View on GitHub</a>
+    <a class="gh-link" href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/src/mcp_server/atomate2_server.py" target="_blank">View on GitHub</a>
   </div>
 </nav>
 <div class="hero">
@@ -59,32 +59,32 @@
 
         <div class="tool-card">
           <h3 class="tool-name">📎 run_atomate2_vasp_calculation</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nRun VASP calculations using atomate2 flows.\n\nThis tool supports MatPES presets (matpes-pbe, matpes-r2scan) and standard MP presets.\nIt can run calculations locally (blocking) or remote.\n\nArgs:\n    structures_path: Path to structure files or directory.\n    output_dir: Directory to save results and logs.\n    preset_type: VASP input preset (\"omat\", \"mp\", \"matpes-pbe\", \"matpes-r2scan\", \"mp-r2scan\").\n    calculation_type: \"static\", \"relaxation\", \"band_structure\", \"optics\", or \"lobster\".\n    config: Optional custom INCAR settings to override preset.\n    execution_mode: \"local\" (blocking) or \"remote\".\n    check_only: If True, only check environment or job status without running.\n    job_id: Optional Job ID to check status or extract results from.\n    remote_settings: Optional dict for remote execution. \n                    Keys: &#39;project&#39; (default: remote_perlmutter), &#39;worker&#39; (default: perlmutter_worker).\n    bandstructure_mode: For &#39;band_structure&#39; type: \"line\", \"uniform\", or \"both\" (default: \"line\").\n    \nReturns:\n    Status message or results summary.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nRun VASP calculations using atomate2 flows.\n\nThis tool supports MatPES presets (matpes-pbe, matpes-r2scan) and standard MP presets.\nIt can run calculations locally (blocking) or remote.\n\nArgs:\n    structures_path: Path to structure files or directory.\n    output_dir: Directory to save results and logs.\n    preset_type: VASP input preset (\"omat\", \"mp\", \"matpes-pbe\", \"matpes-r2scan\", \"mp-r2scan\").\n    calculation_type: \"static\", \"relaxation\", \"band_structure\", \"optics\", or \"lobster\".\n    config: Optional custom INCAR settings to override preset.\n    execution_mode: \"local\" (blocking) or \"remote\".\n    check_only: If True, only check environment or job status without running.\n    job_id: Optional Job ID to check status or extract results from.\n    remote_settings: Optional dict for remote execution.\n                    Keys: &#39;project&#39; (default: remote_perlmutter), &#39;worker&#39; (default: perlmutter_worker).\n    bandstructure_mode: For &#39;band_structure&#39; type: \"line\", \"uniform\", or \"both\" (default: \"line\").\n\nReturns:\n    Status message or results summary.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 get_atomate2_results_by_id</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nRetrieve VASP calculation results from Atomate2 MongoDB by Job IDs or Flow IDs.\n\nArgs:\n    job_ids: List of Job IDs (UUIDs or DB IDs).\n    flow_ids: List of Flow IDs (UUIDs or DB IDs).\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    save_to_file: Optional path to save the results as a JSON file.\n    convert_units: Whether to convert stress from kB to eV/\u00c5\u00b3 (default: True).\n    \nReturns:\n    Dictionary containing the extracted training data and count.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nRetrieve VASP calculation results from Atomate2 MongoDB by Job IDs or Flow IDs.\n\nArgs:\n    job_ids: List of Job IDs (UUIDs or DB IDs).\n    flow_ids: List of Flow IDs (UUIDs or DB IDs).\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    save_to_file: Optional path to save the results as a JSON file.\n    convert_units: Whether to convert stress from kB to eV/\u00c5\u00b3 (default: True).\n\nReturns:\n    Dictionary containing the extracted training data and count.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 get_atomate2_results_by_formula</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nRetrieve VASP calculation results from Atomate2 MongoDB by chemical formula or system.\n\nArgs:\n    formula: Chemical formula filter (e.g., \"Al2O3\").\n    chemsys: Chemical system filter (e.g., \"Al-O\").\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    save_to_file: Optional path to save the results as a JSON file.\n    convert_units: Whether to convert stress from kB to eV/\u00c5\u00b3 (default: True).\n    limit: Maximum number of results to retrieve (default: 100).\n    \nReturns:\n    Dictionary containing the extracted training data and count.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nRetrieve VASP calculation results from Atomate2 MongoDB by chemical formula or system.\n\nArgs:\n    formula: Chemical formula filter (e.g., \"Al2O3\").\n    chemsys: Chemical system filter (e.g., \"Al-O\").\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    save_to_file: Optional path to save the results as a JSON file.\n    convert_units: Whether to convert stress from kB to eV/\u00c5\u00b3 (default: True).\n    limit: Maximum number of results to retrieve (default: 100).\n\nReturns:\n    Dictionary containing the extracted training data and count.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 get_atomate2_summary</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nGet a summary of the Atomate2 database (total labels, convergence, chemsys distribution).\n\nArgs:\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    save_to_file: Optional path to save the results as a JSON file.\n    \nReturns:\n    Dictionary with database statistics.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nGet a summary of the Atomate2 database (total labels, convergence, chemsys distribution).\n\nArgs:\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    save_to_file: Optional path to save the results as a JSON file.\n\nReturns:\n    Dictionary with database statistics.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 get_atomate2_recent_jobs</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nList recently completed Job IDs and their status.\n\nArgs:\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    limit: Number of jobs to retrieve.\n    save_to_file: Optional path to save the results as a JSON file.\n    \nReturns:\n    List of job information dictionaries.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nList recently completed Job IDs and their status.\n\nArgs:\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    limit: Number of jobs to retrieve.\n    save_to_file: Optional path to save the results as a JSON file.\n\nReturns:\n    List of job information dictionaries.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 get_atomate2_job_status</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nCheck the detailed status of a single Atomate2 job by ID.\n\nArgs:\n    job_id: The Job ID or Flow ID (UUID or DB ID).\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    save_to_file: Optional path to save the results as a JSON file.\n    \nReturns:\n    Dictionary with job status information.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nCheck the detailed status of a single Atomate2 job by ID.\n\nArgs:\n    job_id: The Job ID or Flow ID (UUID or DB ID).\n    project_name: Name of the jobflow-remote project (default: None, auto-detected).\n    save_to_file: Optional path to save the results as a JSON file.\n\nReturns:\n    Dictionary with job status information.\n```"'></div>
         </div>
 
   </div>

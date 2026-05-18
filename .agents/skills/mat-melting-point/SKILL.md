@@ -161,4 +161,4 @@ python .agents/skills/mat-melting-point/scripts/create_interface.py Al_solid.cif
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

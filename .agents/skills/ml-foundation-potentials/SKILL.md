@@ -104,4 +104,4 @@ For detailed inference speed and memory usage of various MLIPs, refer to the ded
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

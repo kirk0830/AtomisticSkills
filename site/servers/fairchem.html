@@ -44,7 +44,7 @@
   <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.svg" height="24" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
-    <a class="gh-link" href="https://github.com/bowen-bd/AtomisticSkills/tree/main/src/mcp_server/fairchem_server.py" target="_blank">View on GitHub</a>
+    <a class="gh-link" href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/src/mcp_server/fairchem_server.py" target="_blank">View on GitHub</a>
   </div>
 </nav>
 <div class="hero">
@@ -64,7 +64,7 @@
 
         <div class="tool-card">
           <h3 class="tool-name">📎 predict_structure</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nPredict energy, forces, and stress for a structure or a batch of structures.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n        \nReturns:\n    Dict: {&#39;energy&#39;: eV, &#39;forces&#39;: eV/A, &#39;stress&#39;: eV/\u00c5\u00b3}\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nPredict energy, forces, and stress for a structure or a batch of structures.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n\nReturns:\n    Dict: {&#39;energy&#39;: eV, &#39;forces&#39;: eV/A, &#39;stress&#39;: eV/\u00c5\u00b3}\n```"'></div>
         </div>
 
         <div class="tool-card">
@@ -74,12 +74,12 @@
 
         <div class="tool-card">
           <h3 class="tool-name">📎 relax_structure</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nRelax one or multiple structures using the loaded FAIRCHEM model.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    fmax: Force convergence criterion (eV/Ang).\n    steps: Maximum number of optimization steps.\n    optimizer: Optimizer to use (\"FIRE\", \"BFGS\", \"LBFGS\").\n    relax_cell: Whether to relax the unit cell (default: True).\n    output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.\n    \nReturns:\n    For single: Dict with energy, trajectory_path, cif_path, json_path\n    For batch: Dict with mode=\"batch\", total_structures, successful, failed, results list\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nRelax one or multiple structures using the loaded FAIRCHEM model.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    fmax: Force convergence criterion (eV/Ang).\n    steps: Maximum number of optimization steps.\n    optimizer: Optimizer to use (\"FIRE\", \"BFGS\", \"LBFGS\").\n    relax_cell: Whether to relax the unit cell (default: True).\n    output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.\n\nReturns:\n    For single: Dict with energy, trajectory_path, cif_path, json_path\n    For batch: Dict with mode=\"batch\", total_structures, successful, failed, results list\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 run_md</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nRun molecular dynamics simulation using MatCalc.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    temperature: Temperature in Kelvin.\n    steps: Number of steps.\n    timestep: Timestep in fs.\n    ensemble: Ensemble \"nve\", \"nvt\" (Nose-Hoover), or \"npt\" (NPT).\n              Also supports variants like \"nvt_langevin\", \"nvt_andersen\", \"npt_berendsen\", \"npt_mtk\".\n    log_interval: Interval for logging to trajectory and logfile.\n    pressure: Target pressure in bar (for NPT).\n    pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).\n    output_dir: Directory to save results.\n    monitor: Whether to enable automatic MD monitoring.\n    monitor_type: Type of monitor (\"melting\", \"explosion\", \"overshoot\", \"volume\") or list of types.\n    monitor_params: Optional dictionary of parameters for the monitors (e.g., {\"upper_limit_ratio\": 4.0}).\n    supercell_min_length: Minimum length (\u00c5) for each lattice vector. Automatically expands supercell.\n    \nReturns:\n    Dictionary with MD results (trajectory_path, final_structure).\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nRun molecular dynamics simulation using MatCalc.\n\nArgs:\n    structure_data: Single structure or batch (directory path, list of dicts/paths).\n    temperature: Temperature in Kelvin.\n    steps: Number of steps.\n    timestep: Timestep in fs.\n    ensemble: Ensemble \"nve\", \"nvt\" (Nose-Hoover), or \"npt\" (NPT).\n              Also supports variants like \"nvt_langevin\", \"nvt_andersen\", \"npt_berendsen\", \"npt_mtk\".\n    log_interval: Interval for logging to trajectory and logfile.\n    pressure: Target pressure in bar (for NPT).\n    pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).\n    output_dir: Directory to save results.\n    monitor: Whether to enable automatic MD monitoring.\n    monitor_type: Type of monitor (\"melting\", \"explosion\", \"overshoot\", \"volume\") or list of types.\n    monitor_params: Optional dictionary of parameters for the monitors (e.g., {\"upper_limit_ratio\": 4.0}).\n    supercell_min_length: Minimum length (\u00c5) for each lattice vector. Automatically expands supercell.\n\nReturns:\n    Dictionary with MD results (trajectory_path, final_structure).\n```"'></div>
         </div>
 
   </div>

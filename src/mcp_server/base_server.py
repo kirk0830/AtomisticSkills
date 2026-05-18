@@ -7,9 +7,11 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server
+from src.utils.config_utils import inject_config_into_env
 
 # Setup stdout redirection for MCP
 mcp_pipe_binary = setup_mcp_stdout()
+inject_config_into_env()
 
 import logging
 import warnings

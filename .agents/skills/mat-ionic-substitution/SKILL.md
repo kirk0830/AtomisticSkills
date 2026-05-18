@@ -109,4 +109,4 @@ Expected output includes: LiCl from MP + NaCl(Na→Li), KCl(K→Li), NaBr(Na→L
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

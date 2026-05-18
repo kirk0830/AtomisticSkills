@@ -86,4 +86,4 @@ conda run -n base-agent python .agents/skills/ml-mlip-benchmark/scripts/plot_ben
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

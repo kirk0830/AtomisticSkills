@@ -1,6 +1,6 @@
 # Ibuprofen K-Means Clustering Example
 
-This example demonstrates the new **K-Means clustering** mode for deduplication, introduced to solve [Issue #13](https://github.com/bowen-bd/AtomisticSkills/issues/13). Unlike the legacy RMSD threshold approach, clustering guarantees a maximally **diverse** yet **low-energy** conformer ensemble.
+This example demonstrates the new **K-Means clustering** mode for deduplication, introduced to solve [Issue #13](https://github.com/learningmatter-mit/AtomisticSkills/issues/13). Unlike the legacy RMSD threshold approach, clustering guarantees a maximally **diverse** yet **low-energy** conformer ensemble.
 
 ## Molecule
 

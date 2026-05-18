@@ -88,4 +88,4 @@ python .agents/skills/chem-react-ot/scripts/generate_ts.py \
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

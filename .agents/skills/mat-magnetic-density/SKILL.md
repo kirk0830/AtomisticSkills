@@ -223,4 +223,4 @@ Choosing the right exchange-correlation functional is critical for accurate magn
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

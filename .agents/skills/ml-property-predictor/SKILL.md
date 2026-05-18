@@ -89,4 +89,4 @@ python .agents/skills/ml-property-predictor/scripts/train_matgl_property.py \
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

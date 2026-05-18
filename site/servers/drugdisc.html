@@ -44,7 +44,7 @@
   <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.svg" height="24" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
-    <a class="gh-link" href="https://github.com/bowen-bd/AtomisticSkills/tree/main/src/mcp_server/drugdisc_server.py" target="_blank">View on GitHub</a>
+    <a class="gh-link" href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/src/mcp_server/drugdisc_server.py" target="_blank">View on GitHub</a>
   </div>
 </nav>
 <div class="hero">
@@ -59,27 +59,27 @@
 
         <div class="tool-card">
           <h3 class="tool-name">📎 parse_smiles_input</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nParse SMILES from string or file.\n\nArgs:\n    smiles: Single SMILES string\n    smiles_file: Path to SMILES file (formats: \"SMILES\", \"SMILES\\tNAME\", \"SMILES NAME\")\n    name: Optional molecule name (only used with smiles string)\n    \nReturns:\n    Dictionary with parsed SMILES and names\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nParse SMILES from string or file.\n\nArgs:\n    smiles: Single SMILES string\n    smiles_file: Path to SMILES file (formats: \"SMILES\", \"SMILES\\tNAME\", \"SMILES NAME\")\n    name: Optional molecule name (only used with smiles string)\n\nReturns:\n    Dictionary with parsed SMILES and names\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 standardize_molecule</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nStandardize a molecule using RDKit MolStandardize.\n\nArgs:\n    smiles: Input SMILES string\n    mode: Standardization mode\n        - \"none\": No standardization\n        - \"cleanup\": Basic cleanup\n        - \"parent\": Largest fragment + cleanup\n        - \"uncharged\": Parent + neutralize\n        - \"tautomer\": Parent + canonical tautomer\n    enumerate_protomers: Generate pH-dependent protonation states\n    ph_min: Minimum pH for protomer enumeration\n    ph_max: Maximum pH for protomer enumeration\n    max_protomers: Maximum number of protomers to generate\n    \nReturns:\n    Dictionary with standardized SMILES or list of protomers\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nStandardize a molecule using RDKit MolStandardize.\n\nArgs:\n    smiles: Input SMILES string\n    mode: Standardization mode\n        - \"none\": No standardization\n        - \"cleanup\": Basic cleanup\n        - \"parent\": Largest fragment + cleanup\n        - \"uncharged\": Parent + neutralize\n        - \"tautomer\": Parent + canonical tautomer\n    enumerate_protomers: Generate pH-dependent protonation states\n    ph_min: Minimum pH for protomer enumeration\n    ph_max: Maximum pH for protomer enumeration\n    max_protomers: Maximum number of protomers to generate\n\nReturns:\n    Dictionary with standardized SMILES or list of protomers\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 convert_to_pdbqt</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nConvert molecule or protein to PDBQT format using Meeko.\n\nArgs:\n    input_data: Can be:\n        - SMILES string (if input_type=\"smiles\")\n        - Path to SDF file (if input_type=\"sdf\")\n        - Path to PDB file (if input_type=\"pdb\")\n    output_path: Output PDBQT file path\n    input_type: Type of input (\"smiles\", \"sdf\", \"pdb\")\n    num_confs: Number of conformers to generate (for SMILES/SDF)\n    force_field: Force field for optimization (\"MMFF94\", \"MMFF94s\", \"UFF\")\n    max_iters: Maximum optimization iterations\n    \nReturns:\n    Dictionary with conversion results\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nConvert molecule or protein to PDBQT format using Meeko.\n\nArgs:\n    input_data: Can be:\n        - SMILES string (if input_type=\"smiles\")\n        - Path to SDF file (if input_type=\"sdf\")\n        - Path to PDB file (if input_type=\"pdb\")\n    output_path: Output PDBQT file path\n    input_type: Type of input (\"smiles\", \"sdf\", \"pdb\")\n    num_confs: Number of conformers to generate (for SMILES/SDF)\n    force_field: Force field for optimization (\"MMFF94\", \"MMFF94s\", \"UFF\")\n    max_iters: Maximum optimization iterations\n\nReturns:\n    Dictionary with conversion results\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 compute_molecular_descriptors</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nCompute molecular descriptors and drug-likeness heuristics.\n\nArgs:\n    smiles: Single SMILES string\n    smiles_file: Path to SMILES file\n    include_sandp_tpsa: Use S,P-inclusive TPSA calculation\n    output_file: Path to save results as JSON (REQUIRED)\n    \nReturns:\n    Dictionary with summary statistics and path to full results\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nCompute molecular descriptors and drug-likeness heuristics.\n\nArgs:\n    smiles: Single SMILES string\n    smiles_file: Path to SMILES file\n    include_sandp_tpsa: Use S,P-inclusive TPSA calculation\n    output_file: Path to save results as JSON (REQUIRED)\n\nReturns:\n    Dictionary with summary statistics and path to full results\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 compute_molecular_fingerprints</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nCompute Morgan fingerprints and chemical similarity.\n\nArgs:\n    smiles_file: Path to SMILES file\n    radius: Morgan radius (default 2 for ECFP4)\n    fp_size: Fingerprint bit vector size\n    use_chirality: Include stereochemistry\n    use_features: Use pharmacophore features (FCFP)\n    compute_similarity: Calculate pairwise Tanimoto similarity\n    cluster: Perform Butina clustering\n    cluster_cutoff: Similarity cutoff for clustering\n    save_heatmap: Optional path to save similarity heatmap\n    output_file: Path to save results as JSON (REQUIRED)\n    \nReturns:\n    Dictionary with summary statistics and paths\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nCompute Morgan fingerprints and chemical similarity.\n\nArgs:\n    smiles_file: Path to SMILES file\n    radius: Morgan radius (default 2 for ECFP4)\n    fp_size: Fingerprint bit vector size\n    use_chirality: Include stereochemistry\n    use_features: Use pharmacophore features (FCFP)\n    compute_similarity: Calculate pairwise Tanimoto similarity\n    cluster: Perform Butina clustering\n    cluster_cutoff: Similarity cutoff for clustering\n    save_heatmap: Optional path to save similarity heatmap\n    output_file: Path to save results as JSON (REQUIRED)\n\nReturns:\n    Dictionary with summary statistics and paths\n```"'></div>
         </div>
 
   </div>

@@ -65,4 +65,4 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

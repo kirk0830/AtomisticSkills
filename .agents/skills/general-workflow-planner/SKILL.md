@@ -48,4 +48,4 @@ For an example of decomposing a high-level goal into a Detailed Action Plan usin
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @Bowen-BD](https://github.com/Bowen-BD)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

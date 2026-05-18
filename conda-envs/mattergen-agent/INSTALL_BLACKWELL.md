@@ -275,4 +275,4 @@ python -c "import mattergen, torch, torch_geometric, torch_scatter; print('✓ I
 **Last Updated**: 2026-02-13
 **Tested On**: NVIDIA DGX Spark with GB10 GPU (ARM/aarch64)
 **Author**: Bowen Deng
-**Contact**: github.com/bowen-bd
+**Contact**: github.com/learningmatter-mit

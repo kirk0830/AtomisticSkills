@@ -47,4 +47,4 @@ python .agents/skills/general-chemical-literature/scripts/get_xrefs.py \
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

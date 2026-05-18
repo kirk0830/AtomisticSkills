@@ -10,6 +10,7 @@ import json
 import base64
 import ast
 from pathlib import Path
+import shutil
 import yaml
 
 # Fix: Define PROJECT_ROOT relative to this file's location (site/build_skills.py)
@@ -175,9 +176,6 @@ def process_markdown_structures(md: str, base_dir: Path) -> str:
         except Exception as e:
             print(f"Failed to read structure file {struct_path}: {e}")
             return m.group(0)
-
-        # generate random id for textarea
-        el_id = f"struct_{uuid.uuid4().hex[:8]}"
 
         b64_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
 
@@ -374,7 +372,7 @@ def make_skill_page(
   </a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
-    <a class="gh-link" href="https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/skills/{skill_id}/SKILL.md" target="_blank">View on GitHub</a>
+    <a class="gh-link" href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/.agents/skills/{skill_id}/SKILL.md" target="_blank">View on GitHub</a>
   </div>
 </nav>
 
@@ -396,7 +394,7 @@ def make_skill_page(
   {examples_html}
   <hr style="margin: 3rem 0; border: none; border-top: 1px solid var(--border);">
   <div style="text-align: center; margin-bottom: 2rem;">
-    <a href="https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/skills/{skill_id}/SKILL.md" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; color: var(--text); font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
+    <a href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/.agents/skills/{skill_id}/SKILL.md" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; background: white; border: 1px solid var(--border); padding: 10px 20px; border-radius: 8px; color: var(--text); font-weight: 600; text-decoration: none; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.02); transition: all 0.2s;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
       View this Skill on GitHub
     </a>
@@ -405,7 +403,7 @@ def make_skill_page(
 
 <footer>
   <p>AtomisticSkills — Open-sourced AI research infrastructure &nbsp;·&nbsp;
-    <a href="https://github.com/bowen-bd/AtomisticSkills" target="_blank">GitHub</a>
+    <a href="https://github.com/learningmatter-mit/AtomisticSkills" target="_blank">GitHub</a>
   </p>
 </footer>
 
@@ -714,7 +712,7 @@ def make_workflow_page(workflow_id: str, meta: dict, body_md: str, out_path: Pat
         r"^#\s+.+\n?", "", body_md, count=1, flags=re.MULTILINE
     ).lstrip()
 
-    github_link = f"https://github.com/bowen-bd/AtomisticSkills/tree/main/.agents/workflows/{workflow_id}.md"
+    github_link = f"https://github.com/learningmatter-mit/AtomisticSkills/tree/main/.agents/workflows/{workflow_id}.md"
     html = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -792,6 +790,7 @@ def make_workflow_page(workflow_id: str, meta: dict, body_md: str, out_path: Pat
 def build_workflows():
     print("\nBuilding workflow pages...")
     workflows_index = []
+    built_workflows = set()
     if WORKFLOWS_SRC_DIR.exists():
         for wf_file in sorted(WORKFLOWS_SRC_DIR.glob("*.md")):
             wf_id = wf_file.stem
@@ -800,6 +799,7 @@ def build_workflows():
 
             out_path = WORKFLOWS_OUT_DIR / f"{wf_id}.html"
             make_workflow_page(wf_id, meta, body_md, out_path)
+            built_workflows.add(f"{wf_id}.html")
             workflows_index.append(
                 {
                     "id": wf_id,
@@ -808,6 +808,14 @@ def build_workflows():
                 }
             )
             print(f"  Built: workflows/{wf_id}.html")
+
+    # Clean up obsolete workflows
+    if WORKFLOWS_OUT_DIR.exists():
+        for f in WORKFLOWS_OUT_DIR.glob("*.html"):
+            if f.name not in built_workflows:
+                print(f"  Removing obsolete workflow page: {f.name}")
+                f.unlink()
+
     return workflows_index
 
 
@@ -815,6 +823,7 @@ def build_skills():
     """Build skill-specific pages."""
     print("\nBuilding skill pages...")
     skill_index = []
+    built_skills = set()
     for skill_dir in sorted(SKILLS_SRC_DIR.iterdir()):
         if not skill_dir.is_dir():
             continue
@@ -859,6 +868,7 @@ def build_skills():
 
         out_path = SKILLS_OUT_DIR / f"{skill_id}.html"
         make_skill_page(skill_id, meta, body_md, examples, out_path)
+        built_skills.add(f"{skill_id}.html")
         print(f"  Built: skills/{skill_id}.html  ({len(examples)} examples)")
 
         cats = meta.get("category", ["materials"])
@@ -872,6 +882,13 @@ def build_skills():
                 "num_examples": len(examples),
             }
         )
+
+    # Clean up obsolete skills
+    if SKILLS_OUT_DIR.exists():
+        for f in SKILLS_OUT_DIR.glob("*.html"):
+            if f.name not in built_skills:
+                print(f"  Removing obsolete skill page: {f.name}")
+                f.unlink()
 
     # Add workflows
     workflows_index = build_workflows()
@@ -962,7 +979,7 @@ def make_server_page(server_id, tools, out_path):
         """
 
     page_title = f"{server_id} Server Tools"
-    github_link = f"https://github.com/bowen-bd/AtomisticSkills/tree/main/src/mcp_server/{server_id}_server.py"
+    github_link = f"https://github.com/learningmatter-mit/AtomisticSkills/tree/main/src/mcp_server/{server_id}_server.py"
 
     html = f"""<!doctype html>
 <html lang="en">
@@ -1052,13 +1069,22 @@ def build_servers():
     mcp_dir = PROJECT_ROOT / "src" / "mcp_server"
     if not mcp_dir.exists():
         return
+    built_servers = set()
     for py_file in sorted(mcp_dir.glob("*_server.py")):
         server_id = py_file.name.replace("_server.py", "")
         tools = extract_mcp_tools(py_file)
         if tools:
             out_path = SERVERS_OUT_DIR / f"{server_id}.html"
             make_server_page(server_id, tools, out_path)
+            built_servers.add(f"{server_id}.html")
             print(f"  Built: servers/{server_id}.html with {len(tools)} tools")
+
+    # Clean up obsolete servers
+    if SERVERS_OUT_DIR.exists():
+        for f in SERVERS_OUT_DIR.glob("*.html"):
+            if f.name not in built_servers:
+                print(f"  Removing obsolete server page: {f.name}")
+                f.unlink()
 
 
 def build_all():

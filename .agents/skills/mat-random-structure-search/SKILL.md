@@ -91,4 +91,4 @@ python .agents/skills/mat-random-structure-search/scripts/generate_random_struct
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

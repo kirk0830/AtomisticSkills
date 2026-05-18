@@ -66,4 +66,4 @@ python .agents/skills/drug-bioactivity-assay/scripts/get_assays.py \
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

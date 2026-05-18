@@ -57,7 +57,9 @@ class HttpConfig:
     delay: float = 0.3
     retries: int = 3
     backoff: float = 0.8
-    user_agent: str = "AtomisticSkills-db-chembl/1.0 (+https://github.com/bowen-bd)"
+    user_agent: str = (
+        "AtomisticSkills-db-chembl/1.0 (+https://github.com/learningmatter-mit)"
+    )
 
 
 def _sleep(cfg: HttpConfig) -> None:
@@ -643,13 +645,6 @@ def main() -> None:
     if args.output:
         _write_output(results, args.output)
         print(f"Saved output to: {args.output}")
-
-        # Save input configs for reproducibility
-        from src.utils.config_utils import save_skill_inputs
-
-        save_skill_inputs(args, args.output_dir)
-        _params_path.parent.mkdir(parents=True, exist_ok=True)
-        _params_path.write_text(json.dumps(_config, indent=2, default=str))
 
 
 if __name__ == "__main__":

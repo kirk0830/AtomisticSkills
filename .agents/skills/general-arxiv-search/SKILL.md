@@ -65,4 +65,4 @@ python .agents/skills/general-arxiv-search/scripts/arxiv_search.py --authors "Bo
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

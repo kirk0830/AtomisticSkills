@@ -56,4 +56,4 @@ python ../../scripts/generate_inputs.py --output gaas_flow.json
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub](https://github.com/bowen-bd)
+**Contact:** [GitHub](https://github.com/learningmatter-mit)

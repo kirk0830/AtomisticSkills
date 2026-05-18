@@ -44,7 +44,7 @@
   <a class="nav-logo" href="../index.html"><img src="../logo/atomisticskills_logo.svg" height="24" alt="AtomisticSkills"/></a>
   <a class="nav-back" href="../index.html">← Back to Home</a>
   <div class="nav-right">
-    <a class="gh-link" href="https://github.com/bowen-bd/AtomisticSkills/tree/main/src/mcp_server/base_server.py" target="_blank">View on GitHub</a>
+    <a class="gh-link" href="https://github.com/learningmatter-mit/AtomisticSkills/tree/main/src/mcp_server/base_server.py" target="_blank">View on GitHub</a>
   </div>
 </nav>
 <div class="hero">
@@ -59,47 +59,47 @@
 
         <div class="tool-card">
           <h3 class="tool-name">📎 create_research_dir</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nCreate research directory and set as active for MCP tools.\n\nArgs:\n    research_topic: Short description (e.g. \"LiFePO4_stability\"), prefixed with date.\n    \nReturns:\n    Path to the newly created directory.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nCreate research directory and set as active for MCP tools.\n\nArgs:\n    research_topic: Short description (e.g. \"LiFePO4_stability\"), prefixed with date.\n\nReturns:\n    Path to the newly created directory.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 task_boundary</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nInitialize a task boundary for research phases.\n\nArgs:\n    TaskName: Name of the task phase (e.g. \"Research Plan\", \"Literature Review\").\n    \nReturns:\n    Status message.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nInitialize a task boundary for research phases.\n\nArgs:\n    TaskName: Name of the task phase (e.g. \"Research Plan\", \"Literature Review\").\n\nReturns:\n    Status message.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 notify_user</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nAsk the user to review a document or wait for feedback.\n\nArgs:\n    message: Notification message for the user.\n    ShouldAutoProceed: Set to true to ensure the &#39;Proceed&#39; button is visible to the user.\n    \nReturns:\n    Status message.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nAsk the user to review a document or wait for feedback.\n\nArgs:\n    message: Notification message for the user.\n    ShouldAutoProceed: Set to true to ensure the &#39;Proceed&#39; button is visible to the user.\n\nReturns:\n    Status message.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 search_materials_project_by_formula</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nSearch Materials Project by formula. Supports wildcards.\n\nArgs:\n    formula: Chemical formula (e.g., \"Si\", \"Fe2O3\", \"Si*\").\n    api_key: Optional MP API key (defaults to environment).\n    save_to_file: Optional save path (or directory if return_all=True).\n    return_all: If True, returns all matching structures instead of just the ground state.\n    \nReturns:\n    Path to saved CIF file(s).\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nSearch Materials Project by formula. Supports wildcards.\n\nArgs:\n    formula: Chemical formula (e.g., \"Si\", \"Fe2O3\", \"Si*\").\n    api_key: Optional MP API key (defaults to environment).\n    save_to_file: Optional save path (or directory if return_all=True).\n    return_all: If True, returns all matching structures instead of just the ground state.\n\nReturns:\n    Path to saved CIF file(s).\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 search_materials_project_by_chemsys</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nSearch Materials Project by chemical system. Returns all stable structures on convex hull.\n\nArgs:\n    chemsys: Chemical system (e.g., \"Li-O\", \"Si-Fe-O\").\n    api_key: Optional MP API key (defaults to environment).\n    save_to_file: Optional directory path to save structures. If not provided, creates a directory named {chemsys}_structures.\n    \nReturns:\n    Summary of saved structures with paths.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nSearch Materials Project by chemical system. Returns all stable structures on convex hull.\n\nArgs:\n    chemsys: Chemical system (e.g., \"Li-O\", \"Si-Fe-O\").\n    api_key: Optional MP API key (defaults to environment).\n    save_to_file: Optional directory path to save structures. If not provided, creates a directory named {chemsys}_structures.\n\nReturns:\n    Summary of saved structures with paths.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 visualize_structure</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nVisualize structure(s) as high-quality image(s).\n\nArgs:\n    structure_path: Can be:\n        - Path to a single structure file (CIF, POSCAR, XYZ, etc.)\n        - Path to a directory containing multiple structures (generates one image per structure)\n        - Path to a trajectory file (visualizes the last frame)\n    output_path: Save path for single file, or directory for batch mode (auto: research_dir or cwd). \n                 Formats: png, jpg, svg, pdf.\n    width: Image width in pixels (default: 1200).\n    height: Image height in pixels (default: 800).\n    scale: Resolution scale factor (default: 2.0).\n    \nReturns:\n    Summary of saved image(s).\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nVisualize structure(s) as high-quality image(s).\n\nArgs:\n    structure_path: Can be:\n        - Path to a single structure file (CIF, POSCAR, XYZ, etc.)\n        - Path to a directory containing multiple structures (generates one image per structure)\n        - Path to a trajectory file (visualizes the last frame)\n    output_path: Save path for single file, or directory for batch mode (auto: research_dir or cwd).\n                 Formats: png, jpg, svg, pdf.\n    width: Image width in pixels (default: 1200).\n    height: Image height in pixels (default: 800).\n    scale: Resolution scale factor (default: 2.0).\n\nReturns:\n    Summary of saved image(s).\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 search_literature</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nSearch the OpenAlex database for scientific literature and optionally download full-text.\n\nArgs:\n    query: The search term (e.g., \"solid state battery LGPS\").\n    limit: Maximum number of results to return (default 10, max 50).\n    download: Whether to automatically attempt downloading the full text of discovered papers.\n    save_to_file: Optional path to save the full JSON results.\n    \nReturns:\n    Formatted markdown summary of the top papers found, downloading status, and paywall warnings.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nSearch the OpenAlex database for scientific literature and optionally download full-text.\n\nArgs:\n    query: The search term (e.g., \"solid state battery LGPS\").\n    limit: Maximum number of results to return (default 10, max 50).\n    download: Whether to automatically attempt downloading the full text of discovered papers.\n    save_to_file: Optional path to save the full JSON results.\n\nReturns:\n    Formatted markdown summary of the top papers found, downloading status, and paywall warnings.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 supercell_expansion</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nCreate a supercell from an existing structure.\n\nArgs:\n    structure_path: Path to the input structure file (e.g., CIF, POSCAR).\n    scaling_matrix_json: JSON string of a scaling matrix for generating the supercell (integer, list of 3 ints, or 3x3 matrix list).\n    supercell_min_length: Minimum length (\u00c5) for each lattice vector. Automatically expands supercell. Ignored if scaling_matrix is set.\n    save_to_file: Optional path to save the generated structure. Optional.\n    \nReturns:\n    Summary of saved supercell structure with path.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nCreate a supercell from an existing structure.\n\nArgs:\n    structure_path: Path to the input structure file (e.g., CIF, POSCAR).\n    scaling_matrix_json: JSON string of a scaling matrix for generating the supercell (integer, list of 3 ints, or 3x3 matrix list).\n    supercell_min_length: Minimum length (\u00c5) for each lattice vector. Automatically expands supercell. Ignored if scaling_matrix is set.\n    save_to_file: Optional path to save the generated structure. Optional.\n\nReturns:\n    Summary of saved supercell structure with path.\n```"'></div>
         </div>
 
         <div class="tool-card">
           <h3 class="tool-name">📎 modify_structure</h3>
-          <div class="tool-doc rendered-md" data-md='"```text\nModify a structure by substituting elements.\n\nArgs:\n    structure_path: Path to the input structure file (e.g., CIF, POSCAR).\n    substitution_dict_json: JSON string mapping old elements to new elements or fractions.\n                            Example 1: &#39;{\"Li\": \"Na\"}&#39; changes all Li to Na.\n                            Example 2: &#39;{\"Li\": {\"Li\": 0.5, \"Na\": 0.5}}&#39; changes all Li to a 50/50 mixture.\n    save_to_file: Optional path to save the generated structure. Optional.\n    \nReturns:\n    Summary of saved modified structure with path.\n```"'></div>
+          <div class="tool-doc rendered-md" data-md='"```text\nModify a structure by substituting elements.\n\nArgs:\n    structure_path: Path to the input structure file (e.g., CIF, POSCAR).\n    substitution_dict_json: JSON string mapping old elements to new elements or fractions.\n                            Example 1: &#39;{\"Li\": \"Na\"}&#39; changes all Li to Na.\n                            Example 2: &#39;{\"Li\": {\"Li\": 0.5, \"Na\": 0.5}}&#39; changes all Li to a 50/50 mixture.\n    save_to_file: Optional path to save the generated structure. Optional.\n\nReturns:\n    Summary of saved modified structure with path.\n```"'></div>
         </div>
 
         <div class="tool-card">

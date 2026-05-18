@@ -127,4 +127,4 @@ energy_kcal_per_mol = energy_eV * units.kcal / units.mol
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub @bowen-bd](https://github.com/bowen-bd)
+**Contact:** [GitHub @learningmatter-mit](https://github.com/learningmatter-mit)

@@ -72,4 +72,4 @@ python .agents/skills/mat-dft-lobster/scripts/analyze_lobster.py --cohpcar COHPC
 ---
 
 **Author:** Bowen Deng
-**Contact:** [GitHub](https://github.com/bowen-bd)
+**Contact:** [GitHub](https://github.com/learningmatter-mit)
