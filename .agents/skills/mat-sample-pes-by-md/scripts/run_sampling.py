@@ -111,18 +111,18 @@ def run_sampling():
     setup_logging(args.output_dir)
     logger = logging.getLogger("RunSampling")
 
-    # Serialize and save all input parameters to output_dir/sampling_parameters.json for high traceability
+    # Serialize and save all input parameters to output_dir/input_configs.yaml for high traceability (conforming to skill standards)
     if args.output_dir:
         os.makedirs(args.output_dir, exist_ok=True)
-        import json
+        import yaml
 
-        params_path = os.path.join(args.output_dir, "sampling_parameters.json")
+        params_path = os.path.join(args.output_dir, "input_configs.yaml")
         try:
             with open(params_path, "w") as f:
-                json.dump(vars(args), f, indent=2)
+                yaml.safe_dump(vars(args), f, default_flow_style=False)
             logger.info(f"Saved simulation parameters to {params_path}")
         except Exception as e:
-            logger.warning(f"Could not save sampling_parameters.json: {e}")
+            logger.warning(f"Could not save input_configs.yaml: {e}")
 
     logger.info(f"Loading structure from {args.input}")
     atoms = read(args.input)
