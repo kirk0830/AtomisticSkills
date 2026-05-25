@@ -277,6 +277,35 @@ class Atomate2Handler:
                     result["status"] = flow_info.state.name.lower()
                     result["remote"] = True
                     result["type"] = "flow"
+                    try:
+                        jobs_info = jc.get_jobs_info(flow_ids=[flow_info.flow_id])
+                        job_states = {}
+                        error_details = []
+                        for j in jobs_info:
+                            st = j.state.name.lower()
+                            job_states[st] = job_states.get(st, 0) + 1
+                            if (
+                                st in ["remote_error", "failed"]
+                                and len(error_details) < 1
+                            ):
+                                error_details.append(
+                                    {
+                                        "name": j.name,
+                                        "db_id": j.db_id,
+                                        "uuid": j.uuid,
+                                        "state": j.state.name,
+                                        "remote_error": getattr(j, "remote_err", None)
+                                        or getattr(j, "error", None)
+                                        or getattr(j, "message", None)
+                                        or str(vars(j)),
+                                    }
+                                )
+                        result["job_states"] = job_states
+                        result["total_jobs"] = len(jobs_info)
+                        if error_details:
+                            result["error_details"] = error_details
+                    except Exception as je:
+                        result["job_states_error"] = str(je)
                 else:
                     # Try searching as a Job
                     if job_id.isdigit():
@@ -295,7 +324,8 @@ class Atomate2Handler:
                     with open(status_file, "w") as f:
                         json.dump(result, f)
             except Exception as e:
-                logger.debug(f"Remote status check failed for job {job_id}: {e}")
+                logger.exception(f"Remote status check failed for job {job_id}: {e}")
+                result["error"] = f"Remote status check failed: {str(e)}"
 
         return result
 
