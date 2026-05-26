@@ -11,7 +11,7 @@ The framework integrates state-of-the-art Machine Learning Interatomic Potential
 
 <div align="center">
 
-🌐 **[Documentation Website](https://learningmatter-mit.github.io/AtomisticSkills/)**
+🌐 **[Documentation Website](https://learningmatter-mit.github.io/AtomisticSkills/)** &nbsp;|&nbsp; 📄 **[Preprint](https://arxiv.org/abs/2605.24002)**
 
 </div>
 
