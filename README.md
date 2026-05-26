@@ -70,7 +70,7 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 - **Self-Documented**: Each skill includes instructions (`SKILL.md`), helper scripts, and examples
 
 **Examples:**
-- [**MLIP Training**](.agents/skills/ml-mlip-training/SKILL.md): Benchmark and fine-tune MLIPs using data augmentation
+- [**MLIP Benchmark**](.agents/skills/ml-mlip-benchmark/SKILL.md): Benchmark MLIP accuracy against a labeled dataset — compute MAE/RMSE and generate parity plots
 - [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
 - [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
 - [**Molecular Docking**](.agents/skills/drug-docking-vina/SKILL.md): Dock small-molecule ligands into a protein receptor using AutoDock Vina
