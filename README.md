@@ -2,12 +2,20 @@
 
 ![AtomisticSkills Logo](site/logo/atomisticskills_logo.svg)
 
+[![arXiv](https://img.shields.io/badge/arXiv-2605.24002-b31b1b.svg)](https://arxiv.org/abs/2605.24002)
+
 ## Overview
 **AtomisticSkills** is a composable framework for AI-driven atomistic materials research. Built on the **hierarchical decomposition** of complex scientific tasks into **Workflows** → **Skills** → **Tools**, it enables coding AI agents to autonomously conduct multi-stage materials, chemistry, and drug discovery research by combining modular, reusable capabilities.
 
 The framework integrates state-of-the-art Machine Learning Interatomic Potentials (MLIPs), DFT calculations, generative AI, database APIs, and advanced simulation methods through the Model Context Protocol (MCP) tools and Skills, making advanced materials research accessible to AI copilots like Google Antigravity, Cursor, and Claude Code.
 
+<div align="center">
 
+🎬 **[Video Demo: Using AtomisticSkills in Google Antigravity](https://www.youtube.com/watch?v=oiyZ52RS5oo&feature=youtu.be)**
+
+[![AtomisticSkills Demo](https://img.youtube.com/vi/oiyZ52RS5oo/maxresdefault.jpg)](https://www.youtube.com/watch?v=oiyZ52RS5oo&feature=youtu.be)
+
+</div>
 
 
 
@@ -175,6 +183,28 @@ See [docs/developer_guide.md](docs/developer_guide.md) for architecture details,
 - Add tests for new functionality
 - Update documentation (README, SKILL.md files)
 - Ensure all MCP tools return clean JSON (no stdout pollution)
+
+---
+
+## Citation
+
+If you use AtomisticSkills in your research, please cite our paper:
+
+```bibtex
+@article{deng2025atomisticskills,
+  title   = {Harnessing AtomisticSkills for Agentic Atomistic Research},
+  author  = {Bowen Deng and Bohan Li and Matthew Cox and Hoje Chun and Juno Nam and
+             Artur Lyssenko and Sathya Edamadaka and Jurgis Ruza and Xiaochen Du and
+             Nofit Segal and Jesus Diaz Sanchez and Mingrou Xie and Ty Perez and
+             Yu Yao and Miguel Steiner and Sauradeep Majumdar and Charles B. Musgrave III and
+             Anirban Chandra and Abhirup Patra and Detlef Hohl and Connor W. Coley and
+             Ju Li and Rafael G{\'{o}}mez-Bombarelli},
+  journal = {arXiv preprint arXiv:2605.24002},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2605.24002},
+  doi     = {10.48550/arXiv.2605.24002}
+}
+```
 
 ---
 
