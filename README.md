@@ -149,10 +149,10 @@ AtomisticSkills is designed to be installed and operated by AI agents. For the f
    Install AtomisticSkills according to its `docs/setup.md` guide.
    ```
 
-The agent will read the [**Setup Guide (`docs/setup.md`)**](docs/setup.md) and interactively guide you through creating environments, configuring API keys, and registering MCP servers.
+The agent will read the [**Setup Guide**](docs/setup.md) and interactively guide you through creating environments, configuring API keys, and registering MCP servers.
 
 > [!TIP]
-> **Prefer manual installation?** If you want to configure everything yourself without an agent, read the [**Setup Guide (`docs/setup.md`)**](docs/setup.md) for full manual instructions.
+> **Prefer manual installation?** If you want to configure everything yourself without an agent, read the [**Setup Guide**](docs/setup.md) for full manual instructions.
 
 ---
 
