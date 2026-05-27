@@ -130,7 +130,6 @@ def process_markdown_images(md: str, base_dir: Path) -> str:
 def process_markdown_structures(md: str, base_dir: Path) -> str:
     """Replace relative .cif and .xyz links with a 3Dmol.js interactive viewer while keeping the link."""
     import base64
-    import uuid
 
     def replace_struct(m):
         alt = m.group(1)
@@ -196,6 +195,29 @@ def process_markdown_structures(md: str, base_dir: Path) -> str:
     return re.sub(
         r"\[([^\]]*)\]\(([^)]+\.(?:cif|xyz))\)", replace_struct, md, flags=re.IGNORECASE
     )
+
+
+def rewrite_cross_skill_links(md: str) -> str:
+    """Rewrite relative cross-skill/workflow links for the deployed site.
+
+    Transforms patterns like:
+      ../skill-name/SKILL.md         -> skill-name.html
+      ../../skills/skill-name/SKILL.md -> skill-name.html
+      ../../workflows/wf-name.md     -> ../workflows/wf-name.html
+    """
+    # ../skill-name/SKILL.md  or  ../../skills/skill-name/SKILL.md
+    md = re.sub(
+        r"\]\((?:\.\./|\.\./\.\./skills/)([a-zA-Z0-9_-]+)/SKILL\.md\)",
+        r"](\1.html)",
+        md,
+    )
+    # ../../workflows/wf-name.md
+    md = re.sub(
+        r"\]\(\.\./\.\./workflows/([a-zA-Z0-9_-]+)\.md\)",
+        r"](../workflows/\1.html)",
+        md,
+    )
+    return md
 
 
 def strip_carousel_syntax(md: str) -> str:
@@ -677,6 +699,7 @@ def render_example_readme(readme_path: Path) -> str:
     content = strip_carousel_syntax(content)
     content = process_markdown_structures(content, base_dir)
     content = process_markdown_images(content, base_dir)
+    content = rewrite_cross_skill_links(content)
     return content
 
 
@@ -842,6 +865,7 @@ def build_skills():
         # Process images in skill body
         body_md = strip_carousel_syntax(body_md)
         body_md = process_markdown_images(body_md, skill_dir)
+        body_md = rewrite_cross_skill_links(body_md)
 
         # Collect examples
         examples = []
