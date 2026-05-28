@@ -18,8 +18,40 @@ from ase.md.verlet import VelocityVerlet
 
 from matcalc._base import PropCalc
 from matcalc._relaxation import RelaxCalc
-from matcalc.backend._ase import TrajectoryObserver
 from matcalc.utils import to_ase_atoms, to_pmg_structure
+from matgl.ext.ase import TrajectoryObserver as _BaseTrajectoryObserver
+
+
+class TrajectoryObserver(_BaseTrajectoryObserver):
+    """Extends matgl TrajectoryObserver to also record kinetic energies."""
+
+    def __init__(self, atoms):
+        super().__init__(atoms)
+        self.kinetic_energies: list[float] = []
+
+    def __call__(self):
+        super().__call__()
+        self.kinetic_energies.append(float(self.atoms.get_kinetic_energy()))
+
+    @property
+    def potential_energies(self):
+        return self.energies
+
+    @property
+    def total_energies(self):
+        return [p + k for p, k in zip(self.energies, self.kinetic_energies)]
+
+    def get_slice(self, s):
+        sliced = object.__new__(TrajectoryObserver)
+        sliced.atoms = self.atoms
+        sliced.energies = self.energies[s]
+        sliced.kinetic_energies = self.kinetic_energies[s]
+        sliced.forces = self.forces[s]
+        sliced.stresses = self.stresses[s] if self.stresses else []
+        sliced.atom_positions = self.atom_positions[s]
+        sliced.cells = self.cells[s]
+        return sliced
+
 
 if TYPE_CHECKING:
     from typing import Any
@@ -115,6 +147,31 @@ class CustomMDCalc(PropCalc):
         self.additional_callbacks = additional_callbacks
 
     def _initialize_md(self, atoms: Atoms) -> Any:  # noqa: C901, PLR0911
+        """Initialize the ASE MD driver for the given atoms.
+
+        Attaches the calculator to ``atoms`` and constructs the appropriate
+        ASE MD object based on ``self.ensemble``.
+
+        Parameters
+        ----------
+        atoms : Atoms
+            ASE Atoms object representing the simulation cell.
+
+        Returns
+        -------
+        Any
+            An ASE MD driver instance ready for ``.run(steps)`` (e.g.,
+            ``NoseHooverChainNVT``, ``VelocityVerlet``, ``NPT``,
+            ``NPTBerendsen``, ``MTKNPT``).
+
+        Notes
+        -----
+        Only the ``npt`` / ``npt_nose_hoover`` ensemble (ASE ``NPT``) accepts
+        an anisotropic ``externalstress`` tensor via ``self.external_stress``.
+        All other NPT variants (``npt_berendsen``, ``npt_inhomogeneous``,
+        ``npt_mtk``) accept only a scalar ``pressure_au`` and ignore
+        ``self.external_stress``.
+        """
         atoms.calc = self.calculator
 
         timestep_fs = self.timestep * units.fs
@@ -126,7 +183,7 @@ class CustomMDCalc(PropCalc):
             else np.array([(1, 0, 0), (0, 1, 0), (0, 0, 1)])
         )
         external_stress = (
-            self.external_stress if self.external_stress is not None else 0.0
+            self.external_stress if self.external_stress is not None else self.pressure
         )
         ensemble = self.ensemble.lower()
 
@@ -211,7 +268,7 @@ class CustomMDCalc(PropCalc):
                 atoms,
                 timestep_fs,
                 temperature_K=self.temperature,
-                externalstress=self.pressure,
+                externalstress=external_stress,
                 ttime=self.ttime * units.fs,
                 pfactor=self.pfactor * units.GPa * (units.fs**2),
                 mask=mask,
