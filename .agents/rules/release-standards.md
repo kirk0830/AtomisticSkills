@@ -64,9 +64,9 @@ The annotated tag message must follow this structure exactly:
 
 ### New MCP Tools   ← omit section if none
 
-| Tool | Server | Description |
-|------|--------|-------------|
-| `<tool_name>` | `<server_id>` | One-sentence description from docstring. |
+| Tool | Server | Description | Author |
+|------|--------|-------------|--------|
+| `<tool_name>` | `<server_id>` | One-sentence description from docstring. | @github-handle |
 
 ### Other Highlights
 - **<Area>**: concise bullet per notable fix or improvement
@@ -77,7 +77,7 @@ The annotated tag message must follow this structure exactly:
 - **Stats table**: use counts from `site/skills_index.js` (public skills only). Write `—` when a count did not change.
 - **New Skills table**: one row per skill whose `SKILL.md` was *added* (not just modified) since the previous tag. Use the `description:` frontmatter value, truncated to one sentence. Author is the git committer of the adding commit (`git show --format="%an" <sha>`).
 - **New Workflows table**: one row per workflow whose `WORKFLOW.md` was *added* (not just modified) since the previous tag. Use the `description:` frontmatter value, truncated to one sentence. Author is the git committer of the adding commit.
-- **New MCP Tools table**: one row per `@mcp.tool()`-decorated function *added* since the previous tag. Exclude built-in agent tools (tools that belong to the harness, not the MCP server). Server is the `*_server.py` basename without `_server`.
+- **New MCP Tools table**: one row per `@mcp.tool()`-decorated function *added* since the previous tag. Exclude built-in agent tools (tools that belong to the harness, not the MCP server). Server is the `*_server.py` basename without `_server`. Author is the git committer of the adding commit.
 - **Other Highlights**: group by area (Skills, Sorption, Drug discovery, Docs & CI, etc.). One bullet per logical change, not per commit.
 
 ## Creating the Tag
