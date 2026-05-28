@@ -1,32 +1,29 @@
 import os
 import sys
 
-# set MATGL_BACKEND to DGL by default for better performance and TensorNet support
-if "MATGL_BACKEND" not in os.environ:
-    os.environ["MATGL_BACKEND"] = "DGL"
-
 # Silence Wandb and suppress warnings to prevent protocol pollution
 os.environ["WANDB_MODE"] = "offline"
 os.environ["WANDB_SILENT"] = "true"
 os.environ["PYTHONWARNINGS"] = "ignore"
 
-import logging
+import logging  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 # Add project root to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server
+from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server  # noqa: E402
 
 # Setup stdout redirection for MCP
 mcp_pipe_binary = setup_mcp_stdout()
 
-import warnings
-from mcp.server.fastmcp import FastMCP
-from typing import Dict, Any, Optional, List, Union
-from src.utils.serialization_utils import recursive_tolist
-from src.utils.research_utils import get_current_research_dir
+import warnings  # noqa: E402
+from mcp.server.fastmcp import FastMCP  # noqa: E402
+from typing import Dict, Any, Optional, List, Union  # noqa: E402
+from src.utils.serialization_utils import recursive_tolist  # noqa: E402
+from src.utils.research_utils import get_current_research_dir  # noqa: E402
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
@@ -44,15 +41,18 @@ wrapper: Optional[Any] = None
 
 @mcp.tool()
 def load_model(
-    model_name: str = "CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device: str = "auto"
+    model_name: str = "CHGNet-PES-MatPES-PBE-2025.2.10", device: str = "auto"
 ) -> str:
     """
     Load a MatGL model.
 
     Supported models include:
-    - PES Models: 'CHGNet-MatPES-PBE-2025.2.10-2.7M-PES', 'CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES', 'CHGNet-MPtrj-2024.2.13-11M-PES', 'CHGNet-MPtrj-2023.12.1-2.7M-PES'
-    - PES Models: 'M3GNet-MP-2021.2.8-PES', 'M3GNet-MatPES-PBE-v2025.1-PES', 'M3GNet-MatPES-r2SCAN-v2025.1-PES', 'M3GNet-MP-2021.2.8-DIRECT-PES'
-    - PES Models: 'TensorNet-MatPES-PBE-v2025.1-PES', 'TensorNet-MatPES-r2SCAN-v2025.1-PES', 'M3GNet-ANI-1x-Subset-PES', 'SO3Net-ANI-1x-Subset-PES'
+    - CHGNet PES: 'CHGNet-PES-MatPES-PBE-2025.2.10', 'CHGNet-PES-MatPES-r2SCAN-2025.2.10'
+    - M3GNet PES: 'M3GNet-PES-MatPES-PBE-2025.2', 'M3GNet-PES-MatPES-r2SCAN-2025.2', 'M3GNet-PES-ANI-1x-Subset'
+    - TensorNet PES: 'TensorNet-PES-MatPES-PBE-2025.2', 'TensorNet-PES-MatPES-r2SCAN-2025.2', 'TensorNet-PES-ANI-1x-Subset'
+    - QET PES: 'QET-PES-MatPES-PBE-2025.2', 'QET-PES-MatPES-r2SCAN-2025.2', 'QET-PES-MatQ'
+    - SO3Net PES: 'SO3Net-PES-ANI-1x-Subset'
+    - Property: 'MEGNet-BandGap-mfi-MP-2019.4.1', 'MEGNet-Eform-MP-2018.6.1', 'M3GNet-Eform-MP-2018.6.1'
 
     Args:
         model_name: Name of the model to load.

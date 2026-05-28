@@ -24,7 +24,7 @@ class TestMatGLPredictAtomicFeatures:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
         )
         wrapper.load()
 
@@ -48,7 +48,7 @@ class TestMatGLPredictAtomicFeatures:
         """Test atomic feature extraction with M3GNet model"""
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
-        wrapper = MatGLWrapper(model_name="M3GNet-MatPES-PBE-v2025.1-PES", device="cpu")
+        wrapper = MatGLWrapper(model_name="M3GNet-PES-MatPES-PBE-2025.2", device="cpu")
         wrapper.load()
 
         result = wrapper.predict_atomic_features(sample_ase_atoms)
@@ -62,7 +62,7 @@ class TestMatGLPredictAtomicFeatures:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
         )
         wrapper.load()
 
@@ -77,7 +77,7 @@ class TestMatGLPredictAtomicFeatures:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
         )
         wrapper.load()
 
@@ -110,7 +110,7 @@ class TestMatGLCalculator:
         from ase.calculators.calculator import Calculator
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
         )
         wrapper.load()
 
@@ -124,7 +124,7 @@ class TestMatGLCalculator:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
         from ase.calculators.calculator import Calculator
 
-        wrapper = MatGLWrapper(model_name="M3GNet-MatPES-PBE-v2025.1-PES", device="cpu")
+        wrapper = MatGLWrapper(model_name="M3GNet-PES-MatPES-PBE-2025.2", device="cpu")
         wrapper.load()
 
         calc = wrapper.create_calculator()
@@ -139,7 +139,7 @@ class TestMatGLCalculator:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
         )
         wrapper.load()
 
@@ -164,7 +164,7 @@ class TestMatGLModelLoading:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
         )
         wrapper.load()
 
@@ -175,7 +175,7 @@ class TestMatGLModelLoading:
         """Test loading M3GNet model"""
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
-        wrapper = MatGLWrapper(model_name="M3GNet-MatPES-PBE-v2025.1-PES", device="cpu")
+        wrapper = MatGLWrapper(model_name="M3GNet-PES-MatPES-PBE-2025.2", device="cpu")
         wrapper.load()
 
         assert wrapper.is_loaded
@@ -186,7 +186,7 @@ class TestMatGLModelLoading:
         from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
         wrapper = MatGLWrapper(
-            model_name="CHGNet-MatPES-PBE-2025.2.10-2.7M-PES", device="cpu"
+            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
         )
         wrapper.load()
 

@@ -15,8 +15,7 @@ def cleanup():
 
 @pytest.fixture(scope="module")
 def loaded_server():
-    # Use M3GNet as it is usually fastest/easiest
-    res = matgl_server.load_model("M3GNet", device="cpu")
+    res = matgl_server.load_model("M3GNet-PES-MatPES-PBE-2025.2", device="cpu")
     if "error" in res:
         pytest.fail(f"Failed to load model: {res}")
     return matgl_server
@@ -62,7 +61,7 @@ def test_run_md_batch(loaded_server, cu_structure):
     assert res.get("total_jobs") == 2
     assert res.get("successful") == 2
 
-    res = loaded_server.load_model("M3GNet", device="cpu")
+    res = loaded_server.load_model("M3GNet-PES-MatPES-PBE-2025.2", device="cpu")
     assert "error" not in res
     assert "Successfully loaded" in res
 

@@ -1,6 +1,6 @@
 name: matgl-agent
 dependencies:
-  - python=3.10
+  - python=3.12
   - pip
   - pip:
     - numpy<2
@@ -13,3 +13,4 @@ dependencies:
     - dgl
     - matcalc
     - typing-extensions
+    - pytest
