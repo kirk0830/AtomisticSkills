@@ -1,0 +1,86 @@
+---
+trigger: model_decision
+description: Rules for preparing a release tag for this repository
+---
+
+# Release Standards
+
+Follow these steps when preparing a release tag.
+
+## Version Numbering
+
+Use [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
+
+- **PATCH** (`v1.0.x`): bug fixes, documentation updates, no new skills or tools
+- **MINOR** (`v1.x.0`): new skills, new MCP tools, or new workflows added
+- **MAJOR** (`v2.0.0`): breaking changes to the framework, tool API, or skill interface
+
+## Pre-Tag Checklist
+
+1. Rebuild the doc site to get accurate public counts:
+   ```bash
+   conda run -n base-agent python site/build_skills.py
+   ```
+2. Read counts from `site/skills_index.js` (these exclude private skills and are the source of truth):
+   ```bash
+   python3 -c "
+   import re
+   content = open('site/skills_index.js').read()
+   for key in ['skills', 'tools', 'servers']:
+       m = re.search(f'\"({key})\"\\s*:\\s*(\\d+)', content)
+       print(key, m.group(2))
+   "
+   ```
+3. Ensure all pre-commit hooks pass on HEAD.
+4. Confirm the MCP server does not expose built-in agent tools (e.g. `task_boundary`, `notify_user`).
+
+## Tag Message Format
+
+The annotated tag message must follow this structure exactly:
+
+```
+## What's Changed
+
+### Repository Stats
+
+| Component    | vPREV  | vNEW   | Added |
+|--------------|--------|--------|-------|
+| Skills       | <n>    | <n>    | +N or — |
+| Workflows    | <n>    | <n>    | +N or — |
+| MCP Tools    | <n>    | <n>    | +N or — |
+| Tool Servers | <n>    | <n>    | +N or — |
+
+### New Skills   ← omit section if none
+
+| Skill | Description | Author |
+|-------|-------------|--------|
+| `<skill-id>` | One-sentence description from SKILL.md frontmatter. | @github-handle |
+
+### New MCP Tools   ← omit section if none
+
+| Tool | Server | Description |
+|------|--------|-------------|
+| `<tool_name>` | `<server_id>` | One-sentence description from docstring. |
+
+### Other Highlights
+- **<Area>**: concise bullet per notable fix or improvement
+```
+
+### Field rules
+
+- **Stats table**: use counts from `site/skills_index.js` (public skills only). Write `—` when a count did not change.
+- **New Skills table**: one row per skill whose `SKILL.md` was *added* (not just modified) since the previous tag. Use the `description:` frontmatter value, truncated to one sentence. Author is the git committer of the adding commit (`git show --format="%an" <sha>`).
+- **New MCP Tools table**: one row per `@mcp.tool()`-decorated function *added* since the previous tag. Exclude built-in agent tools (tools that belong to the harness, not the MCP server). Server is the `*_server.py` basename without `_server`.
+- **Other Highlights**: group by area (Skills, Sorption, Drug discovery, Docs & CI, etc.). One bullet per logical change, not per commit.
+
+## Creating the Tag
+
+```bash
+git tag -a v1.x.y -m "$(cat <<'EOF'
+<paste message above>
+EOF
+)"
+git push origin v1.x.y
+```
+
+Always use an annotated tag (`-a`) so the message is stored in the tag object.

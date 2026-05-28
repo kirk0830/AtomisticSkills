@@ -22,6 +22,7 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 - `.agents/rules/skill-standards.md` — for creating or editing a skill
 - `.agents/rules/workflow-standards.md` — for creating or editing a workflow
 - `.agents/rules/plot-standards.md` — for creating or editing a plotting script
+- `.agents/rules/release-standards.md` — for preparing a release tag
 
 ## Framework Overview
 
