@@ -84,14 +84,19 @@ AVAILABLE_MATGL_MODELS = {
 class MatGLWrapper(MLIPModel):
     """MatGL model wrapper implementing the MLIPModel interface."""
 
+    # Functional indices for MEGNet-BandGap-mfi (ntypes_state=4)
+    BANDGAP_FUNCTIONALS: Dict[str, int] = {"PBE": 0, "GLLB-SC": 1, "HSE": 2, "SCAN": 3}
+
     def __init__(
         self,
         model_name: str = "M3GNet",
         model_version: str = "latest",
         device: str = "auto",
+        task_name: Optional[str] = None,
     ):
         super().__init__(model_name, model_version)
         self.device = get_best_device(device)
+        self.task_name = task_name
         self.model = None
         self.is_loaded = False
 
@@ -125,7 +130,12 @@ class MatGLWrapper(MLIPModel):
         )
 
     def static_calculation(self, structure_data: Any) -> Dict[str, Any]:
-        """Run a static single-point calculation."""
+        """Run a static single-point calculation.
+
+        For MEGNet-BandGap models the DFT functional is selected via ``task_name``
+        set at construction time (default "PBE"). Supported values: "PBE", "GLLB-SC",
+        "HSE", "SCAN".
+        """
         if not self.is_loaded:
             return {"error": "Model not loaded. Please call load() first."}
 
@@ -142,11 +152,12 @@ class MatGLWrapper(MLIPModel):
             from pymatgen.io.ase import AseAtomsAdaptor
 
             structure = AseAtomsAdaptor.get_structure(atoms)
-            # MEGNet-BandGap uses ntypes_state=4 (PBE/GLLB-SC/HSE/SCAN).
-            # predict_structure requires an explicit functional index; default to 0 (PBE).
+            # MEGNet-BandGap uses ntypes_state=4; predict_structure requires an explicit
+            # functional index passed as state_attr. Resolve from task_name (default PBE=0).
             state_attr = None
             if "BandGap" in self.model_name:
-                state_attr = torch.tensor([0], dtype=torch.float32)
+                functional = self.BANDGAP_FUNCTIONALS.get(self.task_name or "PBE", 0)
+                state_attr = torch.tensor([functional], dtype=torch.float32)
             prediction = self.model.predict_structure(structure, state_attr=state_attr)
             val = float(
                 prediction.item() if hasattr(prediction, "item") else prediction

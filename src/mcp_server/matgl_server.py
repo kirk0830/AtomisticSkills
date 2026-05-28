@@ -168,24 +168,31 @@ _bandgap_wrapper: Optional[Any] = None
 
 
 @mcp.tool()
-def predict_bandgap(structure_data: Union[Dict[str, Any], str]) -> Dict[str, Any]:
+def predict_bandgap(
+    structure_data: Union[Dict[str, Any], str],
+    task_name: Optional[str] = None,
+) -> Dict[str, Any]:
     """
-    Predict the bandgap for a structure using MEGNet.
+    Predict the bandgap for a structure using MEGNet-BandGap-mfi.
     Uses an isolated model instance to avoid conflicts with PES calculations.
 
     Args:
         structure_data: Single structure or batch (directory path, list of dicts/paths).
+        task_name: DFT functional for the bandgap prediction.
+            Supported: "PBE" (default), "GLLB-SC", "HSE", "SCAN".
 
     Returns:
         Dictionary containing "bandgap" in eV.
     """
     global _bandgap_wrapper
     try:
-        if _bandgap_wrapper is None:
+        if _bandgap_wrapper is None or _bandgap_wrapper.task_name != task_name:
             from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 
             _bandgap_wrapper = MatGLWrapper(
-                model_name="MEGNet-MP-2019.4.1-BandGap-mfi", device="cpu"
+                model_name="MEGNet-MP-2019.4.1-BandGap-mfi",
+                device="cpu",
+                task_name=task_name,
             )
             _bandgap_wrapper.load()
 
