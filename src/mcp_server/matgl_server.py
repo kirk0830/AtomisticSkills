@@ -53,8 +53,6 @@ def load_model(
     - SO3Net PES: 'SO3Net-PES-ANI-1x-Subset'
     - Formation energy: 'MEGNet-Eform-MP-2018.6.1', 'M3GNet-Eform-MP-2018.6.1'
 
-    For bandgap prediction use the dedicated predict_bandgap tool instead.
-
     Args:
         model_name: Name of the model to load.
         device: Device to use ("auto", "cpu", "cuda").
