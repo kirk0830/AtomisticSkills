@@ -12,7 +12,7 @@ To generate diverse and representative atomic configurations from a starting str
 ## Instructions
 
 1.  **Prepare a Foundation Potential**: Select an appropriate MLIP model for sampling.
-    - **Recommended**: `M3GNet-MP-2021.2.8-PES` (MatGL) or `MACE-MP-small` (MACE) for general inorganic materials.
+    - **Recommended**: `M3GNet-PES-MatPES-PBE-2025.2` (MatGL) or `MACE-MP-small` (MACE) for general inorganic materials.
 2.  **Off-Equilibrium Sampling (MD-Clustering)**:
     - Use the unified sampling script to run a short MD trajectory and pick representative configurations via K-Means clustering of latent features.
 
@@ -20,7 +20,7 @@ To generate diverse and representative atomic configurations from a starting str
     ```bash
     # Env: matgl-agent
     python .agents/skills/mat-sample-pes-by-md/scripts/run_sampling.py input.cif \
-        --model_type matgl --model_name CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
+        --model_type matgl --model_name CHGNet-PES-MatPES-PBE-2025.2.10 \
         --total_steps 2000 --temperature 1000 --n_clusters 10 --output_dir sampling_results
     ```
 
@@ -47,7 +47,7 @@ from .agents.skills.mat_sample_pes_by_md.scripts.feature_calculators import MatG
 from matgl import load_model
 
 # Setup calculator
-model = load_model("M3GNet-MP-2021.2.8-PES")
+model = load_model("M3GNet-PES-MatPES-PBE-2025.2")
 calc = MatGLCrystalFeatureCalculator(potential=model)
 
 # Initialize and run sampler
