@@ -142,7 +142,12 @@ class MatGLWrapper(MLIPModel):
             from pymatgen.io.ase import AseAtomsAdaptor
 
             structure = AseAtomsAdaptor.get_structure(atoms)
-            prediction = self.model.predict_structure(structure)
+            # MEGNet-BandGap uses ntypes_state=4 (PBE/GLLB-SC/HSE/SCAN).
+            # predict_structure requires an explicit functional index; default to 0 (PBE).
+            state_attr = None
+            if "BandGap" in self.model_name:
+                state_attr = torch.tensor([0], dtype=torch.float32)
+            prediction = self.model.predict_structure(structure, state_attr=state_attr)
             val = float(
                 prediction.item() if hasattr(prediction, "item") else prediction
             )

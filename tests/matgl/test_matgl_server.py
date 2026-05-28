@@ -73,9 +73,6 @@ def test_predict_atomic_features(loaded_server, cu_structure):
     assert "feature_dim" in res
 
 
-@pytest.mark.xfail(
-    reason="MEGNet 2019 checkpoint incompatible with matgl 4.x PyG state broadcasting"
-)
 def test_predict_bandgap(loaded_server, cu_structure):
     res = loaded_server.predict_bandgap(cu_structure)
     assert "error" not in res
