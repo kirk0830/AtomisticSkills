@@ -56,6 +56,12 @@ The annotated tag message must follow this structure exactly:
 |-------|-------------|--------|
 | `<skill-id>` | One-sentence description from SKILL.md frontmatter. | @github-handle |
 
+### New Workflows   ← omit section if none
+
+| Workflow | Description | Author |
+|----------|-------------|--------|
+| `<workflow-id>` | One-sentence description from WORKFLOW.md frontmatter. | @github-handle |
+
 ### New MCP Tools   ← omit section if none
 
 | Tool | Server | Description |
@@ -70,6 +76,7 @@ The annotated tag message must follow this structure exactly:
 
 - **Stats table**: use counts from `site/skills_index.js` (public skills only). Write `—` when a count did not change.
 - **New Skills table**: one row per skill whose `SKILL.md` was *added* (not just modified) since the previous tag. Use the `description:` frontmatter value, truncated to one sentence. Author is the git committer of the adding commit (`git show --format="%an" <sha>`).
+- **New Workflows table**: one row per workflow whose `WORKFLOW.md` was *added* (not just modified) since the previous tag. Use the `description:` frontmatter value, truncated to one sentence. Author is the git committer of the adding commit.
 - **New MCP Tools table**: one row per `@mcp.tool()`-decorated function *added* since the previous tag. Exclude built-in agent tools (tools that belong to the harness, not the MCP server). Server is the `*_server.py` basename without `_server`.
 - **Other Highlights**: group by area (Skills, Sorption, Drug discovery, Docs & CI, etc.). One bullet per logical change, not per commit.
 
