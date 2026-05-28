@@ -51,7 +51,9 @@ def load_model(
     - TensorNet PES: 'TensorNet-PES-MatPES-PBE-2025.2', 'TensorNet-PES-MatPES-r2SCAN-2025.2', 'TensorNet-PES-ANI-1x-Subset'
     - QET PES: 'QET-PES-MatPES-PBE-2025.2', 'QET-PES-MatPES-r2SCAN-2025.2', 'QET-PES-MatQ'
     - SO3Net PES: 'SO3Net-PES-ANI-1x-Subset'
-    - Property: 'MEGNet-BandGap-mfi-MP-2019.4.1', 'MEGNet-Eform-MP-2018.6.1', 'M3GNet-Eform-MP-2018.6.1'
+    - Formation energy: 'MEGNet-Eform-MP-2018.6.1', 'M3GNet-Eform-MP-2018.6.1'
+
+    For bandgap prediction use the dedicated predict_bandgap tool instead.
 
     Args:
         model_name: Name of the model to load.
