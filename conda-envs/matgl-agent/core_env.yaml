@@ -10,7 +10,6 @@ dependencies:
     - cython
     - pymatgen
     - pymatgen-analysis-diffusion
-    - dgl
     - matcalc
     - typing-extensions
     - pytest
