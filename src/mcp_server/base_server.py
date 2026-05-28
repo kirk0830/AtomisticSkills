@@ -6,18 +6,18 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server
-from src.utils.config_utils import inject_config_into_env
+from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server  # noqa: E402
+from src.utils.config_utils import inject_config_into_env  # noqa: E402
 
 # Setup stdout redirection for MCP
 mcp_pipe_binary = setup_mcp_stdout()
 inject_config_into_env()
 
-import logging
-import warnings
-from mcp.server.fastmcp import FastMCP
-from typing import Any, Optional
-from pathlib import Path
+import logging  # noqa: E402
+import warnings  # noqa: E402
+from mcp.server.fastmcp import FastMCP  # noqa: E402
+from typing import Any, Optional  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
@@ -28,15 +28,15 @@ logging.getLogger("mp-api").setLevel(logging.ERROR)
 logging.getLogger("pymatgen").setLevel(logging.ERROR)
 
 
-from src.utils.structure_utils import (
+from src.utils.structure_utils import (  # noqa: E402
     load_structure_from_file,
     get_structure_by_formula,
     get_structure_by_chemsys,
     save_structure,
 )
 
-from src.utils.research_utils import create_new_research_dir
-from src.utils.model_registry import (
+from src.utils.research_utils import create_new_research_dir  # noqa: E402
+from src.utils.model_registry import (  # noqa: E402
     register_model as _registry_register,
     search_models as _registry_search,
     get_model as _registry_get,
@@ -68,35 +68,6 @@ def create_research_dir(research_topic: str) -> str:
         return f"Successfully created and set research directory: {new_dir}"
     except Exception as e:
         return f"Error creating research directory: {str(e)}"
-
-
-@mcp.tool()
-def task_boundary(TaskName: str) -> str:
-    """Initialize a task boundary for research phases.
-
-    Args:
-        TaskName: Name of the task phase (e.g. "Research Plan", "Literature Review").
-
-    Returns:
-        Status message.
-    """
-    logger.info(f"Task Boundary Initiated: {TaskName}")
-    return f"Task boundary '{TaskName}' initiated."
-
-
-@mcp.tool()
-def notify_user(message: str, ShouldAutoProceed: bool = True) -> str:
-    """Ask the user to review a document or wait for feedback.
-
-    Args:
-        message: Notification message for the user.
-        ShouldAutoProceed: Set to true to ensure the 'Proceed' button is visible to the user.
-
-    Returns:
-        Status message.
-    """
-    logger.info(f"Notification to User: {message}")
-    return f"Notification sent: {message}"
 
 
 @mcp.tool()
