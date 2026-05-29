@@ -394,5 +394,57 @@ def get_atomate2_job_status(
     return status
 
 
+@mcp.tool()
+def get_atomate2_project_status(
+    project_name: Optional[str] = None, save_to_file: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Get an aggregated status summary of all jobs in the active jobflow-remote project.
+    Returns counts of total, queued, running, completed, failed, and remote_error jobs.
+
+    Args:
+        project_name: Name of the jobflow-remote project (default: None, auto-detected).
+        save_to_file: Optional path to save the results as a JSON file.
+
+    Returns:
+        Dictionary with aggregated status statistics.
+    """
+    handler = Atomate2Handler()
+
+    try:
+        project_name = handler.get_project_name(project_name)
+    except Exception as e:
+        return {"error": f"Could not determine project name: {str(e)}"}
+
+    try:
+        from jobflow_remote.jobs.jobcontroller import JobController
+
+        jc = JobController.from_project_name(project_name)
+        jobs_info = jc.get_jobs_info()
+
+        job_states = {}
+        for j in jobs_info:
+            st = j.state.name.lower()
+            job_states[st] = job_states.get(st, 0) + 1
+
+        summary = {
+            "project_name": project_name,
+            "total_jobs": len(jobs_info),
+            "job_states": job_states,
+        }
+
+        if save_to_file:
+            save_path = Path(save_to_file)
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(save_path, "w") as f:
+                from monty.json import jsanitize
+
+                json.dump(jsanitize(summary), f, indent=2)
+
+        return summary
+    except Exception as e:
+        return {"error": f"Failed to get project status: {str(e)}"}
+
+
 if __name__ == "__main__":
     run_fastmcp_server(mcp, mcp_pipe_binary)
