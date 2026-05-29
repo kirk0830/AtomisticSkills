@@ -7,7 +7,7 @@
 ## Overview
 **AtomisticSkills** is a composable framework for AI-driven atomistic materials research. Built on the **hierarchical decomposition** of complex scientific tasks into **Workflows** → **Skills** → **Tools**, it enables coding AI agents to autonomously conduct multi-stage materials, chemistry, and drug discovery research by combining modular, reusable capabilities.
 
-The framework integrates state-of-the-art Machine Learning Interatomic Potentials (MLIPs), DFT calculations, generative AI, database APIs, and advanced simulation methods through the Model Context Protocol (MCP) tools and Skills, making advanced materials research accessible to AI copilots like Google Antigravity, Cursor, and Claude Code.
+The framework integrates state-of-the-art Machine Learning Interatomic Potentials (MLIPs), DFT calculations, generative AI, database APIs, and advanced simulation methods through the Model Context Protocol (MCP) tools and Skills, making advanced materials research accessible to AI copilots like [Google Antigravity](https://antigravity.google), [Cursor](https://www.cursor.com/), [Claude Code](https://code.claude.com/docs/en/overview), and [OpenAI Codex](https://openai.com/codex/).
 
 <div align="center">
 
@@ -17,7 +17,7 @@ The framework integrates state-of-the-art Machine Learning Interatomic Potential
 
 <div align="center">
 
-🎬 **[Video Demo: Using AtomisticSkills in Google Antigravity](https://www.youtube.com/watch?v=oiyZ52RS5oo&feature=youtu.be)**
+🎬 **Video Demo: Using AtomisticSkills in Google Antigravity** — **[Watch on YouTube](https://www.youtube.com/watch?v=oiyZ52RS5oo&feature=youtu.be)**
 
 [![AtomisticSkills Demo](https://img.youtube.com/vi/oiyZ52RS5oo/maxresdefault.jpg)](https://www.youtube.com/watch?v=oiyZ52RS5oo&feature=youtu.be)
 
@@ -143,7 +143,7 @@ AtomisticSkills is designed to be installed and operated by AI agents. For the f
    git clone git@github.com:learningmatter-mit/AtomisticSkills.git
    cd AtomisticSkills
    ```
-2. **Open the repository** as a workspace in your preferred agentic IDE (e.g., Cursor, Claude Code, Roo, Antigravity, VS Code).
+2. **Open the repository** as a workspace in your preferred agentic IDE (e.g., [Cursor](https://www.cursor.com/), [Claude Code](https://code.claude.com/docs/en/overview), [Roo](https://roocode.com/), [Antigravity](https://antigravity.google), [OpenAI Codex](https://openai.com/codex/), [VS Code](https://code.visualstudio.com/)).
 3. **Ask the agent to install AtomisticSkills for you**:
    ```text
    Install AtomisticSkills according to its `docs/setup.md` guide.
@@ -157,7 +157,7 @@ The agent will read the [**Setup Guide**](docs/setup.md) and interactively guide
 ---
 
 ## Agent Intelligence & Automation
-This project is optimized for use with coding AI copilots like **Antigravity**. It includes specialized instructions and pre-defined workflows to automate complex research tasks.
+This project is optimized for use with coding AI copilots like **[Antigravity](https://antigravity.google)**. It includes specialized instructions and pre-defined workflows to automate complex research tasks.
 
 ### The `.agents/` Directory
 - **Rules (`.agents/rules/`)**: Contains project-specific standards, scientific constraints, and modeling guidelines. Coding agents automatically parse these to ensure all simulations and code follow best practices.
