@@ -6,7 +6,7 @@ Run from project root:
     # Env: ms-gen
     python .agents/skills/chem-msms-predict/examples/predict_smiles.py \\
         --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \\
-        --inten_ckpt downloads/iceberg_dag_gen_msg_last.ckpt
+        --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt
 """
 
 import argparse

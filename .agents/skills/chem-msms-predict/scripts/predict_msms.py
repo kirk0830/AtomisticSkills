@@ -9,14 +9,14 @@ Usage:
     python .agents/skills/chem-msms-predict/scripts/predict_msms.py \\
         --smiles "c1ccccc1C(=O)OCCN" \\
         --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \\
-        --inten_ckpt downloads/iceberg_dag_gen_msg_last.ckpt \\
+        --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \\
         --collision_energies 20 40 \\
         --output_dir results/msms_prediction
 
 Requirements:
     - Conda environment: ms-gen
     - Checkpoints: downloads/iceberg_dag_gen_msg_best.ckpt
-                   downloads/iceberg_dag_gen_msg_last.ckpt
+                   downloads/iceberg_dag_inten_msg_best.ckpt
 """
 
 import argparse

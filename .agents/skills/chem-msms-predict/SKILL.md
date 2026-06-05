@@ -33,8 +33,8 @@ Download from [coleygroup/ms-pred releases](https://github.com/coleygroup/ms-pre
 
 ```
 downloads/
-├── iceberg_dag_gen_msg_best.ckpt    # generator (stage 1)
-└── iceberg_dag_gen_msg_last.ckpt   # intensity predictor (stage 2)
+├── iceberg_dag_gen_msg_best.ckpt     # generator (stage 1)
+└── iceberg_dag_inten_msg_best.ckpt   # intensity predictor (stage 2)
 ```
 
 **Flag error and stop** if either checkpoint is missing.
@@ -56,7 +56,7 @@ The `ms_pred` Python package is installed from GitHub automatically by the insta
 python .agents/skills/chem-msms-predict/scripts/predict_msms.py \
     --smiles "c1ccccc1C(=O)OCCN" \
     --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
-    --inten_ckpt downloads/iceberg_dag_gen_msg_last.ckpt \
+    --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
     --collision_energies 20 40 \
     --adduct "[M+H]+" \
     --output_dir results/msms_prediction
@@ -107,7 +107,7 @@ If an experimental spectrum is available, use the companion skill:
 # Env: ms-gen
 python .agents/skills/chem-msms-predict/examples/predict_smiles.py \
     --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
-    --inten_ckpt downloads/iceberg_dag_gen_msg_last.ckpt \
+    --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
     --output_dir .agents/test/msms_example
 ```
 
