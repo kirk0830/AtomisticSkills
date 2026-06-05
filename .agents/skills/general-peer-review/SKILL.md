@@ -69,6 +69,7 @@ To see how the reviewer evaluates a proposed Action Plan for scientific methodol
 ## See Also
 - [general-deep-research](../general-deep-research/SKILL.md)
 - [general-presentation](../general-presentation/SKILL.md)
+- [general-fair-data-review](../general-fair-data-review/SKILL.md)
 
 ---
 
