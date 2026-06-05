@@ -11,7 +11,7 @@ sed '/^[[:space:]]*- pip:/,$d' core_env.yaml > conda_only_env.yaml
 conda env remove -n $ENV_NAME -y || true
 conda env create -f conda_only_env.yaml
 
-sed -n '/^[[:space:]]*- pip:/,$p' core_env.yaml | grep -v 'pip:' | sed 's/^[[:space:]]*- //' | tr -d '"' | tr -d "'" > uv_requirements.txt
+sed -n '/^[[:space:]]*- pip:/,$p' core_env.yaml | grep -v 'pip:' | sed 's/^[[:space:]]*- //' | tr -d '"' | tr -d "'" | grep -v '^dgl ' > uv_requirements.txt
 
 if ! command -v uv &> /dev/null; then
     echo "Installing uv..."
@@ -21,6 +21,9 @@ fi
 
 source $(conda info --base)/etc/profile.d/conda.sh
 conda activate $ENV_NAME
+
+echo "Installing dgl from custom index..."
+uv pip install dgl --find-links https://data.dgl.ai/wheels/torch-2.4/repo.html
 
 echo "Installing pip dependencies with uv..."
 uv pip install -r uv_requirements.txt
@@ -40,11 +43,11 @@ TMP_DIR=$(mktemp -d)
 git clone --depth 1 https://github.com/coleygroup/ms-pred "$TMP_DIR/ms-pred"
 
 cat > "$TMP_DIR/ms-pred/setup.py" << 'SETUP_EOF'
-from setuptools import setup, find_packages
+from setuptools import setup, find_namespace_packages
 setup(
     name='ms_pred',
     version='0.0.1',
-    packages=find_packages(where='src'),
+    packages=find_namespace_packages(where='src'),
     package_dir={'': 'src'},
     include_package_data=True,
 )
