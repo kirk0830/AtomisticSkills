@@ -25,14 +25,20 @@ conda activate $ENV_NAME
 echo "Installing pip dependencies with uv..."
 uv pip install -r uv_requirements.txt
 
+# torch-scatter / torch-sparse: no generic arm64 wheels on PyPI.
+# Use the PyG find-links index pinned to torch 2.4.0+cpu.
+TORCH_VERSION=$(python -c "import torch; print(torch.__version__.split('+')[0])")
+PYG_INDEX="https://data.pyg.org/whl/torch-${TORCH_VERSION}+cpu.html"
+echo "Installing torch-scatter and torch-sparse from PyG index (torch ${TORCH_VERSION})..."
+uv pip install torch-scatter torch-sparse --find-links "$PYG_INDEX"
+
 # Install ms_pred from GitHub.
-# setup.py has a Cython ext (massformer only) that breaks standard install,
-# so we clone, patch setup.py to skip the ext, then install pure-Python package.
+# setup.py includes a Cython extension for massformer (not used by ICEBERG),
+# so we clone, replace setup.py with a pure-Python version, then install.
 echo "Installing ms_pred from GitHub..."
 TMP_DIR=$(mktemp -d)
 git clone --depth 1 https://github.com/coleygroup/ms-pred "$TMP_DIR/ms-pred"
 
-# Patch: replace setup.py with a Cython-free version
 cat > "$TMP_DIR/ms-pred/setup.py" << 'SETUP_EOF'
 from setuptools import setup, find_packages
 setup(
