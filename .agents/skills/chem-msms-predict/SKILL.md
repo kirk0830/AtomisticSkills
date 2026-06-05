@@ -134,4 +134,4 @@ Expected output:
 ---
 
 **Author:** Magdalena Lederbauer
-**Contact:** [magled@mit.edu](mailto:magled@mit.edu)
+**Contact:** [GitHub @mlederbauer](https://github.com/mlederbauer)
