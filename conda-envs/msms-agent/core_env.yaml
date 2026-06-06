@@ -1,0 +1,30 @@
+name: ms-gen
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - cython
+  - matplotlib
+  - conda-forge::rdkit
+  - conda-forge::python-graphviz
+  - conda-forge::pygraphviz
+  - pytorch::pytorch=2.4.0
+  - pip
+  - einops
+  - seaborn
+  - h5py
+  - pip:
+    - dgl -f https://data.dgl.ai/wheels/torch-2.4/repo.html
+    - pytorch-lightning
+    - scikit-learn
+    - pathos
+    - CairoSVG
+    - omegaconf
+    - pubchempy
+    - pygmtools
+    - msbuddy
+    - lightgbm
+    - platformdirs
+    - pyyaml
