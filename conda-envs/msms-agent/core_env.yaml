@@ -1,6 +1,5 @@
 name: ms-gen
 channels:
-  - pytorch
   - conda-forge
   - defaults
 dependencies:
@@ -10,7 +9,7 @@ dependencies:
   - conda-forge::rdkit
   - conda-forge::python-graphviz
   - conda-forge::pygraphviz
-  - pytorch::pytorch=2.4.0
+  - conda-forge::pytorch=2.4.0
   - pip
   - einops
   - seaborn

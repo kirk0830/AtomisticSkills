@@ -178,7 +178,9 @@ class BioRxivSearcher:
         doi = item.get("doi", "")
         return {
             "doi": doi,
-            "url": f"https://www.biorxiv.org/content/{doi}v{item.get('version', 1)}" if doi else "",
+            "url": f"https://www.biorxiv.org/content/{doi}v{item.get('version', 1)}"
+            if doi
+            else "",
             "title": item.get("title", "").strip(),
             "authors": item.get("authors", "").strip(),
             "abstract": item.get("abstract", "").strip(),
@@ -212,7 +214,9 @@ class BioRxivSearcher:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Search bioRxiv/medRxiv for preprints.")
+    parser = argparse.ArgumentParser(
+        description="Search bioRxiv/medRxiv for preprints."
+    )
     parser.add_argument("query", nargs="?", help="Keywords to search in title/abstract")
     parser.add_argument(
         "--server",
@@ -220,12 +224,18 @@ def main():
         choices=["biorxiv", "medrxiv"],
         help="Preprint server (default: biorxiv)",
     )
-    parser.add_argument("--category", help="Subject category (e.g. neuroscience, genetics)")
-    parser.add_argument("--days", type=int, default=30, help="Search last N days (default: 30)")
+    parser.add_argument(
+        "--category", help="Subject category (e.g. neuroscience, genetics)"
+    )
+    parser.add_argument(
+        "--days", type=int, default=30, help="Search last N days (default: 30)"
+    )
     parser.add_argument("--start", help="Start date YYYY-MM-DD for date range search")
     parser.add_argument("--end", help="End date YYYY-MM-DD for date range search")
     parser.add_argument("--doi", help="Retrieve specific preprint by DOI")
-    parser.add_argument("--max_results", type=int, default=10, help="Max results to return")
+    parser.add_argument(
+        "--max_results", type=int, default=10, help="Max results to return"
+    )
     parser.add_argument("--output", help="Path to save results as JSON")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
 
@@ -262,12 +272,17 @@ def main():
             print(f"\n[{i}] {paper['title']}")
             authors = paper.get("authors", "")
             print(f"    Authors: {authors[:100]}{'...' if len(authors) > 100 else ''}")
-            print(f"    DOI: {paper['doi']} | Date: {paper['date']} | Category: {paper['category']}")
+            print(
+                f"    DOI: {paper['doi']} | Date: {paper['date']} | Category: {paper['category']}"
+            )
             print(f"    URL: {paper['url']}")
 
-    from src.utils.config_utils import save_skill_inputs
+    try:
+        from src.utils.config_utils import save_skill_inputs
 
-    save_skill_inputs(args, args.output)
+        save_skill_inputs(args, args.output)
+    except ImportError:
+        pass
 
 
 if __name__ == "__main__":
