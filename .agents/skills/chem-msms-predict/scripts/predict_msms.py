@@ -36,6 +36,7 @@ def run_iceberg(
     inten_ckpt: Path,
     collision_energies: list,
     adduct: str,
+    instrument: str,
     cuda_devices,
     batch_size: int,
     num_workers: int,
@@ -51,6 +52,7 @@ def run_iceberg(
         collision_energies=collision_energies,
         nce=False,
         adduct=adduct,
+        instrument=instrument,
         exp_name="skill_pred",
         python_path=sys.executable,
         gen_ckpt=str(gen_ckpt),
@@ -168,6 +170,10 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument("--adduct", default="[M+H]+", help="Adduct type (default: [M+H]+)")
     p.add_argument(
+        "--instrument", default="Orbitrap", choices=["Orbitrap", "QTOF"],
+        help="Instrument the MSG checkpoints condition on (default: Orbitrap)",
+    )
+    p.add_argument(
         "--output_dir", type=Path, default=Path("results/msms_prediction"),
         help="Output directory",
     )
@@ -215,6 +221,7 @@ def main() -> None:
         inten_ckpt=args.inten_ckpt,
         collision_energies=args.collision_energies,
         adduct=args.adduct,
+        instrument=args.instrument,
         cuda_devices=args.cuda_devices,
         batch_size=args.batch_size,
         num_workers=args.num_workers,

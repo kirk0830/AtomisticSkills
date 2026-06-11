@@ -53,6 +53,27 @@ setup(
 )
 SETUP_EOF
 
+# Patch ms_pred for 3 upstream bugs that break ICEBERG forward prediction on a
+# pip install / CPU / pytorch_lightning 2.x (mirrors the runtime fixes):
+#   1. iceberg_elucidation.py calls predict_smis.py via a cwd-relative path
+#   2. predict_smis.py uses pl.utilities.seed.seed_everything (removed in PL 2.0)
+#   3. predict_smis.py calls torch.cuda.set_device(gpu_id) unconditionally (fails on CPU)
+python - "$TMP_DIR/ms-pred/src/ms_pred/dag_pred" <<'PYPATCH'
+import sys, pathlib
+d = pathlib.Path(sys.argv[1])
+el = d / "iceberg_elucidation.py"
+el.write_text(el.read_text().replace(
+    '{python_path} src/ms_pred/dag_pred/predict_smis.py',
+    '{python_path} {Path(__file__).resolve().parent / "predict_smis.py"}'))
+ps = d / "predict_smis.py"
+t = ps.read_text()
+t = t.replace('pl.utilities.seed.seed_everything', 'pl.seed_everything')
+t = t.replace('torch.cuda.set_device(gpu_id)',
+              '(torch.cuda.set_device(gpu_id) if (gpu and avail_gpu_num > 0) else None)')
+ps.write_text(t)
+print("Patched ms_pred dag_pred (pip-install path / PL2 seed / CPU cuda guard)")
+PYPATCH
+
 uv pip install "$TMP_DIR/ms-pred"
 rm -rf "$TMP_DIR"
 
