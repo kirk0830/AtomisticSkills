@@ -15,8 +15,10 @@ dependencies:
   - seaborn
   - h5py
   - pip:
-    - dgl -f https://data.dgl.ai/wheels/torch-2.4/repo.html
     - pytorch-lightning
+    - ray
+    - ipython
+    - pydantic
     - scikit-learn
     - pathos
     - CairoSVG
