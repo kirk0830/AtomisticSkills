@@ -16,7 +16,8 @@ dependencies:
   - h5py
   - pip:
     - pytorch-lightning
-    - ray
+    - "ray[tune]==2.7.2"
+    - "setuptools<81"
     - ipython
     - pydantic
     - scikit-learn
