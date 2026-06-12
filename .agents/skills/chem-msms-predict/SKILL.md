@@ -59,6 +59,7 @@ python .agents/skills/chem-msms-predict/scripts/predict_msms.py \
     --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
     --collision_energies 20 40 \
     --adduct "[M+H]+" \
+    --instrument "Orbitrap" \
     --output_dir results/msms_prediction
 ```
 
@@ -67,6 +68,7 @@ python .agents/skills/chem-msms-predict/scripts/predict_msms.py \
 - `--gen_ckpt` / `--inten_ckpt` — paths to ICEBERG checkpoints
 - `--collision_energies` — one or more collision energies in eV (e.g. `20 40 60`); model was trained on absolute eV values
 - `--adduct` — supported adducts: `[M+H]+`, `[M-H]-`, `[M+Na]+`, `[M+NH4]+`, and others from `ms_pred.common.ion2mass`
+- `--instrument` — instrument type for intensity prediction (e.g. `"Orbitrap"`, `"QTOF"`)
 - `--threshold` — confidence cutoff for DAG fragment generator (default `0.1`; lower = more fragments)
 - `--sparse_k` — maximum number of peaks returned (default `100`)
 - `--cuda_devices` — GPU device IDs (e.g. `"0"` or `"0,1"`); omit or set to `None` for CPU
