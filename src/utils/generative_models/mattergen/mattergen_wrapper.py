@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 MATTERGEN_AVAILABLE = False
 
 try:
-    import mattergen
+    import mattergen  # noqa: F401
     from mattergen.generator import CrystalGenerator
 
     MATTERGEN_AVAILABLE = True

@@ -49,7 +49,8 @@ Supporting libraries shared across MCP servers:
 
 | Module | Purpose |
 |--------|---------|
-| `mlips/` | Unified MLIP wrappers (MACE, MatGL, FairChem, MatterGen) with common predict / relax / MD / fine-tune interface |
+| `mlips/` | Unified MLIP wrappers (MACE, MatGL, FairChem) with common predict / relax / MD / fine-tune interface |
+| `generative_models/` | Generative model wrappers (ADiT, DiffCSP++, MatterGen) for structure generation |
 | `dft/` | VASP input generation and output parsing via Pymatgen |
 | `drugdisc_utils.py` | RDKit-based molecular descriptors, standardization, and PDBQT conversion |
 | `structure_utils.py` | Convert between ASE Atoms, Pymatgen Structure, and dict formats |

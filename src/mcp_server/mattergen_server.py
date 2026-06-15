@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 import os
 import sys
 
@@ -76,7 +77,9 @@ def generate_structures(
     os.makedirs(output_dir, exist_ok=True)
 
     try:
-        from src.utils.mlips.mattergen.mattergen_wrapper import MatterGenWrapper
+        from src.utils.generative_models.mattergen.mattergen_wrapper import (
+            MatterGenWrapper,
+        )
 
         # Auto-select chemical_system model if chemical system is provided
         if chemical_system:

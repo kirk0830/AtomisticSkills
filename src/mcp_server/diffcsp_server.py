@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 import os
 import sys
 
@@ -45,7 +46,7 @@ def _get_wrapper(model_name: str = "mp_csp", device: str = "auto"):
     """
     global _wrappers
     if model_name not in _wrappers:
-        from src.utils.mlips.diffcsp.diffcsp_wrapper import DiffCSPWrapper
+        from src.utils.generative_models.diffcsp.diffcsp_wrapper import DiffCSPWrapper
 
         _wrappers[model_name] = DiffCSPWrapper(model_name=model_name, device=device)
     return _wrappers[model_name]

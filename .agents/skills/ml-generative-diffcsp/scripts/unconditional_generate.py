@@ -34,7 +34,7 @@ def main(args: argparse.Namespace) -> None:
     Args:
         args: Parsed CLI arguments.
     """
-    from src.utils.mlips.diffcsp.diffcsp_wrapper import DiffCSPWrapper
+    from src.utils.generative_models.diffcsp.diffcsp_wrapper import DiffCSPWrapper
 
     # Load model
     wrapper = DiffCSPWrapper(model_name=args.model, device=args.device)

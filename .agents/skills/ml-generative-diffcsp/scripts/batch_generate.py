@@ -48,7 +48,7 @@ def main(args: argparse.Namespace) -> None:
     Args:
         args: Parsed CLI arguments.
     """
-    from src.utils.mlips.diffcsp.diffcsp_wrapper import DiffCSPWrapper
+    from src.utils.generative_models.diffcsp.diffcsp_wrapper import DiffCSPWrapper
 
     # Validate JSON file
     with open(args.json_file, "r") as f:
