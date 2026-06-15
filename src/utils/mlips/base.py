@@ -15,7 +15,7 @@ matplotlib.use("Agg")  # Must be set before importing pyplot
 # MD related imports will be done inside methods to avoid hard dependencies if not used
 # But we can add some common ones here
 try:
-    from ase import Atoms, units
+    from ase import Atoms  # noqa: F401
 except ImportError:
     pass
 
@@ -159,6 +159,18 @@ class MLIPModel(ABC):
             "supports_charge_spin": self.supports_charge_spin,
         }
 
+    def _get_nvalchemi_model(self) -> Optional[Any]:
+        """Return a NValchemi-compatible model wrapper, or None.
+
+        Subclasses override this to expose their inner model wrapped as a
+        nvalchemi BaseModelMixin so that GPU-parallel batch operations can
+        be dispatched through NValchemi dynamics (FIRE, NVTNoseHoover, etc.).
+
+        The base implementation returns None, which causes all batch calls to
+        fall back to the sequential Python loop.
+        """
+        return None
+
     def validate_structure(self, structure: Any) -> bool:
         """
         Validate that a structure is compatible with the model.
@@ -260,8 +272,6 @@ class MLIPModel(ABC):
             return {
                 "error": "Invalid structure format. Must be file path, pymatgen Structure, ASE Atoms, or dict with 'symbols' and 'positions'."
             }
-
-            return {"error": f"Relaxation failed: {str(e)}"}
 
     def relax_structure(
         self,
@@ -423,6 +433,47 @@ class MLIPModel(ABC):
             traceback.print_exc(file=sys.stderr)
             return {"error": f"Relaxation failed: {str(e)}"}
 
+    def _parse_batch_input(
+        self,
+        structure_data: Union[str, List[Union[Dict[str, Any], str]]],
+    ) -> tuple:
+        """Parse batch structure input into (structure_list, structure_names).
+
+        Returns an error dict if the input is invalid.
+        """
+        structure_list: List[Any] = []
+        structure_names: List[str] = []
+
+        if isinstance(structure_data, str) and Path(structure_data).is_dir():
+            dir_path = Path(structure_data)
+            patterns = ["*.cif", "*.CIF", "*POSCAR*", "*CONTCAR*", "*.vasp"]
+            for pattern in patterns:
+                for filepath in dir_path.glob(pattern):
+                    structure_list.append(str(filepath))
+                    structure_names.append(filepath.stem)
+            if not structure_list:
+                return (
+                    {
+                        "error": f"No structure files found in directory: {structure_data}"
+                    },
+                    [],
+                )
+        elif isinstance(structure_data, list):
+            for i, struct in enumerate(structure_data):
+                structure_list.append(struct)
+                if isinstance(struct, str):
+                    structure_names.append(Path(struct).stem)
+                else:
+                    structure_names.append(f"structure_{i}")
+        else:
+            return (
+                {
+                    "error": "structure_data must be a directory path or a list of structures/paths"
+                },
+                [],
+            )
+        return structure_list, structure_names
+
     def _batch_relax(
         self,
         structure_data: Union[str, List[Union[Dict[str, Any], str]]],
@@ -432,7 +483,138 @@ class MLIPModel(ABC):
         relax_cell: bool,
         output_dir: Optional[str],
     ) -> Dict[str, Any]:
-        """Internal method for batch relaxation."""
+        """Dispatch batch relaxation to NValchemi GPU path or sequential fallback."""
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
+
+        if check_nvalchemi_available():
+            nv_model = self._get_nvalchemi_model()
+            if nv_model is not None:
+                return self._batch_relax_nvalchemi(
+                    nv_model=nv_model,
+                    structure_data=structure_data,
+                    fmax=fmax,
+                    steps=steps,
+                    relax_cell=relax_cell,
+                    output_dir=output_dir,
+                )
+        return self._batch_relax_sequential(
+            structure_data, fmax, steps, optimizer, relax_cell, output_dir
+        )
+
+    def _batch_relax_nvalchemi(
+        self,
+        nv_model: Any,
+        structure_data: Union[str, List[Union[Dict[str, Any], str]]],
+        fmax: float,
+        steps: int,
+        relax_cell: bool,
+        output_dir: Optional[str],
+    ) -> Dict[str, Any]:
+        """GPU-parallel batch relaxation via NValchemi FIRE optimizer."""
+        import os
+        import torch
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+            atoms_to_atomic_data,
+            extract_batch_results,
+        )
+
+        try:
+            from nvalchemi.data import Batch
+            from nvalchemi.dynamics.base import DynamicsStage, ConvergenceHook
+            from nvalchemi.dynamics.optimizers.fire import FIRE, FIREVariableCell
+            from nvalchemi.hooks.neighbor_list import NeighborListHook
+        except ImportError as e:
+            logger.warning(f"NValchemi import failed: {e}; falling back to sequential.")
+            return self._batch_relax_sequential(
+                structure_data, fmax, steps, "FIRE", relax_cell, output_dir
+            )
+
+        parsed = self._parse_batch_input(structure_data)
+        if isinstance(parsed[0], dict) and "error" in parsed[0]:
+            return parsed[0]
+        structure_list, structure_names = parsed
+
+        if not output_dir:
+            try:
+                from src.utils.research_utils import get_current_research_dir
+
+                output_dir = str(
+                    get_current_research_dir()
+                    / self.__class__.__name__.lower().replace("wrapper", "")
+                    / "batch_relaxation"
+                )
+            except Exception:
+                output_dir = "batch_relaxation"
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_dirs = [os.path.join(output_dir, name) for name in structure_names]
+        device = getattr(self, "device", "cpu")
+
+        logger.info(f"NValchemi GPU batch relaxing {len(structure_list)} structures...")
+
+        try:
+            atoms_list = [self.check_structure_data(s) for s in structure_list]
+            data_list = [
+                atoms_to_atomic_data(a, device=device, dtype=torch.float32)
+                for a in atoms_list
+            ]
+            batch = Batch.from_data_list(data_list)
+
+            OptimClass = FIREVariableCell if relax_cell else FIRE
+            optimizer_obj = OptimClass(
+                model=nv_model,
+                dt=0.5,
+                n_steps=steps,
+                convergence_hook=ConvergenceHook.from_fmax(threshold=fmax),
+            )
+
+            if getattr(nv_model.model_config, "neighbor_config", None) is not None:
+                nl_hook = NeighborListHook(
+                    nv_model.model_config.neighbor_config,
+                    stage=DynamicsStage.BEFORE_COMPUTE,
+                )
+                optimizer_obj.register_hook(nl_hook)
+
+            with optimizer_obj:
+                final_batch = optimizer_obj.run(batch)
+
+            results = extract_batch_results(final_batch, structure_names, output_dirs)
+
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc(file=sys.stderr)
+            logger.warning(
+                f"NValchemi batch relax failed ({e}); falling back to sequential."
+            )
+            return self._batch_relax_sequential(
+                structure_data, fmax, steps, "FIRE", relax_cell, output_dir
+            )
+
+        n_success = sum(1 for r in results if r["status"] == "success")
+        n_failed = len(results) - n_success
+        logger.info(f"NValchemi batch relaxation: {n_success} OK, {n_failed} failed")
+
+        return {
+            "mode": "batch",
+            "backend": "nvalchemi",
+            "total_structures": len(results),
+            "successful": n_success,
+            "failed": n_failed,
+            "output_dir": output_dir,
+            "results": results,
+        }
+
+    def _batch_relax_sequential(
+        self,
+        structure_data: Union[str, List[Union[Dict[str, Any], str]]],
+        fmax: float,
+        steps: int,
+        optimizer: str,
+        relax_cell: bool,
+        output_dir: Optional[str],
+    ) -> Dict[str, Any]:
+        """Internal method for batch relaxation (sequential loop)."""
         try:
             from pathlib import Path
             import os
@@ -589,6 +771,19 @@ class MLIPModel(ABC):
         )
 
         if is_batch:
+            # Try NValchemi GPU-parallel static batch first
+            from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+                check_nvalchemi_available,
+            )
+
+            if check_nvalchemi_available():
+                nv_model = self._get_nvalchemi_model()
+                if nv_model is not None:
+                    result = self._batch_static_nvalchemi(nv_model, structure_data)
+                    if "error" not in result:
+                        return result
+
+            # Sequential fallback
             structure_list = []
             structure_names = []
             if isinstance(structure_data, str) and Path(structure_data).is_dir():
@@ -618,6 +813,232 @@ class MLIPModel(ABC):
             }
         else:
             return self._single_static_calculation(structure_data)
+
+    def _batch_static_nvalchemi(
+        self,
+        nv_model: Any,
+        structure_data: Union[str, List[Union[Dict[str, Any], str]]],
+    ) -> Dict[str, Any]:
+        """GPU-parallel batch static calculation via a single NValchemi forward pass.
+
+        Uses ``nvalchemi.neighbors.compute_neighbors`` to set up the neighbor
+        list one-shot (outside a dynamics loop) for MACE/MatGL models.
+        FairChem models (``neighbor_config=None``) build their own graph inside
+        ``adapt_input``.
+        """
+        import torch
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import atoms_to_atomic_data
+
+        try:
+            from nvalchemi.data import Batch
+            from nvalchemi.neighbors import compute_neighbors
+        except ImportError as e:
+            return {"error": f"NValchemi import failed: {e}"}
+
+        parsed = self._parse_batch_input(structure_data)
+        if isinstance(parsed[0], dict) and "error" in parsed[0]:
+            return parsed[0]
+        structure_list, structure_names = parsed
+
+        device = getattr(self, "device", "cpu")
+
+        try:
+            atoms_list = [self.check_structure_data(s) for s in structure_list]
+            data_list = [
+                atoms_to_atomic_data(a, device=device, dtype=torch.float32)
+                for a in atoms_list
+            ]
+            batch = Batch.from_data_list(data_list)
+
+            # Populate neighbor list if the model requires one (MACE, MatGL).
+            # FairChem has neighbor_config=None and builds its own graph.
+            neighbor_config = getattr(nv_model.model_config, "neighbor_config", None)
+            if neighbor_config is not None:
+                compute_neighbors(batch, config=neighbor_config)
+
+            # Do NOT use torch.no_grad() here: MACE/MatGL compute forces via
+            # autograd and require gradient tracking through positions.
+            # FairChemWrapper handles its own no_grad context internally.
+            nv_model.eval()
+            model_out = nv_model(batch)  # ModelOutputs (OrderedDict)
+
+            energy_t = model_out.get("energy")  # [B, 1] or None
+            forces_t = model_out.get("forces")  # [N_total, 3] or None
+            stress_t = model_out.get("stress")  # [B, 3, 3] or None
+
+            results = []
+            for i, (atoms, struct_name) in enumerate(zip(atoms_list, structure_names)):
+                res: Dict[str, Any] = {
+                    "structure_name": struct_name,
+                    "status": "success",
+                }
+
+                if energy_t is not None:
+                    res["energy"] = float(energy_t[i].item())
+
+                if forces_t is not None:
+                    mask = batch.batch_idx == i
+                    res["forces"] = forces_t[mask].detach().cpu().tolist()
+
+                if stress_t is not None:
+                    s = stress_t[i]
+                    if s.dim() == 3:
+                        s = s.squeeze(0)
+                    res["stress"] = s.detach().cpu().tolist()
+
+                results.append(res)
+
+            return {
+                "mode": "batch",
+                "backend": "nvalchemi",
+                "total_structures": len(results),
+                "results": results,
+            }
+
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc(file=sys.stderr)
+            return {"error": f"NValchemi batch static failed: {e}"}
+
+    def _batch_md_nvalchemi(
+        self,
+        nv_model: Any,
+        structure_list: List[Any],
+        structure_names: List[str],
+        temperature: float,
+        steps: int,
+        timestep: float,
+        ensemble: str,
+        output_dir: str,
+    ) -> Dict[str, Any]:
+        """GPU-parallel batch MD via NValchemi integrators.
+
+        Supported ensembles: nve, nvt/nvt_nose_hoover, nvt_langevin, npt.
+        All others fall back to sequential.
+        """
+        import os
+        import torch
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+            atoms_to_atomic_data,
+            extract_batch_results,
+        )
+
+        # Map ensemble names → NValchemi integrator classes
+        _SEQUENTIAL_ENSEMBLES = {
+            "nvt_berendsen",
+            "nvt_andersen",
+            "nvt_bussi",
+            "npt_berendsen",
+            "npt_inhomogeneous",
+        }
+        if ensemble.lower() in _SEQUENTIAL_ENSEMBLES:
+            return {"error": f"Ensemble '{ensemble}' not supported by NValchemi."}
+
+        try:
+            from nvalchemi.data import Batch
+            from nvalchemi.dynamics.base import DynamicsStage
+            from nvalchemi.hooks.neighbor_list import NeighborListHook
+            from nvalchemi.dynamics._ops.thermostat_utils import initialize_velocities
+            from nvalchemi.dynamics.integrators.nve import NVE
+            from nvalchemi.dynamics.integrators.nvt_nose_hoover import NVTNoseHoover
+            from nvalchemi.dynamics.integrators.nvt_langevin import NVTLangevin
+            from nvalchemi.dynamics.integrators.npt import NPT
+        except ImportError as e:
+            return {"error": f"NValchemi import failed: {e}"}
+
+        device = getattr(self, "device", "cpu")
+        os.makedirs(output_dir, exist_ok=True)
+        output_dirs = [os.path.join(output_dir, name) for name in structure_names]
+
+        try:
+            atoms_list = [self.check_structure_data(s) for s in structure_list]
+            data_list = [
+                atoms_to_atomic_data(a, device=device, dtype=torch.float32)
+                for a in atoms_list
+            ]
+            batch = Batch.from_data_list(data_list)
+
+            # Initialize velocities from Maxwell-Boltzmann
+            temp_tensor = torch.full(
+                (batch.num_graphs,), temperature, dtype=torch.float32, device=device
+            )
+            if not hasattr(batch, "velocities") or batch.velocities is None:
+                velocities = torch.zeros_like(batch.positions)
+                batch["velocities"] = velocities
+            initialize_velocities(
+                velocities=batch.velocities,
+                masses=batch.atomic_masses,
+                temperature=temp_tensor,
+                batch_idx=batch.batch_idx.int(),
+            )
+
+            ens = ensemble.lower()
+            if ens == "nve":
+                integrator = NVE(model=nv_model, dt=timestep, n_steps=steps)
+            elif ens in ("nvt", "nvt_nose_hoover"):
+                integrator = NVTNoseHoover(
+                    model=nv_model,
+                    dt=timestep,
+                    temperature=temperature,
+                    thermostat_time=100 * timestep,
+                    n_steps=steps,
+                )
+            elif ens == "nvt_langevin":
+                integrator = NVTLangevin(
+                    model=nv_model,
+                    dt=timestep,
+                    temperature=temperature,
+                    friction=0.01,
+                    n_steps=steps,
+                )
+            elif ens in ("npt", "npt_nose_hoover", "npt_mtk", "npt_isotropic_mtk"):
+                # pressure from bar → eV/Å³ (1 bar = 6.2415e-7 eV/Å³)
+                pressure_ev_a3 = 0.0  # caller passes in bar; convert
+                integrator = NPT(
+                    model=nv_model,
+                    dt=timestep,
+                    temperature=temperature,
+                    pressure=pressure_ev_a3,
+                    barostat_time=1000 * timestep,
+                    thermostat_time=100 * timestep,
+                    pressure_coupling="isotropic",
+                    n_steps=steps,
+                )
+            else:
+                return {"error": f"Unknown ensemble '{ensemble}'."}
+
+            if getattr(nv_model.model_config, "neighbor_config", None) is not None:
+                nl_hook = NeighborListHook(
+                    nv_model.model_config.neighbor_config,
+                    stage=DynamicsStage.BEFORE_COMPUTE,
+                )
+                integrator.register_hook(nl_hook)
+
+            with integrator:
+                final_batch = integrator.run(batch)
+
+            results = extract_batch_results(final_batch, structure_names, output_dirs)
+
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc(file=sys.stderr)
+            return {"error": f"NValchemi batch MD failed: {e}"}
+
+        n_success = sum(1 for r in results if r["status"] == "success")
+        n_failed = len(results) - n_success
+        logger.info(f"NValchemi batch MD: {n_success} OK, {n_failed} failed")
+
+        return {
+            "mode": "batch",
+            "backend": "nvalchemi",
+            "total_jobs": len(results),
+            "successful": n_success,
+            "failed": n_failed,
+            "output_dir": output_dir,
+            "results": results,
+        }
 
     def _single_static_calculation(self, structure_data: Any) -> Dict[str, Any]:
         """Internal single static calculation."""
@@ -925,6 +1346,28 @@ class MLIPModel(ABC):
                 )
             except Exception:
                 output_dir = f"batch_md_{temperature}K"
+
+        # Try NValchemi GPU-parallel MD
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
+
+        if check_nvalchemi_available():
+            nv_model = self._get_nvalchemi_model()
+            if nv_model is not None:
+                nv_result = self._batch_md_nvalchemi(
+                    nv_model=nv_model,
+                    structure_list=structure_list,
+                    structure_names=structure_names,
+                    temperature=temperature,
+                    steps=steps,
+                    timestep=timestep,
+                    ensemble=ensemble,
+                    output_dir=output_dir,
+                )
+                if "error" not in nv_result:
+                    return nv_result
+                logger.warning(
+                    f"NValchemi MD failed ({nv_result.get('error')}); falling back to sequential."
+                )
 
         os.makedirs(output_dir, exist_ok=True)
         results = []
