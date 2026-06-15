@@ -6,17 +6,18 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server
+from src.utils.mcp_utils import setup_mcp_stdout, run_fastmcp_server  # noqa: E402
 
 # Setup stdout redirection for MCP
 mcp_pipe_binary = setup_mcp_stdout()
 
-import logging
-import warnings
-from mcp.server.fastmcp import FastMCP
-from typing import Dict, Any, Optional, Union, List
-from src.utils.serialization_utils import recursive_tolist
-from src.utils.research_utils import get_current_research_dir
+import logging  # noqa: E402
+import warnings  # noqa: E402
+from mcp.server.fastmcp import FastMCP  # noqa: E402
+from typing import Dict, Any, Optional, Union, List  # noqa: E402
+from src.utils.serialization_utils import recursive_tolist  # noqa: E402
+from src.utils.research_utils import get_current_research_dir  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 # Suppress all warnings to prevent protocol pollution
 warnings.filterwarnings("ignore")
@@ -192,6 +193,7 @@ def relax_structure(
     relax_cell: bool = True,
     output_dir: Optional[str] = None,
     fixed_atoms: Optional[List[int]] = None,
+    extract_batch_results: bool = True,
 ) -> Dict[str, Any]:
     """
     Relax one or multiple structures using the loaded MACE model.
@@ -204,6 +206,7 @@ def relax_structure(
         relax_cell: Whether to relax the unit cell.
         output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
         fixed_atoms: List of indices of atoms to keep fixed during relaxation.
+        extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
 
     Returns:
         For single: Dict with energy, trajectory_path, cif_path, json_path
@@ -223,6 +226,7 @@ def relax_structure(
             relax_cell=relax_cell,
             output_dir=output_dir,
             fixed_atoms=fixed_atoms,
+            extract_batch_results=extract_batch_results,
         )
     )
 
@@ -242,6 +246,7 @@ def run_md(
     monitor_type: Optional[Union[str, List[str]]] = None,
     monitor_params: Optional[Dict[str, Any]] = None,
     supercell_min_length: Optional[float] = None,
+    extract_batch_results: bool = True,
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
@@ -263,6 +268,7 @@ def run_md(
         monitor_params: Optional dictionary of parameters for the monitors
                         (e.g., {"upper_limit_ratio": 4.0}).
         supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell.
+        extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
 
     Returns:
         Dictionary with MD results.
@@ -294,6 +300,7 @@ def run_md(
             monitor_type=monitor_type,
             monitor_params=monitor_params,
             supercell_min_length=supercell_min_length,
+            extract_batch_results=extract_batch_results,
         )
 
         if "error" in result:

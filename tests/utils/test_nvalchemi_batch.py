@@ -10,6 +10,8 @@ Run individual groups:
     conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchRelaxCHGNet -v
     conda run -n fairchem-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchStaticFairChem -v
     conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchMDNVT -v
+    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxMACE -v
+    conda run -n fairchem-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxFairChem -v
 """
 
 from __future__ import annotations
@@ -396,3 +398,297 @@ class TestBatchMDNVT:
             output_dir=str(tmp_path),
         )
         assert result is not None
+
+
+# ---------------------------------------------------------------------------
+# Inflight batch relax — MACE
+# ---------------------------------------------------------------------------
+
+
+def _make_pool_varied(n: int = 12):
+    """Return n Cu FCC unit cells with small monotonic strains.
+
+    Each structure has 4 atoms.  With a live-batch cap of 10 atoms the
+    SizeAwareSampler fits at most 2 structures at a time, exercising the
+    evict-and-replace loop across multiple refill cycles.
+    """
+    from ase.build import bulk
+
+    scales = [1.0 + 0.005 * (i - n // 2) for i in range(n)]
+    return [bulk("Cu", "fcc", a=3.6 * s) for s in scales]
+
+
+@pytest.mark.mace
+class TestInflightRelaxMACE:
+    """Inflight batching activates when total atom count exceeds the GPU budget."""
+
+    def _load_wrapper(self):
+        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+
+        wrapper = MACEWrapper(model_name="MACE-OMAT-0-small", device="cpu")
+        wrapper.load()
+        return wrapper
+
+    def test_inflight_backend_selected(self, tmp_path, monkeypatch):
+        """result['backend'] must be 'nvalchemi_inflight' when threshold is exceeded."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        # Cap live batch to 10 atoms so that a pool of 12 × 4-atom structures
+        # (48 atoms total) always triggers inflight mode.
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5: 10,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(12),
+            fmax=100.0,  # loose: structures graduate via 2-step budget, not fmax
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+
+        assert result is not None
+        assert result.get("backend") == "nvalchemi_inflight"
+
+    def test_inflight_all_structures_returned(self, tmp_path, monkeypatch):
+        """Every input structure must appear exactly once in results."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        n = 12
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5: 10,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(n),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+
+        assert result.get("total_structures") == n
+        results_list = result.get("results", [])
+        assert len(results_list) == n
+
+        # No duplicates and no missing indices.
+        names = [r["structure_name"] for r in results_list]
+        assert len(set(names)) == n
+
+    def test_inflight_output_files_written(self, tmp_path, monkeypatch):
+        """CIF and energy files must be written for every structure."""
+        import os
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5: 10,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(12),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+
+        for r in result.get("results", []):
+            assert r["status"] in ("success", "not_converged"), (
+                f"Unexpected status '{r['status']}' for {r['structure_name']}: "
+                f"{r.get('error', '')}"
+            )
+            assert os.path.isfile(r["cif_path"]), f"Missing CIF: {r['cif_path']}"
+            energy_path = os.path.join(r["output_dir"], "relaxed_energy.txt")
+            assert os.path.isfile(energy_path), f"Missing energy file: {energy_path}"
+            assert isinstance(r["energy"], float)
+
+    def test_inflight_fixed_batch_still_works_below_threshold(
+        self, tmp_path, monkeypatch
+    ):
+        """When total atoms are under the threshold, fixed-batch backend is used."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        # Set threshold high enough that 3 × 4-atom structures (12 atoms) fits.
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5: 1000,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(3),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+
+        assert result is not None
+        assert result.get("backend") == "nvalchemi"
+
+
+# ---------------------------------------------------------------------------
+# Inflight batch relax — FairChem
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.fairchem
+class TestInflightRelaxFairChem:
+    """Inflight batching with FairChem UMA model."""
+
+    def _load_wrapper(self):
+        from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
+
+        wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", device="cpu")
+        wrapper.load()
+        return wrapper
+
+    def test_inflight_backend_selected(self, tmp_path, monkeypatch):
+        """Inflight mode is triggered when total atoms exceed batch limit."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper  # noqa: F401
+        except ImportError:
+            pytest.skip("FairChem not available in this environment")
+
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("FairChem uma-s-1p2 unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5: 10,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(8),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+
+        assert result is not None
+        assert result.get("backend") == "nvalchemi_inflight"
+
+    def test_inflight_all_structures_returned(self, tmp_path, monkeypatch):
+        """Every input structure appears exactly once in results."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper  # noqa: F401
+        except ImportError:
+            pytest.skip("FairChem not available in this environment")
+
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("FairChem uma-s-1p2 unavailable in this environment")
+
+        n = 8
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5: 10,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(n),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+
+        assert result.get("total_structures") == n
+        results_list = result.get("results", [])
+        assert len(results_list) == n
+        assert len({r["structure_name"] for r in results_list}) == n
+
+    def test_inflight_output_files_written(self, tmp_path, monkeypatch):
+        """CIF and energy text files exist for every structure."""
+        import os
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper  # noqa: F401
+        except ImportError:
+            pytest.skip("FairChem not available in this environment")
+
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("FairChem uma-s-1p2 unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5: 10,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(8),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+
+        for r in result.get("results", []):
+            assert r["status"] in ("success", "not_converged"), (
+                f"Unexpected status '{r['status']}' for {r['structure_name']}: "
+                f"{r.get('error', '')}"
+            )
+            assert os.path.isfile(r["cif_path"]), f"Missing CIF: {r['cif_path']}"
+            energy_path = os.path.join(r["output_dir"], "relaxed_energy.txt")
+            assert os.path.isfile(energy_path), f"Missing energy: {energy_path}"

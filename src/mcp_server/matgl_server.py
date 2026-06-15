@@ -220,6 +220,7 @@ def relax_structure(
     optimizer: str = "FIRE",
     relax_cell: bool = True,
     output_dir: Optional[str] = None,
+    extract_batch_results: bool = True,
 ) -> Dict[str, Any]:
     """
     Relax one or multiple structures using the loaded MatGL model.
@@ -231,6 +232,7 @@ def relax_structure(
         optimizer: Optimizer to use ("FIRE", "BFGS", "LBFGS").
         relax_cell: Whether to relax the unit cell.
         output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
+        extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
 
     Returns:
         For single: Dict with energy, trajectory_path, cif_path, json_path
@@ -249,6 +251,7 @@ def relax_structure(
             optimizer=optimizer,
             relax_cell=relax_cell,
             output_dir=output_dir,
+            extract_batch_results=extract_batch_results,
         )
     )
 
@@ -268,12 +271,18 @@ def run_md(
     monitor_type: Optional[Union[str, List[str]]] = None,
     monitor_params: Optional[Dict[str, Any]] = None,
     supercell_min_length: Optional[float] = None,
+    extract_batch_results: bool = True,
 ) -> Dict[str, Any]:
     """
     Run molecular dynamics simulation using MatCalc.
 
     Args:
         structure_data: Single structure or batch (directory path, list of dicts/paths).
+        temperature: Temperature in Kelvin.
+        steps: Number of steps.
+        timestep: Timestep in fs.
+        ensemble: Ensemble "nve", "nvt" (Nose-Hoover), or "npt" (NPT).
+                  Also supports variants like "nvt_langevin", "nvt_andersen", "npt_berendsen", "npt_mtk".
         log_interval: Interval for logging to trajectory and logfile.
         pressure: Target pressure in bar (for NPT).
         pressure_mask: Mask for anisotropic NPT (e.g., [1, 0, 0] for 1D).
@@ -282,6 +291,7 @@ def run_md(
         monitor_type: Type of monitor ("melting", "explosion", "overshoot", "volume") or list of types.
         monitor_params: Optional dictionary of parameters for the monitors (e.g., {"upper_limit_ratio": 4.0}).
         supercell_min_length: Minimum length (Å) for each lattice vector. Automatically expands supercell.
+        extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
     Returns:
         Dictionary with MD results (trajectory_path, final_structure).
     """
@@ -311,6 +321,7 @@ def run_md(
             monitor_type=monitor_type,
             monitor_params=monitor_params,
             supercell_min_length=supercell_min_length,
+            extract_batch_results=extract_batch_results,
         )
 
         return recursive_tolist(result)
