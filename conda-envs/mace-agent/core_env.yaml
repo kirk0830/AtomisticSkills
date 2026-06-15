@@ -1,11 +1,11 @@
 name: mace-agent
 dependencies:
-  - python=3.10
+  - python=3.12
   - "pytorch=*=*cuda*"
   - pip
   - pip:
     - mcp
-    - mace-torch>=0.3.15
+    - mace-torch==0.3.15
     - cython
     - pymatgen
     - pymatgen-analysis-diffusion
@@ -15,3 +15,4 @@ dependencies:
     - setuptools-scm
     - sella
     - typing-extensions
+    - "-e /home/bdeng/projects/nvalchemi-toolkit[mace]"

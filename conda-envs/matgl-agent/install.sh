@@ -29,7 +29,7 @@ source $(conda info --base)/etc/profile.d/conda.sh
 conda activate $ENV_NAME
 
 echo "Installing pip dependencies with uv..."
-uv pip install -r uv_requirements.txt
+uv pip install --extra-index-url https://pypi.nvidia.com -r uv_requirements.txt
 
 # Cleanup
 rm conda_only_env.yaml uv_requirements.txt
