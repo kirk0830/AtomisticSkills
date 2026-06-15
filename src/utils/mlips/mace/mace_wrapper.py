@@ -54,9 +54,9 @@ AVAILABLE_MACE_MODELS = {
 MACE_AVAILABLE = False
 
 try:
-    import mace
-    from mace.calculators import mace_mp
-    from mace.tools import utils
+    import mace  # noqa: F401
+    from mace.calculators import mace_mp  # noqa: F401
+    from mace.tools import utils  # noqa: F401
 
     MACE_AVAILABLE = True
 except ImportError as e:
@@ -385,3 +385,9 @@ class MACEWrapper(MLIPModel):
                 f"Could not determine supported elements for {self.model_name}. "
                 f"Failed to extract z_table from the MACECalculator. Internal error: {str(e)}"
             )
+
+    def _get_nvalchemi_model(self):
+        """Return a NValchemi-compatible MACEWrapper, or None if unavailable."""
+        from src.utils.mlips.nvalchemi.mace_nv import get_nvalchemi_mace_model
+
+        return get_nvalchemi_mace_model(self)

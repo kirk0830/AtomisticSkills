@@ -683,6 +683,12 @@ class FAIRCHEMWrapper(MLIPModel):
             f"energies are available to confirm dataset occupancy."
         )
 
+    def _get_nvalchemi_model(self):
+        """Return a NValchemi-compatible FairChemWrapper, or None if unavailable."""
+        from src.utils.mlips.nvalchemi.fairchem_nv import get_nvalchemi_fairchem_model
+
+        return get_nvalchemi_fairchem_model(self)
+
 
 if __name__ == "__main__":
     # Test the wrapper

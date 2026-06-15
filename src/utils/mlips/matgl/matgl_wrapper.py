@@ -139,6 +139,14 @@ class MatGLWrapper(MLIPModel):
         if not self.is_loaded:
             return {"error": "Model not loaded. Please call load() first."}
 
+        # Batch input: pass structure_data directly so base.py can dispatch to
+        # NValchemi or sequential.  check_structure_data() does not handle lists.
+        is_batch = isinstance(structure_data, list) or (
+            isinstance(structure_data, str) and os.path.isdir(structure_data)
+        )
+        if is_batch and "Potential" in type(self.model).__name__:
+            return super().static_calculation(structure_data)
+
         atoms = self.check_structure_data(structure_data)
         if isinstance(atoms, dict) and "error" in atoms:
             return atoms
@@ -291,3 +299,9 @@ class MatGLWrapper(MLIPModel):
             "dipole": False,
             "charge_spin": False,
         }
+
+    def _get_nvalchemi_model(self):
+        """Return a NValchemi-compatible wrapper for the loaded MatGL model, or None."""
+        from src.utils.mlips.nvalchemi.matgl_nv import get_nvalchemi_matgl_model
+
+        return get_nvalchemi_matgl_model(self)
