@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 try:
     import torch
-    from nvalchemi.data import AtomicData, Batch  # noqa: F401
+    from nvalchemi.data import AtomicData
 
     NVALCHEMI_AVAILABLE = True
 except ImportError:

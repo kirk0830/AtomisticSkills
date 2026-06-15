@@ -54,9 +54,7 @@ AVAILABLE_MACE_MODELS = {
 MACE_AVAILABLE = False
 
 try:
-    import mace  # noqa: F401
-    from mace.calculators import mace_mp  # noqa: F401
-    from mace.tools import utils  # noqa: F401
+    import mace  # noqa: F401 — availability check only; imported for ImportError side-effect
 
     MACE_AVAILABLE = True
 except ImportError as e:
