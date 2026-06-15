@@ -70,6 +70,20 @@ def test_run_md(loaded_server, cu_structure):
         assert os.path.exists(res["trajectory_path"])
 
 
+def test_relax_structure_batch(loaded_server, cu_structure):
+    output_dir = os.path.abspath("./results/mace_test/relax_batch")
+    res = loaded_server.relax_structure(
+        [cu_structure, cu_structure],
+        steps=5,
+        fmax=0.5,
+        output_dir=output_dir,
+    )
+    assert "error" not in res
+    assert res.get("mode") == "batch"
+    assert res.get("total_structures") == 2
+    assert res.get("successful") == 2
+
+
 def test_run_md_batch(loaded_server, cu_structure):
     output_dir = os.path.abspath("./results/mace_test/md_batch")
     res = loaded_server.run_md(

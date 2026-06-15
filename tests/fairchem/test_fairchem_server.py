@@ -66,6 +66,20 @@ def test_run_md(loaded_server, cu_structure_dict):
     assert "trajectory_path" in res
 
 
+def test_relax_structure_batch(loaded_server, cu_structure_dict):
+    output_dir = os.path.abspath("./results/fairchem_test/relax_batch")
+    res = loaded_server.relax_structure(
+        [cu_structure_dict, cu_structure_dict],
+        steps=5,
+        fmax=0.5,
+        output_dir=output_dir,
+    )
+    assert "error" not in res
+    assert res.get("mode") == "batch"
+    assert res.get("total_structures") == 2
+    assert res.get("successful") == 2
+
+
 def test_run_md_batch(loaded_server, cu_structure_dict):
     output_dir = os.path.abspath("./results/fairchem_test/md_batch")
     res = loaded_server.run_md(
