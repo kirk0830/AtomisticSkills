@@ -15,7 +15,7 @@
 |-------|-----|:-----------:|:------------:|:-----------:|:-------------:|
 | MACE-OMAT-0-small | mace-agent | **21.7×** | **68.0×** | 9.5e-07 | 0.0 |
 | MACE-OMAT-0-medium | mace-agent | **22.9×** | **72.3×** | 9.5e-07 | 0.0 |
-| MACE-MH-1/omat_pbe | mace-agent | **13.8×** | **33.9×** | ⚠ 7.1 eV¹ | 0.0 |
+| MACE-MH-1/omat_pbe | mace-agent | **14.3×** | **33.9×** | 1.6e-07 | 0.0 |
 | MACE-MH-1/matpes_r2scan | mace-agent | **14.4×** | **33.6×** | 1.2e-07 | 0.0 |
 | MACE-MP-medium-0b3 | mace-agent | **22.9×** | **76.2×** | 1.4e-06 | 0.0 |
 | MACE-MATPES-PBE-0 | mace-agent | **23.6×** | **77.4×** | 7.2e-07 | 0.0 |
@@ -33,9 +33,7 @@
 | FairChem uma-m-1p1 (omat) | fairchem-agent | 2.9× | 3.5× | 1.7e-07 | 0.0 |
 | FairChem uma-s-1p1 (omat) | fairchem-agent | 3.4× | 5.5× | 2.5e-07 | 0.0 |
 
-¹ MACE-MH-1/omat_pbe shows anomalously large ΔE (~7 eV) between NValchemi and sequential paths, likely due to a per-atom energy reference offset between the two code paths for the omat_pbe head. Forces and speedup are correct. The matpes_r2scan head on the same model shows normal precision. Investigation ongoing.
-
-² M3GNet energy errors (~0.7–1.8×10⁻³ eV) arise from different neighbor-list graph connectivity (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc` fallback) producing slightly different bond distances at the float32 precision boundary. Errors are within the 5×10⁻³ eV tolerance for PES screening applications.
+¹ M3GNet energy errors (~0.7–1.8×10⁻³ eV) arise from different neighbor-list graph connectivity (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc` fallback) producing slightly different bond distances at the float32 precision boundary. Errors are within the 5×10⁻³ eV tolerance for PES screening applications.
 
 ---
 
@@ -63,14 +61,12 @@
 
 #### MACE-MH-1/omat_pbe (multi-head, solid-state PBE head)
 
-> ⚠ **Known issue**: ΔE ~7 eV between NValchemi and sequential paths. Likely a per-atom energy reference offset specific to the omat_pbe head. Forces and speedup values are correct. Use matpes_r2scan head for precision-sensitive comparisons.
-
 | N structs | NV (ms) | Seq (ms) | Speedup | ΔE max (eV) | ΔF max (eV/Å) | ΔS max (eV/Å³) |
 |:---------:|--------:|---------:|--------:|:-----------:|:-------------:|:--------------:|
-| 2 | 63 | 228 | 3.6× | 7.1 ⚠ | 0.0 | 4.5e-02 |
-| 5 | 41 | 563 | **13.8×** | 7.1 ⚠ | 0.0 | 4.5e-02 |
-| 10 | 55 | 1134 | **20.8×** | 7.1 ⚠ | 0.0 | 4.5e-02 |
-| 20 | 68 | 2310 | **33.9×** | 7.1 ⚠ | 0.0 | 4.5e-02 |
+| 2 | 186 | 387 | 2.1× | 1.6e-07 | 0.0 | 1.4e-07 |
+| 5 | 40 | 570 | **14.3×** | 1.6e-07 | 0.0 | 1.4e-07 |
+| 10 | 55 | 1122 | **20.4×** | 1.6e-07 | 0.0 | 1.4e-07 |
+| 20 | 68 | 2305 | **33.9×** | 1.6e-07 | 0.0 | 1.6e-07 |
 
 #### MACE-MH-1/matpes_r2scan (multi-head, r2SCAN head)
 
@@ -229,9 +225,8 @@
 
 ### Accuracy
 - **Forces** are exactly identical across all models and batch sizes (ΔF = 0.0). Force correctness is guaranteed because both paths use the same autograd differentiation.
-- **MACE/TensorNet/CHGNet/QET energy errors** are at or below floating-point epsilon (~1e-7 to 2e-6 eV), dominated by nondeterministic GPU/CPU kernel ordering.
+- **MACE/TensorNet/CHGNet/QET/FairChem energy errors** are at or below floating-point epsilon (~1e-7 to 2e-6 eV), dominated by nondeterministic GPU/CPU kernel ordering.
 - **M3GNet energy errors** (~0.7–1.8×10⁻³ eV) are due to slightly different neighbor-list graphs from the NValchemi GPU warp kernel vs. the CPU `radius_graph_pbc` fallback. Forces remain exact.
-- **MACE-MH-1/omat_pbe ΔE**: ~7 eV anomaly is a per-atom energy reference issue between batch and sequential head dispatch, not a precision problem. The matpes_r2scan head on the same model is correct.
 
 ### FairChem Task Heads
 The UMA models support multiple prediction heads:

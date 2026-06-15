@@ -155,15 +155,15 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 |-------|:---:|:---:|:---:|
 | MACE-OMAT-0-small | 21.7× | **68×** | 9.5e-07 |
 | MACE-OMAT-0-medium | 22.9× | **72×** | 9.5e-07 |
-| MACE-MH-1/omat_pbe | 13.8× | **34×** | ⚠ 7.1 eV¹ |
+| MACE-MH-1/omat_pbe | 14.3× | **34×** | 1.6e-07 |
 | MACE-MH-1/matpes_r2scan | 14.4× | **34×** | 1.2e-07 |
 | MACE-MP-medium-0b3 | 22.9× | **76×** | 1.4e-06 |
 | MACE-MATPES-PBE-0 | 23.6× | **77×** | 7.2e-07 |
 | MACE-MATPES-R2SCAN-0 | 24.2× | **76×** | 1.9e-06 |
 | TensorNet-PES-MatPES-PBE-2025.2 | 3.6× | **11×** | 1.4e-07 |
 | TensorNet-PES-MatPES-r2SCAN-2025.2 | 3.8× | **12×** | 8.0e-07 |
-| M3GNet-PES-MatPES-PBE-2025.2 | 3.7× | **11×** | 1.3e-03² |
-| M3GNet-PES-MatPES-r2SCAN-2025.2 | 3.9× | **11×** | 7.2e-04² |
+| M3GNet-PES-MatPES-PBE-2025.2 | 3.7× | **11×** | 1.3e-03¹ |
+| M3GNet-PES-MatPES-r2SCAN-2025.2 | 3.9× | **11×** | 7.2e-04¹ |
 | CHGNet-PES-MatPES-PBE-2025.2.10 | 4.3× | **12×** | 2.4e-07 |
 | CHGNet-PES-MatPES-r2SCAN-2025.2.10 | 4.2× | **13×** | 9.5e-07 |
 | QET-PES-MatPES-PBE-2025.2 | 4.2× | **13×** | 7.2e-07 |
@@ -173,9 +173,7 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 | FairChem uma-m-1p1 (omat) | 2.9× | 3.5× | 1.7e-07 |
 | FairChem uma-s-1p1 (omat) | 3.4× | 5.5× | 2.5e-07 |
 
-¹ MACE-MH-1/omat_pbe: large ΔE (~7 eV) is a per-atom energy reference discrepancy between NValchemi batch and sequential head dispatch. Forces and speedup are correct; use matpes_r2scan head for precision comparisons.
-
-² M3GNet energy errors (~0.7–1.8×10⁻³ eV) from different neighbor-list graph connectivity (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc`). Forces are exact (ΔF = 0). Within 5×10⁻³ eV tolerance for PES screening.
+¹ M3GNet energy errors (~0.7–1.8×10⁻³ eV) from different neighbor-list graph connectivity (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc`). Forces are exact (ΔF = 0). Within 5×10⁻³ eV tolerance for PES screening.
 
 ## Constraints
 
