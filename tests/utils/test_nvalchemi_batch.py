@@ -52,7 +52,10 @@ class TestFallback:
         # The dispatch in base.py checks check_nvalchemi_available() which reads the module attr
         monkeypatch.setattr(_nv_utils, "check_nvalchemi_available", lambda: False)
 
-        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+        try:
+            from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+        except ImportError:
+            pytest.skip("MACE not available in this environment")
 
         wrapper = MACEWrapper(model_name="MACE-OMAT-0-small", device="cpu")
         try:
@@ -72,11 +75,16 @@ class TestFallback:
 
     def test_single_prediction_unchanged(self, tmp_path):
         """Single-structure prediction path must not be affected by NValchemi changes."""
-        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+        try:
+            from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+        except ImportError:
+            pytest.skip("MACE not available in this environment")
 
         wrapper = MACEWrapper(model_name="MACE-OMAT-0-small", device="cpu")
         try:
             wrapper.load()
+            # create_calculator() verifies mace.calculators is importable
+            wrapper.create_calculator()
         except Exception:
             pytest.skip("MACE model unavailable in this environment")
 
@@ -292,7 +300,10 @@ class TestBatchStaticFairChem:
         if not NVALCHEMI_AVAILABLE:
             pytest.skip("nvalchemi not installed")
 
-        from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
+        try:
+            from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
+        except ImportError:
+            pytest.skip("FairChem not available in this environment")
 
         wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", device="cpu")
         try:
@@ -311,7 +322,10 @@ class TestBatchStaticFairChem:
         if not NVALCHEMI_AVAILABLE:
             pytest.skip("nvalchemi not installed")
 
-        from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
+        try:
+            from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
+        except ImportError:
+            pytest.skip("FairChem not available in this environment")
 
         wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", device="cpu")
         try:

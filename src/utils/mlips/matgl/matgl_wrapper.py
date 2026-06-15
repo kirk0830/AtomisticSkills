@@ -165,7 +165,9 @@ class MatGLWrapper(MLIPModel):
             state_attr = None
             if "BandGap" in self.model_name:
                 functional = self.BANDGAP_FUNCTIONALS.get(self.task_name or "PBE", 0)
-                state_attr = torch.tensor([functional], dtype=torch.float32)
+                state_attr = torch.tensor(
+                    [functional], dtype=torch.float32, device=self.device
+                )
             prediction = self.model.predict_structure(structure, state_attr=state_attr)
             val = float(
                 prediction.item() if hasattr(prediction, "item") else prediction

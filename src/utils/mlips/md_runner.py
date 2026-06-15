@@ -19,7 +19,34 @@ from ase.md.verlet import VelocityVerlet
 from matcalc._base import PropCalc
 from matcalc._relaxation import RelaxCalc
 from matcalc.utils import to_ase_atoms, to_pmg_structure
-from matgl.ext.ase import TrajectoryObserver as _BaseTrajectoryObserver
+
+try:
+    from matgl.ext.ase import TrajectoryObserver as _BaseTrajectoryObserver
+except (ImportError, ModuleNotFoundError):
+
+    class _BaseTrajectoryObserver:  # type: ignore[no-redef]
+        """Fallback TrajectoryObserver for environments without matgl.ext."""
+
+        def __init__(self, atoms: Atoms) -> None:
+            self.atoms = atoms
+            self.energies: list[float] = []
+            self.forces: list = []
+            self.stresses: list = []
+            self.atom_positions: list = []
+            self.cells: list = []
+
+        def __call__(self) -> None:
+            self.energies.append(float(self.atoms.get_potential_energy()))
+            self.forces.append(self.atoms.get_forces().tolist())
+            try:
+                self.stresses.append(self.atoms.get_stress().tolist())
+            except Exception:
+                self.stresses.append([])
+            self.atom_positions.append(self.atoms.get_positions().tolist())
+            self.cells.append(np.array(self.atoms.get_cell()).tolist())
+
+        def __len__(self) -> int:
+            return len(self.energies)
 
 
 class TrajectoryObserver(_BaseTrajectoryObserver):

@@ -191,7 +191,7 @@ def predict_bandgap(
 
             _bandgap_wrapper = MatGLWrapper(
                 model_name="MEGNet-MP-2019.4.1-BandGap-mfi",
-                device="cpu",
+                device="auto",
                 task_name=task_name,
             )
             _bandgap_wrapper.load()

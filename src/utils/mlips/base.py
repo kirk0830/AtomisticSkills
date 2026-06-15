@@ -959,6 +959,20 @@ class MLIPModel(ABC):
             ]
             batch = Batch.from_data_list(data_list)
 
+            # Pre-compute initial forces — Velocity Verlet integrators (NVTNoseHoover,
+            # NVE, NPT) require forces at t=0 before the first half-step velocity update.
+            # FIRE (relax) computes forces internally before touching positions, so it
+            # does not need this, but it is safe to do for all dynamics.
+            with torch.no_grad():
+                initial_out = nv_model(batch)
+            f0 = (
+                initial_out.get("forces")
+                if isinstance(initial_out, dict)
+                else getattr(initial_out, "forces", None)
+            )
+            if f0 is not None:
+                batch["forces"] = f0
+
             # Initialize velocities from Maxwell-Boltzmann
             temp_tensor = torch.full(
                 (batch.num_graphs,), temperature, dtype=torch.float32, device=device

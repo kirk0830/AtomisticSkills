@@ -223,7 +223,7 @@ class TestMatGLBandgapFunctionals:
 
         wrapper = MatGLWrapper(
             model_name="MEGNet-BandGap-mfi-MP-2019.4.1",
-            device="cpu",
+            device="auto",
             task_name=task_name,
         )
         wrapper.load()
