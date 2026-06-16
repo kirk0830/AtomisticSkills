@@ -103,3 +103,8 @@ The annotated tag message must follow this structure exactly:
    ```bash
    git tag -l --format='%(contents)' v1.x.y | gh release create v1.x.y -t "v1.x.y" -F -
    ```
+
+3. Validate that the release is online by checking the release URL using `curl` (ensuring it returns a `200 OK` status):
+   ```bash
+   curl -I -L -s https://github.com/learningmatter-mit/AtomisticSkills/releases/tag/v1.x.y | head -n 10
+   ```
