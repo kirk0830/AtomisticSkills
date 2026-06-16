@@ -86,14 +86,20 @@ The annotated tag message must follow this structure exactly:
 - **New MCP Tools table**: one row per `@mcp.tool()`-decorated function *added* since the previous tag. Exclude built-in agent tools (tools that belong to the harness, not the MCP server). Server is the `*_server.py` basename without `_server`. Author is the git committer of the adding commit.
 - **Other Highlights**: group by area (Skills, Sorption, Drug discovery, Docs & CI, etc.). One bullet per logical change, not per commit.
 
-## Creating the Tag
+## Creating the Tag and GitHub Release
 
-```bash
-git tag -a v1.x.y -m "$(cat <<'EOF'
-<paste message above>
-EOF
-)"
-git push origin v1.x.y
-```
+1. Create the annotated tag using `--cleanup=verbatim` to preserve Markdown headings (which start with `#`):
+   ```bash
+   git tag --cleanup=verbatim -a v1.x.y -m "$(cat <<'EOF'
+   <paste message above>
+   EOF
+   )"
+   git push origin v1.x.y
+   ```
 
-Always use an annotated tag (`-a`) so the message is stored in the tag object.
+   > **Note**: Always use an annotated tag (`-a`) so the message is stored in the tag object. Specifying `--cleanup=verbatim` is required so that git does not strip the Markdown headers (`#`) as comment lines.
+
+2. Create the release wrapper on GitHub through the GitHub CLI (`gh`), piping the tag's contents as the release body:
+   ```bash
+   git tag -l --format='%(contents)' v1.x.y | gh release create v1.x.y -t "v1.x.y" -F -
+   ```
