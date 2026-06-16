@@ -298,6 +298,11 @@ class M3GNetWrapper(nn.Module, BaseModelMixin):  # type: ignore[misc]
             persistent=False,
         )
 
+        # M3GNet is a custom nvalchemi wrapper (not native). Inflight GPU batching
+        # triggers a CUDA index OOB in nvalchemi's compiled NeighborListHook when
+        # structures graduate and COO format is used. Fall back to fixed-batch.
+        self._nvalchemi_supports_inflight: bool = False
+
     def _model_dtype(self) -> torch.dtype:
         try:
             return next(self.model.parameters()).dtype
@@ -471,6 +476,11 @@ class CHGNetWrapper(nn.Module, BaseModelMixin):  # type: ignore[misc]
             _build_z_to_type_table(self.model.element_types),
             persistent=False,
         )
+
+        # CHGNet is a custom nvalchemi wrapper (not native). Inflight GPU batching
+        # triggers a CUDA index OOB in nvalchemi's compiled NeighborListHook when
+        # structures graduate and COO format is used. Fall back to fixed-batch.
+        self._nvalchemi_supports_inflight: bool = False
 
     def _model_dtype(self) -> torch.dtype:
         try:

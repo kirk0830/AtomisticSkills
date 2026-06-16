@@ -194,6 +194,7 @@ def relax_structure(
     output_dir: Optional[str] = None,
     fixed_atoms: Optional[List[int]] = None,
     extract_batch_results: bool = True,
+    max_batch_atoms: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Relax one or multiple structures using the loaded MACE model.
@@ -207,6 +208,9 @@ def relax_structure(
         output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
         fixed_atoms: List of indices of atoms to keep fixed during relaxation.
         extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
+        max_batch_atoms: Override the atom budget for the NValchemi inflight live batch.
+            When None (default) the budget is estimated from free VRAM (~2 MB/atom).
+            Set a smaller value (e.g. 300–500) on shared GPUs to avoid OOM.
 
     Returns:
         For single: Dict with energy, trajectory_path, cif_path, json_path
@@ -227,6 +231,7 @@ def relax_structure(
             output_dir=output_dir,
             fixed_atoms=fixed_atoms,
             extract_batch_results=extract_batch_results,
+            max_batch_atoms=max_batch_atoms,
         )
     )
 

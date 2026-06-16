@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 try:
     import torch
@@ -347,8 +347,51 @@ def extract_batch_results(
 # Inflight batching helpers
 # ---------------------------------------------------------------------------
 
+# Per-architecture bytes-per-param-per-atom factors.
+# Substring matched against every class name in the model's MRO (see _detect_bytes_per_atom).
+# Calibrated for NValchemi FIRE relaxation (torch.no_grad(), no gradient buffers).
+#
+# The dominant memory drivers are:
+#   - edge count/atom  ∝ r_cut³ × density
+#   - feature width / tensor order
+# Hence models with long cutoffs (FairChem 12 Å) use far more memory per atom than
+# short-cutoff models (MACE ~5 Å) despite having more parameters.
+_ARCH_BYTES_PER_PARAM_ATOM: list[tuple[str, float]] = [
+    # FairChem eSEN/UMA: 12 Å cutoff, ~400 edges/atom; attention weights shared → lower factor.
+    ("FairChemWrapper", 0.15),
+    # MACE equivariant GNN: ~5 Å cutoff, ~30 edges/atom; L=2 tensor features → moderate factor.
+    # Matches NVMACEWrapper and the dynamically-created HeadAwareMACEWrapper subclass.
+    ("MACEWrapper", 0.5),
+    # MatGL TensorNet: compact model, short cutoff.
+    ("TensorNetWrapper", 1.5),
+    # MatGL M3GNet / CHGNet: very few params, per-atom overhead is relatively large.
+    ("M3GNetWrapper", 4.0),
+    ("CHGNetWrapper", 3.0),
+]
+_FALLBACK_BYTES_PER_ATOM = 5_000_000  # 5 MB/atom for unrecognised architectures
 
-def estimate_max_batch_atoms(device: str = "cuda", safety_factor: float = 0.5) -> int:
+
+def _detect_bytes_per_atom(model: Any) -> int:
+    """Estimate GPU bytes per atom for a NValchemi model.
+
+    Walks the model's class MRO looking for a known architecture pattern,
+    then computes ``bytes_per_atom = num_params × factor``.  Returns the
+    fallback (5 MB/atom) for unrecognised classes.
+    """
+    for klass in type(model).__mro__:
+        name = klass.__name__
+        for pattern, factor in _ARCH_BYTES_PER_PARAM_ATOM:
+            if pattern in name:
+                num_params = sum(p.numel() for p in model.parameters())
+                return max(500_000, int(num_params * factor))
+    return _FALLBACK_BYTES_PER_ATOM
+
+
+def estimate_max_batch_atoms(
+    device: str = "cuda",
+    safety_factor: float = 0.5,
+    model: Optional[Any] = None,
+) -> int:
     """Estimate max total atoms for a single fixed GPU batch from free VRAM.
 
     Used as the threshold for switching from fixed-batch to inflight mode:
@@ -361,6 +404,10 @@ def estimate_max_batch_atoms(device: str = "cuda", safety_factor: float = 0.5) -
         Torch device string. Non-CUDA devices return a conservative fallback.
     safety_factor : float
         Fraction of free VRAM to budget for the live batch. Default 0.5.
+    model : nn.Module, optional
+        The NValchemi model object.  When provided, ``_detect_bytes_per_atom``
+        inspects the class hierarchy to pick a calibrated bytes/atom estimate
+        rather than the generic fallback.
 
     Returns
     -------
@@ -369,12 +416,14 @@ def estimate_max_batch_atoms(device: str = "cuda", safety_factor: float = 0.5) -
     """
     if not NVALCHEMI_AVAILABLE:
         return 2000
-    if torch.cuda.is_available() and device not in ("cpu", "mps"):
-        free_bytes, _ = torch.cuda.mem_get_info()
-        # ~2 MB/atom: conservative estimate covering neighbor lists,
-        # gradient buffers, and intermediate activations for large GNNs.
-        return max(200, int(free_bytes * safety_factor / 2_000_000))
-    return 2000  # CPU / unknown device fallback
+    if not (torch.cuda.is_available() and device not in ("cpu", "mps")):
+        return 2000
+
+    free_bytes, _ = torch.cuda.mem_get_info()
+    bytes_per_atom = (
+        _detect_bytes_per_atom(model) if model is not None else _FALLBACK_BYTES_PER_ATOM
+    )
+    return max(200, int(free_bytes * safety_factor / bytes_per_atom))
 
 
 class AtomsDataset:
@@ -439,6 +488,14 @@ class AtomsDataset:
         data["energy"] = torch.zeros(1, 1, device=self._device, dtype=dtype)
         if self._relax_cell:
             data["stress"] = torch.zeros(1, 3, 3, device=self._device, dtype=dtype)
+        # Register orig_idx as a system-level property so it survives from_data_list/
+        # to_data_list round-trips via the system_group.  _bookkeeping_keys only
+        # overwrites "status" and "system_id", so orig_idx tracks the original input
+        # index through refill_check even when n_remaining=0 resets all system_ids.
+        data.add_system_property(
+            "orig_idx",
+            torch.tensor([[idx]], dtype=torch.long, device=self._device),
+        )
         return data, {"name": self._names[idx], "index": idx}
 
 
@@ -452,7 +509,25 @@ class HostMemoryWithSystemId(HostMemory):
     ``SizeAwareSampler``) is silently dropped.  This subclass extracts
     ``system_id`` *before* unbatching and re-registers it on each individual
     ``AtomicData`` so that it survives ``read()`` / ``drain()``.
+
+    Parameters
+    ----------
+    capacity : int
+        Maximum number of graduated samples to buffer in CPU memory.
+    on_graduate : callable(orig_idx: int, data_cpu: AtomicData) -> None, optional
+        Callback fired immediately when each structure graduates from the live
+        batch.  Receives the dataset index (``orig_idx``) and the structure's
+        ``AtomicData`` already moved to CPU.  Use this to write results to disk
+        incrementally so partial results survive an OOM abort.
     """
+
+    def __init__(
+        self,
+        capacity: int,
+        on_graduate: Optional[Callable[[int, Any], None]] = None,
+    ) -> None:
+        super().__init__(capacity)
+        self._on_graduate = on_graduate
 
     def write(self, batch: Any, mask: Any = None) -> None:  # type: ignore[override]
         if not NVALCHEMI_AVAILABLE:
@@ -476,6 +551,23 @@ class HostMemoryWithSystemId(HostMemory):
                 _ = batch.batch_ptr  # trigger lazy init for SegmentedLevelStorage
                 batch = batch.index_select(indices)
 
+        # Normalise system tensors before to_data_list() to satisfy AtomicData validators.
+        # `batch` is already a local copy from index_select above, so in-place
+        # modification is safe and does not affect the live batch.
+        # - Cast float64 → float32 (FairChem and similar models output float64 stress).
+        # - Reshape stress (B, 9) → (B, 3, 3) if a model outputs Voigt notation.
+        sys_group = batch._system_group
+        if sys_group is not None:
+            for key in list(sys_group.keys()):
+                t = sys_group[key]
+                if not isinstance(t, torch.Tensor):
+                    continue
+                if t.dtype == torch.float64:
+                    t = t.float()
+                if key == "stress" and t.dim() == 2 and t.shape[-1] == 9:
+                    t = t.reshape(t.shape[0], 3, 3)
+                sys_group[key] = t
+
         # Extract system_id before to_data_list() drops it.
         system_ids = batch["system_id"].detach().to("cpu")
         data_list = batch.to_data_list()
@@ -490,3 +582,92 @@ class HostMemoryWithSystemId(HostMemory):
             data_cpu = data.to(self._device)
             data_cpu.add_system_property("system_id", system_ids[i : i + 1])
             self._data_list.append(data_cpu)
+            if self._on_graduate is not None:
+                orig_idx = int(data_cpu["orig_idx"].squeeze().item())
+                self._on_graduate(orig_idx, data_cpu)
+
+        # Explicitly release the GPU data_list and return cached CUDA allocator
+        # blocks back to the driver.  On DGX Spark's unified memory pool this
+        # prevents the allocator from silently consuming the entire pool over
+        # thousands of FIRE steps (each adapt_input builds large temporary graphs).
+        del data_list
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+
+class RelaxLogHook:
+    """ASE-style per-structure relax.log writer for inflight batch relaxation.
+
+    Writes ``{output_dir}/relax.log`` for each structure in the same format
+    as the fixed-batch NValchemi path, enabling step-by-step monitoring of
+    relaxations running inside the FusedStage engine.
+
+    Implements the NValchemi Hook protocol (``frequency``, ``stage``,
+    ``__call__``) and the Python context-manager protocol.  FusedStage calls
+    ``__enter__``/``__exit__`` automatically via ``_open_hooks``/
+    ``_close_hooks``, so file handles are flushed and closed without extra
+    bookkeeping in ``_batch_relax_nvalchemi_inflight``.
+
+    Parameters
+    ----------
+    output_dirs : list[str]
+        Per-structure output directories indexed by ``orig_idx``.
+    stage : DynamicsStage
+        Hook stage — pass ``DynamicsStage.AFTER_COMPUTE``.
+    """
+
+    frequency: int = 1
+
+    def __init__(self, output_dirs: list, stage: Any) -> None:
+        self.stage = stage
+        self._output_dirs = output_dirs
+        self._step_counts: dict[int, int] = {}
+        self._file_handles: dict[int, Any] = {}
+
+    def __call__(self, ctx: Any, stage: Any) -> None:
+        if not NVALCHEMI_AVAILABLE:
+            return
+        batch = ctx.batch
+        n_graphs = batch.num_graphs
+        if n_graphs == 0:
+            return
+
+        # Per-graph orig_idx and energy (both system-level, shape [B, 1])
+        orig_idxs = batch["orig_idx"].squeeze(-1).tolist()
+        energies = batch["energy"].squeeze(-1).tolist()
+
+        # Per-graph max force norm via scatter_reduce_ over atom-level forces
+        force_norms = batch["forces"].norm(dim=-1)  # (N_total,)
+        batch_idx = batch.batch_idx  # (N_total,) — atom→graph mapping
+        fmax_per_graph = torch.zeros(n_graphs, device=force_norms.device)
+        fmax_per_graph.scatter_reduce_(
+            0, batch_idx, force_norms, reduce="amax", include_self=False
+        )
+        fmax_list = fmax_per_graph.tolist()
+
+        for g in range(n_graphs):
+            oidx = int(orig_idxs[g])
+            energy = float(energies[g])
+            fmax_val = float(fmax_list[g])
+            step = self._step_counts.get(oidx, 0)
+
+            if oidx not in self._file_handles:
+                out_dir = self._output_dirs[oidx]
+                os.makedirs(out_dir, exist_ok=True)
+                fh = open(os.path.join(out_dir, "relax.log"), "w")
+                fh.write("           Step          Energy         fmax\n")
+                self._file_handles[oidx] = fh
+
+            self._file_handles[oidx].write(
+                f"FIRE:  {step:9d}  {energy:14.6f}  {fmax_val:12.6f}\n"
+            )
+            self._file_handles[oidx].flush()
+            self._step_counts[oidx] = step + 1
+
+    def __enter__(self) -> "RelaxLogHook":
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        for fh in self._file_handles.values():
+            fh.close()
+        self._file_handles.clear()

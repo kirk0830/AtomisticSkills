@@ -12,6 +12,14 @@ Run individual groups:
     conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchMDNVT -v
     conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxMACE -v
     conda run -n fairchem-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxFairChem -v
+    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxM3GNet -v
+    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxTensorNet -v
+    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxCHGNet -v
+
+Backend key and MCP signature tests (any environment with nvalchemi + MACE):
+    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestBackendKeyAllPaths -v
+    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestRelaxLogFixedBatch -v
+    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestMCPServerParamCoverage -v
 """
 
 from __future__ import annotations
@@ -406,7 +414,7 @@ class TestBatchMDNVT:
 
 
 def _make_pool_varied(n: int = 12):
-    """Return n Cu FCC unit cells with small monotonic strains.
+    """Return n Cu FCC conventional cells (cubic=True) with small monotonic strains.
 
     Each structure has 4 atoms.  With a live-batch cap of 10 atoms the
     SizeAwareSampler fits at most 2 structures at a time, exercising the
@@ -415,7 +423,7 @@ def _make_pool_varied(n: int = 12):
     from ase.build import bulk
 
     scales = [1.0 + 0.005 * (i - n // 2) for i in range(n)]
-    return [bulk("Cu", "fcc", a=3.6 * s) for s in scales]
+    return [bulk("Cu", "fcc", a=3.6 * s, cubic=True) for s in scales]
 
 
 @pytest.mark.mace
@@ -447,7 +455,7 @@ class TestInflightRelaxMACE:
         monkeypatch.setattr(
             nv_utils,
             "estimate_max_batch_atoms",
-            lambda device="cuda", safety_factor=0.5: 10,
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
         )
 
         result = wrapper.relax_structure(
@@ -477,7 +485,7 @@ class TestInflightRelaxMACE:
         monkeypatch.setattr(
             nv_utils,
             "estimate_max_batch_atoms",
-            lambda device="cuda", safety_factor=0.5: 10,
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
         )
 
         result = wrapper.relax_structure(
@@ -512,7 +520,7 @@ class TestInflightRelaxMACE:
         monkeypatch.setattr(
             nv_utils,
             "estimate_max_batch_atoms",
-            lambda device="cuda", safety_factor=0.5: 10,
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
         )
 
         result = wrapper.relax_structure(
@@ -530,6 +538,14 @@ class TestInflightRelaxMACE:
             assert os.path.isfile(r["cif_path"]), f"Missing CIF: {r['cif_path']}"
             energy_path = os.path.join(r["output_dir"], "relaxed_energy.txt")
             assert os.path.isfile(energy_path), f"Missing energy file: {energy_path}"
+            log_path = os.path.join(r["output_dir"], "relax.log")
+            assert os.path.isfile(log_path), f"Missing relax.log: {log_path}"
+            with open(log_path) as lf:
+                lines = lf.readlines()
+            assert lines[0].startswith("           Step"), "Bad relax.log header"
+            assert any(
+                ln.startswith("FIRE:") for ln in lines[1:]
+            ), "No FIRE steps logged"
             assert isinstance(r["energy"], float)
 
     def test_inflight_fixed_batch_still_works_below_threshold(
@@ -551,7 +567,7 @@ class TestInflightRelaxMACE:
         monkeypatch.setattr(
             nv_utils,
             "estimate_max_batch_atoms",
-            lambda device="cuda", safety_factor=0.5: 1000,
+            lambda device="cuda", safety_factor=0.5, model=None: 1000,
         )
 
         result = wrapper.relax_structure(
@@ -602,7 +618,7 @@ class TestInflightRelaxFairChem:
         monkeypatch.setattr(
             nv_utils,
             "estimate_max_batch_atoms",
-            lambda device="cuda", safety_factor=0.5: 10,
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
         )
 
         result = wrapper.relax_structure(
@@ -637,7 +653,7 @@ class TestInflightRelaxFairChem:
         monkeypatch.setattr(
             nv_utils,
             "estimate_max_batch_atoms",
-            lambda device="cuda", safety_factor=0.5: 10,
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
         )
 
         result = wrapper.relax_structure(
@@ -674,7 +690,7 @@ class TestInflightRelaxFairChem:
         monkeypatch.setattr(
             nv_utils,
             "estimate_max_batch_atoms",
-            lambda device="cuda", safety_factor=0.5: 10,
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
         )
 
         result = wrapper.relax_structure(
@@ -692,3 +708,520 @@ class TestInflightRelaxFairChem:
             assert os.path.isfile(r["cif_path"]), f"Missing CIF: {r['cif_path']}"
             energy_path = os.path.join(r["output_dir"], "relaxed_energy.txt")
             assert os.path.isfile(energy_path), f"Missing energy: {energy_path}"
+            log_path = os.path.join(r["output_dir"], "relax.log")
+            assert os.path.isfile(log_path), f"Missing relax.log: {log_path}"
+            with open(log_path) as lf:
+                lines = lf.readlines()
+            assert lines[0].startswith("           Step"), "Bad relax.log header"
+            assert any(
+                ln.startswith("FIRE:") for ln in lines[1:]
+            ), "No FIRE steps logged"
+
+
+# ---------------------------------------------------------------------------
+# Backend key coverage — all three execution paths
+# ---------------------------------------------------------------------------
+
+
+class TestBackendKeyAllPaths:
+    """The 'backend' key must be present and correct in every batch result dict.
+
+    These tests use MACE with CPU to avoid GPU availability constraints, but the
+    backend-key contract is enforced in base.py and applies to all wrappers.
+    """
+
+    def _load_mace(self):
+        from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+
+        wrapper = MACEWrapper(model_name="MACE-OMAT-0-small", device="cpu")
+        wrapper.load()
+        return wrapper
+
+    def test_sequential_backend_key(self, tmp_path, monkeypatch):
+        """Sequential fallback (NValchemi disabled) must return backend='sequential'."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as _nv
+
+        try:
+            wrapper = self._load_mace()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        monkeypatch.setattr(_nv, "NVALCHEMI_AVAILABLE", False)
+        monkeypatch.setattr(_nv, "check_nvalchemi_available", lambda: False)
+
+        result = wrapper.relax_structure(
+            structure_data=_make_structures(2),
+            fmax=0.5,
+            steps=3,
+            output_dir=str(tmp_path),
+        )
+        assert (
+            result.get("backend") == "sequential"
+        ), f"Expected 'sequential', got {result.get('backend')!r}"
+
+    def test_fixed_batch_nvalchemi_backend_key(self, tmp_path, monkeypatch):
+        """Fixed-batch NValchemi (all structures fit in one pass) must return backend='nvalchemi'."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            wrapper = self._load_mace()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        # Large threshold → total atoms (3×1=3) always < threshold → fixed-batch
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10_000,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_structures(3),
+            fmax=0.5,
+            steps=3,
+            output_dir=str(tmp_path),
+        )
+        assert (
+            result.get("backend") == "nvalchemi"
+        ), f"Expected 'nvalchemi', got {result.get('backend')!r}"
+
+    def test_inflight_backend_key(self, tmp_path, monkeypatch):
+        """Inflight mode (total atoms > threshold) must return backend='nvalchemi_inflight'."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            wrapper = self._load_mace()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        # Cap at 10 atoms; pool of 12 × 4-atom structures (48 total) forces inflight
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(12),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        assert (
+            result.get("backend") == "nvalchemi_inflight"
+        ), f"Expected 'nvalchemi_inflight', got {result.get('backend')!r}"
+
+    def test_static_sequential_backend_key(self, tmp_path, monkeypatch):
+        """Sequential static_calculation fallback must return backend='sequential'."""
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as _nv
+
+        try:
+            wrapper = self._load_mace()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        monkeypatch.setattr(_nv, "NVALCHEMI_AVAILABLE", False)
+        monkeypatch.setattr(_nv, "check_nvalchemi_available", lambda: False)
+
+        result = wrapper.static_calculation(structure_data=_make_structures(2))
+        assert (
+            result.get("backend") == "sequential"
+        ), f"Expected 'sequential', got {result.get('backend')!r}"
+
+
+# ---------------------------------------------------------------------------
+# relax.log written by fixed-batch NValchemi path
+# ---------------------------------------------------------------------------
+
+
+class TestRelaxLogFixedBatch:
+    """relax.log must be written for fixed-batch NValchemi runs (not only inflight)."""
+
+    def test_relax_log_written_fixed_batch_mace(self, tmp_path, monkeypatch):
+        import os
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+
+        try:
+            from src.utils.mlips.mace.mace_wrapper import MACEWrapper
+
+            wrapper = MACEWrapper(model_name="MACE-OMAT-0-small", device="cpu")
+            wrapper.load()
+        except Exception:
+            pytest.skip("MACE-OMAT-0-small unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10_000,
+        )
+
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(3),
+            fmax=100.0,
+            steps=3,
+            output_dir=str(tmp_path),
+        )
+        assert result.get("backend") == "nvalchemi"
+        for r in result.get("results", []):
+            log_path = os.path.join(r["output_dir"], "relax.log")
+            assert os.path.isfile(log_path), f"Missing relax.log: {log_path}"
+            with open(log_path) as f:
+                lines = f.readlines()
+            assert lines[0].startswith("           Step"), "Bad header"
+            assert any(ln.startswith("FIRE:") for ln in lines[1:]), "No FIRE steps"
+
+
+# ---------------------------------------------------------------------------
+# MCP server parameter-signature coverage
+# ---------------------------------------------------------------------------
+
+
+class TestMCPServerParamCoverage:
+    """max_batch_atoms must be in the signature of every MCP relax_structure tool.
+
+    These tests import the server modules and inspect function signatures so they
+    run in any environment without starting the actual MCP servers.
+    """
+
+    def _get_relax_fn(self, server_module_path: str):
+        import importlib
+        import sys
+
+        # Temporarily suppress the MCP server's stdout redirection at import time
+        orig = sys.stdout
+        try:
+            mod = importlib.import_module(server_module_path)
+        except Exception:
+            return None
+        finally:
+            sys.stdout = orig
+        return getattr(mod, "relax_structure", None)
+
+    def _check_param(self, fn, param: str) -> None:
+        import inspect
+
+        if fn is None:
+            pytest.skip("Server module not importable in this environment")
+        sig = inspect.signature(fn)
+        assert param in sig.parameters, (
+            f"'{param}' missing from {fn.__module__}.{fn.__qualname__} signature. "
+            f"Parameters: {list(sig.parameters)}"
+        )
+
+    def test_fairchem_relax_has_max_batch_atoms(self):
+        try:
+            import src.mcp_server.fairchem_server as srv
+
+            fn = getattr(srv, "relax_structure", None)
+        except Exception:
+            pytest.skip("fairchem_server not importable")
+        self._check_param(fn, "max_batch_atoms")
+
+    def test_mace_relax_has_max_batch_atoms(self):
+        try:
+            import src.mcp_server.mace_server as srv
+
+            fn = getattr(srv, "relax_structure", None)
+        except Exception:
+            pytest.skip("mace_server not importable")
+        self._check_param(fn, "max_batch_atoms")
+
+    def test_matgl_relax_has_max_batch_atoms(self):
+        try:
+            import src.mcp_server.matgl_server as srv
+
+            fn = getattr(srv, "relax_structure", None)
+        except Exception:
+            pytest.skip("matgl_server not importable")
+        self._check_param(fn, "max_batch_atoms")
+
+
+# ---------------------------------------------------------------------------
+# Inflight batch relax — MatGL (M3GNet, TensorNet, CHGNet)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.matgl
+class TestInflightRelaxM3GNet:
+    """Inflight batching with MatGL M3GNet model.
+
+    M3GNet is used because it supports Cu without element-coverage gaps.
+    TensorNet and CHGNet share the same inflight code path and are covered
+    by TestInflightRelaxTensorNet / TestInflightRelaxCHGNet below.
+    """
+
+    def _load_wrapper(self):
+        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+
+        wrapper = MatGLWrapper(model_name="M3GNet-PES-MatPES-PBE-2025.2", device="cpu")
+        wrapper.load()
+        return wrapper
+
+    def test_inflight_backend_selected(self, tmp_path, monkeypatch):
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("M3GNet model unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
+        )
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(12),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        assert result.get("backend") == "nvalchemi_inflight"
+
+    def test_inflight_all_structures_returned(self, tmp_path, monkeypatch):
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("M3GNet model unavailable in this environment")
+
+        n = 12
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
+        )
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(n),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        assert result.get("total_structures") == n
+        assert len(result.get("results", [])) == n
+
+    def test_inflight_output_files_written(self, tmp_path, monkeypatch):
+        import os
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("M3GNet model unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
+        )
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(8),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        for r in result.get("results", []):
+            assert r["status"] in (
+                "success",
+                "not_converged",
+            ), f"Unexpected status for {r['structure_name']}: {r.get('error', '')}"
+            assert os.path.isfile(r["cif_path"])
+            assert os.path.isfile(os.path.join(r["output_dir"], "relaxed_energy.txt"))
+            log_path = os.path.join(r["output_dir"], "relax.log")
+            assert os.path.isfile(log_path), f"Missing relax.log: {log_path}"
+            with open(log_path) as f:
+                lines = f.readlines()
+            assert lines[0].startswith("           Step"), "Bad relax.log header"
+            assert any(
+                ln.startswith("FIRE:") for ln in lines[1:]
+            ), "No FIRE steps logged"
+
+    def test_inflight_fixed_batch_still_works_below_threshold(
+        self, tmp_path, monkeypatch
+    ):
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("M3GNet model unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10_000,
+        )
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(3),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        assert result.get("backend") == "nvalchemi"
+
+
+@pytest.mark.matgl
+class TestInflightRelaxTensorNet:
+    """Inflight batching with MatGL TensorNet model."""
+
+    def _load_wrapper(self):
+        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+
+        wrapper = MatGLWrapper(
+            model_name="TensorNet-PES-MatPES-PBE-2025.2", device="cpu"
+        )
+        wrapper.load()
+        return wrapper
+
+    def test_inflight_backend_selected(self, tmp_path, monkeypatch):
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("TensorNet model unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
+        )
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(12),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        assert result.get("backend") == "nvalchemi_inflight"
+
+    def test_inflight_output_files_written(self, tmp_path, monkeypatch):
+        import os
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("TensorNet model unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
+        )
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(8),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        for r in result.get("results", []):
+            assert r["status"] in ("success", "not_converged")
+            assert os.path.isfile(r["cif_path"])
+            log_path = os.path.join(r["output_dir"], "relax.log")
+            assert os.path.isfile(log_path), f"Missing relax.log: {log_path}"
+            with open(log_path) as f:
+                lines = f.readlines()
+            assert lines[0].startswith("           Step")
+            assert any(ln.startswith("FIRE:") for ln in lines[1:])
+
+
+@pytest.mark.matgl
+class TestInflightRelaxCHGNet:
+    """Inflight batching with MatGL CHGNet model."""
+
+    def _load_wrapper(self):
+        from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
+
+        wrapper = MatGLWrapper(
+            model_name="CHGNet-PES-MatPES-PBE-2025.2.10", device="cpu"
+        )
+        wrapper.load()
+        return wrapper
+
+    def test_inflight_backend_selected(self, tmp_path, monkeypatch):
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("CHGNet model unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
+        )
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(12),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        assert result.get("backend") == "nvalchemi_inflight"
+
+    def test_inflight_output_files_written(self, tmp_path, monkeypatch):
+        import os
+        import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
+
+        if not NVALCHEMI_AVAILABLE:
+            pytest.skip("nvalchemi not installed")
+        try:
+            wrapper = self._load_wrapper()
+        except Exception:
+            pytest.skip("CHGNet model unavailable in this environment")
+
+        monkeypatch.setattr(
+            nv_utils,
+            "estimate_max_batch_atoms",
+            lambda device="cuda", safety_factor=0.5, model=None: 10,
+        )
+        result = wrapper.relax_structure(
+            structure_data=_make_pool_varied(8),
+            fmax=100.0,
+            steps=2,
+            output_dir=str(tmp_path),
+        )
+        for r in result.get("results", []):
+            assert r["status"] in ("success", "not_converged")
+            assert os.path.isfile(r["cif_path"])
+            log_path = os.path.join(r["output_dir"], "relax.log")
+            assert os.path.isfile(log_path), f"Missing relax.log: {log_path}"
+            with open(log_path) as f:
+                lines = f.readlines()
+            assert lines[0].startswith("           Step")
+            assert any(ln.startswith("FIRE:") for ln in lines[1:])

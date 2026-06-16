@@ -28,6 +28,62 @@ The dispatch lives in `src/utils/mlips/base.py`:
 - `relax_structure(list)` → `_batch_relax_nvalchemi()` → batched FIRE
 - `run_md(list)` → `_batch_md_nvalchemi()` → batched NVT/NVE/NPT integrator
 
+### Inflight batching (relaxation)
+
+For `relax_structure`, there are three execution backends selected automatically:
+
+```
+_batch_relax()
+ ├─ nvalchemi available AND model loads?
+ │    YES → _batch_relax_nvalchemi()
+ │              └─ sum(atoms) > max_batch_atoms AND model._nvalchemi_supports_inflight?
+ │                   YES → _batch_relax_nvalchemi_inflight()   ← rolling GPU window
+ │                   NO  → fixed-batch NValchemi               ← all structures at once
+ │    NO  → _batch_relax_sequential()                          ← plain ASE FIRE, one by one
+```
+
+> **Note**: `M3GNetWrapper` and `CHGNetWrapper` set `_nvalchemi_supports_inflight=False`.
+> They always use fixed-batch NValchemi regardless of structure count.
+
+**Inflight batching** keeps only `max_batch_atoms` atoms on the GPU at once.  As each structure converges or exhausts its step budget it is evicted and a new one is loaded.  This is necessary when the full set of structures would exceed GPU memory.
+
+**`max_batch_atoms` — how it is set:**
+
+| How | Behaviour |
+|-----|-----------|
+| `max_batch_atoms=None` (default) | Auto-estimated: `free_VRAM × 0.5 / bytes_per_atom` using per-architecture calibration (FairChem 0.15 B/param/atom, MACE 0.5, M3GNet 4.0, fallback 5 MB/atom) |
+| Explicit integer (e.g. `500`) | Forces inflight for almost any real dataset; recommended on shared GPUs |
+| Very large integer | Forces fixed-batch (all structures in one GPU call) |
+
+### How to tell which backend ran
+
+Every batch result dict carries a `"backend"` key:
+
+| `"backend"` value | Meaning |
+|---|---|
+| `"nvalchemi_inflight"` | Inflight rolling-window (large datasets / shared GPU) |
+| `"nvalchemi"` | Fixed-batch NValchemi (entire set fits in one GPU pass) |
+| `"sequential"` | Plain ASE FIRE, one structure at a time |
+
+```python
+result = wrapper.relax_structure(structures, fmax=0.05, steps=500)
+print(result["backend"])   # "nvalchemi_inflight" / "nvalchemi" / "sequential"
+```
+
+Logger messages (written to stderr / MCP server log) also signal transitions:
+- `"Total atoms (N) exceeds batch limit (M); switching to inflight batching."`
+- `"NValchemi inflight relax: N structures, live batch ≤M atoms, ≤S steps/structure."`
+
+### Inflight vs sequential benchmark (FairChem uma-s-1p2, GB10 GPU, 100 Si MP structures)
+
+| Mode | Wall time | Per structure | Converged |
+|---|---|---|---|
+| NValchemi inflight (`max_batch_atoms=500`) | **42.6 s** | 0.43 s | 100/100 |
+| Sequential ASE FIRE | **70.4 s** | 0.70 s | 100/100 |
+| Speed-up | **1.65×** | | |
+
+The gap grows with larger structures (more atoms → more FIRE steps → GPU stays busier per structure loaded).
+
 ## Instructions
 
 ### Step 1 — Verify NValchemi is Available
@@ -86,9 +142,14 @@ result = wrapper.relax_structure(
     structure_data=structures,   # list of ASE Atoms
     fmax=0.05,                   # eV/Å convergence
     steps=500,
-    output_dir="/path/to/output"
+    output_dir="/path/to/output",
+    # max_batch_atoms=500,       # optional: set explicitly on shared GPUs to force
+    #                            # inflight mode and avoid OOM; None = auto from VRAM
 )
+print(result["backend"])         # "nvalchemi_inflight", "nvalchemi", or "sequential"
 ```
+
+Per-structure `relax.log` files (ASE FIRE format) are written incrementally to `{output_dir}/{structure_name}/relax.log` during inflight runs, so partial results survive an OOM abort.
 
 ### Step 4 — Batch Molecular Dynamics
 
@@ -187,6 +248,7 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 - **CHGNet batch speedup**: CHGNet directed line graph construction parallelizes well on GPU (12–13× at N=20). CPU performance is marginal (<3×); always use `device="cuda"` for batch workloads.
 - **SO3Net not supported**: `SO3Net-PES-ANI-1x-Subset` falls back to sequential automatically (`_get_nvalchemi_model()` returns `None`).
 - **ANI-1x models with transition metals**: TensorNet-PES-ANI-1x and M3GNet-PES-ANI-1x training sets cover only H/C/N/O. Using them with Cu or other transition metals causes a CUDA index OOB error that corrupts the CUDA context for the session. Run ANI-1x models in a separate process from other models.
+- **CHGNet/M3GNet inflight batching not supported**: These custom wrappers use COO-format neighbor lists. Inflight batching (rolling GPU window) triggers a CUDA index OOB in nvalchemi's compiled `NeighborListHook` during structure graduation. Both wrappers set `_nvalchemi_supports_inflight=False`; when the total atom count exceeds the batch budget, they fall through to fixed-batch NValchemi (all structures in one GPU pass) rather than inflight. For very large structure sets, reduce `max_batch_atoms` to a value that fits in VRAM, or use a natively-supported model (MACE, TensorNet, FairChem).
 - **Unsupported ensembles for batch MD**: `nvt_berendsen`, `nvt_andersen`, `nvt_bussi`, `npt_berendsen`, and `npt_inhomogeneous` have no NValchemi equivalent and always run sequentially.
 
 ## References

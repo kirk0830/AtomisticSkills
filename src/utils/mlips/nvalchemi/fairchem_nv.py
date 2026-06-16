@@ -236,8 +236,11 @@ class FairChemWrapper(nn.Module, BaseModelMixin):  # type: ignore[misc]
             outputs["forces"] = forces
 
         if stress is not None:
-            # FairChem stress is [B, 3, 3]; NValchemi wants [B, 3, 3]
-            outputs["stress"] = stress
+            # FairChem outputs stress in Voigt (B, 9); reshape to (B, 3, 3) and
+            # cast to float32 for AtomicData pydantic Float[Tensor, 'B 3 3'] validator.
+            if stress.dim() == 2 and stress.shape[-1] == 9:
+                stress = stress.reshape(stress.shape[0], 3, 3)
+            outputs["stress"] = stress.float()
 
         return outputs
 

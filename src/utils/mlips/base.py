@@ -283,6 +283,7 @@ class MLIPModel(ABC):
         output_dir: Optional[str] = None,
         fixed_atoms: Optional[List[int]] = None,
         extract_batch_results: bool = True,
+        max_batch_atoms: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Relax one or multiple structures using the loaded model.
@@ -302,6 +303,9 @@ class MLIPModel(ABC):
             output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
             fixed_atoms: List of indices of atoms to keep fixed during relaxation (single mode only).
             extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
+            max_batch_atoms: Override the auto-detected atom budget for the NValchemi inflight live
+                batch.  When None (default) the budget is estimated from free VRAM.  Set a smaller
+                value (e.g. 500) on shared GPUs to avoid OOM.
 
         Returns:
             For single structure: Dict with energy, trajectory_path, cif_path, json_path
@@ -325,6 +329,7 @@ class MLIPModel(ABC):
                 relax_cell,
                 output_dir,
                 extract_batch_results=extract_batch_results,
+                max_batch_atoms=max_batch_atoms,
             )
         else:
             # SINGLE STRUCTURE MODE
@@ -491,6 +496,7 @@ class MLIPModel(ABC):
         relax_cell: bool,
         output_dir: Optional[str],
         extract_batch_results: bool = True,
+        max_batch_atoms: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Dispatch batch relaxation to NValchemi GPU path or sequential fallback."""
         from src.utils.mlips.nvalchemi.nvalchemi_utils import check_nvalchemi_available
@@ -506,6 +512,7 @@ class MLIPModel(ABC):
                     relax_cell=relax_cell,
                     output_dir=output_dir,
                     extract_batch_results=extract_batch_results,
+                    max_batch_atoms=max_batch_atoms,
                 )
         return self._batch_relax_sequential(
             structure_data, fmax, steps, optimizer, relax_cell, output_dir
@@ -520,6 +527,7 @@ class MLIPModel(ABC):
         relax_cell: bool,
         output_dir: Optional[str],
         extract_batch_results: bool = True,
+        max_batch_atoms: Optional[int] = None,
     ) -> Dict[str, Any]:
         """GPU-parallel batch relaxation via NValchemi FIRE optimizer."""
         import os
@@ -563,115 +571,113 @@ class MLIPModel(ABC):
 
         logger.info(f"NValchemi GPU batch relaxing {len(structure_list)} structures...")
 
-        try:
-            from nvalchemi.dynamics.hooks import SnapshotHook
-            from nvalchemi.dynamics.sinks import HostMemory
+        from nvalchemi.dynamics.hooks import SnapshotHook
+        from nvalchemi.dynamics.sinks import HostMemory
 
-            atoms_list = [self.check_structure_data(s) for s in structure_list]
+        atoms_list = [self.check_structure_data(s) for s in structure_list]
 
-            # Switch to inflight mode when all structures would exceed GPU memory.
-            total_atoms = sum(len(a) for a in atoms_list)
-            max_batch_atoms = self._estimate_max_batch_atoms(device)
-            if total_atoms > max_batch_atoms:
-                logger.info(
-                    f"Total atoms ({total_atoms}) exceeds batch limit "
-                    f"({max_batch_atoms}); switching to inflight batching."
-                )
-                return self._batch_relax_nvalchemi_inflight(
-                    nv_model=nv_model,
-                    atoms_list=atoms_list,
-                    structure_names=structure_names,
-                    output_dirs=output_dirs,
-                    fmax=fmax,
-                    steps=steps,
-                    relax_cell=relax_cell,
-                    max_batch_atoms=max_batch_atoms,
-                )
-
-            data_list = [
-                atoms_to_atomic_data(a, device=device, dtype=torch.float32)
-                for a in atoms_list
-            ]
-            batch = Batch.from_data_list(data_list)
-
-            OptimClass = FIREVariableCell if relax_cell else FIRE
-            optimizer_obj = OptimClass(
-                model=nv_model,
-                dt=0.5,
-                n_steps=steps,
-                convergence_hook=ConvergenceHook.from_fmax(
-                    threshold=fmax, source_status=0, target_status=1
-                ),
+        # Switch to inflight mode when all structures would exceed GPU memory.
+        # Models that set _nvalchemi_supports_inflight=False (e.g. CHGNet, M3GNet)
+        # skip inflight: their COO-format NeighborListHook triggers a CUDA OOB
+        # during graduation, a known limitation of the custom wrappers.
+        total_atoms = sum(len(a) for a in atoms_list)
+        if max_batch_atoms is None:
+            max_batch_atoms = self._estimate_max_batch_atoms(device, model=nv_model)
+        supports_inflight = getattr(nv_model, "_nvalchemi_supports_inflight", True)
+        if total_atoms > max_batch_atoms and not supports_inflight:
+            logger.warning(
+                f"Total atoms ({total_atoms}) exceeds batch limit ({max_batch_atoms}) "
+                f"but inflight batching is not supported for {type(nv_model).__name__}. "
+                f"Proceeding with fixed-batch (may OOM for very large structure sets)."
             )
-
-            if getattr(nv_model.model_config, "neighbor_config", None) is not None:
-                nl_hook = NeighborListHook(
-                    nv_model.model_config.neighbor_config,
-                    stage=DynamicsStage.BEFORE_COMPUTE,
-                )
-                optimizer_obj.register_hook(nl_hook)
-
-            # Set up memory sink to record full history of relaxation steps if requested
-            memory_sink = None
-            if extract_batch_results:
-                capacity = (steps + 1) * len(structure_list)
-                memory_sink = HostMemory(capacity=capacity)
-                snapshot_hook = SnapshotHook(sink=memory_sink, frequency=1)
-                optimizer_obj.register_hook(snapshot_hook)
-
-            # Write step 0 state
-            neighbor_config = getattr(nv_model.model_config, "neighbor_config", None)
-            if neighbor_config is not None:
-                from nvalchemi.neighbors import compute_neighbors
-
-                compute_neighbors(batch, config=neighbor_config)
-
-            nv_model.eval()
-            if hasattr(batch, "positions") and batch.positions is not None:
-                batch.positions.requires_grad_(True)
-            initial_out = nv_model(batch)
-            f0 = (
-                initial_out.get("forces")
-                if isinstance(initial_out, dict)
-                else getattr(initial_out, "forces", None)
+        if total_atoms > max_batch_atoms and supports_inflight:
+            logger.info(
+                f"Total atoms ({total_atoms}) exceeds batch limit "
+                f"({max_batch_atoms}); switching to inflight batching."
             )
-            if f0 is not None:
-                batch["forces"] = f0.detach()
-            e0 = (
-                initial_out.get("energy")
-                if isinstance(initial_out, dict)
-                else getattr(initial_out, "energy", None)
-            )
-            if e0 is not None:
-                batch["energy"] = e0.detach()
-            batch.positions.requires_grad_(False)
-
-            if memory_sink is not None:
-                memory_sink.write(batch)
-
-            with optimizer_obj:
-                final_batch = optimizer_obj.run(batch)
-
-            # Reconstruct trajectory and log for each structure using unified extraction helper
-            results = extract_batch_results_fn(
-                final_batch=final_batch,
+            return self._batch_relax_nvalchemi_inflight(
+                nv_model=nv_model,
+                atoms_list=atoms_list,
                 structure_names=structure_names,
                 output_dirs=output_dirs,
-                mode="relax",
-                memory_sink=memory_sink,
+                fmax=fmax,
+                steps=steps,
+                relax_cell=relax_cell,
+                max_batch_atoms=max_batch_atoms,
             )
 
-        except Exception as e:
-            import traceback
-            import sys
+        data_list = [
+            atoms_to_atomic_data(a, device=device, dtype=torch.float32)
+            for a in atoms_list
+        ]
+        batch = Batch.from_data_list(data_list)
 
-            traceback.print_exc(file=sys.stderr)
-            logger.warning(
-                f"NValchemi batch relax failed ({e}); falling back to sequential."
+        OptimClass = FIREVariableCell if relax_cell else FIRE
+        optimizer_obj = OptimClass(
+            model=nv_model,
+            dt=0.5,
+            n_steps=steps,
+            convergence_hook=ConvergenceHook.from_fmax(
+                threshold=fmax, source_status=0, target_status=1
+            ),
+        )
+
+        if getattr(nv_model.model_config, "neighbor_config", None) is not None:
+            nl_hook = NeighborListHook(
+                nv_model.model_config.neighbor_config,
+                stage=DynamicsStage.BEFORE_COMPUTE,
             )
-            return self._batch_relax_sequential(
-                structure_data, fmax, steps, "FIRE", relax_cell, output_dir
-            )
+            optimizer_obj.register_hook(nl_hook)
+
+        # Set up memory sink to record full history of relaxation steps if requested
+        memory_sink = None
+        if extract_batch_results:
+            capacity = (steps + 1) * len(structure_list)
+            memory_sink = HostMemory(capacity=capacity)
+            snapshot_hook = SnapshotHook(sink=memory_sink, frequency=1)
+            optimizer_obj.register_hook(snapshot_hook)
+
+        # Write step 0 state
+        neighbor_config = getattr(nv_model.model_config, "neighbor_config", None)
+        if neighbor_config is not None:
+            from nvalchemi.neighbors import compute_neighbors
+
+            compute_neighbors(batch, config=neighbor_config)
+
+        nv_model.eval()
+        if hasattr(batch, "positions") and batch.positions is not None:
+            batch.positions.requires_grad_(True)
+        initial_out = nv_model(batch)
+        f0 = (
+            initial_out.get("forces")
+            if isinstance(initial_out, dict)
+            else getattr(initial_out, "forces", None)
+        )
+        if f0 is not None:
+            batch["forces"] = f0.detach()
+        e0 = (
+            initial_out.get("energy")
+            if isinstance(initial_out, dict)
+            else getattr(initial_out, "energy", None)
+        )
+        if e0 is not None:
+            batch["energy"] = e0.detach()
+        batch.positions.requires_grad_(False)
+
+        if memory_sink is not None:
+            memory_sink.write(batch)
+
+        with optimizer_obj:
+            final_batch = optimizer_obj.run(batch)
+
+        # Reconstruct trajectory and log for each structure using unified extraction helper
+        results = extract_batch_results_fn(
+            final_batch=final_batch,
+            structure_names=structure_names,
+            output_dirs=output_dirs,
+            mode="relax",
+            memory_sink=memory_sink,
+        )
 
         n_success = sum(1 for r in results if r["status"] == "success")
         n_failed = len(results) - n_success
@@ -688,16 +694,21 @@ class MLIPModel(ABC):
         }
 
     @staticmethod
-    def _estimate_max_batch_atoms(device: str = "cuda") -> int:
+    def _estimate_max_batch_atoms(
+        device: str = "cuda", model: Optional[Any] = None
+    ) -> int:
         """Estimate the atom budget that fits in a single fixed GPU batch.
 
         Returns the threshold used to decide between fixed-batch and inflight
         modes: if the total atom count across all input structures exceeds
         this value, ``_batch_relax_nvalchemi_inflight`` is used instead.
+
+        Passing ``model`` enables per-architecture calibration (bytes/param/atom
+        look-up) instead of a fixed 5 MB/atom fallback.
         """
         from src.utils.mlips.nvalchemi.nvalchemi_utils import estimate_max_batch_atoms
 
-        return estimate_max_batch_atoms(device=device)
+        return estimate_max_batch_atoms(device=device, model=model)
 
     def _batch_relax_nvalchemi_inflight(
         self,
@@ -739,6 +750,7 @@ class MLIPModel(ABC):
             Atom budget for the live batch (from ``_estimate_max_batch_atoms``).
         """
         import os
+        import torch
 
         from nvalchemi.dynamics import SizeAwareSampler
         from nvalchemi.dynamics.base import ConvergenceHook, DynamicsStage, FusedStage
@@ -748,11 +760,57 @@ class MLIPModel(ABC):
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
             AtomsDataset,
             HostMemoryWithSystemId,
+            RelaxLogHook,
             atomic_data_to_atoms,
         )
 
         device = getattr(self, "device", "cuda")
         n_structures = len(atoms_list)
+
+        # Flush CUDA allocator cache before starting so the full memory budget is
+        # available.  On DGX Spark's unified memory pool, cached-but-freed blocks
+        # from model loading count against available memory if not released here.
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        # --- Incremental disk-write callback ---
+        # Structures are serialized to disk the moment they graduate from the live
+        # batch, so partial results survive an OOM abort mid-run (analogous to how
+        # ASE writes trajectory frames incrementally).
+        saved_to_disk: Dict[int, Dict[str, Any]] = {}
+
+        def on_graduate(orig_idx: int, data_cpu: Any) -> None:
+            out_dir = output_dirs[orig_idx]
+            struct_name = structure_names[orig_idx]
+            os.makedirs(out_dir, exist_ok=True)
+            try:
+                atoms = atomic_data_to_atoms(data_cpu)
+                structure = AseAtomsAdaptor.get_structure(atoms)
+                cif_path = os.path.join(out_dir, "relaxed_structure.cif")
+                structure.to(filename=cif_path)
+                final_energy = atoms.get_potential_energy()
+                with open(os.path.join(out_dir, "relaxed_energy.txt"), "w") as f:
+                    f.write(f"{final_energy}\n")
+                # Determine converged status from actual forces rather than relying
+                # on graduation reason (could be converged or step-budget exhausted).
+                fmax_actual = float(data_cpu["forces"].norm(dim=-1).max().item())
+                converged = fmax_actual < fmax
+                saved_to_disk[orig_idx] = {
+                    "structure_name": struct_name,
+                    "status": "success" if converged else "not_converged",
+                    "energy": final_energy,
+                    "cif_path": cif_path,
+                    "output_dir": out_dir,
+                    "converged": converged,
+                }
+                logger.debug(
+                    f"Graduated [{orig_idx}] {struct_name}: "
+                    f"E={final_energy:.4f} eV, fmax={fmax_actual:.4f} eV/Å"
+                )
+            except Exception as exc:
+                logger.warning(
+                    f"on_graduate failed for [{orig_idx}] {struct_name}: {exc}"
+                )
 
         # AtomsDataset pre-allocates zero forces/energy/stress on every structure.
         # SegmentedLevelStorage.concatenate() only keeps keys common to both batches,
@@ -768,7 +826,9 @@ class MLIPModel(ABC):
             max_batch_size=min(n_structures, 128),
         )
 
-        results_sink = HostMemoryWithSystemId(capacity=n_structures)
+        results_sink = HostMemoryWithSystemId(
+            capacity=n_structures, on_graduate=on_graduate
+        )
 
         OptimClass = FIREVariableCell if relax_cell else FIRE
         fire_stage = OptimClass(
@@ -786,11 +846,15 @@ class MLIPModel(ABC):
 
         # exit_status auto-set to len(sub_stages) = 1; structures with
         # status >= 1 are graduated and replaced by the sampler.
+        # refill_frequency=1: check for graduates every step so that structures
+        # with a short per-system budget (e.g. steps=2) are replaced immediately.
+        # Higher values let graduated structures idle and can exhaust the global
+        # step budget before all structures are processed.
         fused = FusedStage(
             sub_stages=[(0, fire_stage)],
             sampler=sampler,
             sinks=[results_sink],
-            refill_frequency=5,
+            refill_frequency=1,
         )
 
         # In FusedStage, BEFORE_COMPUTE is fired on the fused stage itself
@@ -800,6 +864,13 @@ class MLIPModel(ABC):
             fused.register_hook(
                 NeighborListHook(neighbor_config, stage=DynamicsStage.BEFORE_COMPUTE)
             )
+
+        # Write ASE-style relax.log per structure.  FusedStage calls __enter__/
+        # __exit__ on registered hooks automatically, so file handles are closed
+        # cleanly even if the run is aborted by OOM.
+        fused.register_hook(
+            RelaxLogHook(output_dirs=output_dirs, stage=DynamicsStage.AFTER_COMPUTE)
+        )
 
         # Safety cap: absolute worst case is every structure processed serially.
         total_step_budget = steps * n_structures
@@ -822,30 +893,33 @@ class MLIPModel(ABC):
                 f"{remaining_batch.num_graphs} structure(s) still active."
             )
 
-        # --- Collect results keyed by system_id (= dataset index) ---
-        results_by_id: Dict[int, Dict[str, Any]] = {}
-
-        if len(results_sink) > 0:
-            converged_batch = results_sink.read()
-            sids = converged_batch["system_id"].squeeze(-1).tolist()
-            for sid, data in zip(sids, converged_batch.to_data_list()):
-                results_by_id[int(sid)] = {"data": data, "converged": True}
-
-        # Structures still active when budget was exhausted (not converged).
+        # --- Collect remaining-batch results (not graduated — still active at budget exhaustion) ---
+        # orig_idx is a system-level property stamped in AtomsDataset.__getitem__ that
+        # survives refill_check unchanged: _bookkeeping_keys only overwrites "status" and
+        # "system_id", so orig_idx is reliable even when n_remaining=0 resets system_ids.
+        remaining_by_id: Dict[int, Any] = {}
         if remaining_batch is not None:
-            remaining_sids = remaining_batch["system_id"].squeeze(-1).tolist()
-            for sid, data in zip(remaining_sids, remaining_batch.to_data_list()):
-                idx = int(sid)
-                if idx not in results_by_id:
-                    results_by_id[idx] = {"data": data, "converged": False}
+            for oidx, data in zip(
+                remaining_batch["orig_idx"].squeeze(-1).tolist(),
+                remaining_batch.to_data_list(),
+            ):
+                remaining_by_id[int(oidx)] = data
 
         # --- Serialize to disk ---
+        # Structures already written by on_graduate are skipped; only remaining-batch
+        # structures (not graduated before budget exhaustion) need post-run serialization.
         results: List[Dict[str, Any]] = []
         for i, struct_name in enumerate(structure_names):
             out_dir = output_dirs[i]
+
+            if i in saved_to_disk:
+                # Already written to disk by on_graduate during the run.
+                results.append(saved_to_disk[i])
+                continue
+
             os.makedirs(out_dir, exist_ok=True)
 
-            if i not in results_by_id:
+            if i not in remaining_by_id:
                 results.append(
                     {
                         "structure_name": struct_name,
@@ -856,26 +930,23 @@ class MLIPModel(ABC):
                 )
                 continue
 
-            entry = results_by_id[i]
+            # Not-graduated: save best available state from remaining_batch.
             try:
-                atoms = atomic_data_to_atoms(entry["data"])
+                atoms = atomic_data_to_atoms(remaining_by_id[i])
                 structure = AseAtomsAdaptor.get_structure(atoms)
                 cif_path = os.path.join(out_dir, "relaxed_structure.cif")
                 structure.to(filename=cif_path)
-
                 final_energy = atoms.get_potential_energy()
                 with open(os.path.join(out_dir, "relaxed_energy.txt"), "w") as f:
                     f.write(f"{final_energy}\n")
-
-                converged = entry["converged"]
                 results.append(
                     {
                         "structure_name": struct_name,
-                        "status": "success" if converged else "not_converged",
+                        "status": "not_converged",
                         "energy": final_energy,
                         "cif_path": cif_path,
                         "output_dir": out_dir,
-                        "converged": converged,
+                        "converged": False,
                     }
                 )
             except Exception as e:
@@ -1045,6 +1116,7 @@ class MLIPModel(ABC):
 
             return {
                 "mode": "batch",
+                "backend": "sequential",
                 "total_structures": len(results),
                 "successful": n_success,
                 "failed": n_failed,
@@ -1111,6 +1183,7 @@ class MLIPModel(ABC):
                 results.append(res)
             return {
                 "mode": "batch",
+                "backend": "sequential",
                 "total_structures": len(results),
                 "results": results,
             }

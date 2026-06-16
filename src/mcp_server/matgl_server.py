@@ -221,6 +221,7 @@ def relax_structure(
     relax_cell: bool = True,
     output_dir: Optional[str] = None,
     extract_batch_results: bool = True,
+    max_batch_atoms: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
     Relax one or multiple structures using the loaded MatGL model.
@@ -233,6 +234,9 @@ def relax_structure(
         relax_cell: Whether to relax the unit cell.
         output_dir: Directory to save results. For batch mode, each structure gets a subdirectory.
         extract_batch_results: Whether to extract full trajectory / logs for all structures in batch mode.
+        max_batch_atoms: Override the atom budget for the NValchemi inflight live batch.
+            When None (default) the budget is estimated from free VRAM and model size.
+            Set a smaller value (e.g. 300–500) on shared GPUs to avoid OOM.
 
     Returns:
         For single: Dict with energy, trajectory_path, cif_path, json_path
@@ -252,6 +256,7 @@ def relax_structure(
             relax_cell=relax_cell,
             output_dir=output_dir,
             extract_batch_results=extract_batch_results,
+            max_batch_atoms=max_batch_atoms,
         )
     )
 
