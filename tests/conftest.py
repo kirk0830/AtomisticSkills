@@ -36,7 +36,7 @@ def current_env() -> str:
     return detect_conda_env()
 
 
-@pytest.fixture
+@pytest.fixture(scope="class", autouse=True)
 def skip_if_wrong_env(request, current_env):
     """
     Auto-skip test if running in wrong environment.

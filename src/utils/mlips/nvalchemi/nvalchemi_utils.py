@@ -14,6 +14,14 @@ try:
 except ImportError:
     NVALCHEMI_AVAILABLE = False
 
+    class AtomicData:  # type: ignore
+        pass
+
+    class HostMemory:  # type: ignore
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+
 if TYPE_CHECKING:
     from ase import Atoms
 

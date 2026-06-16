@@ -25,13 +25,7 @@ def _make_structures(n: int = 2):
     return [_make_cu_bulk(s) for s in scales]
 
 
-@pytest.mark.skipif(
-    __import__(
-        "src.utils.mlips.nvalchemi.nvalchemi_utils", fromlist=["NVALCHEMI_AVAILABLE"]
-    ).NVALCHEMI_AVAILABLE
-    is False,
-    reason="nvalchemi not installed",
-)
+@pytest.mark.mace
 class TestBatchRetrieval:
     def test_batch_relaxation_retrieval(self, tmp_path):
         from src.utils.mlips.mace.mace_wrapper import MACEWrapper

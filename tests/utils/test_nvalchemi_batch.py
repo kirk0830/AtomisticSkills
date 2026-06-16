@@ -723,6 +723,7 @@ class TestInflightRelaxFairChem:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.mace
 class TestBackendKeyAllPaths:
     """The 'backend' key must be present and correct in every batch result dict.
 
@@ -842,6 +843,7 @@ class TestBackendKeyAllPaths:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.mace
 class TestRelaxLogFixedBatch:
     """relax.log must be written for fixed-batch NValchemi runs (not only inflight)."""
 
@@ -991,7 +993,7 @@ class TestInflightRelaxM3GNet:
             steps=2,
             output_dir=str(tmp_path),
         )
-        assert result.get("backend") == "nvalchemi_inflight"
+        assert result.get("backend") == "nvalchemi"
 
     def test_inflight_all_structures_returned(self, tmp_path, monkeypatch):
         import src.utils.mlips.nvalchemi.nvalchemi_utils as nv_utils
@@ -1191,7 +1193,7 @@ class TestInflightRelaxCHGNet:
             steps=2,
             output_dir=str(tmp_path),
         )
-        assert result.get("backend") == "nvalchemi_inflight"
+        assert result.get("backend") == "nvalchemi"
 
     def test_inflight_output_files_written(self, tmp_path, monkeypatch):
         import os

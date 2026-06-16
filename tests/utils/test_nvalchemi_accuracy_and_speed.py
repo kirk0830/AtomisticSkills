@@ -199,14 +199,20 @@ def _compare_static(label: str, wrapper: Any, structures: list) -> dict:
 def _load_wrapper(cls_path: str, model_name: str):
     """Import and load a wrapper; return wrapper or pytest.skip."""
     import importlib
+    import importlib.util
 
     mod, cls = cls_path.rsplit(".", 1)
+
+    if "fairchem" in mod and importlib.util.find_spec("fairchem") is None:
+        pytest.skip("fairchem-core not installed")
+    if "mace" in mod and importlib.util.find_spec("mace") is None:
+        pytest.skip("mace-torch not installed")
+    if "matgl" in mod and importlib.util.find_spec("matgl") is None:
+        pytest.skip("matgl not installed")
+
     WrapperCls = getattr(importlib.import_module(mod), cls)
     w = WrapperCls(model_name=model_name, device="cpu")
-    try:
-        w.load()
-    except Exception as exc:
-        pytest.skip(f"{model_name} unavailable: {exc}")
+    w.load()
     nv = w._get_nvalchemi_model()
     if nv is None:
         pytest.skip(f"_get_nvalchemi_model() returned None for {model_name}")
