@@ -1,7 +1,7 @@
 ---
 name: chem-spectrum-matcher
 description: Match an experimental spectrum (1H NMR, 13C NMR, IR) against predicted or database reference spectra for candidate ranking and structure confirmation. Supports local catalog lookup, public database fallback, and pluggable similarity metrics.
-category: chemistry
+category: [chemistry, drug-discovery]
 ---
 
 # Spectrum Matcher

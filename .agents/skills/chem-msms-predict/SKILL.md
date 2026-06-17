@@ -1,7 +1,7 @@
 ---
 name: chem-msms-predict
 description: Predict LC-MS/MS (MS2, tandem mass spectra) from SMILES via ICEBERG, a two-stage deep neural network. Outputs predicted m/z vs intensity spectrum, fragment ion SMILES, and a spectrum plot.
-category: chemistry
+category: [chemistry, drug-discovery]
 ---
 
 # LC-MS/MS Spectrum Prediction
