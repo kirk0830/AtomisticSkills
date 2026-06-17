@@ -89,16 +89,15 @@ def test_get_atomate2_job_status(skip_if_wrong_env, mock_handler):
 
 @pytest.mark.atomate2
 @patch("jobflow_remote.jobs.jobcontroller.JobController")
-def test_get_atomate2_project_status(
-    mock_jc_class, skip_if_wrong_env, mock_handler
-):
+def test_get_atomate2_project_status(mock_jc_class, skip_if_wrong_env, mock_handler):
     mock_jc = mock_jc_class.from_project_name.return_value
-    
+
     class FakeJobInfo:
         def __init__(self, state_name):
             class FakeState:
                 def __init__(self, name):
                     self.name = name
+
             self.state = FakeState(state_name)
 
     mock_jc.get_jobs_info.return_value = [
@@ -106,7 +105,7 @@ def test_get_atomate2_project_status(
         FakeJobInfo("RUNNING"),
         FakeJobInfo("FAILED"),
     ]
-    
+
     res = atomate2_server.get_atomate2_project_status(project_name="mock_project")
     assert "error" not in res
     assert res["project_name"] == "mock_project"
@@ -114,4 +113,3 @@ def test_get_atomate2_project_status(
     assert res["job_states"]["completed"] == 1
     assert res["job_states"]["running"] == 1
     assert res["job_states"]["failed"] == 1
-
