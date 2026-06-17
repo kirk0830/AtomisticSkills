@@ -145,19 +145,27 @@ def relax_structure(
     if wrapper is None or not wrapper.is_loaded:
         return {"error": "Model not loaded. Please call load_model first."}
 
-    # Simply delegate to base wrapper's unified relax_structure method
-    return recursive_tolist(
-        wrapper.relax_structure(
-            structure_data=structure_data,
-            fmax=fmax,
-            steps=steps,
-            optimizer=optimizer,
-            relax_cell=relax_cell,
-            output_dir=output_dir,
-            extract_batch_results=extract_batch_results,
-            max_batch_atoms=max_batch_atoms,
+    try:
+        # Simply delegate to base wrapper's unified relax_structure method
+        return recursive_tolist(
+            wrapper.relax_structure(
+                structure_data=structure_data,
+                fmax=fmax,
+                steps=steps,
+                optimizer=optimizer,
+                relax_cell=relax_cell,
+                output_dir=output_dir,
+                extract_batch_results=extract_batch_results,
+                max_batch_atoms=max_batch_atoms,
+            )
         )
-    )
+    finally:
+        import gc
+        import torch
+
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 
 @mcp.tool()
@@ -238,6 +246,13 @@ def run_md(
             "error": f"MD execution failed: {str(e)}",
             "traceback": traceback.format_exc(),
         }
+    finally:
+        import gc
+        import torch
+
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
