@@ -503,19 +503,25 @@ class MLIPModel(ABC):
 
         if check_nvalchemi_available():
             nv_model = self._get_nvalchemi_model()
-            if nv_model is not None and getattr(
-                nv_model, "_nvalchemi_supports_relax", True
-            ):
-                return self._batch_relax_nvalchemi(
-                    nv_model=nv_model,
-                    structure_data=structure_data,
-                    fmax=fmax,
-                    steps=steps,
-                    relax_cell=relax_cell,
-                    output_dir=output_dir,
-                    extract_batch_results=extract_batch_results,
-                    max_batch_atoms=max_batch_atoms,
-                )
+            if nv_model is not None:
+                try:
+                    return self._batch_relax_nvalchemi(
+                        nv_model=nv_model,
+                        structure_data=structure_data,
+                        fmax=fmax,
+                        steps=steps,
+                        relax_cell=relax_cell,
+                        output_dir=output_dir,
+                        extract_batch_results=extract_batch_results,
+                        max_batch_atoms=max_batch_atoms,
+                    )
+                except ValueError as exc:
+                    if "Per-system shift count" not in str(exc):
+                        raise
+                    logger.warning(
+                        "NValchemi neighbor-list overflow during batch relaxation; "
+                        "falling back to sequential relaxation."
+                    )
         return self._batch_relax_sequential(
             structure_data, fmax, steps, optimizer, relax_cell, output_dir
         )
