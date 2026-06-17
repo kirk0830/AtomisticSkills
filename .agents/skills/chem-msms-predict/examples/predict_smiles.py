@@ -27,14 +27,23 @@ def main() -> None:
 
     script = Path(__file__).parent.parent / "scripts" / "predict_msms.py"
     cmd = [
-        sys.executable, str(script),
-        "--smiles", EXAMPLE_SMILES,
-        "--gen_ckpt", str(args.gen_ckpt),
-        "--inten_ckpt", str(args.inten_ckpt),
-        "--collision_energies", "20", "40",
-        "--adduct", "[M+H]+",
-        "--output_dir", str(args.output_dir),
-        "--num_workers", "0",
+        sys.executable,
+        str(script),
+        "--smiles",
+        EXAMPLE_SMILES,
+        "--gen_ckpt",
+        str(args.gen_ckpt),
+        "--inten_ckpt",
+        str(args.inten_ckpt),
+        "--collision_energies",
+        "20",
+        "40",
+        "--adduct",
+        "[M+H]+",
+        "--output_dir",
+        str(args.output_dir),
+        "--num_workers",
+        "0",
     ]
     if args.cuda_devices:
         cmd += ["--cuda_devices", args.cuda_devices]

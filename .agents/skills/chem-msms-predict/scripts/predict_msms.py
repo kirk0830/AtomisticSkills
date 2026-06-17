@@ -105,13 +105,24 @@ def plot_spectrum(
         plt.setp(stemlines, linewidth=0.8)
 
         ax.axvline(
-            precursor_mass, color="red", linestyle="--", linewidth=0.8, alpha=0.6,
+            precursor_mass,
+            color="red",
+            linestyle="--",
+            linewidth=0.8,
+            alpha=0.6,
             label=f"precursor {adduct} ({precursor_mass:.4f} Da)",
         )
 
         for i in np.argsort(inten)[::-1][:5]:
-            ax.text(mz[i], inten[i] + 0.02, f"{mz[i]:.2f}", fontsize=7,
-                    ha="center", va="bottom", color="C0")
+            ax.text(
+                mz[i],
+                inten[i] + 0.02,
+                f"{mz[i]:.2f}",
+                fontsize=7,
+                ha="center",
+                va="bottom",
+                color="C0",
+            )
 
         try:
             ce_label = f"{float(ce):.0f} eV"
@@ -157,28 +168,40 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Predict LC-MS/MS spectra via ICEBERG")
     p.add_argument("--smiles", required=True, help="Input SMILES string")
     p.add_argument(
-        "--gen_ckpt", required=True, type=Path,
+        "--gen_ckpt",
+        required=True,
+        type=Path,
         help="ICEBERG generator checkpoint (.ckpt)",
     )
     p.add_argument(
-        "--inten_ckpt", required=True, type=Path,
+        "--inten_ckpt",
+        required=True,
+        type=Path,
         help="ICEBERG intensity checkpoint (.ckpt)",
     )
     p.add_argument(
-        "--collision_energies", nargs="+", type=int, default=[20, 40],
+        "--collision_energies",
+        nargs="+",
+        type=int,
+        default=[20, 40],
         help="Collision energies in eV (default: 20 40)",
     )
     p.add_argument("--adduct", default="[M+H]+", help="Adduct type (default: [M+H]+)")
     p.add_argument(
-        "--instrument", default="Orbitrap", choices=["Orbitrap", "QTOF"],
+        "--instrument",
+        default="Orbitrap",
+        choices=["Orbitrap", "QTOF"],
         help="Instrument the MSG checkpoints condition on (default: Orbitrap)",
     )
     p.add_argument(
-        "--output_dir", type=Path, default=Path("results/msms_prediction"),
+        "--output_dir",
+        type=Path,
+        default=Path("results/msms_prediction"),
         help="Output directory",
     )
     p.add_argument(
-        "--cuda_devices", default=None,
+        "--cuda_devices",
+        default=None,
         help="CUDA device IDs e.g. '0' or '0,1'. Omit for CPU.",
     )
     p.add_argument("--batch_size", type=int, default=8)
@@ -186,11 +209,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--sparse_k", type=int, default=100, help="Top-K peaks to output")
     p.add_argument("--max_nodes", type=int, default=100, help="Max fragment DAG nodes")
     p.add_argument(
-        "--threshold", type=float, default=0.1,
+        "--threshold",
+        type=float,
+        default=0.1,
         help="Fragment generator confidence cutoff (default: 0.1)",
     )
     p.add_argument(
-        "--no_fragments", action="store_true",
+        "--no_fragments",
+        action="store_true",
         help="Skip saving fragment SMILES assignments",
     )
     return p.parse_args()
