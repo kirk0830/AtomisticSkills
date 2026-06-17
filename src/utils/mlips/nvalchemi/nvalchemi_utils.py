@@ -706,38 +706,22 @@ class PositionWrappingHook:
         if batch is None or batch.num_graphs == 0:
             return
 
-        # Check if cell is present and non-empty
         if not hasattr(batch, "cell") or batch.cell is None:
             return
 
         if batch.cell.abs().sum() == 0:
             return
 
-        try:
-            batch_idx = batch.batch_idx.long()
+        batch_idx = batch.batch_idx.long()
+        cells_inv = torch.linalg.inv(batch.cell)
+        cells_inv_per_atom = cells_inv[batch_idx]
 
-            # Compute inverse cell per system
-            cells_inv = torch.linalg.inv(batch.cell)
-            cells_inv_per_atom = cells_inv[batch_idx]
+        frac = torch.bmm(batch.positions.unsqueeze(1), cells_inv_per_atom).squeeze(1)
+        frac = frac - torch.floor(frac)
 
-            # Cartesian to fractional: pos_frac = pos_cart @ cell_inv
-            frac = torch.bmm(batch.positions.unsqueeze(1), cells_inv_per_atom).squeeze(
-                1
-            )
-
-            # Wrap fractional coordinates to [0, 1)
-            frac = frac - torch.floor(frac)
-
-            # Fractional to cartesian: pos_cart = pos_frac @ cell
-            cells_per_atom = batch.cell[batch_idx]
-            wrapped_pos = torch.bmm(frac.unsqueeze(1), cells_per_atom).squeeze(1)
-
-            # Update positions in-place
-            batch.positions.copy_(wrapped_pos)
-        except Exception as e:
-            import logging
-
-            logging.warning(f"PositionWrappingHook failed: {e}")
+        cells_per_atom = batch.cell[batch_idx]
+        wrapped_pos = torch.bmm(frac.unsqueeze(1), cells_per_atom).squeeze(1)
+        batch.positions.copy_(wrapped_pos)
 
 
 class ForceStressClippingHook:
@@ -763,17 +747,13 @@ class ForceStressClippingHook:
         if batch is None or batch.num_graphs == 0:
             return
 
-        # 1. Cap forces
         if hasattr(batch, "forces") and batch.forces is not None:
             forces = batch.forces
             force_norms = torch.norm(forces, dim=-1, keepdim=True)
-            # Clip force vectors such that their norm is at most self.max_force
             scale = torch.clamp(self.max_force / (force_norms + 1e-8), max=1.0)
             batch.forces.copy_(forces * scale)
 
-        # 2. Cap stress
         if hasattr(batch, "stress") and batch.stress is not None:
-            # Clip stress values to [-max_stress, max_stress] in-place
             batch.stress.copy_(
                 torch.clamp(batch.stress, min=-self.max_stress, max=self.max_stress)
             )

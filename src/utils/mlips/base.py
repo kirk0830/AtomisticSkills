@@ -533,6 +533,8 @@ class MLIPModel(ABC):
         import os
         import torch
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+            ForceStressClippingHook,
+            PositionWrappingHook,
             atoms_to_atomic_data,
             extract_batch_results as extract_batch_results_fn,
         )
@@ -541,7 +543,8 @@ class MLIPModel(ABC):
         try:
             from nvalchemi.data import Batch
             from nvalchemi.dynamics.base import DynamicsStage, ConvergenceHook
-            from nvalchemi.dynamics.optimizers.fire import FIRE, FIREVariableCell
+            from nvalchemi.dynamics.optimizers.fire import FIRE
+            from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
             from nvalchemi.hooks.neighbor_list import NeighborListHook
         except ImportError as e:
             logger.warning(f"NValchemi import failed: {e}; falling back to sequential.")
@@ -614,9 +617,9 @@ class MLIPModel(ABC):
         batch = Batch.from_data_list(data_list)
 
         if relax_cell:
-            optimizer_obj = FIREVariableCell(
+            optimizer_obj = FIRE2VariableCell(
                 model=nv_model,
-                dt=0.5,
+                dt=0.05,
                 n_steps=steps,
                 convergence_hook=ConvergenceHook.from_fmax(
                     threshold=fmax, source_status=0, target_status=1
@@ -631,11 +634,6 @@ class MLIPModel(ABC):
                     threshold=fmax, source_status=0, target_status=1
                 ),
             )
-
-        from src.utils.mlips.nvalchemi.nvalchemi_utils import (
-            PositionWrappingHook,
-            ForceStressClippingHook,
-        )
 
         optimizer_obj.register_hook(
             PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE)
@@ -786,12 +784,15 @@ class MLIPModel(ABC):
         os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
         from nvalchemi.dynamics import SizeAwareSampler
         from nvalchemi.dynamics.base import ConvergenceHook, DynamicsStage, FusedStage
-        from nvalchemi.dynamics.optimizers.fire import FIRE, FIREVariableCell
+        from nvalchemi.dynamics.optimizers.fire import FIRE
+        from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
         from nvalchemi.hooks.neighbor_list import NeighborListHook
         from pymatgen.io.ase import AseAtomsAdaptor
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
             AtomsDataset,
+            ForceStressClippingHook,
             HostMemoryWithSystemId,
+            PositionWrappingHook,
             RelaxLogHook,
             atomic_data_to_atoms,
         )
@@ -863,9 +864,9 @@ class MLIPModel(ABC):
         )
 
         if relax_cell:
-            fire_stage = FIREVariableCell(
+            fire_stage = FIRE2VariableCell(
                 model=nv_model,
-                dt=0.5,
+                dt=0.05,
                 # Per-system step budget: structures graduate after `steps` FIRE
                 # steps even if fmax never drops below threshold.
                 n_steps=steps,
@@ -903,10 +904,6 @@ class MLIPModel(ABC):
         # In FusedStage, BEFORE_COMPUTE is fired on the fused stage itself
         # (not on sub-stages), so the NeighborListHook must be registered here.
         # This also covers the initial "prime forces" call in FusedStage.run().
-        from src.utils.mlips.nvalchemi.nvalchemi_utils import (
-            PositionWrappingHook,
-            ForceStressClippingHook,
-        )
 
         fused.register_hook(PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE))
         if neighbor_config is not None:
