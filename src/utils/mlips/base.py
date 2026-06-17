@@ -503,7 +503,9 @@ class MLIPModel(ABC):
 
         if check_nvalchemi_available():
             nv_model = self._get_nvalchemi_model()
-            if nv_model is not None:
+            if nv_model is not None and getattr(
+                nv_model, "_nvalchemi_supports_relax", True
+            ):
                 return self._batch_relax_nvalchemi(
                     nv_model=nv_model,
                     structure_data=structure_data,

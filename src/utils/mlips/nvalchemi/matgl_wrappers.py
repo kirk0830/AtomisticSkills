@@ -298,9 +298,10 @@ class M3GNetWrapper(nn.Module, BaseModelMixin):  # type: ignore[misc]
             persistent=False,
         )
 
-        # M3GNet is a custom nvalchemi wrapper (not native). Inflight GPU batching
-        # triggers a CUDA index OOB in nvalchemi's compiled NeighborListHook when
-        # structures graduate and COO format is used. Fall back to fixed-batch.
+        # M3GNet is a custom nvalchemi wrapper (not native). MatGL's ASE
+        # calculator path can poison nvalchemiops neighbor-list state before
+        # subsequent variable-cell relaxation, so use sequential relaxation.
+        self._nvalchemi_supports_relax: bool = False
         self._nvalchemi_supports_inflight: bool = False
 
     def _model_dtype(self) -> torch.dtype:
@@ -477,9 +478,10 @@ class CHGNetWrapper(nn.Module, BaseModelMixin):  # type: ignore[misc]
             persistent=False,
         )
 
-        # CHGNet is a custom nvalchemi wrapper (not native). Inflight GPU batching
-        # triggers a CUDA index OOB in nvalchemi's compiled NeighborListHook when
-        # structures graduate and COO format is used. Fall back to fixed-batch.
+        # CHGNet is a custom nvalchemi wrapper (not native). MatGL's ASE
+        # calculator path can poison nvalchemiops neighbor-list state before
+        # subsequent variable-cell relaxation, so use sequential relaxation.
+        self._nvalchemi_supports_relax: bool = False
         self._nvalchemi_supports_inflight: bool = False
 
     def _model_dtype(self) -> torch.dtype:
