@@ -220,8 +220,13 @@ class Atomate2Handler:
                         maker.static_maker.input_set_generator.user_incar_settings.update(
                             user_incar
                         )
-                    if hasattr(maker.optics_maker, "input_set_generator"):
-                        maker.optics_maker.input_set_generator.user_incar_settings.update(
+                    optics_maker = getattr(
+                        maker,
+                        "optics_maker",
+                        getattr(maker, "band_structure_maker", None),
+                    )
+                    if hasattr(optics_maker, "input_set_generator"):
+                        optics_maker.input_set_generator.user_incar_settings.update(
                             user_incar
                         )
                 elif calculation_type == "lobster":
@@ -339,7 +344,11 @@ class Atomate2Handler:
         if "perlmutter" not in worker_name.lower():
             return True, ""
 
-        return True, ""
+        nersc_key = Path.home() / ".ssh" / "nersc"
+        if not nersc_key.exists():
+            return False, f"NERSC SSH key not found: {nersc_key}"
+
+        return True, "SSHProxy appears configured."
 
     def run_remote(
         self,

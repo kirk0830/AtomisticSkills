@@ -53,6 +53,9 @@ def atoms_to_atomic_data(
         )
     if dtype is None:
         dtype = torch.float32
+    # Wrap coordinates inside unit cell boundary to prevent OOM from huge neighbor list image creation
+    if hasattr(atoms, "pbc") and any(atoms.pbc):
+        atoms.wrap()
     return AtomicData.from_atoms(atoms, device=device, dtype=dtype)
 
 
@@ -471,6 +474,10 @@ class AtomsDataset:
         self._device = device
         self._dtype = dtype
         self._relax_cell = relax_cell
+        # Wrap coordinates inside unit cell boundary to prevent OOM from huge neighbor list image creation
+        for a in self._atoms:
+            if hasattr(a, "pbc") and any(a.pbc):
+                a.wrap()
         # Pre-computed for O(1) get_metadata — no tensor allocation at query time.
         self._sizes: list[tuple[int, int]] = [(len(a), 0) for a in atoms_list]
 
@@ -679,3 +686,94 @@ class RelaxLogHook:
         for fh in self._file_handles.values():
             fh.close()
         self._file_handles.clear()
+
+
+class PositionWrappingHook:
+    """Hook to wrap batch positions back into the unit cell at BEFORE_COMPUTE.
+
+    Prevents graph/neighbor list generation OOMs when coordinates explode.
+    """
+
+    frequency: int = 1
+
+    def __init__(self, stage: Any) -> None:
+        self.stage = stage
+
+    def __call__(self, ctx: Any, stage: Any) -> None:
+        if not NVALCHEMI_AVAILABLE:
+            return
+        batch = ctx.batch
+        if batch is None or batch.num_graphs == 0:
+            return
+
+        # Check if cell is present and non-empty
+        if not hasattr(batch, "cell") or batch.cell is None:
+            return
+
+        if batch.cell.abs().sum() == 0:
+            return
+
+        try:
+            batch_idx = batch.batch_idx.long()
+
+            # Compute inverse cell per system
+            cells_inv = torch.linalg.inv(batch.cell)
+            cells_inv_per_atom = cells_inv[batch_idx]
+
+            # Cartesian to fractional: pos_frac = pos_cart @ cell_inv
+            frac = torch.bmm(batch.positions.unsqueeze(1), cells_inv_per_atom).squeeze(
+                1
+            )
+
+            # Wrap fractional coordinates to [0, 1)
+            frac = frac - torch.floor(frac)
+
+            # Fractional to cartesian: pos_cart = pos_frac @ cell
+            cells_per_atom = batch.cell[batch_idx]
+            wrapped_pos = torch.bmm(frac.unsqueeze(1), cells_per_atom).squeeze(1)
+
+            # Update positions in-place
+            batch.positions.copy_(wrapped_pos)
+        except Exception as e:
+            import logging
+
+            logging.warning(f"PositionWrappingHook failed: {e}")
+
+
+class ForceStressClippingHook:
+    """Hook to cap huge forces and stresses at AFTER_COMPUTE.
+
+    Prevents dynamics from exploding in variable-cell/atomic relaxation
+    when starting configurations are highly unstable.
+    """
+
+    frequency: int = 1
+
+    def __init__(
+        self, stage: Any, max_force: float = 5.0, max_stress: float = 5.0
+    ) -> None:
+        self.stage = stage
+        self.max_force = max_force
+        self.max_stress = max_stress
+
+    def __call__(self, ctx: Any, stage: Any) -> None:
+        if not NVALCHEMI_AVAILABLE:
+            return
+        batch = ctx.batch
+        if batch is None or batch.num_graphs == 0:
+            return
+
+        # 1. Cap forces
+        if hasattr(batch, "forces") and batch.forces is not None:
+            forces = batch.forces
+            force_norms = torch.norm(forces, dim=-1, keepdim=True)
+            # Clip force vectors such that their norm is at most self.max_force
+            scale = torch.clamp(self.max_force / (force_norms + 1e-8), max=1.0)
+            batch.forces.copy_(forces * scale)
+
+        # 2. Cap stress
+        if hasattr(batch, "stress") and batch.stress is not None:
+            # Clip stress values to [-max_stress, max_stress] in-place
+            batch.stress.copy_(
+                torch.clamp(batch.stress, min=-self.max_stress, max=self.max_stress)
+            )

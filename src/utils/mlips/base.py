@@ -537,6 +537,7 @@ class MLIPModel(ABC):
             extract_batch_results as extract_batch_results_fn,
         )
 
+        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
         try:
             from nvalchemi.data import Batch
             from nvalchemi.dynamics.base import DynamicsStage, ConvergenceHook
@@ -612,22 +613,44 @@ class MLIPModel(ABC):
         ]
         batch = Batch.from_data_list(data_list)
 
-        OptimClass = FIREVariableCell if relax_cell else FIRE
-        optimizer_obj = OptimClass(
-            model=nv_model,
-            dt=0.5,
-            n_steps=steps,
-            convergence_hook=ConvergenceHook.from_fmax(
-                threshold=fmax, source_status=0, target_status=1
-            ),
+        if relax_cell:
+            optimizer_obj = FIREVariableCell(
+                model=nv_model,
+                dt=0.5,
+                n_steps=steps,
+                convergence_hook=ConvergenceHook.from_fmax(
+                    threshold=fmax, source_status=0, target_status=1
+                ),
+            )
+        else:
+            optimizer_obj = FIRE(
+                model=nv_model,
+                dt=0.5,
+                n_steps=steps,
+                convergence_hook=ConvergenceHook.from_fmax(
+                    threshold=fmax, source_status=0, target_status=1
+                ),
+            )
+
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+            PositionWrappingHook,
+            ForceStressClippingHook,
         )
 
+        optimizer_obj.register_hook(
+            PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE)
+        )
         if getattr(nv_model.model_config, "neighbor_config", None) is not None:
             nl_hook = NeighborListHook(
                 nv_model.model_config.neighbor_config,
                 stage=DynamicsStage.BEFORE_COMPUTE,
             )
             optimizer_obj.register_hook(nl_hook)
+        optimizer_obj.register_hook(
+            ForceStressClippingHook(
+                stage=DynamicsStage.AFTER_COMPUTE, max_force=5.0, max_stress=5.0
+            )
+        )
 
         # Set up memory sink to record full history of relaxation steps if requested
         memory_sink = None
@@ -662,6 +685,14 @@ class MLIPModel(ABC):
         )
         if e0 is not None:
             batch["energy"] = e0.detach()
+        if relax_cell:
+            s0 = (
+                initial_out.get("stress")
+                if isinstance(initial_out, dict)
+                else getattr(initial_out, "stress", None)
+            )
+            if s0 is not None:
+                batch["stress"] = s0.detach()
         batch.positions.requires_grad_(False)
 
         if memory_sink is not None:
@@ -752,6 +783,7 @@ class MLIPModel(ABC):
         import os
         import torch
 
+        os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
         from nvalchemi.dynamics import SizeAwareSampler
         from nvalchemi.dynamics.base import ConvergenceHook, DynamicsStage, FusedStage
         from nvalchemi.dynamics.optimizers.fire import FIRE, FIREVariableCell
@@ -830,17 +862,28 @@ class MLIPModel(ABC):
             capacity=n_structures, on_graduate=on_graduate
         )
 
-        OptimClass = FIREVariableCell if relax_cell else FIRE
-        fire_stage = OptimClass(
-            model=nv_model,
-            dt=0.5,
-            # Per-system step budget: structures graduate after `steps` FIRE
-            # steps even if fmax never drops below threshold.
-            n_steps=steps,
-            convergence_hook=ConvergenceHook.from_fmax(
-                threshold=fmax, source_status=0, target_status=1
-            ),
-        )
+        if relax_cell:
+            fire_stage = FIREVariableCell(
+                model=nv_model,
+                dt=0.5,
+                # Per-system step budget: structures graduate after `steps` FIRE
+                # steps even if fmax never drops below threshold.
+                n_steps=steps,
+                convergence_hook=ConvergenceHook.from_fmax(
+                    threshold=fmax, source_status=0, target_status=1
+                ),
+            )
+        else:
+            fire_stage = FIRE(
+                model=nv_model,
+                dt=0.5,
+                # Per-system step budget: structures graduate after `steps` FIRE
+                # steps even if fmax never drops below threshold.
+                n_steps=steps,
+                convergence_hook=ConvergenceHook.from_fmax(
+                    threshold=fmax, source_status=0, target_status=1
+                ),
+            )
 
         neighbor_config = getattr(nv_model.model_config, "neighbor_config", None)
 
@@ -860,10 +903,21 @@ class MLIPModel(ABC):
         # In FusedStage, BEFORE_COMPUTE is fired on the fused stage itself
         # (not on sub-stages), so the NeighborListHook must be registered here.
         # This also covers the initial "prime forces" call in FusedStage.run().
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+            PositionWrappingHook,
+            ForceStressClippingHook,
+        )
+
+        fused.register_hook(PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE))
         if neighbor_config is not None:
             fused.register_hook(
                 NeighborListHook(neighbor_config, stage=DynamicsStage.BEFORE_COMPUTE)
             )
+        fused.register_hook(
+            ForceStressClippingHook(
+                stage=DynamicsStage.AFTER_COMPUTE, max_force=5.0, max_stress=5.0
+            )
+        )
 
         # Write ASE-style relax.log per structure.  FusedStage calls __enter__/
         # __exit__ on registered hooks automatically, so file handles are closed
