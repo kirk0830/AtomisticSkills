@@ -634,6 +634,7 @@ class MLIPModel(ABC):
             for a in atoms_list
         ]
         batch = Batch.from_data_list(data_list)
+        batch.status = torch.zeros(batch.num_graphs, dtype=torch.int32, device=device)
 
         if relax_cell:
             optimizer_obj = ScaledFIRE2VariableCell(
@@ -644,6 +645,7 @@ class MLIPModel(ABC):
                     threshold=fmax, source_status=0, target_status=1
                 ),
             )
+            optimizer_obj._mutable_fields = ("positions", "velocities", "cell")
         else:
             optimizer_obj = FIRE(
                 model=nv_model,
@@ -654,6 +656,8 @@ class MLIPModel(ABC):
                 ),
             )
 
+        if optimizer_obj.convergence_hook is not None:
+            optimizer_obj.register_hook(optimizer_obj.convergence_hook)
         optimizer_obj.register_hook(
             PositionWrappingHook(stage=DynamicsStage.BEFORE_COMPUTE)
         )
