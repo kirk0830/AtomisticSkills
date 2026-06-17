@@ -201,9 +201,17 @@ def extract_batch_results(
                     for s in range(n_snapshots):
                         idx = s * n_structures + i
                         if idx < n_total_frames:
-                            struct_atoms_list.append(
-                                atomic_data_to_atoms(data_list[idx])
-                            )
+                            frame_data = data_list[idx]
+                            struct_atoms_list.append(atomic_data_to_atoms(frame_data))
+                            status_val = getattr(frame_data, "status", None)
+                            if status_val is not None:
+                                val = int(
+                                    status_val.item()
+                                    if hasattr(status_val, "item")
+                                    else status_val
+                                )
+                                if val >= 1:
+                                    break
                 else:
                     struct_atoms_list.append(atomic_data_to_atoms(data_list[i]))
 
