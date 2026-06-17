@@ -5,6 +5,7 @@ fairchem_repo/
 
 # Temporary storage and test results
 scratch/
+.agent/
 .agents/tmp/
 .agents/test/
 tests/.agents/test/

@@ -7,7 +7,7 @@ paths to the local conda installation.
 Supported agents:
   claude   - Claude Code (.mcp.json or ~/.claude/settings.json)
   codex    - OpenAI Codex CLI (.codex/config.toml)
-  gemini   - Google Gemini CLI (.gemini/settings.json)
+  gemini   - Google Gemini CLI and IDE (.gemini/settings.json, config/mcp_config.json, and custom plugin)
   cursor   - Cursor (.cursor/mcp.json)
   windsurf - Windsurf (~/.codeium/windsurf/mcp_config.json, global only)
 
@@ -51,6 +51,177 @@ workflows combining literature, MLIP tools, and MCP servers.
 See CLAUDE.md for the full instructions (Claude Code format, also applicable
 to other agents). Skills are in .agents/skills/, workflows in .agents/workflows/.
 """
+
+ATOMISTICSKILLS_GLOBAL_MARKER = "# AtomisticSkills Global Reference"
+
+
+def _global_reference_block() -> str:
+    """Return a compact global instruction block for agents outside this repo."""
+    return f"""\
+{ATOMISTICSKILLS_GLOBAL_MARKER}
+
+If your current workspace is NOT {PROJECT_ROOT} (or any of its subdirectories), and the task involves atomistic research, materials simulation, drug discovery, spectroscopy, ML interatomic potentials, or related scientific workflows:
+- The AtomisticSkills repository is installed at {PROJECT_ROOT}.
+- Rules live at {PROJECT_ROOT}/.agents/rules/.
+- Skills live at {PROJECT_ROOT}/.agents/skills/.
+- Workflows live at {PROJECT_ROOT}/.agents/workflows/.
+- First read these rules:
+  - {PROJECT_ROOT}/.agents/rules/research-standards.md
+  - {PROJECT_ROOT}/.agents/rules/coding-standards.md
+  - {PROJECT_ROOT}/.agents/rules/mcp-environments.md
+- For skill discovery, scan descriptions with:
+  grep -r "^description:" {PROJECT_ROOT}/.agents/skills/*/SKILL.md
+- For end-to-end protocols, inspect:
+  find {PROJECT_ROOT}/.agents/workflows -maxdepth 2 -type f
+- Read the full SKILL.md or workflow file before following it.
+
+If your current workspace IS {PROJECT_ROOT} or one of its subdirectories, ignore this global reference because the project-local AGENTS.md and project skills are already available.
+"""
+
+
+def _upsert_marked_block(path: Path, marker: str, block_content: str) -> None:
+    """Append or replace a marked instruction block in a markdown file."""
+    content = ""
+    if path.exists():
+        content = path.read_text()
+
+    if marker in content:
+        before = content.split(marker, 1)[0].rstrip()
+        content = before + "\n\n" + block_content
+    else:
+        if content and not content.endswith("\n"):
+            content += "\n"
+        content += "\n" + block_content
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content.lstrip())
+
+
+def _symlink_target(path: Path) -> Path:
+    """Return the absolute target path for a symlink."""
+    target = path.readlink()
+    if not target.is_absolute():
+        target = path.parent / target
+    return target
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    """Return whether path is inside parent without requiring it to exist."""
+    try:
+        path.resolve(strict=False).relative_to(parent.resolve(strict=False))
+    except ValueError:
+        return False
+    return True
+
+
+def _remove_stale_project_skill_symlinks(
+    skills_dir: Path,
+    project_skills_dir: Path,
+) -> int:
+    """Remove global skill symlinks that point to removed project skills."""
+    removed = 0
+    if not skills_dir.exists():
+        return removed
+
+    for global_skill in skills_dir.iterdir():
+        if not global_skill.is_symlink():
+            continue
+
+        target = _symlink_target(global_skill)
+        if _is_relative_to(target, project_skills_dir) and not target.exists():
+            global_skill.unlink()
+            removed += 1
+
+    return removed
+
+
+def _reset_directory_symlink(link_path: Path, target_path: Path) -> str:
+    """Replace a path with a directory symlink and report the action."""
+    action = "Created"
+    if link_path.exists() or link_path.is_symlink():
+        action = "Refreshed" if link_path.is_symlink() else "Replaced"
+        if link_path.is_symlink() or link_path.is_file():
+            link_path.unlink()
+        elif link_path.is_dir():
+            shutil.rmtree(link_path)
+        else:
+            link_path.unlink()
+
+    link_path.symlink_to(target_path, target_is_directory=True)
+    return action
+
+
+def _write_codex_global_skills() -> None:
+    """Expose project skills globally for Codex."""
+    codex_skills_dir = Path.home() / ".codex" / "skills"
+    codex_skills_dir.mkdir(parents=True, exist_ok=True)
+    project_skills_dir = PROJECT_ROOT / ".agents" / "skills"
+    removed = _remove_stale_project_skill_symlinks(
+        codex_skills_dir,
+        project_skills_dir,
+    )
+
+    skill_dir = codex_skills_dir / "atomisticskills"
+    skill_dir.mkdir(parents=True, exist_ok=True)
+    skill_file = skill_dir / "SKILL.md"
+    skill_file.write_text(
+        f"""\
+---
+name: atomisticskills
+description: Use AtomisticSkills from {PROJECT_ROOT} for atomistic research, materials simulation, molecular modeling, spectroscopy, MLIP, drug discovery, and scientific workflow tasks.
+---
+
+# AtomisticSkills
+
+Use this skill when a task would benefit from the AtomisticSkills repository installed at:
+
+`{PROJECT_ROOT}`
+
+Before acting, read the applicable project instructions directly from that repository:
+
+1. Always read:
+   - `{PROJECT_ROOT}/.agents/rules/research-standards.md`
+   - `{PROJECT_ROOT}/.agents/rules/coding-standards.md`
+   - `{PROJECT_ROOT}/.agents/rules/mcp-environments.md`
+2. For skill discovery, inspect:
+   - `{PROJECT_ROOT}/.agents/skills/*/SKILL.md`
+3. For end-to-end protocols, inspect:
+   - `{PROJECT_ROOT}/.agents/workflows/`
+4. Read the full selected `SKILL.md` or workflow file before following it.
+
+If the current workspace is already `{PROJECT_ROOT}` or a subdirectory, prefer the project-local AGENTS.md and project-local skills to avoid duplicate context.
+"""
+    )
+    print(f"  Global skill -> {skill_file}")
+
+    linked = 0
+    skipped: list[str] = []
+    for project_skill in sorted(project_skills_dir.iterdir()):
+        if not project_skill.is_dir():
+            continue
+
+        global_skill = codex_skills_dir / project_skill.name
+        if global_skill.exists() or global_skill.is_symlink():
+            if global_skill.is_symlink():
+                target = _symlink_target(global_skill)
+                if not _is_relative_to(target, project_skills_dir):
+                    skipped.append(project_skill.name)
+                    continue
+                global_skill.unlink()
+            else:
+                skipped.append(project_skill.name)
+                continue
+
+        global_skill.symlink_to(project_skill, target_is_directory=True)
+        linked += 1
+
+    print(
+        f"  Global project skills -> {codex_skills_dir} "
+        f"({linked} symlinks, {removed} stale removed)"
+    )
+    if skipped:
+        separator = ", "
+        print(f"  Skipped existing non-symlink skills: {separator.join(skipped)}")
 
 
 # ---------------------------------------------------------------------------
@@ -187,14 +358,15 @@ def _write_instruction_file(path: Path, source: Path) -> None:
 
 
 def configure_claude(servers: dict, scope: str) -> None:
-    """Claude Code: .mcp.json (project) or ~/.claude/settings.json (global)."""
+    """Claude Code: .mcp.json (project) or ~/.claude.json (global user scope)."""
     if scope in ("project", "both"):
         path = PROJECT_ROOT / ".mcp.json"
         _write_json(path, servers, merge_key="mcpServers")
         print(f"  Project MCP → {path.relative_to(PROJECT_ROOT)}")
 
     if scope in ("global", "both"):
-        path = Path.home() / ".claude" / "settings.json"
+        # Global user scope: ~/.claude.json (same file as `claude mcp add --scope user`)
+        path = Path.home() / ".claude.json"
         _write_json(path, servers, merge_key="mcpServers")
         print(f"  Global MCP  → {path}")
 
@@ -215,6 +387,47 @@ def configure_codex(servers: dict, scope: str) -> None:
         import tomli_w
     except ImportError:
         tomli_w = None
+
+    def _toml_key(key: str) -> str:
+        if re.fullmatch(r"[A-Za-z0-9_-]+", key):
+            return key
+        return json.dumps(key)
+
+    def _toml_path(prefix: str, key: str) -> str:
+        key_part = _toml_key(key)
+        return f"{prefix}.{key_part}" if prefix else key_part
+
+    def _toml_value(value: Any) -> str:
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, (int, float)):
+            return str(value)
+        if isinstance(value, list):
+            return "[" + ", ".join(_toml_value(item) for item in value) + "]"
+        return json.dumps(str(value))
+
+    def _emit_toml_table(lines: list[str], prefix: str, table: dict) -> None:
+        scalar_items = [
+            (key, value) for key, value in table.items() if not isinstance(value, dict)
+        ]
+        child_items = [
+            (key, value) for key, value in table.items() if isinstance(value, dict)
+        ]
+
+        if prefix:
+            lines.append(f"[{prefix}]")
+        for key, value in scalar_items:
+            lines.append(f"{_toml_key(key)} = {_toml_value(value)}")
+        if scalar_items and child_items:
+            lines.append("")
+
+        for index, (key, value) in enumerate(child_items):
+            if lines and lines[-1] != "":
+                lines.append("")
+            child_prefix = _toml_path(prefix, key)
+            _emit_toml_table(lines, child_prefix, value)
+            if index != len(child_items) - 1 and lines[-1] != "":
+                lines.append("")
 
     def _write_toml(path: Path, servers: dict) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -238,16 +451,9 @@ def configure_codex(servers: dict, scope: str) -> None:
             with open(path, "wb") as fh:
                 tomli_w.dump(existing, fh)
         else:
-            # Fallback: write minimal TOML manually
-            lines = []
-            for name, cfg in existing.get("mcp_servers", {}).items():
-                lines.append(f"\n[mcp_servers.{name}]")
-                lines.append(f'command = {json.dumps(cfg["command"])}')
-                args_str = ", ".join(json.dumps(a) for a in cfg.get("args", []))
-                lines.append(f"args = [{args_str}]")
-                for k, v in cfg.get("env", {}).items():
-                    lines.append(f"{k} = {json.dumps(v)}")
-            path.write_text("\n".join(lines) + "\n")
+            lines: list[str] = []
+            _emit_toml_table(lines, "", existing)
+            path.write_text("\n".join(lines).rstrip() + "\n")
 
     if scope in ("project", "both"):
         path = PROJECT_ROOT / ".codex" / "config.toml"
@@ -259,6 +465,15 @@ def configure_codex(servers: dict, scope: str) -> None:
         _write_toml(path, servers)
         print(f"  Global MCP  → {path}")
 
+        global_agents = Path.home() / ".codex" / "AGENTS.md"
+        _upsert_marked_block(
+            global_agents,
+            ATOMISTICSKILLS_GLOBAL_MARKER,
+            _global_reference_block(),
+        )
+        print(f"  Global instructions → {global_agents}")
+        _write_codex_global_skills()
+
     _write_instruction_file(
         PROJECT_ROOT / "AGENTS.md",
         PROJECT_ROOT / "CLAUDE.md",
@@ -266,16 +481,86 @@ def configure_codex(servers: dict, scope: str) -> None:
 
 
 def configure_gemini(servers: dict, scope: str) -> None:
-    """Gemini CLI: .gemini/settings.json."""
+    """Gemini CLI and IDE: settings.json, mcp_config.json, and custom plugin."""
     if scope in ("project", "both"):
         path = PROJECT_ROOT / ".gemini" / "settings.json"
         _write_json(path, servers, merge_key="mcpServers")
         print(f"  Project MCP → {path.relative_to(PROJECT_ROOT)}")
 
     if scope in ("global", "both"):
-        path = Path.home() / ".gemini" / "settings.json"
-        _write_json(path, servers, merge_key="mcpServers")
-        print(f"  Global MCP  → {path}")
+        # Gemini CLI settings
+        cli_path = Path.home() / ".gemini" / "settings.json"
+        _write_json(cli_path, servers, merge_key="mcpServers")
+        print(f"  Global MCP (CLI) → {cli_path}")
+
+        # Gemini IDE settings
+        ide_path = Path.home() / ".gemini" / "config" / "mcp_config.json"
+        _write_json(ide_path, servers, merge_key="mcpServers")
+        print(f"  Global MCP (IDE) → {ide_path}")
+
+        # Setup IDE Plugin for global skills
+        plugin_dir = (
+            Path.home()
+            / ".gemini"
+            / "config"
+            / "plugins"
+            / "Google.atomisticskills.atomisticskills"
+        )
+        plugin_dir.mkdir(parents=True, exist_ok=True)
+
+        plugin_json = plugin_dir / "plugin.json"
+        plugin_data = {
+            "name": "atomisticskills",
+            "description": "AtomisticSkills workspace plugin",
+            "disabled": False,
+        }
+        with open(plugin_json, "w") as fh:
+            json.dump(plugin_data, fh)
+            fh.write("\n")
+        print(f"  Created plugin config → {plugin_json}")
+
+        skills_symlink = plugin_dir / "skills"
+        target_skills = PROJECT_ROOT / ".agents" / "skills"
+        symlink_action = _reset_directory_symlink(skills_symlink, target_skills)
+        print(
+            f"  {symlink_action} skills symlink → {skills_symlink} to {target_skills}"
+        )
+
+        # Global Instructions in ~/.gemini/GEMINI.md
+        global_md = Path.home() / ".gemini" / "GEMINI.md"
+        marker = "# AtomisticSkills Global Reference"
+        block_content = f"""\
+{marker}
+
+If your current workspace is NOT {PROJECT_ROOT} (or any of its subdirectories), and you need to perform atomistic research, materials discovery, molecular simulation, or related tasks:
+- The AtomisticSkills repository is installed at {PROJECT_ROOT}.
+- You can access its Skills at {PROJECT_ROOT}/.agents/skills/ and workflows at {PROJECT_ROOT}/.agents/workflows/.
+- Discover skills by running: grep -r "^description:" {PROJECT_ROOT}/.agents/skills/*/SKILL.md
+- Read and follow these rules from the AtomisticSkills repo:
+  - [research-standards.md](file://{PROJECT_ROOT}/.agents/rules/research-standards.md)
+  - [coding-standards.md](file://{PROJECT_ROOT}/.agents/rules/coding-standards.md)
+  - [mcp-environments.md](file://{PROJECT_ROOT}/.agents/rules/mcp-environments.md)
+  - [skill-standards.md](file://{PROJECT_ROOT}/.agents/rules/skill-standards.md)
+  - [workflow-standards.md](file://{PROJECT_ROOT}/.agents/rules/workflow-standards.md)
+  - [plot-standards.md](file://{PROJECT_ROOT}/.agents/rules/plot-standards.md)
+- NOTE: If you are already inside the {PROJECT_ROOT} directory, ignore this section to avoid loading duplicate rules or context.
+"""
+        content = ""
+        if global_md.exists():
+            content = global_md.read_text()
+
+        if marker in content:
+            parts = content.split(marker)
+            before = parts[0].rstrip()
+            content = before + "\n\n" + block_content
+        else:
+            if content and not content.endswith("\n"):
+                content += "\n"
+            content += "\n" + block_content
+
+        global_md.parent.mkdir(parents=True, exist_ok=True)
+        global_md.write_text(content)
+        print(f"  Updated global instructions → {global_md}")
 
     _write_instruction_file(
         PROJECT_ROOT / "GEMINI.md",

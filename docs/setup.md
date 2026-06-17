@@ -77,17 +77,61 @@ python configure_mcp.py
 ## Step 6: Add to AI Assistant
 Finally, copy the patched MCP settings into their AI copilot's configuration file.
 
-| Client | File |
-|--------|------|
-| **Antigravity / Gemini CLI** | `~/.gemini/settings.json` or `~/.gemini/antigravity/mcp_config.json` |
-| **Cursor** | `.cursor/mcp.json` (Settings $\rightarrow$ MCP $\rightarrow$ Add) |
-| **Claude Code** | `.claude.json` or `.mcp.json` |
-| **Windsurf** | `~/.codeium/windsurf/mcp_config.json` |
+| Client | Project scope | Global scope (all projects) |
+|--------|--------------|----------------------------|
+| **Claude Code** | `.mcp.json` (project root) | `~/.claude.json` |
+| **Codex CLI** | `.codex/config.toml` | `~/.codex/config.toml` |
+| **Cursor** | `.cursor/mcp.json` | `~/.cursor/mcp.json` |
+| **Windsurf** | — | `~/.codeium/windsurf/mcp_config.json` |
+| **Gemini CLI** | `.gemini/settings.json` | `~/.gemini/settings.json` |
 
-1. Locate the AI assistant's config file.
-2. Copy the `mcpServers` block from AtomisticSkills' `mcp_config.json` for the environments they installed.
-3. Paste/Merge into the AI assistant config.
-4. Restart the assistant!
+The `configure_mcp.py` script handles path substitution automatically:
+
+```bash
+# Project scope only (default) — tools available when inside this repo
+python configure_mcp.py
+
+# Global scope — tools available in every project/session
+python configure_mcp.py --scope global
+
+# Both scopes
+python configure_mcp.py --scope both
+```
+
+**Claude Code users: optional global skill awareness**
+
+With `--scope global`, MCP tools become available everywhere. To also make Claude aware of the 129+ skills and workflows when working outside this repo, create `~/.claude/CLAUDE.md`:
+
+```markdown
+# AtomisticSkills
+
+When a task involves materials simulation, drug discovery, or atomistic modeling,
+the full toolkit lives at /path/to/AtomisticSkills.
+Skills: /path/to/AtomisticSkills/.agents/skills/
+Workflows: /path/to/AtomisticSkills/.agents/workflows/
+Discover skills: grep -r "^description:" /path/to/AtomisticSkills/.agents/skills/*/SKILL.md
+```
+
+**Codex CLI users: global MCP, rules, skills, and workflows**
+
+With `--scope global` or `--scope both`, `configure_mcp.py --agent codex` will:
+1. Register MCP tools globally in `~/.codex/config.toml`.
+2. Append/update the `AtomisticSkills Global Reference` block in `~/.codex/AGENTS.md` for rules and workflows.
+3. Create a compact pointer skill at `~/.codex/skills/atomisticskills/SKILL.md`.
+4. Symlink every project skill from `.agents/skills/` into `~/.codex/skills/`, making the full skill library available when Codex starts outside this repository.
+
+The symlink step preserves unrelated existing global skills. If a non-project skill with the same name already exists in `~/.codex/skills/`, `configure_mcp.py` skips that entry and reports it. On each run, stale Codex symlinks pointing to removed AtomisticSkills project skills are cleaned up, and new project skills are linked globally. When Codex is started inside the AtomisticSkills repository, the global reference tells it to prefer the project-local `AGENTS.md` and project-local skills, avoiding duplicate rule/skill context.
+
+**Gemini (CLI & IDE/Antigravity) users: global MCP, rules, skills, and workflows**
+
+With `--scope global` or `--scope both`, running `configure_mcp.py --agent gemini` will:
+1. Register MCP tools globally in `~/.gemini/config/mcp_config.json` and `~/.gemini/settings.json`.
+2. Register a global IDE plugin in `~/.gemini/config/plugins/Google.atomisticskills.atomisticskills` and symlink the skills directory directly, making all 129+ skills natively accessible in any session.
+3. Append/update the `AtomisticSkills Global Reference` block in your global rules file (`~/.gemini/GEMINI.md`) for workflows and rules.
+
+This makes Gemini automatically aware of all rules, skills, and workflows when working in any folder outside this repository, while preventing duplicate context/rule loading when working inside the repository. Gemini uses a directory symlink to `.agents/skills/`, so added and removed project skills are reflected globally through that link; rerunning `configure_mcp.py` refreshes the plugin symlink if it becomes stale or points elsewhere.
+
+Restart the assistant after any config changes.
 
 ## What's Next? (Guided First Use)
 **Run a live test WITH the user.**
