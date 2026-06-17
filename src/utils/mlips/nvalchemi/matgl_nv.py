@@ -48,6 +48,7 @@ def get_nvalchemi_matgl_model(wrapper: "MatGLWrapper") -> Optional[Any]:
 
         if isinstance(inner, TensorNet):
             nv_model = TensorNetWrapper.from_potential(wrapper.model)
+            nv_model._nvalchemi_supports_inflight = False
         elif isinstance(inner, M3GNet):
             nv_model = M3GNetWrapper.from_potential(wrapper.model)
         elif isinstance(inner, CHGNet):

@@ -84,6 +84,23 @@ Logger messages (written to stderr / MCP server log) also signal transitions:
 
 The gap grows with larger structures (more atoms → more FIRE steps → GPU stays busier per structure loaded).
 
+### Mode Benchmark: Serial vs. Fixed-Batch vs. Inflight-Batch (10 structures, 50 steps)
+
+Below is a three-way relaxation mode benchmark on 10 structures for 50 steps using MACE and TensorNet:
+
+#### MACE-OMAT-0-small (`mace-agent`)
+- **Serial Mode:** 13.24 s
+- **Fixed-Batch Mode:** 5.75 s (**2.3x speedup**)
+- **Inflight-Batch Mode:** 9.51 s (**1.4x speedup**)
+
+#### TensorNet-PES-MatPES-PBE-2025.2 (`matgl-agent`)
+- **Serial Mode:** 8.50 s
+- **Fixed-Batch Mode:** 12.95 s (0.7x - JIT compiler/graph overhead dominates for small datasets)
+- **Inflight-Batch Mode:** 14.53 s (0.6x - JIT compiler/graph overhead dominates for small datasets)
+
+> **Important (TensorNet Energy Increase Bug):** In TensorNet's inflight batching, a neighbor list graduation issue caused massive energy increases and force clipping in `relax.log` (e.g. from -390.7 eV to -268.5 eV) due to its COO-format neighbor lists not shifting index offsets correctly upon graduation. To prevent this, we explicitly set `_nvalchemi_supports_inflight = False` for the TensorNet wrapper, forcing it to fall back to fixed-batch or sequential mode, matching CHGNet and M3GNet.
+
+
 ## Instructions
 
 ### Step 1 — Verify NValchemi is Available
