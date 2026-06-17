@@ -67,13 +67,13 @@ def mol_identifiers(smiles: str) -> dict:
     Raises ValueError if SMILES is invalid.
     """
     from rdkit import Chem
-    from rdkit.Chem.inchi import MolToInchiKey, MolToInchi
+    from rdkit.Chem.inchi import MolToInchiKey
 
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError(f"Invalid SMILES: {smiles}")
     canonical = Chem.MolToSmiles(mol)
-    inchi = MolToInchi(mol) or ""
+
     inchikey = MolToInchiKey(mol) or ""
     inchikey14 = inchikey[:14] if inchikey else ""
     return {
@@ -122,6 +122,7 @@ def _load_jdx(path: pathlib.Path) -> tuple[np.ndarray, np.ndarray]:
     """Parse minimal JCAMP-DX file to extract x/y arrays."""
     try:
         import jcamp
+
         data = jcamp.jcamp_readfile(str(path))
         x = np.array(data.get("x", []))
         y = np.array(data.get("y", []))
@@ -147,7 +148,7 @@ def _load_jdx(path: pathlib.Path) -> tuple[np.ndarray, np.ndarray]:
                     x.append(float(tokens[0]) * x_factor)
                     for t in tokens[1:]:
                         y.append(float(t) * y_factor)
-        x, y = np.array(x), np.array(y[:len(x)])
+        x, y = np.array(x), np.array(y[: len(x)])
     order = np.argsort(x)
     return x[order], y[order]
 
@@ -199,7 +200,9 @@ def similarity_wasserstein(y1: np.ndarray, y2: np.ndarray) -> float:
     s1, s2 = y1.sum(), y2.sum()
     if s1 == 0 or s2 == 0:
         return 0.0
-    dist = wasserstein_distance(np.arange(len(y1)), np.arange(len(y2)), y1 / s1, y2 / s2)
+    dist = wasserstein_distance(
+        np.arange(len(y1)), np.arange(len(y2)), y1 / s1, y2 / s2
+    )
     # Normalize by max possible distance (full width)
     max_dist = len(y1)
     return float(max(0.0, 1.0 - dist / max_dist))
@@ -419,9 +422,15 @@ def main():
     ap = argparse.ArgumentParser(
         description="Match an experimental spectrum against predicted/database references."
     )
-    ap.add_argument("--query", required=True, help="Experimental spectrum file (.xy, .csv, .jdx)")
-    ap.add_argument("--smiles", nargs="+", required=True, help="Candidate SMILES strings")
-    ap.add_argument("--names", nargs="+", help="Labels for candidates (order matches --smiles)")
+    ap.add_argument(
+        "--query", required=True, help="Experimental spectrum file (.xy, .csv, .jdx)"
+    )
+    ap.add_argument(
+        "--smiles", nargs="+", required=True, help="Candidate SMILES strings"
+    )
+    ap.add_argument(
+        "--names", nargs="+", help="Labels for candidates (order matches --smiles)"
+    )
     ap.add_argument(
         "--modality",
         choices=SUPPORTED_MODALITIES,
@@ -434,12 +443,32 @@ def main():
         default="l2",
         help="Similarity metric (default: l2)",
     )
-    ap.add_argument("--catalog_dir", default="research/spectrum_catalog", help="Local catalog directory")
+    ap.add_argument(
+        "--catalog_dir",
+        default="research/spectrum_catalog",
+        help="Local catalog directory",
+    )
     ap.add_argument("--output_dir", default="spectrum_match", help="Output directory")
-    ap.add_argument("--fallback_public_db", action="store_true", help="Query public DB on catalog miss")
-    ap.add_argument("--field_mhz", type=float, default=400.0, help="NMR field strength in MHz (default: 400)")
-    ap.add_argument("--linewidth", type=float, default=1.0, help="Lorentzian linewidth Hz for broadening (default: 1.0)")
-    ap.add_argument("--plot", action="store_true", help="Save overlay plot match_plot.png")
+    ap.add_argument(
+        "--fallback_public_db",
+        action="store_true",
+        help="Query public DB on catalog miss",
+    )
+    ap.add_argument(
+        "--field_mhz",
+        type=float,
+        default=400.0,
+        help="NMR field strength in MHz (default: 400)",
+    )
+    ap.add_argument(
+        "--linewidth",
+        type=float,
+        default=1.0,
+        help="Lorentzian linewidth Hz for broadening (default: 1.0)",
+    )
+    ap.add_argument(
+        "--plot", action="store_true", help="Save overlay plot match_plot.png"
+    )
     ap.add_argument(
         "--lookup_by",
         choices=SUPPORTED_LOOKUP,
@@ -484,13 +513,27 @@ def main():
             ids = mol_identifiers(smiles)
         except ValueError as e:
             print(f"INVALID SMILES: {e}")
-            results.append({"name": name, "smiles": smiles, "score": None, "source": "error", "error": str(e)})
+            results.append(
+                {
+                    "name": name,
+                    "smiles": smiles,
+                    "score": None,
+                    "source": "error",
+                    "error": str(e),
+                }
+            )
             continue
 
         # 1. Local catalog
         ref_path = lookup_local(
-            ids, args.modality, catalog, inchikey_idx, inchikey14_idx,
-            output_dir, safe_name, lookup_by=args.lookup_by,
+            ids,
+            args.modality,
+            catalog,
+            inchikey_idx,
+            inchikey14_idx,
+            output_dir,
+            safe_name,
+            lookup_by=args.lookup_by,
         )
         source = "local_catalog"
 
@@ -499,7 +542,9 @@ def main():
             peaks = fetch_public_db(ids["canonical_smiles"], args.modality)
             if peaks:
                 r_x, r_y = peaks_to_xy(
-                    peaks, x_min, x_max,
+                    peaks,
+                    x_min,
+                    x_max,
                     linewidth=args.linewidth,
                     field_mhz=args.field_mhz,
                     modality=args.modality,
@@ -511,7 +556,9 @@ def main():
 
         if ref_path is None:
             print("missed")
-            results.append({"name": name, "smiles": smiles, "score": None, "source": "missed"})
+            results.append(
+                {"name": name, "smiles": smiles, "score": None, "source": "missed"}
+            )
             continue
 
         # Compute similarity
@@ -522,16 +569,18 @@ def main():
         score = metric_fn(q_norm, r_norm)
         print(f"score={score:.3f} ({source})")
 
-        results.append({
-            "name": name,
-            "smiles": smiles,
-            "canonical_smiles": ids["canonical_smiles"],
-            "inchikey": ids["inchikey"],
-            "inchikey14": ids["inchikey14"],
-            "score": round(score, 4),
-            "source": source,
-            "spectrum_path": str(ref_path),
-        })
+        results.append(
+            {
+                "name": name,
+                "smiles": smiles,
+                "canonical_smiles": ids["canonical_smiles"],
+                "inchikey": ids["inchikey"],
+                "inchikey14": ids["inchikey14"],
+                "score": round(score, 4),
+                "source": source,
+                "spectrum_path": str(ref_path),
+            }
+        )
 
     # Rank by score (missed entries last)
     results.sort(key=lambda r: r.get("score") or -1.0, reverse=True)
@@ -549,7 +598,9 @@ def main():
     if args.plot:
         q_x_full, q_y_full = load_spectrum(query_path)
         scored = [r for r in results if r.get("score") is not None]
-        plot_overlay(q_x_full, q_y_full, scored, output_dir / "match_plot.png", args.modality)
+        plot_overlay(
+            q_x_full, q_y_full, scored, output_dir / "match_plot.png", args.modality
+        )
 
     if _save_skill_inputs is not None:
         _save_skill_inputs(args, args.output_dir)

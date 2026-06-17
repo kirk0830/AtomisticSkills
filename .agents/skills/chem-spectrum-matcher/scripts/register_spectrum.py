@@ -52,13 +52,13 @@ def mol_identifiers(smiles: str) -> dict:
     Raises ValueError if SMILES is invalid.
     """
     from rdkit import Chem
-    from rdkit.Chem.inchi import MolToInchiKey, MolToInchi
+    from rdkit.Chem.inchi import MolToInchiKey
 
     mol = Chem.MolFromSmiles(smiles)
     if mol is None:
         raise ValueError(f"Invalid SMILES: {smiles}")
     canonical = Chem.MolToSmiles(mol)
-    inchi = MolToInchi(mol) or ""
+
     inchikey = MolToInchiKey(mol) or ""
     inchikey14 = inchikey[:14] if inchikey else ""
     return {
@@ -133,12 +133,16 @@ def register_from_nmr_predict(
             "inchikey14": ids["inchikey14"],
             "modality": modality,
             "spectrum": str(pathlib.Path(spectrum).resolve()),
-            "signals": str(pathlib.Path(entry.get("signals", "")).resolve()) if entry.get("signals") else "",
+            "signals": str(pathlib.Path(entry.get("signals", "")).resolve())
+            if entry.get("signals")
+            else "",
             "n_signals": entry.get("n_signals", 0),
             "n_atoms_h": entry.get("n_atoms_h", 0),
             "parameters": manifest.get("parameters", {}),
         }
-        print(f"  Registered {name} ({ids['canonical_smiles']}) [{modality}]  InChIKey: {ids['inchikey']}")
+        print(
+            f"  Registered {name} ({ids['canonical_smiles']}) [{modality}]  InChIKey: {ids['inchikey']}"
+        )
         registered += 1
 
     return registered, skipped
@@ -200,7 +204,9 @@ def register_from_files(
             "signals": "",
             "parameters": {},
         }
-        print(f"  Registered {name} ({ids['canonical_smiles']}) [{modality}]  InChIKey: {ids['inchikey']}")
+        print(
+            f"  Registered {name} ({ids['canonical_smiles']}) [{modality}]  InChIKey: {ids['inchikey']}"
+        )
         registered += 1
 
     return registered, skipped
@@ -252,10 +258,14 @@ def main():
     manifest_path = source_dir / "predictions.json"
 
     if manifest_path.exists():
-        registered, skipped = register_from_nmr_predict(source_dir, args.modality, catalog, args.overwrite)
+        registered, skipped = register_from_nmr_predict(
+            source_dir, args.modality, catalog, args.overwrite
+        )
     else:
         if not args.smiles or not args.names:
-            ap.error("--smiles and --names required when predictions.json is absent in source_dir")
+            ap.error(
+                "--smiles and --names required when predictions.json is absent in source_dir"
+            )
         if len(args.smiles) != len(args.names):
             ap.error("--smiles and --names must have equal length")
         registered, skipped = register_from_files(
