@@ -552,7 +552,9 @@ class MLIPModel(ABC):
             from nvalchemi.data import Batch
             from nvalchemi.dynamics.base import DynamicsStage, ConvergenceHook
             from nvalchemi.dynamics.optimizers.fire import FIRE
-            from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
+            from src.utils.mlips.nvalchemi.nvalchemi_utils import (
+                ScaledFIRE2VariableCell,
+            )
             from nvalchemi.hooks.neighbor_list import NeighborListHook
         except ImportError as e:
             logger.warning(f"NValchemi import failed: {e}; falling back to sequential.")
@@ -586,7 +588,16 @@ class MLIPModel(ABC):
         from nvalchemi.dynamics.hooks import SnapshotHook
         from nvalchemi.dynamics.sinks import HostMemory
 
-        atoms_list = [self.check_structure_data(s) for s in structure_list]
+        atoms_list = []
+        for s in structure_list:
+            atoms = self.check_structure_data(s)
+            if hasattr(atoms, "cell") and atoms.cell and atoms.cell.volume > 1e-6:
+                std_cell, Q = atoms.cell.standard_form()
+                atoms.set_cell(std_cell, scale_atoms=False)
+                atoms.positions = atoms.positions @ Q.T
+                if atoms.get_velocities() is not None:
+                    atoms.set_velocities(atoms.get_velocities() @ Q.T)
+            atoms_list.append(atoms)
 
         # Switch to inflight mode when all structures would exceed GPU memory.
         # Models that set _nvalchemi_supports_inflight=False (e.g. CHGNet, M3GNet)
@@ -625,7 +636,7 @@ class MLIPModel(ABC):
         batch = Batch.from_data_list(data_list)
 
         if relax_cell:
-            optimizer_obj = FIRE2VariableCell(
+            optimizer_obj = ScaledFIRE2VariableCell(
                 model=nv_model,
                 dt=0.05,
                 n_steps=steps,
@@ -793,7 +804,7 @@ class MLIPModel(ABC):
         from nvalchemi.dynamics import SizeAwareSampler
         from nvalchemi.dynamics.base import ConvergenceHook, DynamicsStage, FusedStage
         from nvalchemi.dynamics.optimizers.fire import FIRE
-        from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
+        from src.utils.mlips.nvalchemi.nvalchemi_utils import ScaledFIRE2VariableCell
         from nvalchemi.hooks.neighbor_list import NeighborListHook
         from pymatgen.io.ase import AseAtomsAdaptor
         from src.utils.mlips.nvalchemi.nvalchemi_utils import (
@@ -872,7 +883,7 @@ class MLIPModel(ABC):
         )
 
         if relax_cell:
-            fire_stage = FIRE2VariableCell(
+            fire_stage = ScaledFIRE2VariableCell(
                 model=nv_model,
                 dt=0.05,
                 # Per-system step budget: structures graduate after `steps` FIRE

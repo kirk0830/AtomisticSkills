@@ -9,6 +9,7 @@ try:
     import torch
     from nvalchemi.data import AtomicData
     from nvalchemi.dynamics.sinks import HostMemory
+    from nvalchemi.dynamics.optimizers.fire2 import FIRE2VariableCell
 
     NVALCHEMI_AVAILABLE = True
 except ImportError:
@@ -18,6 +19,10 @@ except ImportError:
         pass
 
     class HostMemory:  # type: ignore
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            pass
+
+    class FIRE2VariableCell:  # type: ignore
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             pass
 
@@ -757,3 +762,68 @@ class ForceStressClippingHook:
             batch.stress.copy_(
                 torch.clamp(batch.stress, min=-self.max_stress, max=self.max_stress)
             )
+
+
+class ScaledFIRE2VariableCell(FIRE2VariableCell):
+    """FIRE2 variable-cell optimizer with cell force and velocity scaling.
+
+    Prevents cell explosion by scaling cell degrees of freedom by a factor
+    proportional to the number of atoms in the system, matching the behavior
+    of ASE's UnitCellFilter.
+    """
+
+    def pre_update(self, batch: Any) -> None:
+        import torch
+        from nvalchemi.dynamics.optimizers.fire2 import fire2_step_coord_cell
+        from nvalchemi.dynamics._ops.npt_nph import stress_to_cell_force
+
+        # 1. Compute cell force from stress
+        volumes = torch.linalg.det(batch.cell).abs()
+        stress_sigma = batch.stress
+        cell_force = stress_to_cell_force(stress_sigma, batch.cell, volumes)
+
+        # 2. Compute per-system cell factor f = number of atoms
+        num_atoms_per_system = torch.zeros(
+            batch.num_graphs, dtype=torch.int32, device=batch.device
+        )
+        num_atoms_per_system.scatter_add_(
+            0,
+            batch.batch_idx.long(),
+            torch.ones_like(batch.batch_idx, dtype=torch.int32),
+        )
+        f = num_atoms_per_system.to(batch.positions.dtype)
+        f = torch.clamp(f, min=1.0).view(-1, 1, 1)
+
+        # 3. Scale cell, cell_velocities, and cell_force
+        batch.cell.copy_(batch.cell * f)
+        self._state.cell_velocities.copy_(self._state.cell_velocities * f)
+        cell_force_scaled = cell_force / f
+
+        # 4. Call the original step function
+        fire2_step_coord_cell(
+            batch.positions.detach(),
+            batch.velocities,
+            batch.forces,
+            batch.cell.detach(),
+            self._state.cell_velocities,
+            cell_force_scaled,
+            batch.batch_idx.int(),
+            self._state.alpha,
+            self._state.dt,
+            self._state.nsteps_inc,
+            vf=self._state.vf,
+            v_sumsq=self._state.v_sumsq,
+            f_sumsq=self._state.f_sumsq,
+            delaystep=self.delaystep,
+            dtgrow=self.dtgrow,
+            dtshrink=self.dtshrink,
+            alphashrink=self.alphashrink,
+            alpha0=self.alpha0,
+            tmax=self.tmax,
+            tmin=self.tmin,
+            maxstep=self.maxstep,
+        )
+
+        # 5. Unscale cell and cell_velocities
+        batch.cell.copy_(batch.cell / f)
+        self._state.cell_velocities.copy_(self._state.cell_velocities / f)
