@@ -86,7 +86,7 @@ The gap grows with larger structures (more atoms → more FIRE steps → GPU sta
 
 ### Mode Benchmark: Serial vs. Fixed-Batch vs. Inflight-Batch (10 structures, 50 steps)
 
-Below is a three-way relaxation mode benchmark on 10 structures for 50 steps using MACE and TensorNet:
+Below is a three-way relaxation mode benchmark on 10 structures for 50 steps using MACE, TensorNet, and FairChem:
 
 #### MACE-OMAT-0-small (`mace-agent`)
 - **Serial Mode:** 13.24 s
@@ -99,6 +99,11 @@ Below is a three-way relaxation mode benchmark on 10 structures for 50 steps usi
 - **Inflight-Batch Mode:** 14.53 s (0.6x - JIT compiler/graph overhead dominates for small datasets)
 
 > **Important (TensorNet Energy Increase Bug):** In TensorNet's inflight batching, a neighbor list graduation issue caused massive energy increases and force clipping in `relax.log` (e.g. from -390.7 eV to -268.5 eV) due to its COO-format neighbor lists not shifting index offsets correctly upon graduation. To prevent this, we explicitly set `_nvalchemi_supports_inflight = False` for the TensorNet wrapper, forcing it to fall back to fixed-batch or sequential mode, matching CHGNet and M3GNet.
+
+#### FairChem uma-s-1p2 (`fairchem-agent`)
+- **Serial Mode:** 24.58 s
+- **Fixed-Batch Mode:** 30.89 s (0.8x - overhead dominates fixed-batch execution for small datasets)
+- **Inflight-Batch Mode:** 16.57 s (**1.5x speedup**)
 
 
 ## Instructions

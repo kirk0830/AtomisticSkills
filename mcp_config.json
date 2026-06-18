@@ -18,7 +18,12 @@
         "src.mcp_server.mace_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills",
+        "CONDA_PREFIX": "/home/bdeng/miniforge3/envs/mace-agent",
+        "TRITON_PTXAS_BLACKWELL_PATH": "/home/bdeng/miniforge3/envs/mace-agent/bin/ptxas",
+        "PATH": "/home/bdeng/miniforge3/envs/mace-agent/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "CUDA_LAUNCH_BLOCKING": "1",
+        "TORCH_USE_CUDA_DSA": "1"
       }
     },
     "fairchem": {

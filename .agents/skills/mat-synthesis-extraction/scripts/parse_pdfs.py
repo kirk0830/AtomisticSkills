@@ -88,7 +88,9 @@ def process_pdf_folder(pdf_dir: Path, output_dir: Path) -> list[dict]:
     summary_path = output_dir / "parse_summary.json"
     summary_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
     print(f"\nSummary written to {summary_path}")
-    print(f"Processed {len(results)} PDFs — {sum(r['status'] == 'ok' for r in results)} succeeded.")
+    print(
+        f"Processed {len(results)} PDFs — {sum(r['status'] == 'ok' for r in results)} succeeded."
+    )
     return results
 
 

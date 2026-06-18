@@ -273,6 +273,32 @@ def load_mcp_servers(conda_base: str) -> dict[str, Any]:
         env = server.get("env", {})
         if "PYTHONPATH" in env:
             env["PYTHONPATH"] = project_root
+        # Rewrite CONDA_PREFIX so Triton's ptxas-blackwell fallback resolves
+        # correctly on Blackwell+ GPUs even when the MCP server is launched
+        # without full conda activation (no PATH / CONDA_PREFIX from conda init).
+        if "CONDA_PREFIX" in env and match:
+            env["CONDA_PREFIX"] = f"{conda_base}/envs/{env_name}"
+        # Explicit Triton ptxas-blackwell path: more direct than CONDA_PREFIX
+        # fallback. Required on Blackwell GPUs (sm_100+, compute capability ≥ 12.0)
+        # where torch.compile triggers Triton JIT compilation via nvalchemi hooks.
+        if "TRITON_PTXAS_BLACKWELL_PATH" in env and match:
+            env["TRITON_PTXAS_BLACKWELL_PATH"] = (
+                f"{conda_base}/envs/{env_name}/bin/ptxas"
+            )
+        # Rewrite PATH: replace the placeholder conda env bin dir so that
+        # shutil.which('ptxas-blackwell') resolves correctly in MCP server
+        # processes that do not have full conda activation.
+        if "PATH" in env and match:
+            env_bin = f"{conda_base}/envs/{env_name}/bin"
+            # Replace any existing envs/<name>/bin prefix in PATH
+            import re as _re
+
+            env["PATH"] = _re.sub(
+                r"[^ ]*?/envs/[^/]+/bin",
+                env_bin,
+                env["PATH"],
+                count=1,
+            )
 
     return config.get("mcpServers", {})
 

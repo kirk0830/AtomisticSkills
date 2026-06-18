@@ -31,6 +31,9 @@ conda activate $ENV_NAME
 echo "Installing pip dependencies with uv..."
 python -m pip install --extra-index-url https://pypi.nvidia.com -r uv_requirements.txt
 
+echo "Ensuring Triton is completely installed from PyPI (overriding conda-forge)..."
+python -m pip install --force-reinstall triton
+
 # Cleanup
 rm conda_only_env.yaml uv_requirements.txt
 echo "Environment $ENV_NAME created successfully!"
