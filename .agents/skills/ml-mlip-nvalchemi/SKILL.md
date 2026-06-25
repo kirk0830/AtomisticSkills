@@ -119,8 +119,8 @@ Below is the speedup comparison for running a 100-step molecular dynamics simula
 - **Batched MD (NValchemi):** 7.17 s (**7.20x speedup**)
 
 #### FairChem uma-s-1p2 (`fairchem-agent`)
-- **Sequential MD:** 82.52 s
-- **Batched MD (NValchemi):** 18.06 s (**4.57x speedup**)
+- **Sequential MD:** 266.03 s
+- **Batched MD (NValchemi):** 11.31 s (**23.53x speedup**)
 
 
 ## Instructions
