@@ -106,6 +106,23 @@ Below is a three-way relaxation mode benchmark on 10 structures for 50 steps usi
 - **Inflight-Batch Mode:** 16.57 s (**1.5x speedup**)
 
 
+### Molecular Dynamics (MD) Benchmark: Sequential vs. Batched (20 structures, 100 steps)
+
+Below is the speedup comparison for running a 100-step molecular dynamics simulation under the `nvt_nose_hoover` ensemble at 300K on 20 strained Cu FCC structures (expanded to $\ge 10\text{ \AA}$ supercells):
+
+#### MACE-OMAT-0-small (`mace-agent`)
+- **Sequential MD:** 54.11 s
+- **Batched MD (NValchemi):** 10.97 s (**4.93x speedup**)
+
+#### TensorNet-PES-MatPES-PBE-2025.2 (`matgl-agent`)
+- **Sequential MD:** 51.63 s
+- **Batched MD (NValchemi):** 7.17 s (**7.20x speedup**)
+
+#### FairChem uma-s-1p2 (`fairchem-agent`)
+- **Sequential MD:** 82.52 s
+- **Batched MD (NValchemi):** 18.06 s (**4.57x speedup**)
+
+
 ## Instructions
 
 ### Step 1 — Verify NValchemi is Available
