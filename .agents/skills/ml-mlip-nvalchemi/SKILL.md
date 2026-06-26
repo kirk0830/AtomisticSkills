@@ -108,19 +108,25 @@ Below is a three-way relaxation mode benchmark on 10 structures for 50 steps usi
 
 ### Molecular Dynamics (MD) Benchmark: Sequential vs. Batched (20 structures, 100 steps)
 
-Below is the speedup comparison for running a 100-step molecular dynamics simulation under the `nvt_nose_hoover` ensemble at 300K on 20 strained Cu FCC structures (expanded to $\ge 10\text{ \AA}$ supercells):
+Speedup comparison for a 100-step MD simulation under the `nvt_nose_hoover` ensemble at 300 K on 20 strained Cu FCC structures, each expanded to a fixed 108-atom cubic supercell ($\ge 10\text{ \AA}$ sides). Sequential = NValchemi disabled, structures run one at a time; Batched = all 20 driven through NValchemi integrators in a single GPU batch. Best-of-2 wall time, measured serially (one environment at a time to avoid GPU contention).
 
 #### MACE-OMAT-0-small (`mace-agent`)
-- **Sequential MD:** 54.11 s
-- **Batched MD (NValchemi):** 10.97 s (**4.93x speedup**)
+- **Sequential MD:** 54.48 s
+- **Batched MD (NValchemi):** 11.12 s (**4.90x speedup**)
 
 #### TensorNet-PES-MatPES-PBE-2025.2 (`matgl-agent`)
-- **Sequential MD:** 51.63 s
-- **Batched MD (NValchemi):** 7.17 s (**7.20x speedup**)
+- **Sequential MD:** 58.28 s
+- **Batched MD:** disabled — routed to sequential (see note below; ~0.88x even when forced, i.e. *slower* than sequential)
 
 #### FairChem uma-s-1p2 (`fairchem-agent`)
-- **Sequential MD:** 266.03 s
-- **Batched MD (NValchemi):** 11.31 s (**23.53x speedup**)
+- **Sequential MD:** 339.74 s
+- **Batched MD:** disabled — routed to sequential (see note below; measured ~0.64x, i.e. *slower*, before being disabled)
+
+> **When does batched MD help?** Only for models whose per-structure forward pass is cheap enough to be launch-latency-bound at small system sizes (e.g. MACE, **4.90x**). For both the very light TensorNet and the heavy FairChem uma-s-1p2, batching is at or below 1x, so their MD is routed to sequential. The wrappers still accept a list of structures (and batch **static/relax** remain available); only the **MD** path is gated. Measured on NVIDIA GB10 (aarch64, CUDA 13, Warp 1.14).
+
+> **FairChem batched MD disabled (`_nvalchemi_supports_batch_md = False`):** uma-s-1p2's forward scales **superlinearly per atom** — ≈1.57 ms/atom at batch=1 (108 atoms) rising to ≈2.43 ms/atom at batch=20 (2160 atoms), 1.55x worse — so a single large batched step is *slower* than running the structures one at a time through the model's optimized single-system path (batched 0.64x). Two facts pin this down: (1) the cost is intrinsic to the eSCN/MoE forward, not the neighbor list — correcting the wrapper cutoff (12 A → the model's true 6 A) cut `adapt_input` edges from 530 to 78 per atom but left the per-step time unchanged at ~5.25 s; (2) uma-s-1p2 runs with `external_graph_gen=False`, so it **rebuilds its own graph internally and ignores the edges `adapt_input` provides** (energies are identical for any cutoff we pass, including a 0-edge 2 A list). Batched MD is therefore correct (energies match sequential to 0.00 meV/atom) but never a speedup, so `run_md` falls back to sequential.
+
+> **TensorNet batched MD disabled (`_nvalchemi_supports_batch_md = False`):** TensorNet + NValchemi MD is officially supported in MatGL (`matgl.ext.alchmtk.TensorNetWrapper`, whose docstring documents the exact `NeighborListHook` path we use), so this is *not* a TensorNet incompatibility. On this hardware, however, TensorNet's light forward pass exposes a race in nvalchemi's `NeighborListHook.__call__`: the `@torch.compile`'d hook reads `num_neighbors.max()` before the asynchronous Warp neighbor-list kernel (on a non-default CUDA stream) finishes writing, yielding a garbage count that raises `NeighborOverflowError` and corrupts the CUDA context. A heavier forward (MACE) hides the race; TensorNet does not. Since (a) working around it would require patching the third-party nvalchemi-toolkit and (b) batched MD is *slower* than sequential for TensorNet anyway, the TensorNet wrapper sets `_nvalchemi_supports_batch_md = False` and `run_md` falls back to sequential. Batch **static** and **relax** for TensorNet are unaffected (they build the neighbor list once, off the hook).
 
 
 ## Instructions

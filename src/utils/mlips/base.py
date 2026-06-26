@@ -1376,6 +1376,18 @@ class MLIPModel(ABC):
             extract_batch_results as extract_batch_results_fn,
         )
 
+        # Models that set _nvalchemi_supports_batch_md=False (e.g. TensorNet)
+        # opt out of batched MD: their light forward pass races the asynchronous
+        # Warp neighbor-list kernel inside the per-step NeighborListHook, raising
+        # NeighborOverflowError. Fall back to sequential MD.
+        if not getattr(nv_model, "_nvalchemi_supports_batch_md", True):
+            return {
+                "error": (
+                    f"Batch MD not supported by NValchemi for "
+                    f"{type(nv_model).__name__}; using sequential."
+                )
+            }
+
         # Map ensemble names → NValchemi integrator classes
         _SEQUENTIAL_ENSEMBLES = {
             "nvt_berendsen",

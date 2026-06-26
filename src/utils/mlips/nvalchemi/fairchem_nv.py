@@ -299,6 +299,32 @@ class FairChemWrapper(nn.Module, BaseModelMixin):  # type: ignore[misc]
         return wrapper.to(device)
 
 
+def _find_backbone(predict_unit: Any) -> Optional[Any]:
+    """Locate the FairChem backbone module under a predict_unit.
+
+    Tries the known nesting (``model.module.backbone`` for an AveragedModel
+    wrapping a HydraModel, and ``model.backbone``) and otherwise walks
+    ``named_modules()`` for the first module exposing a ``cutoff`` attribute.
+    """
+    for path in ("model.module.backbone", "model.backbone", "backbone"):
+        obj = predict_unit
+        ok = True
+        for attr in path.split("."):
+            if not hasattr(obj, attr):
+                ok = False
+                break
+            obj = getattr(obj, attr)
+        if ok and hasattr(obj, "cutoff"):
+            return obj
+
+    named_modules = getattr(predict_unit, "named_modules", None)
+    if named_modules is not None:
+        for _name, mod in named_modules():
+            if hasattr(mod, "cutoff") and hasattr(mod, "max_neighbors"):
+                return mod
+    return None
+
+
 def get_nvalchemi_fairchem_model(wrapper: "FAIRCHEMWrapper") -> Optional[Any]:
     """Return a NValchemi-compatible FairChemWrapper for the loaded model.
 
@@ -315,21 +341,43 @@ def get_nvalchemi_fairchem_model(wrapper: "FAIRCHEMWrapper") -> Optional[Any]:
         return wrapper._nv_model
 
     try:
-        # Try to infer the model's cutoff from the predict_unit backbone
-        cutoff = 12.0
-        if hasattr(wrapper.model, "backbone") and hasattr(
-            wrapper.model.backbone, "cutoff"
-        ):
-            cutoff = float(wrapper.model.backbone.cutoff)
-        elif hasattr(wrapper.model, "model") and hasattr(wrapper.model.model, "cutoff"):
-            cutoff = float(wrapper.model.model.cutoff)
+        # Read the model's true cutoff and max_neighbors from the backbone.
+        # The predict_unit nests it as predict_unit.model(.module).backbone, so
+        # probe a few known layouts and the generic named_modules() walk before
+        # falling back. NOTE: uma-s-1p2 runs with external_graph_gen=False, so it
+        # rebuilds its own graph internally and IGNORES the edges adapt_input
+        # provides — passing the right cutoff doesn't change results, it only
+        # keeps adapt_input from building a needlessly dense (e.g. 12 A, ~530
+        # edges/atom) list that is then discarded.
+        backbone = _find_backbone(wrapper.model)
+        cutoff = 6.0
+        max_neigh = 300
+        if backbone is not None:
+            if hasattr(backbone, "cutoff"):
+                cutoff = float(backbone.cutoff)
+            if hasattr(backbone, "max_neighbors"):
+                max_neigh = int(backbone.max_neighbors)
+        else:
+            logger.warning(
+                "Could not locate FairChem backbone to read cutoff/max_neighbors; "
+                f"using defaults cutoff={cutoff} A, max_neigh={max_neigh}."
+            )
 
         nv_model = FairChemWrapper.from_predict_unit(
             predict_unit=wrapper.model,
             task_name=wrapper.task_name,
             device=wrapper.device,
             cutoff=cutoff,
+            max_neigh=max_neigh,
         )
+        # Batch MD is disabled for FairChem: uma-s-1p2's forward scales
+        # superlinearly per atom (≈1.6 ms/atom at batch=1 → ≈2.4 ms/atom at
+        # batch=20), so a single large batched step is slower than running the
+        # structures sequentially through the model's optimized single-system
+        # path. Batched MD is correct (energies match sequential exactly) but
+        # never a speedup, so run_md falls back to sequential. Batch
+        # static/relax remain available.
+        nv_model._nvalchemi_supports_batch_md = False
         wrapper._nv_model = nv_model  # cache
         return nv_model
 
