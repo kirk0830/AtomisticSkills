@@ -1,0 +1,100 @@
+{#- 
+    Base Slurm job script template.
+    
+    Variables:
+        job: JobSpec object with all configuration
+    
+    Usage:
+        from src.utils.hpc.job_template import generate_slurm_script
+        script = generate_slurm_script(job_spec)
+-#}
+#!/bin/bash
+
+# ============================================================
+#  SLURM Directives
+# ============================================================
+
+#SBATCH --job-name={{ job.name }}
+#SBATCH --nodes={{ job.nodes }}
+#SBATCH --ntasks-per-node={{ job.ntasks_per_node }}
+#SBATCH --cpus-per-task={{ job.cpus_per_task }}
+{% if job.partition %}
+#SBATCH --partition={{ job.partition }}
+{% endif %}
+{% if job.qos %}
+#SBATCH --qos={{ job.qos }}
+{% endif %}
+{% if job.time_limit %}
+#SBATCH --time={{ job.time_limit }}
+{% endif %}
+{% if job.memory_per_node %}
+#SBATCH --mem={{ job.memory_per_node }}
+{% endif %}
+{% if job.gres %}
+#SBATCH --gres={{ job.gres }}
+{% endif %}
+#SBATCH --output={{ job.output_file }}
+#SBATCH --error={{ job.error_file }}
+{% if job.account %}
+#SBATCH --account={{ job.account }}
+{% endif %}
+{% if job.email %}
+#SBATCH --mail-user={{ job.email }}
+#SBATCH --mail-type={{ job.email_type }}
+{% endif %}
+{% for directive in job.extra_directives %}
+{% if directive.strip().startswith('#SBATCH') %}
+{{ directive }}
+{% else %}
+#SBATCH {{ directive }}
+{% endif %}
+{% endfor %}
+
+# ============================================================
+#  Environment Setup
+# ============================================================
+
+{% if job.work_dir %}
+cd {{ job.work_dir | quote }}
+{% endif %}
+
+{% if job.modules %}
+# Load modules
+{% for mod in job.modules %}
+module load {{ mod }}
+{% endfor %}
+{% endif %}
+
+{% if job.environment %}
+# Environment variables
+{% for key, value in job.environment.items() %}
+export {{ key }}={{ value | quote }}
+{% endfor %}
+{% endif %}
+
+{% if job.pre_run %}
+# Pre-run setup
+{{ job.pre_run }}
+{% endif %}
+
+# ============================================================
+#  Job Execution
+# ============================================================
+
+echo "=== Job started at $(date) ==="
+echo "Job ID: $SLURM_JOB_ID"
+echo "Job Name: $SLURM_JOB_NAME"
+echo "Node list: $SLURM_JOB_NODELIST"
+echo "Working directory: $(pwd)"
+
+# Run the main command
+{{ job.command }}
+EXIT_CODE=$?
+
+{% if job.post_run %}
+# Post-run cleanup
+{{ job.post_run }}
+{% endif %}
+
+echo "=== Job finished at $(date) with exit code $EXIT_CODE ==="
+exit $EXIT_CODE
