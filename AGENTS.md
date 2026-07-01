@@ -5,7 +5,7 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 **Read these rules files at the start of every conversation:**
 - `.agents/rules/research-standards.md` — research protocol, intent classification, plan workflow
 - `.agents/rules/coding-standards.md` — coding rules, environment management, MCP stability
-- `.agents/rules/mcp-environments.md` — conda environment to MCP server mapping
+- `.agents/rules/mcp-environments.md` — Pixi environment to MCP server mapping
 
 **Read these on demand when the task requires it:**
 - `.agents/rules/skill-standards.md` — for creating or editing a skill
@@ -22,6 +22,8 @@ This project decomposes complex research tasks into three levels:
 
 When a user asks a research question, check workflows first for end-to-end protocols, then find the relevant skill(s).
 
+For a full cross-reference of workflows → skills → MCP tools, see `docs/skill_mcp_workflow_map.md`.
+
 ## Skill Discovery
 
 Skills are at `.agents/skills/`. Scan frontmatter descriptions to find relevant ones:
@@ -33,17 +35,21 @@ Then read the full `SKILL.md` for any matching skill and follow its numbered ins
 
 ## Executing Skills
 
+### Environment Management: Pixi (Preferred)
+
+All environments are defined in `pixi.toml`. Use `pixi run -e <env-name>` to execute scripts in the correct environment.
+
 ### Scripts with `# Env:` annotations
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-melting-point/scripts/create_interface.py ...
 ```
 Run with:
 ```bash
-mamba activate <env-name>
-# or
-conda run -n <env-name> python <path-to-script> [args]
+pixi run -e mace python .agents/skills/mat-melting-point/scripts/create_interface.py [args]
 ```
+
+Common environments: `base`, `mace`, `matgl`, `fairchem`, `atomate2`, `drugdisc`, `drugmd`, `nmr`, `msms`, `xrd`, `void`, `orca`. See `.agents/rules/mcp-environments.md` for the full list.
 
 ### MCP tool calls
 Skills that reference `mcp_*` functions require MCP servers to be configured. If unavailable, check the skill's `scripts/` directory or `src/utils/`.
