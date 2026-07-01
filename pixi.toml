@@ -1,0 +1,465 @@
+# AtomisticSkills Pixi Configuration
+#
+# This configuration replaces the conda-envs/*/install.sh approach with
+# a declarative, reproducible, and isolated environment management system.
+#
+# Key improvements over Conda:
+# 1. No brutal env remove/create - incremental updates
+# 2. Environments isolated in .pixi/envs/ - no PATH pollution
+# 3. Lockfile (pixi.lock) ensures reproducibility
+# 4. Tasks replace shell scripts
+# 5. Multiple environments in one workspace
+
+[workspace]
+name = "atomistic-skills"
+description = "AI-driven atomistic materials research framework"
+authors = ["AtomisticSkills Team"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64"]
+# Note: Some environments (orca, CUDA) are platform-specific
+
+# =============================================================================
+# FEATURE DEFINITIONS
+# Features are dependency groups that can be combined into environments
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Core Feature: Shared base dependencies for all environments
+# -----------------------------------------------------------------------------
+[feature.core.dependencies]
+python = ">=3.10,<3.13"
+pip = "*"
+numpy = ">=1.20"
+scipy = ">=1.7"
+pymatgen = "*"
+ase = ">=3.22"
+typing-extensions = "*"
+mcp = "*"
+
+[feature.core.pypi-dependencies]
+# PyPI-only packages
+optimade = { version = "*", extras = ["client"] }
+
+# -----------------------------------------------------------------------------
+# Chemistry Feature: Molecular chemistry tools
+# -----------------------------------------------------------------------------
+[feature.chemistry.dependencies]
+rdkit = "*"
+packmol = "*"
+
+# -----------------------------------------------------------------------------
+# PyTorch Base Feature: Shared PyTorch (CPU variant)
+# -----------------------------------------------------------------------------
+[feature.torch-base.dependencies]
+pytorch = ">=2.0"
+
+# -----------------------------------------------------------------------------
+# PyTorch CUDA Feature: GPU-accelerated PyTorch (linux-64 only)
+# -----------------------------------------------------------------------------
+[feature.torch-cuda]
+platforms = ["linux-64"]
+
+[feature.torch-cuda.dependencies]
+pytorch = { version = ">=2.0", build = "*cuda*" }
+# CUDA toolkit from conda-forge
+cuda-toolkit = "*"
+
+[feature.torch-cuda.channels]
+channels = ["nvidia", "pytorch", "conda-forge"]
+
+# -----------------------------------------------------------------------------
+# MLIP-MACE Feature: MACE machine learning interatomic potential
+# -----------------------------------------------------------------------------
+[feature.mlip-mace.pypi-dependencies]
+mace-torch = "==0.3.15"
+sella = "*"
+matcalc = "*"
+setuptools = "<70"  # Compatibility requirement
+
+# -----------------------------------------------------------------------------
+# MLIP-MatGL Feature: MatGL/CHGNet/TensorNet potentials
+# -----------------------------------------------------------------------------
+[feature.mlip-matgl.pypi-dependencies]
+matgl = "*"
+matcalc = "*"
+cython = "*"
+
+# -----------------------------------------------------------------------------
+# MLIP-FairChem Feature: FairChem/UMA/ESEN potentials
+# -----------------------------------------------------------------------------
+[feature.mlip-fairchem.pypi-dependencies]
+fairchem-core = ">=2.18.0"
+matcalc = "*"
+setuptools = "<70"
+
+# -----------------------------------------------------------------------------
+# LAMMPS Feature: Molecular dynamics with MLIP support
+# -----------------------------------------------------------------------------
+[feature.lammps.dependencies]
+lammps = "*"
+# LAMMPS from conda-forge includes ML-MACE, ML-IAP packages
+
+# -----------------------------------------------------------------------------
+# DFT Feature: Atomate2 VASP workflows
+# -----------------------------------------------------------------------------
+[feature.dft.dependencies]
+python = ">=3.10,<3.11"  # Atomate2 requires Python 3.10
+
+[feature.dft.pypi-dependencies]
+atomate2 = "*"
+jobflow-remote = "*"
+amset = "*"
+lobsterpy = "*"
+ijson = "*"
+
+# -----------------------------------------------------------------------------
+# DFT-Orca Feature: SCINE/ReaDuct for molecular DFT (x86_64 only)
+# -----------------------------------------------------------------------------
+[feature.dft-orca]
+platforms = ["linux-64", "osx-64"]
+
+[feature.dft-orca.dependencies]
+python = ">=3.11,<3.12"
+scine-utilities-python = "*"
+scine-readuct-python = "*"
+
+[feature.dft-orca.pypi-dependencies]
+numpy = "<2"  # SCINE compatibility
+
+# -----------------------------------------------------------------------------
+# Generative-Base Feature: Shared dependencies for generative models
+# -----------------------------------------------------------------------------
+[feature.generative-base.pypi-dependencies]
+pytorch-lightning = ">=2.0"
+hydra-core = "==1.3.2"
+omegaconf = "==2.3.0"
+wandb = "*"
+
+# -----------------------------------------------------------------------------
+# Generative-DiffCSP Feature: Crystal structure generation
+# -----------------------------------------------------------------------------
+[feature.generative-diffcsp.pypi-dependencies]
+pyxtal = "*"
+torchdiffeq = "*"
+smact = "*"
+matminer = "*"
+einops = "*"
+
+# -----------------------------------------------------------------------------
+# Generative-MatterGen Feature: Diffusion-based material generation
+# -----------------------------------------------------------------------------
+[feature.generative-mattergen.pypi-dependencies]
+mattergen = "*"
+
+# -----------------------------------------------------------------------------
+# Generative-ADiT Feature: All-atom Diffusion Transformer
+# -----------------------------------------------------------------------------
+[feature.generative-adit]
+# Minimal dependencies - most installed via pip from source
+
+# -----------------------------------------------------------------------------
+# Generative-ReactOT Feature: Transition state generation
+# -----------------------------------------------------------------------------
+[feature.generative-reactot.dependencies]
+python = "==3.10.14"
+numpy = "==1.26.4"
+pytest = "*"
+
+# -----------------------------------------------------------------------------
+# Generative-SCD Feature: SelfConditionedDenoisingAtoms
+# -----------------------------------------------------------------------------
+[feature.generative-scd.dependencies]
+git = "*"  # For cloning external repo
+
+[feature.generative-scd.pypi-dependencies]
+lightning-utilities = "*"
+scikit-learn = ">=1.0"
+pandas = ">=1.3"
+datasets = ">=2.0"
+huggingface-hub = ">=0.10"
+fastmcp = "*"
+
+# -----------------------------------------------------------------------------
+# Thermodynamics Feature: CALPHAD phase diagrams
+# -----------------------------------------------------------------------------
+[feature.thermo-calphad.dependencies]
+numpy = "*"
+scipy = "*"
+matplotlib = "*"
+pandas = "*"
+xarray = "*"
+tinydb = "*"
+sympy = "*"
+jupyter = "*"
+ipyython = "*"
+
+[feature.thermo-calphad.pypi-dependencies]
+pycalphad = "*"
+
+# -----------------------------------------------------------------------------
+# PhaseField Feature: Cahn-Hilliard / Allen-Cahn simulations
+# -----------------------------------------------------------------------------
+[feature.phasefield.dependencies]
+fipy = "*"
+imageio = "*"
+tqdm = "*"
+
+# -----------------------------------------------------------------------------
+# ClusterExpansion Feature: smol for Monte Carlo
+# -----------------------------------------------------------------------------
+[feature.cluster-expansion.pypi-dependencies]
+smol = "*"
+polytope = "*"
+scikit-learn = "*"
+pyyaml = "*"
+
+# -----------------------------------------------------------------------------
+# DrugDiscovery Feature: Drug discovery tools
+# -----------------------------------------------------------------------------
+[feature.drugdiscovery.dependencies]
+vina = "*"
+pdbfixer = "*"
+fpocket = "*"
+
+[feature.drugdiscovery.pypi-dependencies]
+meeko = "*"
+gemmi = "*"
+openbabel-wheel = "*"
+biopython = "*"
+dimorphite_dl = "*"
+posebusters = "*"
+MDAnalysis = "*"
+
+# -----------------------------------------------------------------------------
+# Spectroscopy-NMR Feature: NMR spectrum prediction
+# -----------------------------------------------------------------------------
+[feature.spectroscopy-nmr.dependencies]
+rdkit = "*"
+
+[feature.spectroscopy-nmr.pypi-dependencies]
+nmrsim = "*"
+opencv-python-headless = "*"
+Pillow = "*"
+
+# -----------------------------------------------------------------------------
+# Spectroscopy-MSMS Feature: Mass spectrum prediction (ICEBERG)
+# -----------------------------------------------------------------------------
+[feature.spectroscopy-msms.dependencies]
+python = "==3.10"
+cython = "*"
+rdkit = "*"
+python-graphviz = "*"
+pygraphviz = "*"
+pytorch = "==2.4.0"
+einops = "*"
+seaborn = "*"
+h5py = "*"
+
+[feature.spectroscopy-msms.pypi-dependencies]
+"ray[tune]" = "==2.7.2"
+pygmtools = "*"
+msbuddy = "*"
+lightgbm = "*"
+CairoSVG = "*"
+
+# -----------------------------------------------------------------------------
+# PorousMaterials Feature: VOID for sorption calculations
+# -----------------------------------------------------------------------------
+[feature.porous-materials.dependencies]
+numpy = "*"
+scikit-learn = "*"
+networkx = "*"
+rdkit = "*"
+
+[feature.porous-materials.pypi-dependencies]
+zeopp-lsmo = "*"
+
+# -----------------------------------------------------------------------------
+# Analysis Feature: Trajectory analysis, plotting, etc.
+# -----------------------------------------------------------------------------
+[feature.analysis.dependencies]
+h5py = "*"
+phonopy = "*"
+beautifulsoup4 = "*"
+
+[feature.analysis.pypi-dependencies]
+reaction-network = "*"
+pymatgen-analysis-diffusion = "*"
+
+# -----------------------------------------------------------------------------
+# XRD Feature: X-ray diffraction analysis
+# -----------------------------------------------------------------------------
+[feature.xrd.dependencies]
+# Inherits from core
+
+# =============================================================================
+# ENVIRONMENT DEFINITIONS
+# Environments combine features and define which MCP server they support
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Base Environment: Core tools and MCP server
+# -----------------------------------------------------------------------------
+[environments.base]
+features = ["core", "chemistry", "analysis"]
+
+# -----------------------------------------------------------------------------
+# MLIP Environments: Machine Learning Interatomic Potentials
+# Using solve-group "mlip" to share dependency resolution
+# -----------------------------------------------------------------------------
+
+[environments.mace]
+features = ["core", "torch-cuda", "mlip-mace", "analysis"]
+solve-group = "mlip-cuda"
+
+[environments.mace-lammps]
+features = ["core", "torch-cuda", "mlip-mace", "lammps", "analysis"]
+solve-group = "mlip-cuda"
+
+[environments.matgl]
+features = ["core", "torch-base", "mlip-matgl", "analysis"]
+solve-group = "mlip-base"
+
+[environments.matgl-lammps]
+features = ["core", "torch-base", "mlip-matgl", "lammps", "analysis"]
+solve-group = "mlip-base"
+
+[environments.fairchem]
+features = ["core", "torch-cuda", "mlip-fairchem", "analysis"]
+solve-group = "mlip-cuda"
+
+[environments.fairchem-lammps]
+features = ["core", "torch-cuda", "mlip-fairchem", "lammps", "analysis"]
+solve-group = "mlip-cuda"
+
+# -----------------------------------------------------------------------------
+# DFT Environments: First-principles calculations
+# -----------------------------------------------------------------------------
+
+[environments.atomate2]
+features = ["core", "chemistry", "dft", "analysis"]
+
+[environments.orca]
+features = ["core", "chemistry", "dft-orca", "analysis"]
+platforms = ["linux-64", "osx-64"]
+
+# -----------------------------------------------------------------------------
+# Generative Environments: Structure generation models
+# -----------------------------------------------------------------------------
+
+[environments.diffcsp]
+features = ["core", "torch-base", "generative-base", "generative-diffcsp"]
+
+[environments.mattergen]
+features = ["core", "torch-base", "generative-base", "generative-mattergen"]
+
+[environments.adit]
+features = ["core", "torch-base", "generative-base", "generative-adit"]
+
+[environments.react-ot]
+features = ["core", "generative-reactot"]
+
+[environments.scd]
+features = ["core", "torch-base", "generative-base", "generative-scd"]
+
+# -----------------------------------------------------------------------------
+# Thermodynamics Environments: Phase diagrams and CALPHAD
+# -----------------------------------------------------------------------------
+
+[environments.calphad]
+features = ["core", "thermo-calphad"]
+
+[environments.phasefield]
+features = ["core", "phasefield"]
+
+[environments.smol]
+features = ["core", "chemistry", "cluster-expansion"]
+
+# -----------------------------------------------------------------------------
+# Drug Discovery Environment
+# -----------------------------------------------------------------------------
+
+[environments.drugdisc]
+features = ["core", "chemistry", "drugdiscovery"]
+
+# -----------------------------------------------------------------------------
+# Spectroscopy Environments
+# -----------------------------------------------------------------------------
+
+[environments.nmr]
+features = ["core", "chemistry", "spectroscopy-nmr"]
+
+[environments.msms]
+features = ["core", "chemistry", "torch-base", "spectroscopy-msms"]
+
+[environments.xrd]
+features = ["core", "chemistry", "xrd"]
+
+# -----------------------------------------------------------------------------
+# Porous Materials Environment
+# -----------------------------------------------------------------------------
+
+[environments.void]
+features = ["core", "chemistry", "porous-materials"]
+
+# =============================================================================
+# TASKS
+# Tasks replace shell scripts with declarative commands
+# =============================================================================
+
+# Common tasks
+[tasks.install]
+description = "Install all environments"
+cmd = "pixi install"
+
+[tasks.test-base]
+description = "Run base server tests"
+cmd = "pytest tests/base/"
+environment = "base"
+
+# MLIP tasks
+[tasks.test-mace]
+description = "Run MACE server tests"
+cmd = "pytest tests/mace/"
+environment = "mace"
+
+[tasks.test-matgl]
+description = "Run MatGL server tests"
+cmd = "pytest tests/matgl/"
+environment = "matgl"
+
+[tasks.test-fairchem]
+description = "Run FairChem server tests"
+cmd = "pytest tests/fairchem/"
+environment = "fairchem"
+
+# DFT tasks
+[tasks.test-atomate2]
+description = "Run Atomate2 server tests"
+cmd = "pytest tests/atomate2/"
+environment = "atomate2"
+
+# =============================================================================
+# ACTIVATION SCRIPTS
+# Environment-specific activation (replaces source conda.sh)
+# =============================================================================
+
+[feature.mlip-mace.activation-scripts]
+# Set environment variables for MACE
+script = """
+export MACE_BACKEND=torch
+"""
+
+[feature.torch-cuda.activation-scripts]
+script = """
+export CUDA_LAUNCH_BLOCKING=1
+export TORCH_USE_CUDA_DSA=1
+"""
+
+# =============================================================================
+# PYTHON PATH CONFIGURATION
+# Instead of hardcoding PYTHONPATH, use workspace-relative paths
+# =============================================================================
+
+# The workspace PYTHONPATH is automatically set by Pixi when running tasks
+# No need for: PYTHONPATH=/home/user/projects/AtomisticSkills
