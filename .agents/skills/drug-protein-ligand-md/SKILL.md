@@ -27,7 +27,7 @@ Required from [drug-complex-system-builder](../drug-complex-system-builder/SKILL
 ### 2. Run the simulation
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-protein-ligand-md/scripts/run_md.py \
   --system_xml md/system/system.xml \
   --input_pdb md/system/complex_solvated.pdb \
@@ -72,7 +72,7 @@ The script produces:
 For statistical confidence, run multiple independent replicates with different random seeds:
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 for i in 1 2 3; do
   python .agents/skills/drug-protein-ligand-md/scripts/run_md.py \
     --system_xml md/system/system.xml \
@@ -96,7 +96,7 @@ After the run, verify:
 ### Example: 10 ns production MD of TYK2 complex
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-protein-ligand-md/scripts/run_md.py \
   --system_xml tyk2/md/system/system.xml \
   --input_pdb tyk2/md/system/complex_solvated.pdb \
@@ -109,7 +109,7 @@ python .agents/skills/drug-protein-ligand-md/scripts/run_md.py \
 ### Example: short 1 ns refinement for pose assessment
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-protein-ligand-md/scripts/run_md.py \
   --system_xml md/system/system.xml \
   --input_pdb md/system/complex_solvated.pdb \
@@ -120,7 +120,7 @@ python .agents/skills/drug-protein-ligand-md/scripts/run_md.py \
 
 ## Constraints
 
-- **Environment**: Requires `drugmd-agent`.
+- **Environment**: Requires `drugmd`.
 - **GPU acceleration**: The script auto-detects CUDA GPUs. Without a GPU, simulations will run on CPU (significantly slower; consider reducing production_steps for testing).
 - **Timestep**: 4 fs requires hydrogen mass repartitioning (HMR) in the system. The [drug-complex-system-builder](../drug-complex-system-builder/SKILL.md) applies HMR by default. If using a system without HMR, set `--timestep 2.0`.
 - **Trajectory size**: DCD files grow ~1 MB per 1000 frames for a typical 50k-atom system. A 10 ns run at 20 ps intervals produces ~500 frames (~500 MB).

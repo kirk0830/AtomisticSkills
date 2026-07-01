@@ -275,6 +275,21 @@ posebusters = "*"
 MDAnalysis = "*"
 
 # -----------------------------------------------------------------------------
+# OpenMM-MD Feature: OpenMM-based molecular dynamics for drug discovery
+# Includes OpenMM, OpenFF, ParmEd, ProLIF, and AmberTools (MMPBSA.py, cpptraj)
+# -----------------------------------------------------------------------------
+[feature.openmm-md.dependencies]
+openmm = "*"
+openmmforcefields = "*"
+ambertools = "*"
+parmed = "*"
+
+[feature.openmm-md.pypi-dependencies]
+openff-toolkit = "*"
+prolif = "*"
+matplotlib = "*"
+
+# -----------------------------------------------------------------------------
 # Spectroscopy-NMR Feature: NMR spectrum prediction
 # -----------------------------------------------------------------------------
 [feature.spectroscopy-nmr.dependencies]
@@ -431,6 +446,14 @@ features = ["core", "chemistry", "cluster-expansion"]
 
 [environments.drugdisc]
 features = ["core", "chemistry", "drugdiscovery"]
+
+# -----------------------------------------------------------------------------
+# Drug Discovery MD Environment (with OpenMM)
+# Extends drugdisc with OpenMM, OpenFF, ParmEd, AmberTools, ProLIF
+# -----------------------------------------------------------------------------
+
+[environments.drugmd]
+features = ["core", "chemistry", "drugdiscovery", "openmm-md"]
 
 # -----------------------------------------------------------------------------
 # Spectroscopy Environments

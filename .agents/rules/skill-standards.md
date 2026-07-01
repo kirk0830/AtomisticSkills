@@ -191,6 +191,7 @@ Refer to `mcp-environments.md` for the standard environment mapping (Pixi enviro
 - `smol`: Cluster expansion and Monte Carlo simulations.
 - `mattergen`: MatterGen structure generation.
 - `drugdisc`: Drug discovery, docking, and molecular tools.
+- `drugmd`: Drug discovery + OpenMM MD (OpenMM, OpenFF, ParmEd, AmberTools, ProLIF).
 - `orca`: ORCA molecular DFT (scripts only, no MCP server).
 - `nmr`: NMR prediction and analysis.
 - `msms`: MS/MS spectrum prediction.

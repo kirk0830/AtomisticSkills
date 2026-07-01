@@ -109,7 +109,8 @@ User Query
 | Skill | Primary MCP Tools | Related Skills |
 |-------|-------------------|----------------|
 | `drug-docking-vina` | `drugdisc.convert_to_pdbqt`, `drugdisc.compute_molecular_descriptors` | [drug-ligand-prep](../.agents/skills/drug-ligand-prep/SKILL.md), [drug-protein-prep](../.agents/skills/drug-protein-prep/SKILL.md) |
-| `drug-protein-ligand-md` | (scripts only — OpenMM) | [drug-complex-system-builder](../.agents/skills/drug-complex-system-builder/SKILL.md), [drug-trajectory-analysis](../.agents/skills/drug-trajectory-analysis/SKILL.md) |
+| `drug-protein-ligand-md` | (scripts only — `drugmd` env, OpenMM) | [drug-complex-system-builder](../.agents/skills/drug-complex-system-builder/SKILL.md), [drug-trajectory-analysis](../.agents/skills/drug-trajectory-analysis/SKILL.md) |
+| `drug-mmpbsa-gbsa` | (scripts only — `drugmd` env, OpenMM + AmberTools) | [drug-protein-ligand-md](../.agents/skills/drug-protein-ligand-md/SKILL.md) |
 | `drug-admet-prediction` | `drugdisc.compute_molecular_descriptors` | [drug-molecular-fingerprints](../.agents/skills/drug-molecular-fingerprints/SKILL.md) |
 | `drug-db-pubchem` | (scripts only — `base` env, PubChem API) | [drug-db-chembl](../.agents/skills/drug-db-chembl/SKILL.md), [drug-db-pdb](../.agents/skills/drug-db-pdb/SKILL.md) |
 | `drug-pose-validation` | `drugdisc.*` | [drug-docking-analysis](../.agents/skills/drug-docking-analysis/SKILL.md) |
@@ -164,8 +165,10 @@ These skills rely on standalone Python scripts rather than MCP tools. They still
 | `mat-phase-field-conservative` | `phasefield` | FiPy Cahn-Hilliard |
 | `mat-phase-field-non-conservative` | `phasefield` | FiPy Allen-Cahn |
 | `drug-docking-vina` | `drugdisc` | AutoDock Vina (script-based) |
-| `drug-protein-ligand-md` | (OpenMM) | OpenMM simulation |
-| `drug-complex-system-builder` | (OpenMM) | OpenMM system builder |
+| `drug-protein-ligand-md` | `drugmd` | OpenMM MD simulation |
+| `drug-complex-system-builder` | `drugmd` | OpenMM system builder |
+| `drug-mmpbsa-gbsa` | `drugmd` | MM-GBSA / MM-PBSA (OpenMM + AmberTools) |
+| `drug-trajectory-analysis` | `drugmd` | MDAnalysis + ProLIF trajectory analysis |
 | `ml-property-predict-scd` | `scd` | SCD foundation model |
 | `general-plot-digitizer` | `base` | VLM + CV pipeline |
 

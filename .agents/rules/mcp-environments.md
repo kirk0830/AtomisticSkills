@@ -48,6 +48,7 @@ All environments are defined in `pixi.toml`.
 | `phasefield` | Phase-field simulations (FiPy) |
 | `smol` | Cluster expansion + Monte Carlo (SMOL) |
 | `drugdisc` | Drug discovery tools (Vina, fpocket, RDKit, Meeko, PoseBusters) |
+| `drugmd` | Drug discovery + OpenMM MD (OpenMM, OpenFF, ParmEd, AmberTools, ProLIF) |
 | `nmr` | NMR prediction/analysis (nmrsim, RDKit) |
 | `msms` | MS/MS prediction (ICEBERG) |
 | `xrd` | XRD analysis (DARA) |

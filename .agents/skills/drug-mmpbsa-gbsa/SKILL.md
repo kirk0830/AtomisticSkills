@@ -24,7 +24,7 @@ The entropy term (-TdS) is omitted, which is standard practice when the goal is 
 | Path | Script | When to use | Extras |
 |---|---|---|---|
 | **OpenMM GBn2 (fast)** | `compute_mmgbsa.py` | Throughput rescoring of HTVS hits; everything stays inside OpenMM with the same force field as the MD | No extra dependencies; ~1-5 minutes per compound on CPU |
-| **AmberTools MMPBSA.py** | `compute_mmpbsa.py` | When you need PB (not just GB), per-method decomposition (ELE, VDW, EGB / EPB, ESURF), or a setup that matches what reviewers expect from the MM-PBSA literature | Adds `MMPBSA.py`, `cpptraj`, and `parmed` to the dependency surface (already in `drugmd-agent`); ~1-3 minutes for GB, ~5-30 minutes for PB depending on system size and frame count |
+| **AmberTools MMPBSA.py** | `compute_mmpbsa.py` | When you need PB (not just GB), per-method decomposition (ELE, VDW, EGB / EPB, ESURF), or a setup that matches what reviewers expect from the MM-PBSA literature | Adds `MMPBSA.py`, `cpptraj`, and `parmed` to the dependency surface (already in `drugmd`); ~1-3 minutes for GB, ~5-30 minutes for PB depending on system size and frame count |
 
 Both paths give comparable GB rankings for typical drug-protein systems, but the absolute dG numbers will differ across backends because they use different GB models, radius sets, and surface-area treatments. **Don't compare numbers across the two scripts.**
 
@@ -35,7 +35,7 @@ Both paths give comparable GB rankings for typical drug-protein systems, but the
 For the 1-5 ns production runs typical in the [HTVS workflow](../../workflows/drug-hit-finding-htvs.md):
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
@@ -60,7 +60,7 @@ Key parameters:
 When the receptor has a bound cofactor that should be part of the receptor subsystem, and the MD production was long enough (>=10 ns) to justify a longer equilibration skip:
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
@@ -85,7 +85,7 @@ The interior dielectric of the solute (`--solute_dielectric`, OpenMM's `soluteDi
 Higher dielectrics damp electrostatic contributions and generally improve ranking agreement with experiment for charged systems, at the cost of losing sensitivity to directional electrostatic interactions. If you are unsure, run the rescoring at 1.0 and 2.0 on a small subset with known rank-order and pick the value that tracks better. The chosen value is recorded in `mmgbsa_summary.json` for provenance.
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
@@ -100,7 +100,7 @@ python .agents/skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
 For non-standard residue naming or multi-chain receptors:
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-mmpbsa-gbsa/scripts/compute_mmgbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
@@ -139,7 +139,7 @@ More negative dG indicates stronger predicted binding. **Only relative ranking w
 When you need Poisson-Boltzmann (not just GB), or when you want a method that matches what reviewers expect from the MM-PBSA literature, use `compute_mmpbsa.py`. It builds the same dry-complex / receptor / ligand subsystems as the OpenMM path, then converts the systems to Amber prmtops via ParmEd, converts the trajectory to NetCDF via cpptraj, and hands everything to AmberTools `MMPBSA.py`.
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-mmpbsa-gbsa/scripts/compute_mmpbsa.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
@@ -201,10 +201,10 @@ In the [HTVS workflow](../../workflows/drug-hit-finding-htvs.md), MM-GBSA is run
 
 ## Constraints
 
-- **Environment**: Requires `drugmd-agent`.
+- **Environment**: Requires `drugmd`.
 - **Dependencies**:
   - OpenMM path (`compute_mmgbsa.py`): openmm, openmmforcefields, openff-toolkit (for SMIRNOFF parameterization), rdkit, MDAnalysis.
-  - AmberTools path (`compute_mmpbsa.py`): the OpenMM deps above plus parmed, AmberTools (`MMPBSA.py`, `mmpbsa_py_energy`, `cpptraj`). All present in `drugmd-agent`.
+  - AmberTools path (`compute_mmpbsa.py`): the OpenMM deps above plus parmed, AmberTools (`MMPBSA.py`, `mmpbsa_py_energy`, `cpptraj`). All present in `drugmd`.
 - **Implicit solvent**:
   - OpenMM path: GBn2 (Generalized Born with neck correction, model 2). NoCutoff nonbonded method.
   - AmberTools path: igb=5 (OBC2) by default, with mbondi2 GB radii. Other igb models supported with their canonical paired radii: 1 (HCT / mbondi), 2 (OBC1 / mbondi2), 7 (GBn / mbondi), 8 (GBn2 / mbondi3). Radii are set automatically via ParmEd `changeRadii`.

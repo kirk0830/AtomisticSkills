@@ -28,7 +28,7 @@ Required:
 ### 2. Run trajectory analysis
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
@@ -69,7 +69,7 @@ Key indicators of a stable binding pose:
 For a fast assessment, check only ligand RMSD:
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
   --topology md/system/complex_solvated.pdb \
   --trajectory md/run/production.dcd \
@@ -83,7 +83,7 @@ python .agents/skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
 ### Example: full analysis of TYK2 inhibitor trajectory
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
   --topology tyk2/md/system/complex_solvated.pdb \
   --trajectory tyk2/md/run/production.dcd \
@@ -95,7 +95,7 @@ python .agents/skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
 
 ## Constraints
 
-- **Environment**: Requires `drugmd-agent` with MDAnalysis and ProLIF.
+- **Environment**: Requires `drugmd` with MDAnalysis and ProLIF.
 - **Trajectory format**: DCD is the default from the MD skill. PDB trajectories and XTC are also supported by MDAnalysis.
 - **Ligand residue name**: must match the name used in the topology PDB. OpenMM often assigns `UNL` to non-standard residues.
 - **ProLIF requirement**: interaction fingerprints require ProLIF. If ProLIF is not installed, the script skips IFP computation and logs a warning.
