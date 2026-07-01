@@ -39,7 +39,7 @@ Decide which database to query and which element/identifier filters to apply.
 ### Step 2: Run the query
 
 ```bash
-# Env: base-agent
+# Env: base
 # QMOF — 10 Zn-containing MOFs
 MP_API_KEY=<your_key> python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
     --database qmof \
@@ -49,7 +49,7 @@ MP_API_KEY=<your_key> python .agents/skills/chem-db-mof/scripts/query_mof_db.py 
 ```
 
 ```bash
-# Env: base-agent
+# Env: base
 # ARC-MOF DB7 (Majumdar) — 20 Zn,O,C hypothetical MOFs
 python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
     --database arcmof-majumdar \
@@ -59,7 +59,7 @@ python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
 ```
 
 ```bash
-# Env: base-agent
+# Env: base
 # ARC-MOF DB7 — retrieve a specific structure by identifier
 python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
     --database arcmof-majumdar \
@@ -104,7 +104,7 @@ Subsequent runs with the same `--output-dir` skip already-downloaded CIFs.
 
 **Example 1: Query Zn MOFs from QMOF for CO₂ screening pre-processing**
 ```bash
-# Env: base-agent
+# Env: base
 MP_API_KEY=<your_mp_api_key> \
 python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
     --database qmof \
@@ -115,7 +115,7 @@ python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
 
 **Example 2: Query Zn, Ni, or Mg hypothetical MOFs from ARC-MOF DB7**
 ```bash
-# Env: base-agent
+# Env: base
 # Zn-based
 python .agents/skills/chem-db-mof/scripts/query_mof_db.py \
     --database arcmof-majumdar \

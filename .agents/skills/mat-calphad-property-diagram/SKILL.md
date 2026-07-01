@@ -18,7 +18,7 @@ You must obtain a legitimate `.tdb` (Thermodynamic Data Base) file for the chemi
 Calculate what phases are present, and their molar fractions, across a cooling/heating schedule for a fixed composition.
 
 ```bash
-# Env: calphad-agent
+# Env: calphad
 python .agents/skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.py path/to/database.tdb --elements Element1 Element2 --composition Element2 0.3 --t-range 300 1000 10 --output research_dir/phase_fractions.png
 ```
 
@@ -29,7 +29,7 @@ python .agents/skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.
 
 Evaluating phase fractions for an Al-40%Zn alloy as it cools:
 ```bash
-# Env: calphad-agent
+# Env: calphad
 python .agents/skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.py .agents/skills/mat-calphad-phase-diagram/examples/Al-Zn/alzn_mey.tdb --elements Al Zn --composition Zn 0.4 --t-range 300 900 10 --output phase_fractions.png
 ```
 

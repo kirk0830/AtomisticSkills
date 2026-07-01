@@ -45,7 +45,7 @@ DARA searches for structures in experimental databases. It supports:
 Use this script when the node where you run it can reach the database servers (for automatic COD CIF download), or when you have a local directory of CIFs/local database installed.
 
 ```bash
-# Env: xrd-agent
+# Env: xrd
 python .agents/skills/mat-xrd-phase-analysis/scripts/phase_search.py \
   --xrd_data .agents/skills/mat-xrd-phase-analysis/examples/GeO2-ZnO/GeO2-ZnO_700C_60min.xrdml \
   --chemical_system "Ge-O-Zn" \

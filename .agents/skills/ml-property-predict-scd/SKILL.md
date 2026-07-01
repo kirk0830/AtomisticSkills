@@ -72,7 +72,7 @@ Important details:
 Use the native training path when you want all model weights updated:
 
 ```bash
-# Env: scd-agent
+# Env: scd
 cd ../SelfConditionedDenoisingAtoms
 python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id my_run
 ```
@@ -80,7 +80,7 @@ python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-pcq --job-id my
 or
 
 ```bash
-# Env: scd-agent
+# Env: scd
 cd ../SelfConditionedDenoisingAtoms
 python train.py --conf configs/my_finetune.yaml --load-hf ct-scd-amp --job-id my_run
 ```
@@ -99,7 +99,7 @@ Full-model finetuning usually gives better results than the lightweight frozen-b
 Use the native training path:
 
 ```bash
-# Env: scd-agent
+# Env: scd
 cd ../SelfConditionedDenoisingAtoms
 python train.py --conf configs/my_pretrain.yaml --job-id my_pretrain
 ```
@@ -141,7 +141,7 @@ Treat live stdout visibility as general guidance for SCD runs, not just these ex
 - Use `nvidia-smi` both before launch and during launch: before launch to choose devices, during launch to verify the intended GPU or GPUs are actually being used.
 - Do not default to grabbing every GPU on a shared workstation. Ask first.
 - Prefer `python -u ...` and a TTY-capable shell session for smoke runs.
-- If using `conda run`, prefer `conda run --no-capture-output ...` so dataset downloads, checkpoint downloads, split generation, and normalization work are visible immediately.
+- If using Pixi, prefer `pixi run -e scd python -u ...` so dataset downloads, checkpoint downloads, split generation, and normalization work are visible immediately.
 - Treat an initially quiet terminal as ambiguous until you have checked live stdout. For first-run workflows, several minutes of startup can be legitimate while data or checkpoints are prepared.
 - For the fastest smoke tests, copy the target config and disable expensive reporting such as `parity_plot: true` before launching. Otherwise a `max_steps=2` run can still spend significant extra time on parity-plot generation and repeated evaluation passes.
 - Expect QM9-like runs to spend real wall time computing dataset `mean/std`, sometimes more than once across train and test setup. This is startup work, not necessarily a hang.

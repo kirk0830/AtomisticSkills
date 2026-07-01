@@ -15,7 +15,7 @@ To programmatically extract critical safety information from the PubChem PUG-VIE
 Provide the precise CID of the molecule targeting the specific record to query safety metadata. The output is a JSON array of natural language texts sourced from chemical vendors, safety data sheets, and literature.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-hazard-toxicity/scripts/get_safety_data.py \
   --cid 2519 \
   --outdir research/caffeine_safety \
@@ -27,7 +27,7 @@ python .agents/skills/chem-hazard-toxicity/scripts/get_safety_data.py \
 We can test the extraction for Caffeine (CID: 2519), a well documented compound.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-hazard-toxicity/scripts/get_safety_data.py \
   --cid 2519 \
   --outdir .agents/skills/chem-hazard-toxicity/examples/caffeine \

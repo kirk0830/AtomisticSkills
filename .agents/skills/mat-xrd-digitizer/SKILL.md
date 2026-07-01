@@ -40,7 +40,7 @@ Example `peaks.json` format:
 Use the provided script to generate the experimental `.xy` file based on the extracted peaks.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-xrd-digitizer/scripts/digitize_plot.py peaks.json --output digitized_plot.xy --min-x 5.0 --max-x 80.0
 ```
 
@@ -59,7 +59,7 @@ For a full working example of extracting and digitizing a YBCO plot:
 See [`examples/digitize-ybco/README.md`](examples/digitize-ybco/README.md).
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-xrd-digitizer/scripts/digitize_plot.py .agents/skills/mat-xrd-digitizer/examples/digitize-ybco/peaks.json --output test_ybco.xy
 ```
 

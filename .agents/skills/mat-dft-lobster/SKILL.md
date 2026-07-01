@@ -40,7 +40,7 @@ To analyze COHP outputs, the standard package is **LobsterPy**. It offers both C
 
 **Via CLI:**
 ```bash
-# Env: atomate2-agent
+# Env: atomate2
 lobsterpy automatic-plot
 ```
 
@@ -50,14 +50,14 @@ Use the provided `analyze_lobster.py` script as a baseline to parse and visualiz
 You can test the DAG generation by running the MCP tool with `check_only=True` on a structure, or if testing scripts manually:
 
 ```bash
-# Env: atomate2-agent
+# Env: atomate2
 cd .agents/skills/mat-dft-lobster/examples/GaAs
 python ../../scripts/generate_inputs.py --output gaas_flow.json
 ```
 
 To plot a sample COHPCAR:
 ```bash
-# Env: atomate2-agent
+# Env: atomate2
 python .agents/skills/mat-dft-lobster/scripts/analyze_lobster.py --cohpcar COHPCAR.lobster --poscar POSCAR --save cohp_plot.png
 ```
 

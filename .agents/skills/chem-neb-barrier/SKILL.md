@@ -24,7 +24,7 @@ Performs the NEB calculation between two endpoint structures.
 
 ### Use with MACE (periodic materials)
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \
@@ -36,7 +36,7 @@ python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
 
 ### Use with MACE (non-periodic molecules)
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure reactant.xyz \
     --end_structure product.xyz \
@@ -49,7 +49,7 @@ python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
 
 ### Use with FairChem
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \
@@ -61,7 +61,7 @@ python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
 
 ### Use with MatGL
 ```bash
-# Env: matgl-agent
+# Env: matgl
 python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure <path_to_start.cif> \
     --end_structure <path_to_end.cif> \

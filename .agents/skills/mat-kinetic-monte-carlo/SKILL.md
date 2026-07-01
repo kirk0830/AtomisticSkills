@@ -112,7 +112,7 @@ For lattice KMC you need:
 - hop distances are physically reasonable (cutoffs/NN shells).
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-kinetic-monte-carlo/scripts/build_lattice_from_structure.py \
     --structure relaxed.cif \
     --site_element Li \
@@ -158,7 +158,7 @@ k_ij / k_ji ~ exp(-(E_j - E_i) / kBT)
 - rates have correct units and magnitudes
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-kinetic-monte-carlo/scripts/validate_detailed_balance.py \
     --config kmc_config.json
 ```
@@ -188,7 +188,7 @@ Use a rejection-free algorithm (residence-time / Gillespie / n-fold way):
 - advance time by exponential waiting time.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-kinetic-monte-carlo/scripts/run_lattice_kmc.py \
     --config kmc_config.json
 ```
@@ -205,7 +205,7 @@ Typical outputs:
 - Arrhenius fits across temperature.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-kinetic-monte-carlo/scripts/analyze_kmc_msd.py \
     --trace kmc_run_T800K/kmc_trace.npz \
     --dim 3 \
@@ -247,7 +247,7 @@ The included engine supports:
 ### Example A: Vacancy Diffusion on Li Sublattice
 ```bash
 # 1) Build site network from relaxed structure
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-kinetic-monte-carlo/scripts/build_lattice_from_structure.py \
     --structure relaxed.cif \
     --site_element Li \
@@ -255,17 +255,17 @@ python .agents/skills/mat-kinetic-monte-carlo/scripts/build_lattice_from_structu
     --out lattice.json
 
 # 2) Validate detailed balance (if using site energies)
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-kinetic-monte-carlo/scripts/validate_detailed_balance.py \
     --config kmc_config.json
 
 # 3) Run KMC
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-kinetic-monte-carlo/scripts/run_lattice_kmc.py \
     --config kmc_config.json
 
 # 4) Analyze -> D_tracer, D_J, Haven ratio
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-kinetic-monte-carlo/scripts/analyze_kmc_msd.py \
     --trace kmc_run_T800K/kmc_trace.npz \
     --dim 3 \

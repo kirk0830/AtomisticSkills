@@ -37,7 +37,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate the elastic tensor, use the `calculate_elasticity.py` script:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-elasticity/scripts/calculate_elasticity.py \
     --structure path/to/structure.cif \
     --model_type mace \
@@ -75,7 +75,7 @@ python .agents/skills/mat-elasticity/scripts/calculate_elasticity.py \
 See `examples/Cu/` for a copper elastic tensor calculation using MACE-OMAT-0-small.
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-elasticity/scripts/calculate_elasticity.py \
     --structure .agents/skills/mat-elasticity/examples/Cu/Cu.cif \
     --model_type mace \

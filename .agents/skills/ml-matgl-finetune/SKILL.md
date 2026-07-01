@@ -22,7 +22,7 @@ To evaluate and improve the accuracy of a foundation MatGL potential (e.g., CHGN
 ### 1. Data Preparation
 Convert your dataset into the appropriate JSON format for MatGL training:
 ```bash
-conda run -n matgl-agent python .agents/skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
+pixi run -e matgl python .agents/skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
     --data /path/to/training_data.json \
     --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \
     --val-split 0.1 \
@@ -32,7 +32,7 @@ conda run -n matgl-agent python .agents/skills/ml-matgl-finetune/scripts/prepare
 ### 2. Run Training
 Fine-tune the model using the prepared data:
 ```bash
-conda run -n matgl-agent python .agents/skills/ml-matgl-finetune/scripts/train_matgl.py \
+pixi run -e matgl python .agents/skills/ml-matgl-finetune/scripts/train_matgl.py \
     --train-data ./matgl_finetuned/train_data.json \
     --val-data ./matgl_finetuned/val_data.json \
     --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \

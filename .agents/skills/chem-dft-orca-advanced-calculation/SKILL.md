@@ -93,7 +93,7 @@ end
 ### Step 3: Run the calculation
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-advanced-calculation/scripts/run_orca_input.py \
     --input_file calculation.inp \
     --output_dir research/my_project/advanced_calc
@@ -111,7 +111,7 @@ The script will:
 For standard energies, the runner script already extracts the final energy. For other properties, use the dedicated parser:
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-advanced-calculation/scripts/parse_orca_output.py \
     --output_file research/my_project/advanced_calc/calculation.out \
     --property energy orbitals

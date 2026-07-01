@@ -18,7 +18,7 @@ To generate diverse and representative atomic configurations from a starting str
 
     Using MatGL (CHGNet):
     ```bash
-    # Env: matgl-agent
+    # Env: matgl
     python .agents/skills/mat-sample-pes-by-md/scripts/run_sampling.py input.cif \
         --model_type matgl --model_name CHGNet-PES-MatPES-PBE-2025.2.10 \
         --total_steps 2000 --temperature 1000 --n_clusters 10 --output_dir sampling_results
@@ -26,7 +26,7 @@ To generate diverse and representative atomic configurations from a starting str
 
     Using MACE:
     ```bash
-    # Env: mace-agent
+    # Env: mace
     python .agents/skills/mat-sample-pes-by-md/scripts/run_sampling.py input.cif \
         --model_type mace --model_name MACE-OMAT-0-small \
         --total_steps 2000 --temperature 1000 --n_clusters 10 --output_dir sampling_results

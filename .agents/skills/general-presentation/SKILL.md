@@ -17,7 +17,7 @@ Create professional PowerPoint presentations from simulation results (plots, tab
 All scripts should import `slide_utils` from this skill:
 
 ```python
-# Env: base-agent
+# Env: base
 import sys
 sys.path.insert(0, ".agents/skills/general-presentation/scripts")
 from slide_utils import *
@@ -74,7 +74,7 @@ pdftocairo -png output.pdf output
 Generating a simulation report:
 
 ```python
-# Env: base-agent
+# Env: base
 import sys
 sys.path.insert(0, ".agents/skills/general-presentation/scripts")
 from slide_utils import *

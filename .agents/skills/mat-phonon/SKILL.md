@@ -30,7 +30,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate phonon properties using machine learning potentials, use the `calculate_phonon.py` script.
 
 ```bash
-conda activate mace-agent
+pixi shell -e mace
 python .agents/skills/mat-phonon/scripts/calculate_phonon.py \
     --structure path/to/relaxed_structure.cif \
     --model_type mace \
@@ -44,7 +44,7 @@ python .agents/skills/mat-phonon/scripts/calculate_phonon.py \
 For validation and benchmarking, retrieve pre-computed DFT phonon data:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-phonon/scripts/get_mp_phonon.py \
     --material_id mp-149 \
     --phonon_method dfpt \

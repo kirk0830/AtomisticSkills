@@ -82,7 +82,7 @@ The results will include:
 Use the provided script to parse the magnetic moments from the results:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-magnetic-density/scripts/parse_magnetic_moments.py magnetic_results.json --output magnetic_analysis.json
 ```
 
@@ -97,7 +97,7 @@ This script will:
 For detailed analysis of spin density distribution, use the spin density extraction script:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-magnetic-density/scripts/extract_spin_density.py <output_dir> --output spin_density.json
 ```
 
@@ -111,7 +111,7 @@ This requires access to the CHGCAR file from the VASP calculation and will:
 Visualize the magnetic ordering by creating a structure with magnetic moment vectors:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-magnetic-density/scripts/visualize_magnetic_structure.py structure.cif magnetic_analysis.json --output magnetic_structure.png
 ```
 
@@ -144,7 +144,7 @@ mcp_atomate2_get_atomate2_results_by_id(
 
 ```bash
 # Step 4: Parse magnetic moments
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-magnetic-density/scripts/parse_magnetic_moments.py Fe_magnetic_results.json --output Fe_moments.json
 ```
 

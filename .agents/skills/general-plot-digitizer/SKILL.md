@@ -22,7 +22,7 @@ Do **not** attempt to generate JSON with the VLM. It acts only as a visual senso
 
 1. **Generate grid overlay**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-plot-digitizer/scripts/plot_utils.py plot.png --draw-grid
 ```
 This produces `plot_grid.png` with a labeled pixel grid for precise coordinate reading.
@@ -72,7 +72,7 @@ Read the VLM narrative and construct `metadata.json`. Schema: [resources/metadat
 
 **If the VLM color guess is uncertain**, run:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-plot-digitizer/scripts/suggest_colors.py plot.png \
   --bounding-box x_min,y_min,x_max,y_max
 ```
@@ -92,7 +92,7 @@ This reports dominant non-background colors in the cropped region. Use the top r
 
 **Run the pipeline:**
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py \
   plot.png \
   --full \

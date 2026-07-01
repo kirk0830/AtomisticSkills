@@ -22,14 +22,14 @@ Docking accuracy is strongly affected by **structure preparation** (protonation,
 - [ligand-prep](../drug-ligand-prep/SKILL.md) to generate ligand `*.pdbqt` (consider multiple protomers/tautomers)
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1HSG \
   --heterogens none \
   --missing_residues ignore \
   --output_dir docking/inputs/
 
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-ligand-prep/scripts/prepare_ligand.py \
   --smiles "CC(=O)Oc1ccccc1C(=O)O" \
   --name aspirin \
@@ -49,7 +49,7 @@ You must define the docking region. The most common approaches:
 If you have a reference ligand already positioned in the binding site (PDBQT), compute a reasonable box automatically:
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-docking-vina/scripts/compute_box_from_pdbqt.py \
   docking/inputs/reference_ligand.pdbqt \
   --padding 6.0 \
@@ -62,7 +62,7 @@ This writes `center_x/y/z` and `size_x/y/z` you can paste into the docking comma
 ### 3. Run docking (single ligand)
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-docking-vina/scripts/run_docking.py \
   --receptor docking/inputs/1HSG_prepared.pdbqt \
   --ligand docking/inputs/aspirin.pdbqt \
@@ -86,7 +86,7 @@ Outputs:
 ### 4. Run docking (batch mode / virtual screening)
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-docking-vina/scripts/run_docking.py \
   --receptor docking/inputs/1HSG_prepared.pdbqt \
   --ligand_dir docking/inputs/ligands_pdbqt/ \
@@ -107,7 +107,7 @@ python .agents/skills/drug-docking-vina/scripts/run_docking.py \
 `run_docking.py` writes a machine-readable JSON that is good for reproducibility but not directly consumable by downstream analysis tools (such as [drug-docking-analysis](../drug-docking-analysis/SKILL.md)). Use `collect_results.py` to produce a ranked CSV that joins the docking scores with library metadata (SMILES, labels, microstate/parent IDs).
 
 ```bash
-# Env: drugdisc-agent (stdlib only, any env works)
+# Env: drugdisc (stdlib only, any env works)
 
 # Combined JSON from run_docking.py
 python .agents/skills/drug-docking-vina/scripts/collect_results.py \
@@ -143,20 +143,20 @@ Docking is approximate; good practice is to validate your protocol for a given t
 ### Example: HIV-1 protease docking (1HSG + indinavir)
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1HSG \
   --heterogens none \
   --missing_residues ignore \
   --output_dir hiv_docking/inputs/
 
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-ligand-prep/scripts/prepare_ligand.py \
   --smiles "CC(C)(C)NC(=O)C1CC2CCCCC2CN1CC(O)C(CC1=CC=CC=C1)NC(=O)C(CC(N)=O)NC(=O)C1=CC2=CC=CC=C2N1" \
   --name indinavir \
   --output_dir hiv_docking/inputs/
 
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-docking-vina/scripts/run_docking.py \
   --receptor hiv_docking/inputs/1HSG_prepared.pdbqt \
   --ligand hiv_docking/inputs/indinavir.pdbqt \

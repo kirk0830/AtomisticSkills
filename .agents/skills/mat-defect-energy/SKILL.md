@@ -42,7 +42,7 @@ Record the final **energy per atom** from the output.
 ### 4. Generate Defect Supercells
 Use the defect generation script with `pymatgen-analysis-defects`:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-defect-energy/scripts/generate_defects.py \
     --bulk bulk_relaxation/relaxed_structure.cif \
     --supercell_size 2 2 2 \
@@ -70,7 +70,7 @@ mcp_mace_relax_structure(
 ### 6. Calculate Formation Energies
 Compute defect formation energies:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-defect-energy/scripts/calculate_defect_energy.py \
     --bulk_dir bulk_relaxation/ \
     --defect_dir defect_relaxations/ \

@@ -21,7 +21,7 @@ To retrieve computational data and relaxed crystal structures (.cif) for roughly
 1. **Query Database**: Use the provided script `query_qmof.py` to search by formula or identifier.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-db-qmof/scripts/query_qmof.py \
     --formula "Zn" \
     --max-results 5 \
@@ -38,13 +38,13 @@ python .agents/skills/chem-db-qmof/scripts/query_qmof.py \
 
 **Example 1: Automated testing script (Zinc MOF)**
 ```bash
-# Env: base-agent
+# Env: base
 bash .agents/skills/chem-db-qmof/examples/test_qmof.sh
 ```
 
 **Example 2: Query for 5 MOFs containing Zinc manually**
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-db-qmof/scripts/query_qmof.py \
     --formula "Zn" \
     --max-results 5 \
@@ -53,7 +53,7 @@ python .agents/skills/chem-db-qmof/scripts/query_qmof.py \
 
 **Example 2: Retrieve a specific MOF by identifier**
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-db-qmof/scripts/query_qmof.py \
     --identifier "KAXQIL" \
     --max-results 1 \

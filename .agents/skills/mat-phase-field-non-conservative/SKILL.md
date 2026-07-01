@@ -22,7 +22,7 @@ Unlike Cahn-Hilliard, Allen-Cahn does not conserve the integral of $\phi$. It na
 Use the provided script to set up a 2D grid containing a circular solid grain in a liquid matrix and observe its capillarity-driven shrinkage.
 
 ```bash
-# Env: phasefield-agent
+# Env: phasefield
 python .agents/skills/mat-phase-field-non-conservative/scripts/run_grain_growth.py \
     --grid-size 100 \
     --radius 30 \
@@ -44,7 +44,7 @@ python .agents/skills/mat-phase-field-non-conservative/scripts/run_grain_growth.
 A universal mathematical benchmark for the Allen-Cahn equation is proving that a circular domain shrinks at a rate proportional to its curvature (the $v = M \gamma K$ law). The area of the circle must decrease linearly with time.
 
 ```bash
-# Env: phasefield-agent
+# Env: phasefield
 python .agents/skills/mat-phase-field-non-conservative/scripts/run_grain_growth.py \
     --grid-size 100 \
     --radius 35 \

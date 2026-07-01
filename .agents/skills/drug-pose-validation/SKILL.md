@@ -22,14 +22,14 @@ You need:
 If your docked poses are in PDBQT format, convert them to SDF first:
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 obabel docking/results/ligand_docked.pdbqt -O docking/results/ligand_docked.sdf -m
 ```
 
 ### 2. Run pose validation
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-pose-validation/scripts/validate_poses.py \
   --poses docking/results/ligand_docked.sdf \
   --receptor docking/inputs/protein_prepared.pdb \
@@ -46,7 +46,7 @@ This produces:
 When no receptor is available, run ligand-only validation (checks bond geometry, planarity, stereochemistry, internal clashes):
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-pose-validation/scripts/validate_poses.py \
   --poses generated/conformers.sdf \
   --output_dir generated/validation/
@@ -101,10 +101,10 @@ Poses failing any test are excluded from `valid_poses.sdf`. If all poses fail, r
 ### Example: validate Vina docking output for HIV-1 protease
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 obabel hiv_docking/results/indinavir_docked.pdbqt -O hiv_docking/results/indinavir_docked.sdf -m
 
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-pose-validation/scripts/validate_poses.py \
   --poses hiv_docking/results/indinavir_docked.sdf \
   --receptor hiv_docking/inputs/1HSG_prepared.pdb \

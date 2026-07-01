@@ -26,7 +26,7 @@ The substitution probability model is trained on the ICSD (Inorganic Crystal Str
 
 2. **Run the forward proposal script**:
    ```bash
-   # Env: base-agent
+   # Env: base
    python .agents/skills/mat-ionic-substitution/scripts/propose_substitutions.py \
        --structure source.cif \
        --threshold 0.001 \
@@ -46,7 +46,7 @@ The substitution probability model is trained on the ICSD (Inorganic Crystal Str
 
 1. **Run the reverse search script**:
    ```bash
-   # Env: base-agent
+   # Env: base
    python .agents/skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
        --composition LiCl \
        --threshold 0.001 \
@@ -76,7 +76,7 @@ If you already know the exact substitution you want to make on a specific struct
 
 ### Example 1: Discover new Li-ion cathode from NaCoO₂
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-ionic-substitution/scripts/propose_substitutions.py \
     --structure NaCoO2.cif \
     --threshold 0.001 \
@@ -86,7 +86,7 @@ Expected output includes: LiCoO₂, KCoO₂, NaNiO₂, NaMnO₂, LiNiO₂, etc.
 
 ### Example 2: Find all crystal structures for LiCl
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-ionic-substitution/scripts/find_structures_for_composition.py \
     --composition LiCl \
     --output_dir LiCl_structures/

@@ -49,7 +49,7 @@ This skill assumes the input structure is already appropriate for the target the
 Run the standalone Frenkel-Ladd script:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-solid-free-energy/scripts/run_frenkel_ladd.py \
     --structure path/to/pre_equilibrated_structure.cif \
     --name my_solid \
@@ -106,7 +106,7 @@ The script defaults are:
 See `examples/Si_MACE/` for a minimal silicon example using MACE with reduced step counts for demonstration.
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-solid-free-energy/scripts/run_frenkel_ladd.py \
     --structure .agents/skills/mat-solid-free-energy/examples/Si_MACE/Si.cif \
     --name Si_demo \

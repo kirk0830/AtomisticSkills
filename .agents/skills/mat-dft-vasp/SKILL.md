@@ -18,7 +18,7 @@ To prepare VASP input files (INCAR, POTCAR, KPOINTS, POSCAR) locally for a struc
 Use the `prepare_vasp_inputs.py` script to generate local input files from a structure (CIF, XYZ, POSCAR) or a directory of structures.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-dft-vasp/scripts/prepare_vasp_inputs.py \
     <structure-path> \
     <output-dir> \
@@ -38,7 +38,7 @@ Parameters:
 After the VASP calculation has concluded, extract the output data (energy, forces, stress, structure) using `parse_vasp_results.py`. This handles both single directories (containing a `vasprun.xml`) and root directories with multiple subdirectories.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-dft-vasp/scripts/parse_vasp_results.py \
     <vasp-output-dir> \
     --save_to_file parsed_results.json

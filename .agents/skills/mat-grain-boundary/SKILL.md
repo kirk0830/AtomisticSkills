@@ -34,7 +34,7 @@ Refer to [ml-foundation-potentials](../ml-foundation-potentials/SKILL.md).
 Perform a high-accuracy bulk relaxation to obtain $E_{bulk}$.
 
 ```bash
-# Env: matgl-agent
+# Env: matgl
 mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
 mcp_matgl_relax_structure(
     structure_data="bulk.cif",
@@ -51,7 +51,7 @@ Record the final energy per atom ($E_{bulk}$) from the relaxation output JSON.
 Use pymatgen's `GrainBoundaryGenerator` to create CSL grain boundary supercells for a range of Σ values and rotation angles.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-grain-boundary/scripts/create_grain_boundary.py \
     --bulk bulk_relaxation/relaxed_structure.cif \
     --rotation-axis 0 0 1 \
@@ -80,7 +80,7 @@ The script writes one CIF per unique GB, with filename format `sigma{Σ}_{angle:
 Relax all generated GB structures. **Do NOT relax the cell in directions parallel to the GB plane** — use `relax_cell=False` to fix the in-plane lattice vectors and only relax atomic positions.
 
 ```bash
-# Env: matgl-agent
+# Env: matgl
 mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
 mcp_matgl_relax_structure(
     structure_data="gb_structures/",
@@ -96,7 +96,7 @@ mcp_matgl_relax_structure(
 ### 5. Calculate Grain Boundary Energies
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-grain-boundary/scripts/calculate_gb_energy.py \
     --bulk-energy-per-atom -4.567 \
     --gb-relaxation-dir gb_relaxations/ \

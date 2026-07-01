@@ -63,7 +63,7 @@ SMILES  ──► [Predictor]  ──► predicted spectrum (.xy / .jdx)
 #### Option A: Retrieve from catalog or public DB (fast, no prediction)
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-spectrum-matcher/scripts/match_spectrum.py \
   --query experimental_spectrum.xy \
   --smiles "CCO" \
@@ -80,14 +80,14 @@ Run the appropriate predictor for the modality, then register outputs into the c
 
 **1H NMR:**
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-nmr-predict/scripts/predict_nmr.py \
   --smiles "CCO" \
   --names "ethanol" \
   --field_mhz 400 \
   --output_dir <research_dir>/nmr_predictions/
 
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-spectrum-matcher/scripts/register_spectrum.py \
   --source_dir <research_dir>/nmr_predictions/ \
   --modality nmr_1h \
@@ -96,11 +96,11 @@ python .agents/skills/chem-spectrum-matcher/scripts/register_spectrum.py \
 
 **IR (from NIST WebBook):**
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-db-spectra/scripts/query_spectra.py \
   C10H18O <research_dir>/ir_references/ --type IR
 
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-spectrum-matcher/scripts/register_spectrum.py \
   --source_dir <research_dir>/ir_references/ \
   --modality ir \
@@ -109,7 +109,7 @@ python .agents/skills/chem-spectrum-matcher/scripts/register_spectrum.py \
 
 **IR (QM-backed, high accuracy):**
 ```bash
-# Env: orca-agent
+# Env: orca
 # Run ORCA frequency calculation → extract IR spectrum → register
 # See conda-envs/orca-agent/ for ORCA setup.
 # After ORCA run, convert output with src/utils/dft/orca_utils.py
@@ -121,7 +121,7 @@ python .agents/skills/chem-spectrum-matcher/scripts/register_spectrum.py \
 `match_spectrum.py` retrieves reference spectra (catalog → public DB fallback) and computes similarity scores between the query and each candidate.
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-spectrum-matcher/scripts/match_spectrum.py \
   --query experimental_spectrum.xy \
   --smiles "CCO" \

@@ -80,7 +80,7 @@ No BGMN working files (`.str`, `.par`, `.lst`, etc.) are saved; DARA runs in a t
 Layout: `examples/LiFePO4/LiFePO4_xrd.xy` and `examples/LiFePO4/cifs/LiFePO4.cif`, `Li3PO4.cif`. No `--cifs` needed.
 
 ```bash
-# Env: xrd-agent
+# Env: xrd
 python .agents/skills/mat-xrd-refinement/scripts/refine.py \
   --xrd_data .agents/skills/mat-xrd-refinement/examples/LiFePO4/LiFePO4_xrd.xy
 ```
@@ -90,7 +90,7 @@ Results: `examples/LiFePO4/refinement_results/LiFePO4/` (refinement_result.json,
 ### Example 2: CaNi(PO3)4 (path with parentheses — must quote)
 
 ```bash
-# Env: xrd-agent. Quote the path because of (PO3), (OH), (NH4).
+# Env: xrd. Quote the path because of (PO3), (OH), (NH4).
 python .agents/skills/mat-xrd-refinement/scripts/refine.py \
   --xrd_data ".agents/skills/mat-xrd-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
 

@@ -17,10 +17,10 @@ This skill evaluates the accuracy of a given MLIP against an existing ground-tru
 ### 1. Run Benchmark metrics
 Use the `.agents/skills/ml-mlip-benchmark/scripts/run_benchmark.py` script to perform inference across the dataset and compute global error metrics.
 
-**Environment requirement**: This script instantiates the MLIP models directly and thus **must be executed within the target model's conda environment** (e.g., `mace-agent`, `fairchem-agent`, or `matgl-agent`). Run this using the `run_command` via `conda run -n <model_agent> python ...`.
+**Environment requirement**: This script instantiates the MLIP models directly and thus **must be executed within the target model's Pixi environment** (e.g., `mace`, `fairchem`, or `matgl`). Run this using `pixi run -e <env> python ...`.
 
 ```bash
-conda run -n <MODEL-AGENT-ENV> python .agents/skills/ml-mlip-benchmark/scripts/run_benchmark.py \
+pixi run -e <ENV> python .agents/skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --data_path <path_to_labeled_data.json> \
     --model <model_name_or_path> \
     --backend <mace|fairchem|matgl> \
@@ -31,10 +31,10 @@ conda run -n <MODEL-AGENT-ENV> python .agents/skills/ml-mlip-benchmark/scripts/r
 ### 2. Generate Parity Plots
 Once `run_benchmark.py` finishes, it writes a comprehensive JSON file containing original targets alongside the model's predictions and numerical metrics. Visualize these using the plotting script.
 
-**Environment requirement**: It is safe to use `base-agent` for the plotting script.
+**Environment requirement**: It is safe to use the `base` environment for the plotting script.
 
 ```bash
-conda run -n base-agent python .agents/skills/ml-mlip-benchmark/scripts/plot_benchmark.py \
+pixi run -e base python .agents/skills/ml-mlip-benchmark/scripts/plot_benchmark.py \
     --results <path_to_benchmark_results.json> \
     --output_dir <path_to_save_plots>
 ```
@@ -53,21 +53,21 @@ If the model is performing poorly on the labeled data, suggest fine-tuning it ut
 Evaluating state-of-the-art MatPES-r2SCAN Foundation Models directly against f-block filtered analytical DFT data from the Materials Project:
 
 ```bash
-# Env: base-agent
+# Env: base
 # Fetch 100 random r2SCAN structures from MP API (excluding Lanthanides/Actinides)
 python .agents/skills/ml-mlip-benchmark/examples/fetch_r2scan.py
 
-# Env: mace-agent
+# Env: mace
 # Benchmark MACE foundation potential
-conda run -n mace-agent python .agents/skills/ml-mlip-benchmark/scripts/run_benchmark.py \
+pixi run -e mace python .agents/skills/ml-mlip-benchmark/scripts/run_benchmark.py \
     --data_path research/2026-03-03_r2SCAN_benchmark/r2scan_data.json \
     --model MACE-MATPES-R2SCAN-0 \
     --backend mace \
     --output research/2026-03-03_r2SCAN_benchmark/mace_results.json
 
-# Env: base-agent
+# Env: base
 # Plot the evaluation statistics
-conda run -n base-agent python .agents/skills/ml-mlip-benchmark/scripts/plot_benchmark.py \
+pixi run -e base python .agents/skills/ml-mlip-benchmark/scripts/plot_benchmark.py \
     --results research/2026-03-03_r2SCAN_benchmark/mace_results.json \
     --output_dir research/2026-03-03_r2SCAN_benchmark/plots_mace
 ```

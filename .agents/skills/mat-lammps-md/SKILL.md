@@ -17,7 +17,7 @@ Run GPU-accelerated LAMMPS molecular dynamics with MLIP backends using three iso
 
 2. **Check system prerequisites**.
 ```bash
-# Env: base-agent
+# Env: base
 nvidia-smi
 nvcc --version
 g++ --version
@@ -27,7 +27,7 @@ mpicxx --version
 
 3. **Identify GPU compute capability and set Kokkos arch flag**.
 ```bash
-# Env: base-agent
+# Env: base
 nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader
 ```
 - Example mapping:
@@ -40,7 +40,7 @@ nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader
 
    **Path A: MACE**
 ```bash
-# Env: base-agent
+# Env: base
 bash conda-envs/mace-agent/install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
@@ -51,7 +51,7 @@ bash conda-envs/mace-agent/install_lammps.sh
 
    **Path B: MatGL/CHGNet**
 ```bash
-# Env: base-agent
+# Env: base
 bash conda-envs/matgl-agent/install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
@@ -62,7 +62,7 @@ bash conda-envs/matgl-agent/install_lammps.sh
 
    **Path C: FairChem**
 ```bash
-# Env: base-agent
+# Env: base
 bash conda-envs/fairchem-agent/install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
@@ -73,8 +73,8 @@ bash conda-envs/fairchem-agent/install_lammps.sh
 
 5. **Run the selected binary with its matching conda environment**.
 ```bash
-# Env: mace-agent (example; switch env/binary pair as needed)
-conda activate mace-agent
+# Env: mace (example; switch env/binary pair as needed)
+pixi shell -e mace
 ./lammps/mace-agent/lmp -h
 ```
 

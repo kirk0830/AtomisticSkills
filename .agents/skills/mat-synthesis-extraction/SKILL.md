@@ -21,7 +21,7 @@ The ontology captures: target compound, compound type, synthesis method, startin
 Run the PDF parser to extract plain text from all PDFs in the input folder.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-synthesis-extraction/scripts/parse_pdfs.py \
     --pdf-dir /path/to/pdf_folder \
     --output-dir /path/to/output/texts

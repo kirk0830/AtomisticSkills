@@ -120,12 +120,12 @@ MACE fine-tuning is divided into a data preparation step, a configuration genera
 Usage:
 ```bash
 # 1. Prepare Data
-conda run -n mace-agent python .agents/skills/ml-mace-finetune/scripts/prepare_mace_data.py \
+pixi run -e mace python .agents/skills/ml-mace-finetune/scripts/prepare_mace_data.py \
     --data /path/to/training_data.json \
     --output-dir ./mace_finetuned_data
 
 # 2. Generate Configuration
-conda run -n mace-agent python .agents/skills/ml-mace-finetune/scripts/generate_mace_config.py \
+pixi run -e mace python .agents/skills/ml-mace-finetune/scripts/generate_mace_config.py \
     --train-file ./mace_finetuned_data/train.xyz \
     --valid-file ./mace_finetuned_data/valid.xyz \
     --model MACE-OMAT-0-small \
@@ -136,10 +136,10 @@ conda run -n mace-agent python .agents/skills/ml-mace-finetune/scripts/generate_
     --output-dir ./mace_finetuned
 
 # 3. Run Training
-conda run -n mace-agent mace_run_train --config ./mace_finetuned/finetune_config.yaml
+pixi run -e mace mace_run_train --config ./mace_finetuned/finetune_config.yaml
 
 # 4. Extract Training Logs (Optional, to create standard training_history.json)
-conda run -n base-agent python .agents/skills/ml-mace-finetune/scripts/extract_mace_logs.py \
+pixi run -e base python .agents/skills/ml-mace-finetune/scripts/extract_mace_logs.py \
     --results-dir ./mace_finetuned/results
 ```
 

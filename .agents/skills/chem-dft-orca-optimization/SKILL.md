@@ -56,7 +56,7 @@ Geometry optimization iteratively adjusts nuclear positions to minimize (or, for
 ### Geometry minimization
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional B3LYP \
@@ -69,7 +69,7 @@ python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
 ### Transition state optimization
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure ts_guess.xyz \
     --opt_type ts \
@@ -86,7 +86,7 @@ python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
 For settings not exposed as dedicated flags, pass JSON strings. `--calculator_settings` applies to the SCINE/ORCA calculator, `--optimizer_settings` applies to the ReaDuct optimization task. SCINE is strict about types, so JSON ensures values are passed with the correct type (int, float, string).
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional B3LYP \
@@ -99,7 +99,7 @@ python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
 ### With implicit solvation
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional PBE0 \

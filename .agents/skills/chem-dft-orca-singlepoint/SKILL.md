@@ -47,7 +47,7 @@ The calculation relies on the SCINE wrapper for automated input generation, outp
 ### Basic energy calculation
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --output_dir research/my_project/singlepoint
@@ -56,7 +56,7 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
 ### Energy + forces with a hybrid functional and dispersion
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
@@ -70,7 +70,7 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
 ### With implicit solvation
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional PBE0 \
@@ -86,7 +86,7 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
 For settings not exposed as dedicated flags, pass a JSON string via `--calculator_settings`. SCINE is strict about types, so JSON ensures values are passed with the correct type (int, float, string).
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
@@ -102,7 +102,7 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
 ### Hessian calculation
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
@@ -122,7 +122,7 @@ ORCA also supports post-HF methods useful for reference calculations, such as lo
 This is also available through this skill.
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional DLPNO-CCSD(T) \
