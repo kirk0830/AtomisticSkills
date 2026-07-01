@@ -39,6 +39,11 @@ mcp = "*"
 [feature.core.pypi-dependencies]
 # PyPI-only packages
 optimade = { version = "*", extras = ["client"] }
+# Install atomistic_skills as editable local package
+# This makes `from src.utils...` importable in ALL pixi environments
+atomistic-skills = { path = ".", editable = true }
+jinja2 = ">=3.0"  # For HPC job template generation
+pyyaml = ">=6.0"  # For HPC config loading
 
 # -----------------------------------------------------------------------------
 # Chemistry Feature: Molecular chemistry tools

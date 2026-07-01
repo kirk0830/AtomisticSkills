@@ -1,6 +1,6 @@
 ---
 name: chem-dft-orca-singlepoint
-description: Run a DFT or Coupled Cluster single-point energy calculation (with optional gradients/Hessian) on a molecular structure with ORCA through SCINE wrapper.
+description: Run a DFT or Coupled Cluster single-point energy calculation (with optional gradients/Hessian) on a molecular structure with ORCA, either locally or via HPC cluster submission.
 category: [chemistry]
 ---
 
@@ -9,19 +9,39 @@ category: [chemistry]
 ## Goal
 
 Compute the DFT electronic energy and optionally forces (gradients) and/or the Hessian for a given molecular structure with the ORCA quantum chemistry program.
-The calculation relies on the SCINE wrapper for automated input generation, output parsing, and error handling, with curated defaults suitable for standard cases.
+
+This skill supports two execution modes:
+1. **Local mode** — Uses the SCINE wrapper for automated input generation, output parsing, and error handling (existing behavior)
+2. **HPC mode** — Submits the calculation to an HPC cluster via Slurm (login node or SSH), using the unified HPC module
 
 > [!IMPORTANT]
+> Before running, ask the user which execution mode they prefer:
+> - **Local**: ORCA runs on the current machine (requires `ORCA_BINARY_PATH`)
+> - **HPC**: Submit to a Slurm cluster (requires HPC configuration — see [HPC Configuration](#hpc-configuration))
+>
+> If HPC mode is chosen, ask the user for: partition/queue name, number of CPU cores, wall time limit, and any required modules (e.g. `orca/5.0.4`, `openmpi/4.1.5`).
+
+> [!NOTE]
 > This skill is for **standard DFT single-point calculations** on molecular (non-periodic) systems. For advanced methods, multi-reference calculations, or properties not exposed here, use the [advanced ORCA skill](../chem-dft-orca-advanced-calculation/SKILL.md). For geometry optimization, use the [ORCA optimization skill](../chem-dft-orca-optimization/SKILL.md).
 
 ## 1. Prerequisites
 
-- **Conda environment:** `orca-agent` with `scine_utilities` and `ase` installed
+### Local Mode
+- **Pixi environment:** `orca` with `scine_utilities` and `ase` installed
 - **ORCA binary:** The environment variable `ORCA_BINARY_PATH` must point to the ORCA executable
   ```bash
   export ORCA_BINARY_PATH=/path/to/orca
   ```
 - **Input structure:** A molecular structure file readable by ASE (`.xyz`, `.cif`, `.mol`, etc.)
+
+### HPC Mode
+- **Pixi environment:** Any environment with `atomistic-skills` installed (the HPC module is in `src.utils.hpc`)
+- **HPC cluster:** A Slurm-based cluster accessible either:
+  - **Login node mode**: Agent running on the login node (sbatch available in PATH)
+  - **SSH mode**: Agent running locally, submitting via SSH (requires SSH key)
+- **HPC configuration:** Set up via `~/.atomistic_skills.yaml` or environment variables (see [HPC Configuration](#hpc-configuration))
+- **ORCA on cluster:** ORCA must be installed on the HPC cluster and loadable via `module load`
+- **Input structure:** Same as local mode
 
 ## 2. Parameters
 
@@ -44,20 +64,22 @@ The calculation relies on the SCINE wrapper for automated input generation, outp
 
 ## 3. Running a Calculation
 
-### Basic energy calculation
+### Option A: Local Execution (SCINE wrapper)
+
+#### Basic energy calculation
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+python .agents/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --output_dir research/my_project/singlepoint
 ```
 
-### Energy + forces with a hybrid functional and dispersion
+#### Energy + forces with a hybrid functional and dispersion
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+python .agents/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -67,11 +89,11 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --output_dir research/my_project/singlepoint
 ```
 
-### With implicit solvation
+#### With implicit solvation
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+python .agents/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional PBE0 \
     --basis_set def2-TZVP \
@@ -81,13 +103,13 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --output_dir research/my_project/singlepoint_solvated
 ```
 
-### With extra SCINE calculator settings
+#### With extra SCINE calculator settings
 
 For settings not exposed as dedicated flags, pass a JSON string via `--calculator_settings`. SCINE is strict about types, so JSON ensures values are passed with the correct type (int, float, string).
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+python .agents/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -99,11 +121,11 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
 > A popular functional choice is 'wB97M-V' which can only be used with the hack "--functional '' --dispersion '' --special_option wB97M-V"
 > This hack will work for any functional choice that includes hyphens
 
-### Hessian calculation
+#### Hessian calculation
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+python .agents/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -116,14 +138,14 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --output_dir research/my_project/singlepoint_full
 ```
 
-### Beyond DFT calculation
+#### Beyond DFT calculation
 
 ORCA also supports post-HF methods useful for reference calculations, such as local coupled cluster DLPNO-CCSD(T).
 This is also available through this skill.
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
+python .agents/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --structure molecule.xyz \
     --functional DLPNO-CCSD(T) \
     --basis_set def2-TZVP \
@@ -131,6 +153,85 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
     --spin_multiplicity 1 \
     --nprocs 8 \
     --output_dir research/my_project/singlepoint_full
+```
+
+### Option B: HPC Cluster Submission
+
+Use the `OrcaHPCRunner` to submit calculations to an HPC cluster. This generates the ORCA input file, submits a Slurm job, waits for completion, and parses the results.
+
+#### Basic HPC submission
+
+```python
+# Env: orca (or any env with atomistic-skills installed)
+from src.utils.dft.orca_hpc import OrcaHPCRunner
+
+runner = OrcaHPCRunner(mode="hpc")
+
+result = runner.run_singlepoint(
+    structure_path="molecule.xyz",
+    functional="B3LYP",
+    basis_set="def2-TZVP",
+    dispersion="D3BJ",
+    charge=0,
+    spin_multiplicity=1,
+    nprocs=16,              # CPU cores per job
+    compute_gradients=True,
+    output_dir="research/my_project/singlepoint_hpc",
+    poll_interval=30,       # Check job status every 30s
+)
+
+print(f"Job ID: {result.job_id}")
+print(f"Energy: {result.energy_eV:.6f} eV")
+print(f"SCF converged: {result.scf_converged}")
+print(f"Success: {result.success}")
+```
+
+#### With custom HPC settings
+
+```python
+# Env: orca
+from src.utils.dft.orca_hpc import OrcaHPCRunner
+
+# Pass HPC config directly, or use ~/.atomistic_skills.yaml
+runner = OrcaHPCRunner(
+    mode="hpc",
+    hpc_config={
+        "mode": "ssh",
+        "host": "cluster.university.edu",
+        "user": "your_username",
+        "key_path": "~/.ssh/id_ed25519",
+        "remote_work_dir": "/work/your_username/orca_calcs",
+    },
+)
+
+result = runner.run_singlepoint(
+    structure_path="molecule.xyz",
+    functional="PBE0",
+    basis_set="def2-TZVP",
+    nprocs=32,
+    output_dir="/work/your_username/orca_calcs/benzene",
+    job_name="benzene_pbe0",
+    timeout=3600,  # 1 hour timeout
+)
+```
+
+#### Hessian calculation on HPC
+
+```python
+# Env: orca
+from src.utils.dft.orca_hpc import OrcaHPCRunner
+
+runner = OrcaHPCRunner(mode="hpc")
+result = runner.run_singlepoint(
+    structure_path="molecule.xyz",
+    functional="B3LYP",
+    basis_set="def2-TZVP",
+    dispersion="D3BJ",
+    nprocs=16,
+    compute_gradients=True,
+    compute_hessian=True,
+    output_dir="research/my_project/hessian_hpc",
+)
 ```
 
 ## 4. Useful standards to adhere to
@@ -152,10 +253,56 @@ python .agent/skills/chem-dft-orca-singlepoint/scripts/run_singlepoint.py \
 
 - **Non-periodic systems only:** This skill is designed for molecules, clusters, and finite systems. ORCA does not handle periodic boundary conditions.
 - **Standard methods:** For multi-reference methods (CASSCF, NEVPT2), excited-state calculations (TD-DFT, EOM-CCSD), or other advanced features, use the [advanced ORCA skill](../chem-dft-orca-advanced-calculation/SKILL.md).
-- **ORCA binary:** `ORCA_BINARY_PATH` must be set and point to a working ORCA installation.
-- **Environment:** All commands require the `orca-agent` conda environment.
+- **ORCA binary (local mode):** `ORCA_BINARY_PATH` must be set and point to a working ORCA installation.
+- **HPC cluster (HPC mode):** ORCA must be available on the cluster via `module load`. Configure via `~/.atomistic_skills.yaml`.
+- **Environment:** Local mode requires the `orca` pixi environment. HPC mode works from any environment with `atomistic-skills` installed.
 - **Solvation:** When using `--solvation`, you must also provide `--solvent`. Available solvents depend on the chosen model (CPCM/SMD); common names like `water`, `ethanol`, `dmso`, `acetonitrile`, `thf` are supported.
 - **Spin multiplicity:** Provide the spin multiplicity $2S+1$ (e.g. 1 for singlet, 2 for doublet, 3 for triplet), not the number of unpaired electrons.
+
+## 7. HPC Configuration
+
+### Config File: ~/.atomistic_skills.yaml
+
+```yaml
+hpc:
+  # Profile: generic, nersc_perlmutter, mit_supercloud, etc.
+  profile: "nersc_perlmutter"
+
+  # Mode: auto, local, ssh
+  mode: "auto"
+
+  # SSH config (for ssh mode)
+  ssh_host: "cluster.university.edu"
+  ssh_user: "your_username"
+  ssh_key: "~/.ssh/id_ed25519"
+  ssh_remote_work_dir: "/work/your_username/orca_calcs"
+
+  # ORCA modules (overrides profile defaults)
+  modules:
+    orca: ["orca/5.0.4", "openmpi/4.1.5"]
+```
+
+### Environment Variables
+
+```bash
+# Quick override without editing config file
+export HPC_MODE=ssh
+export HPC_SSH_HOST=cluster.university.edu
+export HPC_SSH_USER=your_username
+export HPC_SSH_KEY=~/.ssh/id_ed25519
+export HPC_MODULES_ORCA="orca/5.0.4,openmpi/4.1.5"
+```
+
+### Built-in Profiles
+
+| Profile | Default Partition | ORCA Modules |
+|---------|------------------|--------------|
+| `generic` | None | None |
+| `nersc_perlmutter` | `cpu` | `orca/5.0.4`, `openmpi/4.1.5` |
+| `mit_supercloud` | `batch` | `orca/5.0` |
+| `umich_arc` | `standard` | `orca/5.0.4` |
+
+See [HPC Job Submission docs](../../../docs/hpc_job_submission.md) for full configuration reference.
 
 ## References
 

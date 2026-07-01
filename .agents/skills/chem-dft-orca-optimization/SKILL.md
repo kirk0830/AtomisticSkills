@@ -1,6 +1,6 @@
 ---
 name: chem-dft-orca-optimization
-description: Run DFT geometry optimization (minimization or TS search) on a molecular structure using ORCA via SCINE/ReaDuct wrapper.
+description: Run DFT geometry optimization (minimization or TS search) on a molecular structure using ORCA, either locally via SCINE/ReaDuct or via HPC cluster submission.
 category: [chemistry]
 ---
 
@@ -8,7 +8,20 @@ category: [chemistry]
 
 ## Goal
 
-Optimize the geometry of a molecular structure at the DFT level using the ORCA quantum chemistry program. Supports two modes: **minimization** (finding the nearest local minimum) and **transition state (TS) optimization** (single-ended saddle point search). The calculation uses the SCINE/ReaDuct wrapper for robust optimizer management.
+Optimize the geometry of a molecular structure at the DFT level using the ORCA quantum chemistry program. Supports two modes: **minimization** (finding the nearest local minimum) and **transition state (TS) optimization** (single-ended saddle point search).
+
+This skill supports two execution modes:
+1. **Local mode** — Uses the SCINE/ReaDuct wrapper for robust optimizer management (existing behavior)
+2. **HPC mode** — Submits the calculation to an HPC cluster via Slurm (useful for long-running optimizations)
+
+> [!IMPORTANT]
+> Before running, ask the user which execution mode they prefer:
+> - **Local**: SCINE/ReaDuct handles optimization on the current machine
+> - **HPC**: Submit to a Slurm cluster (generates ORCA Opt input, submits job, retrieves results)
+>
+> If HPC mode is chosen, ask for: partition/queue, CPU cores, wall time limit, and required modules.
+>
+> **Note:** HPC mode uses ORCA's native optimizer (not SCINE/ReaDuct). For TS optimization requiring ReaDuct's advanced step control, use local mode.
 
 > [!IMPORTANT]
 > This skill provides **single-ended TS optimization** only. For reaction pathway methods (NEB, IRC), consider using the MLIP-based [NEB skill](../chem-neb-barrier/SKILL.md) or [IRC skill](../chem-irc-verification/SKILL.md) with MLIP pre-screening, then refine with DFT. For advanced ORCA features, use the [advanced ORCA skill](../chem-dft-orca-advanced-calculation/SKILL.md).
@@ -22,13 +35,20 @@ Geometry optimization iteratively adjusts nuclear positions to minimize (or, for
 
 ## 1. Prerequisites
 
-- **Conda environment:** `orca-agent` with `scine_utilities`, `scine_readuct`, and `ase` installed
+### Local Mode
+- **Pixi environment:** `orca` with `scine_utilities`, `scine_readuct`, and `ase` installed
 - **ORCA binary:** The environment variable `ORCA_BINARY_PATH` must point to the ORCA executable
   ```bash
   export ORCA_BINARY_PATH=/path/to/orca
   ```
 - **Input structure:** A molecular structure file readable by ASE (`.xyz`, `.cif`, `.mol`, etc.)
 - For **TS optimization:** Provide a reasonable TS guess geometry. Poor initial guesses will likely fail to converge to the correct saddle point.
+
+### HPC Mode
+- **Pixi environment:** Any environment with `atomistic-skills` installed
+- **HPC cluster:** Slurm-based cluster (login node or SSH access)
+- **ORCA on cluster:** Loadable via `module load orca/...`
+- **HPC configuration:** See [HPC Configuration](#hpc-configuration) in the singlepoint skill
 
 ## 2. Parameters
 
@@ -53,11 +73,13 @@ Geometry optimization iteratively adjusts nuclear positions to minimize (or, for
 
 ## 3. Running an Optimization
 
-### Geometry minimization
+### Option A: Local Execution (SCINE/ReaDuct)
+
+#### Geometry minimization
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+python .agents/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -66,11 +88,11 @@ python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --output_dir research/my_project/optimization
 ```
 
-### Transition state optimization
+#### Transition state optimization
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+python .agents/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure ts_guess.xyz \
     --opt_type ts \
     --functional B3LYP \
@@ -81,13 +103,13 @@ python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --output_dir research/my_project/ts_optimization
 ```
 
-### With extra settings (calculator + optimizer)
+#### With extra settings (calculator + optimizer)
 
 For settings not exposed as dedicated flags, pass JSON strings. `--calculator_settings` applies to the SCINE/ORCA calculator, `--optimizer_settings` applies to the ReaDuct optimization task. SCINE is strict about types, so JSON ensures values are passed with the correct type (int, float, string).
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+python .agents/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional B3LYP \
     --basis_set def2-TZVP \
@@ -96,11 +118,11 @@ python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --output_dir research/my_project/opt_custom
 ```
 
-### With implicit solvation
+#### With implicit solvation
 
 ```bash
 # Env: orca
-python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
+python .agents/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --structure molecule.xyz \
     --functional PBE0 \
     --basis_set def2-TZVP \
@@ -109,6 +131,40 @@ python .agent/skills/chem-dft-orca-optimization/scripts/run_optimization.py \
     --nprocs 4 \
     --output_dir research/my_project/opt_solvated
 ```
+
+### Option B: HPC Cluster Submission
+
+For long-running optimizations, submit to an HPC cluster. This uses ORCA's native optimizer (Opt keyword) instead of SCINE/ReaDuct.
+
+```python
+# Env: orca (or any env with atomistic-skills installed)
+from src.utils.dft.orca_hpc import OrcaHPCRunner
+
+runner = OrcaHPCRunner(mode="hpc")
+
+# Geometry minimization on HPC
+result = runner.run_singlepoint(
+    structure_path="molecule.xyz",
+    functional="B3LYP",
+    basis_set="def2-TZVP",
+    dispersion="D3BJ",
+    nprocs=16,
+    output_dir="research/my_project/opt_hpc",
+    # For optimization, add Opt keyword via special_options
+    special_options=["Opt", "TightSCF"],
+    poll_interval=60,
+    timeout=86400,  # 24 hour timeout
+)
+
+print(f"Job ID: {result.job_id}")
+print(f"Energy: {result.energy_eV:.6f} eV")
+print(f"SCF converged: {result.scf_converged}")
+```
+
+> [!NOTE]
+> HPC mode uses ORCA's native `Opt` keyword for optimization, not SCINE/ReaDuct.
+> For TS optimization with ReaDuct's advanced step control, use local mode instead.
+> For HPC TS optimization, write a custom input with `! Opt TS` and use the [advanced skill](../chem-dft-orca-advanced-calculation/SKILL.md).
 
 ## 4. Output Files
 
