@@ -1,0 +1,241 @@
+# Security Fix Checkpoint
+
+> 本文档记录 AtomisticSkills 仓库安全性重构的当前进度、已完成项、待处理项和讨论结论。
+
+## 背景
+
+AtomisticSkills 是一个 AI 驱动的原子级材料研究框架，采用 Tools / Skills / Workflows 三层架构。
+
+**原始安全风险**（已识别的初始问题）：
+
+1. 安装流程不透明 — 仅需告诉 IDE "我要安装"，整个过程不透明
+2. `install.sh` 脚本在沙盒外运行 — 大量 skills 目录下的 install.sh 进行文件增删改
+3. `mcp_config.json` 硬编码个人路径 — 暴露用户目录结构
+4. `conda env remove` 粗暴删除重建 — 风险高且不优雅
+5. Git clone 依赖无版本锁定 — 供应链攻击风险
+6. 运行时 patch 上游代码 — 安全审计失效
+7. LAMMPS 手动编译 — 复杂且有编译期风险
+
+## 重构策略
+
+**核心决策**：从 Conda 迁移到 Pixi，消除所有 `install.sh`，实现声明式、可重现、隔离的环境管理。
+
+**迁移原则**：
+- 渐进式迁移，保持向后兼容（Conda 仍可通过 `--no-pixi` 强制使用）
+- 优先使用 conda-forge 包替代手动编译
+- 对于必须从源码构建的依赖，用 Pixi task 封装并锁定版本
+- 路径全部隔离在项目内 `.pixi/` 目录
+
+---
+
+## 已完成项 ✅
+
+### 1. pixi.toml 基础架构
+
+**文件**: [pixi.toml](file:///workspace/pixi.toml)
+
+已定义的 Feature 分组：
+- `core` — 基础科学计算依赖（pymatgen, ase, rdkit 等）
+- `chemistry` — 分子工具（rdkit, openbabel, packmol 等）
+- `torch-base` / `torch-cuda` — PyTorch CPU/GPU 版本
+- `mlip-mace` / `mlip-matgl` / `mlip-fairchem` — 三个 MLIP 模型
+- `dft-atomate2` / `dft-orca` — DFT 工具
+- `generative-*` — 生成式模型（ADiT, DiffCSP, MatterGen 等）
+- `thermo-*` — 热力学工具（calphad, phasefield, smol）
+- `drugdiscovery` — 药物发现工具
+- `spectroscopy-*` — 光谱分析工具
+- `porous-void` — 孔道材料工具
+- `analysis` — 分析工具（matplotlib, scikit-learn 等）
+
+已定义的环境（20+）：
+- `base`, `mace`, `matgl`, `fairchem`
+- `mace-lammps`, `matgl-lammps`, `fairchem-lammps`
+- `atomate2`, `smol`, `drugdisc`, `adit`, `diffcsp`, `mattergen`
+- `calphad`, `phasefield`, `nmr`, `msms`, `void`, `orca`, `react-ot`, `scd`
+
+**Solve Group 优化**:
+- `mlip-cuda` — mace 和 fairchem 共享 CUDA 解析
+- `mlip-base` — matgl 使用 CPU PyTorch
+
+### 2. LAMMPS 方案
+
+**结论**:
+- **FairChem**: conda-forge `lammps` 包（已经在用，零改动）
+- **MatGL**: conda-forge `lammps=*=cuda*` 包（含 Kokkos+CUDA, ML-IAP, USER-M3GNET）
+- **MACE**: 保留 ACEsuit fork 编译，但用 Pixi task 封装 + 锁定版本
+
+**原因**: MACE 的 `pair_style mace` 需要 `PKG_ML-MACE`，仅存在于 ACEsuit fork，
+conda-forge 不含此包。迁移到 `pair_style mliap unified` 接口风险较高（需改输入文件、
+模型转换、运行参数），当前阶段先保留原行为。
+
+**新增内容**:
+- `lammps-cpu` feature — conda-forge CPU 版 LAMMPS
+- `lammps-cuda` feature — conda-forge CUDA 版 LAMMPS
+- `lammps-mace-build` feature — MACE fork 编译工具链（cmake, gxx, openmpi, mkl-devel）
+- `fairchem-lammps-pkg` feature — fairchem-lammps pip 包
+- `build-lammps-mace` task — 封装 MACE LAMMPS 编译，产物安装到环境内
+
+安全改进：
+- 编译产物从 `PROJECT_ROOT/lammps/` 改为 `.pixi/envs/<env>/bin/lmp`
+- 克隆目录在 `.pixi/build/` 内，隔离在项目中
+- 移除 `rm -rf` 强制清理，改为增量构建
+- 可通过 `LAMMPS_REF` 环境变量锁定 commit hash
+
+### 3. MCP 配置 Pixi 化
+
+**文件**: [mcp_config.json](file:///workspace/mcp_config.json)
+
+**改动**:
+- 移除硬编码 `/home/bdeng/miniforge3/envs/...` 路径
+- 改用 `PIXI_PROJECT/.pixi/envs/<name>/bin/python` 占位符
+- PYTHONPATH 从硬编码路径改为 `PIXI_PROJECT` 占位符
+- 按字母顺序重新排列服务器（base → mace → matgl → ...）
+
+**安全收益**:
+- 配置文件不再包含任何个人路径信息
+- 可直接提交到版本控制，无隐私泄露风险
+- 由 `configure_mcp.py` 运行时替换为实际路径
+
+### 4. configure_mcp.py Pixi 支持
+
+**文件**: [configure_mcp.py](file:///workspace/configure_mcp.py)
+
+**改动**:
+- 新增 `detect_pixi_project_root()` — 检测 pixi.toml 自动启用 Pixi 模式
+- 新增 `PIXI_ENV_PATTERN` — 匹配 Pixi 环境路径
+- 重构 `load_mcp_servers()` — 同时支持 Conda 和 Pixi，Pixi 优先
+- 提取 `_rewrite_env_paths()` — 通用路径重写函数
+- 新增 CLI 参数: `--pixi` / `--no-pixi`
+- 输出信息区分 "env mode: pixi" vs "env mode: conda"
+
+**向后兼容**:
+- 如果 `pixi.toml` 不存在，自动回退到 Conda 模式
+- `--no-pixi` 可强制使用 Conda
+- Conda 环境的 `-agent` 后缀仍然支持
+
+### 5. 规则文档更新
+
+**文件**: [.agents/rules/mcp-environments.md](file:///workspace/.agents/rules/mcp-environments.md)
+
+**改动**:
+- 新增 Pixi 优先说明
+- 完整列出所有 Pixi 环境及其描述
+- 提供 `pixi run -e <env>` 运行指南
+- 保留 Conda (Legacy) 部分作为参考
+- 说明 Skill 中 `# Env:` 注释与 Pixi 环境的对应关系
+
+### 6. .gitignore 更新
+
+**文件**: [.gitignore](file:///workspace/.gitignore)
+
+新增排除：
+```
+.pixi/
+pixi.lock
+```
+
+---
+
+## 讨论过但未实施的内容 📋
+
+### Git Clone 依赖处理方案
+
+**6 个 git clone 依赖**：nvalchemi-toolkit, react-ot, SelfConditionedDenoisingAtoms,
+VOID, ms-pred, LAMMPS (MACE fork)
+
+**评估的方案**：
+1. **Pixi Git 依赖** — 声明式 + 版本锁定，但无法应用 patch
+2. **Fork + 发布** — 最安全，长期维护成本高
+3. **Vendoring** — 代码在仓库内，体积增大
+4. **可选依赖 + 延迟安装** — 最小化攻击面
+
+**当前决策**：
+- LAMMPS (MACE) → Pixi task 封装 + 锁定 commit（已实施）
+- 其余 5 个 → 待讨论和实施
+
+**nvalchemi-toolkit 状态**: 假设为内部工具，状态不明，后续处理
+
+### ms-pred 运行时 patch
+
+msms-agent 的 install.sh 中有大量运行时 patch：
+- 完全重写上游 setup.py
+- 修改 Python 源代码（9 处 patch）
+- 修改 dgl site-packages 文件
+- 伪造 torchdata 包
+
+**风险**: 安全审计完全失效，上游更新可能不兼容
+
+**待决策**: 是否 fork ms-pred 并将 patch 固化到 fork 中？
+
+### MACE 迁移到 ML-IAP 接口
+
+MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 的
+`pair_style mace`。迁移后可完全使用 conda-forge LAMMPS。
+
+**风险**: 需要改所有输入文件、模型转换脚本、运行参数
+
+**当前决策**: 暂不迁移，保留 fork 编译但用 Pixi 封装
+
+---
+
+## 待处理项 🔜
+
+### 高优先级
+
+1. **Git clone 依赖迁移到 Pixi**
+   - react-ot, SCD, VOID, ms-pred, nvalchemi-toolkit
+   - 需确定每个依赖的处理方案
+
+2. **Skills 全面 Pixi 化**
+   - 替换 `# Env: x-agent` 为 `# Env: x`（Pixi 环境名）
+   - 替换 `conda run -n x-agent` 为 `pixi run -e x`
+   - 将 skills 中的 shell 脚本迁移为 Pixi tasks
+
+3. **install.sh 消除计划**
+   - 评估剩余的 install.sh 是否可完全由 pixi.toml 替代
+   - 逐步标记为 legacy / 删除
+
+### 中优先级
+
+4. **pixi.lock 生成**
+   - 实际运行 `pixi install` 生成锁定文件
+   - （当前因网络问题暂未执行）
+
+5. **依赖安全审计**
+   - 审查所有第三方依赖的版本
+   - 检查是否有已知漏洞
+
+6. **输入验证**
+   - MCP 服务器参数校验
+   - SMILES / 结构输入安全性
+
+### 低优先级
+
+7. **SELinux / AppArmor 配置建议**
+8. **日志脱敏** — 确保错误日志不泄露敏感信息
+
+---
+
+## 安全改进对比
+
+| 安全维度 | 改进前 | 改进后 |
+|----------|--------|--------|
+| **路径泄露** | mcp_config.json 硬编码 `/home/bdeng/...` | PIXI_PROJECT 占位符，运行时替换 |
+| **环境隔离** | 全局 `~/miniforge3/envs/` | 项目内 `.pixi/envs/` |
+| **PATH 污染** | conda activate 后全局生效 | 仅 pixi run 内生效 |
+| **粗暴删除** | `conda env remove -y` | 增量更新，无强制删除 |
+| **可重现性** | YAML 无锁定 | pixi.lock hash 验证 |
+| **安装透明** | install.sh 黑盒 | pixi.toml 声明式配置 |
+| **LAMMPS 编译** | 写 PROJECT_ROOT 外 | 写 .pixi/envs/ 内 |
+| **向后兼容** | - | `--no-pixi` 回退 Conda |
+
+---
+
+## 下一步计划
+
+根据用户决策，下一步可以选择：
+
+**选项 A**: 处理剩余 git clone 依赖（react-ot, SCD, VOID, ms-pred, nvalchemi）
+**选项 B**: 全面更新 Skills，将 Env 注释和 conda run 命令改为 Pixi 方式
+**选项 C**: 先验证现有 pixi.toml 能否正确解析（需要网络环境）
+**选项 D**: 制定完整的 install.sh 消除路线图

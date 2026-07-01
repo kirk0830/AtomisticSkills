@@ -1,109 +1,109 @@
 {
   "mcpServers": {
-    "matgl": {
-      "command": "/home/bdeng/miniforge3/envs/matgl-agent/bin/python",
-      "args": [
-        "-m",
-        "src.mcp_server.matgl_server"
-      ],
-      "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills",
-        "MATGL_BACKEND": "DGL"
-      }
-    },
-    "mace": {
-      "command": "/home/bdeng/miniforge3/envs/mace-agent/bin/python",
-      "args": [
-        "-m",
-        "src.mcp_server.mace_server"
-      ],
-      "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills",
-        "CONDA_PREFIX": "/home/bdeng/miniforge3/envs/mace-agent",
-        "TRITON_PTXAS_BLACKWELL_PATH": "/home/bdeng/miniforge3/envs/mace-agent/bin/ptxas",
-        "PATH": "/home/bdeng/miniforge3/envs/mace-agent/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-        "CUDA_LAUNCH_BLOCKING": "1",
-        "TORCH_USE_CUDA_DSA": "1"
-      }
-    },
-    "fairchem": {
-      "command": "/home/bdeng/miniforge3/envs/fairchem-agent/bin/python",
-      "args": [
-        "-m",
-        "src.mcp_server.fairchem_server"
-      ],
-      "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
-      }
-    },
     "base": {
-      "command": "/home/bdeng/miniforge3/envs/base-agent/bin/python",
+      "command": "PIXI_PROJECT/.pixi/envs/base/bin/python",
       "args": [
         "-m",
         "src.mcp_server.base_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+        "PYTHONPATH": "PIXI_PROJECT"
+      }
+    },
+    "mace": {
+      "command": "PIXI_PROJECT/.pixi/envs/mace/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.mace_server"
+      ],
+      "env": {
+        "PYTHONPATH": "PIXI_PROJECT",
+        "CONDA_PREFIX": "PIXI_PROJECT/.pixi/envs/mace",
+        "TRITON_PTXAS_BLACKWELL_PATH": "PIXI_PROJECT/.pixi/envs/mace/bin/ptxas",
+        "PATH": "PIXI_PROJECT/.pixi/envs/mace/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "CUDA_LAUNCH_BLOCKING": "1",
+        "TORCH_USE_CUDA_DSA": "1"
+      }
+    },
+    "matgl": {
+      "command": "PIXI_PROJECT/.pixi/envs/matgl/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.matgl_server"
+      ],
+      "env": {
+        "PYTHONPATH": "PIXI_PROJECT",
+        "MATGL_BACKEND": "DGL"
+      }
+    },
+    "fairchem": {
+      "command": "PIXI_PROJECT/.pixi/envs/fairchem/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.fairchem_server"
+      ],
+      "env": {
+        "PYTHONPATH": "PIXI_PROJECT"
       }
     },
     "atomate2": {
-      "command": "/home/bdeng/miniforge3/envs/atomate2-agent/bin/python",
+      "command": "PIXI_PROJECT/.pixi/envs/atomate2/bin/python",
       "args": [
         "-m",
         "src.mcp_server.atomate2_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+        "PYTHONPATH": "PIXI_PROJECT"
       }
     },
     "smol": {
-      "command": "/home/bdeng/miniforge3/envs/smol-agent/bin/python",
+      "command": "PIXI_PROJECT/.pixi/envs/smol/bin/python",
       "args": [
         "-m",
         "src.mcp_server.smol_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+        "PYTHONPATH": "PIXI_PROJECT"
       }
     },
     "drugdisc": {
-      "command": "/home/bdeng/miniforge3/envs/drugdisc-agent/bin/python",
+      "command": "PIXI_PROJECT/.pixi/envs/drugdisc/bin/python",
       "args": [
         "-m",
         "src.mcp_server.drugdisc_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+        "PYTHONPATH": "PIXI_PROJECT"
       }
     },
     "adit": {
-      "command": "/home/bdeng/miniforge3/envs/adit-agent/bin/python",
+      "command": "PIXI_PROJECT/.pixi/envs/adit/bin/python",
       "args": [
         "-m",
         "src.mcp_server.adit_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+        "PYTHONPATH": "PIXI_PROJECT"
       }
     },
     "diffcsp": {
-      "command": "/home/bdeng/miniforge3/envs/diffcsp-agent/bin/python",
+      "command": "PIXI_PROJECT/.pixi/envs/diffcsp/bin/python",
       "args": [
         "-m",
         "src.mcp_server.diffcsp_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+        "PYTHONPATH": "PIXI_PROJECT"
       }
     },
     "mattergen": {
-      "command": "/home/bdeng/miniforge3/envs/mattergen-agent/bin/python",
+      "command": "PIXI_PROJECT/.pixi/envs/mattergen/bin/python",
       "args": [
         "-m",
         "src.mcp_server.mattergen_server"
       ],
       "env": {
-        "PYTHONPATH": "/home/bdeng/projects/AtomisticSkills"
+        "PYTHONPATH": "PIXI_PROJECT"
       }
     }
   }
