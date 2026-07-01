@@ -38,6 +38,7 @@ from pathlib import Path
 from typing import Any
 
 ENV_PATTERN = re.compile(r".*/envs/([^/]+)/bin/python$")
+PIXI_ENV_PATTERN = re.compile(r".*/\.pixi/envs/([^/]+)/bin/python$")
 PROJECT_ROOT = Path(__file__).resolve().parent
 MCP_SOURCE = PROJECT_ROOT / "mcp_config.json"
 
@@ -229,6 +230,14 @@ If the current workspace is already `{PROJECT_ROOT}` or a subdirectory, prefer t
 # ---------------------------------------------------------------------------
 
 
+def detect_pixi_project_root() -> str | None:
+    """Detect Pixi project root by looking for pixi.toml."""
+    candidate = PROJECT_ROOT / "pixi.toml"
+    if candidate.is_file():
+        return str(PROJECT_ROOT)
+    return None
+
+
 def detect_conda_base() -> str | None:
     for cmd in ("conda", "mamba", "micromamba"):
         try:
@@ -258,47 +267,79 @@ def detect_conda_base() -> str | None:
 # ---------------------------------------------------------------------------
 
 
-def load_mcp_servers(conda_base: str) -> dict[str, Any]:
-    """Load mcp_config.json and rewrite conda env paths for this machine."""
+def _rewrite_env_paths(
+    env: dict,
+    project_root: str,
+    env_name: str | None,
+    env_prefix: str | None,
+) -> None:
+    """Rewrite PYTHONPATH, CONDA_PREFIX, PATH etc. for an environment.
+
+    Works for both conda and pixi environments.
+    """
+    if "PYTHONPATH" in env:
+        env["PYTHONPATH"] = project_root
+
+    if env_name is None or env_prefix is None:
+        return
+
+    if "CONDA_PREFIX" in env:
+        env["CONDA_PREFIX"] = env_prefix
+    if "TRITON_PTXAS_BLACKWELL_PATH" in env:
+        env["TRITON_PTXAS_BLACKWELL_PATH"] = f"{env_prefix}/bin/ptxas"
+    if "PATH" in env:
+        bin_dir = f"{env_prefix}/bin"
+        import re as _re
+
+        env["PATH"] = _re.sub(
+            r"[^ ]*?/(?:envs|\.pixi/envs)/[^/]+/bin",
+            bin_dir,
+            env["PATH"],
+            count=1,
+        )
+
+
+def load_mcp_servers(
+    conda_base: str | None = None,
+    pixi_root: str | None = None,
+) -> dict[str, Any]:
+    """Load mcp_config.json and rewrite env paths for this machine.
+
+    Supports both conda and pixi environments. Pixi takes priority if both
+    are available (pixi.toml present in project root).
+    """
     with open(MCP_SOURCE) as fh:
         config = json.load(fh)
 
     project_root = str(PROJECT_ROOT)
+    use_pixi = pixi_root is not None
 
     for server in config.get("mcpServers", {}).values():
-        match = ENV_PATTERN.match(server.get("command", ""))
-        if match:
-            env_name = match.group(1)
-            server["command"] = f"{conda_base}/envs/{env_name}/bin/python"
-        env = server.get("env", {})
-        if "PYTHONPATH" in env:
-            env["PYTHONPATH"] = project_root
-        # Rewrite CONDA_PREFIX so Triton's ptxas-blackwell fallback resolves
-        # correctly on Blackwell+ GPUs even when the MCP server is launched
-        # without full conda activation (no PATH / CONDA_PREFIX from conda init).
-        if "CONDA_PREFIX" in env and match:
-            env["CONDA_PREFIX"] = f"{conda_base}/envs/{env_name}"
-        # Explicit Triton ptxas-blackwell path: more direct than CONDA_PREFIX
-        # fallback. Required on Blackwell GPUs (sm_100+, compute capability ≥ 12.0)
-        # where torch.compile triggers Triton JIT compilation via nvalchemi hooks.
-        if "TRITON_PTXAS_BLACKWELL_PATH" in env and match:
-            env["TRITON_PTXAS_BLACKWELL_PATH"] = (
-                f"{conda_base}/envs/{env_name}/bin/ptxas"
-            )
-        # Rewrite PATH: replace the placeholder conda env bin dir so that
-        # shutil.which('ptxas-blackwell') resolves correctly in MCP server
-        # processes that do not have full conda activation.
-        if "PATH" in env and match:
-            env_bin = f"{conda_base}/envs/{env_name}/bin"
-            # Replace any existing envs/<name>/bin prefix in PATH
-            import re as _re
+        cmd = server.get("command", "")
 
-            env["PATH"] = _re.sub(
-                r"[^ ]*?/envs/[^/]+/bin",
-                env_bin,
-                env["PATH"],
-                count=1,
-            )
+        env_name: str | None = None
+        env_prefix: str | None = None
+
+        # Check for Pixi placeholder (PIXI_PROJECT/.pixi/envs/<name>/bin/python)
+        pixi_match = PIXI_ENV_PATTERN.search(cmd) or "PIXI_PROJECT" in cmd
+        if use_pixi and pixi_match:
+            m = re.search(r"\.pixi/envs/([^/]+)/bin/python", cmd)
+            if not m:
+                m = re.search(r"PIXI_PROJECT/\.pixi/envs/([^/]+)/bin/python", cmd)
+            if m:
+                env_name = m.group(1)
+                env_prefix = f"{pixi_root}/.pixi/envs/{env_name}"
+                server["command"] = f"{env_prefix}/bin/python"
+        elif conda_base:
+            match = ENV_PATTERN.match(cmd)
+            if match:
+                env_name = match.group(1)
+                env_prefix = f"{conda_base}/envs/{env_name}"
+                server["command"] = f"{env_prefix}/bin/python"
+
+        _rewrite_env_paths(
+            server.get("env", {}), project_root, env_name, env_prefix
+        )
 
     return config.get("mcpServers", {})
 
@@ -675,6 +716,17 @@ def main() -> None:
         help="Path to conda/mamba base directory (auto-detected if omitted).",
     )
     parser.add_argument(
+        "--pixi",
+        action="store_true",
+        default=None,
+        help="Use Pixi environments (auto-detected if pixi.toml exists).",
+    )
+    parser.add_argument(
+        "--no-pixi",
+        action="store_true",
+        help="Force conda mode even if pixi.toml is present.",
+    )
+    parser.add_argument(
         "--scope",
         choices=["project", "global", "both"],
         default="project",
@@ -696,27 +748,37 @@ def main() -> None:
             print("No supported agents detected.")
         return
 
-    # Resolve conda base
-    conda_base: str | None = args.conda
-    if conda_base is not None:
-        if not Path(conda_base).is_dir():
-            print(f"Error: {conda_base} is not a valid directory.", file=sys.stderr)
-            sys.exit(1)
+    # Resolve Pixi vs Conda mode
+    pixi_root: str | None = None
+    conda_base: str | None = None
+
+    if args.no_pixi:
+        use_pixi = False
     else:
-        conda_base = detect_conda_base()
-        if conda_base is None:
-            print(
-                "Error: Could not auto-detect a conda/mamba installation.\n"
-                "Provide the base path explicitly: --conda /path/to/miniforge3",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+        pixi_root = detect_pixi_project_root()
+        use_pixi = pixi_root is not None
+
+    if not use_pixi:
+        conda_base = args.conda
+        if conda_base is not None:
+            if not Path(conda_base).is_dir():
+                print(f"Error: {conda_base} is not a valid directory.", file=sys.stderr)
+                sys.exit(1)
+        else:
+            conda_base = detect_conda_base()
+            if conda_base is None:
+                print(
+                    "Error: Could not auto-detect a conda/mamba installation.\n"
+                    "Provide the base path explicitly: --conda /path/to/miniforge3",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
 
     if not MCP_SOURCE.exists():
         print(f"Error: {MCP_SOURCE} not found.", file=sys.stderr)
         sys.exit(1)
 
-    servers = load_mcp_servers(conda_base)
+    servers = load_mcp_servers(conda_base=conda_base, pixi_root=pixi_root)
 
     # Resolve agent list
     if args.agent is None:
@@ -735,7 +797,11 @@ def main() -> None:
         agents = args.agent
 
     print(f"Project root : {PROJECT_ROOT}")
-    print(f"Conda base   : {conda_base}")
+    if use_pixi:
+        print(f"Env mode     : pixi (envs in .pixi/envs/)")
+    else:
+        print(f"Env mode     : conda")
+        print(f"Conda base   : {conda_base}")
     print(f"Scope        : {args.scope}")
     print()
 

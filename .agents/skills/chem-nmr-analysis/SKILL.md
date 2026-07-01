@@ -42,7 +42,7 @@ For end-to-end workflows that chain this skill with other skills, see: `.agents/
 The agent should use this script to predict reaction products from reactant and reagent SMILES via the ReactionT5 model.
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 export HF_TOKEN=<token>
 python .agents/skills/chem-nmr-analysis/scripts/predict_products.py \
   --reactant_smiles "C1CCC(=O)C1" \
@@ -55,7 +55,7 @@ python .agents/skills/chem-nmr-analysis/scripts/predict_products.py \
 The agent should use this script to determine mole fractions of known components in a mixture spectrum via Wasserstein-distance deconvolution.
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-nmr-analysis/scripts/deconvolve.py \
   mixture.csv ref_borneol.xy ref_isoborneol.xy \
   --protons 18 18 \
@@ -70,7 +70,7 @@ python .agents/skills/chem-nmr-analysis/scripts/deconvolve.py \
 The agent should use this script when the user has crude NMR spectra recorded at multiple time points during a reaction.
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-nmr-analysis/scripts/kinetics.py \
   --refs ref1.xy ref2.xy \
   --timepoints t0.csv t10.csv t20.csv \
@@ -87,7 +87,7 @@ python .agents/skills/chem-nmr-analysis/scripts/kinetics.py \
 The agent should use this script to overlay or stack spectra for visual inspection before or after deconvolution.
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-nmr-analysis/scripts/plot.py \
   mixture.csv ref_borneol.xy ref_isoborneol.xy \
   --labels "Mixture" "borneol" "isoborneol" \

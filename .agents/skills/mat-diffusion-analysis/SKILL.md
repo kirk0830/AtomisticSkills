@@ -12,7 +12,7 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 ## Instructions
 
 1.  **MD Preparation**: Run NVT or NPT MD simulations at multiple temperatures (typically 4-6 points between 600K and 1200K).
-    - Use the `run_md` tool from a relevant potential skill (e.g., [mace](../mace/SKILL.md) or [matgl](../matgl/SKILL.md)).
+    - Use the `run_md` MCP tool from the `mace` or `matgl` MCP server (see [ml-foundation-potentials](../ml-foundation-potentials/SKILL.md) for model selection guidance).
     - **Batch Processing**: You can pass a directory or a list of CIF paths to `structure_data` to run multiple MD simulations concurrently via the MCP tool.
     - **Supercell Expansion**: Ensure supercells are sufficiently large (> 10 Å in all dimensions). The `run_md` tool natively supports this via the `supercell_min_length` argument (defaults to 10.0 Å) which performs orthogonal expansion automatically.
     - **Optimization**: Use the `diffusion` monitor (see [mat-md-monitors](../mat-md-monitors/SKILL.md)) to automatically stop simulations once the transport properties have converged.
@@ -30,7 +30,7 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 
 2.  **Individual Diffusivity Analysis**: For each temperature directory that did *not* hit the early stopping criteria, run the analysis script to extract the diffusivity and Mean Square Displacement (MSD).
     ```bash
-    # Env: base-agent
+    # Env: base
     python .agents/skills/mat-diffusion-analysis/scripts/analyze_diffusion.py \
         results/md_600K/trajectory.traj \
         --species Li \
@@ -43,7 +43,7 @@ To accurately calculate the ionic diffusivity ($D$) and activation energy ($E_a$
 
 3.  **Activation Energy Fitting**: Once all individual results are generated, use the fitting script to combine data and perform a weighted Arrhenius fit.
     ```bash
-    # Env: base-agent
+    # Env: base
     python .agents/skills/mat-diffusion-analysis/scripts/calculate_activation_energy.py results/
     ```
     - The script looks for `md_*K/diffusion_results.json` patterns.

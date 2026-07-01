@@ -15,7 +15,7 @@ Search and retrieve preprint metadata (title, authors, abstract, DOI, category, 
 Search last 30 days for papers matching keywords in title/abstract.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py "protein folding" --max_results 5 --output protein_folding.json
 ```
 
@@ -23,7 +23,7 @@ python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py "protein 
 Retrieve preprints posted in a specific date range, with optional keyword/category filter.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py "CRISPR" --start 2025-01-01 --end 2025-06-01 --max_results 10 --output crispr_2025.json
 ```
 
@@ -31,7 +31,7 @@ python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py "CRISPR" 
 Filter by subject category (use shortcuts or full names).
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py --category neuroscience --days 14 --max_results 10
 ```
 
@@ -52,7 +52,7 @@ python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py --categor
 Use `--server medrxiv` for medical preprints.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py "COVID vaccine efficacy" --server medrxiv --max_results 5 --output covid_vaccine.json
 ```
 
@@ -60,7 +60,7 @@ python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py "COVID va
 Retrieve metadata for a specific preprint by DOI.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py --doi 10.1101/2021.01.01.000000 --output paper.json
 ```
 
@@ -68,13 +68,13 @@ python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py --doi 10.
 
 ### Recent Neuroscience Papers
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py --category neuroscience --days 7 --max_results 5
 ```
 
 ### Genomics Papers with Keyword Filter
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-biorxiv-search/scripts/biorxiv_search.py "single cell sequencing" --category genomics --start 2024-01-01 --end 2024-12-31 --max_results 10 --output scrna_2024.json
 ```
 

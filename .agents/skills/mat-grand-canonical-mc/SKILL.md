@@ -40,7 +40,7 @@ print(f"Loaded CE with {len(ce.cluster_subspace)} clusters")
 Use the `run_gcmc_sweep.py` script to perform systematic sweeps of chemical potential at different temperatures.
 
 ```bash
-# Env: smol-agent
+# Env: smol
 python .agents/skills/mat-grand-canonical-mc/scripts/run_gcmc_sweep.py \
     --ce_file cluster_expansion.json \
     --supercell 3 3 3 \
@@ -75,7 +75,7 @@ python .agents/skills/mat-grand-canonical-mc/scripts/run_gcmc_sweep.py \
 Use the analysis script to visualize the results and create phase diagrams.
 
 ```bash
-# Env: smol-agent
+# Env: smol
 python .agents/skills/mat-grand-canonical-mc/scripts/analyze_gcmc_results.py \
     --results_file gcmc_results/results_summary.json \
     --output_dir gcmc_results/ \
@@ -94,7 +94,7 @@ python .agents/skills/mat-grand-canonical-mc/scripts/analyze_gcmc_results.py \
 Using the pre-trained Cu-Ag cluster expansion:
 
 ```bash
-# Env: smol-agent
+# Env: smol
 python .agents/skills/mat-grand-canonical-mc/scripts/run_gcmc_sweep.py \
     --ce_file .agents/skills/ml-cluster-expansion/examples/CuAg_CE/cluster_expansion.json \
     --supercell 4 4 4 \
@@ -111,7 +111,7 @@ python .agents/skills/mat-grand-canonical-mc/scripts/run_gcmc_sweep.py \
 Then analyze:
 
 ```bash
-# Env: smol-agent
+# Env: smol
 python .agents/skills/mat-grand-canonical-mc/scripts/analyze_gcmc_results.py \
     --results_file .agents/skills/mat-grand-canonical-mc/examples/CuAg/gcmc_results/results_summary.json \
     --output_dir .agents/skills/mat-grand-canonical-mc/examples/CuAg/ \

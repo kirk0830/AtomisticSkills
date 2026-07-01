@@ -17,7 +17,7 @@ To perform random structure searching (RSS) for a given chemical composition —
 
 1. **Generate random structures** for the target composition:
    ```bash
-   # Env: base-agent
+   # Env: base
    python .agents/skills/mat-random-structure-search/scripts/generate_random_structures.py \
        --composition NaCl \
        --num_structures 100 \
@@ -57,7 +57,7 @@ To perform random structure searching (RSS) for a given chemical composition —
 
 ### Example 1: Search for NaCl ground state
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-random-structure-search/scripts/generate_random_structures.py \
     --composition NaCl \
     --num_structures 100 \
@@ -68,7 +68,7 @@ Expected: Rocksalt (SG 225) should emerge as the lowest-energy structure after M
 
 ### Example 2: Search for Li₂ZrCl₆ polymorphs
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-random-structure-search/scripts/generate_random_structures.py \
     --composition Li2ZrCl6 \
     --num_structures 200 \

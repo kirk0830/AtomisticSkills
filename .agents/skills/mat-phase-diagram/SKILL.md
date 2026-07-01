@@ -21,7 +21,7 @@ Retrieve pre-computed phase diagrams from Materials Project to analyze thermodyn
 Retrieve a phase diagram for a chemical system:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-phase-diagram/scripts/get_phase_diagram.py \
   --chemsys "Li-O" \
   --output li_o_phase_diagram.json
@@ -34,7 +34,7 @@ python .agents/skills/mat-phase-diagram/scripts/get_phase_diagram.py \
 Add `--plot` flag to create a visualization:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-phase-diagram/scripts/get_phase_diagram.py \
   --chemsys "Li-O" \
   --output li_o_pd.json \
@@ -48,7 +48,7 @@ python .agents/skills/mat-phase-diagram/scripts/get_phase_diagram.py \
 By default, retrieves GGA+U phase diagrams. For R2SCAN data:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-phase-diagram/scripts/get_phase_diagram.py \
   --chemsys "Li-Fe-P-O" \
   --thermo_type "R2SCAN" \

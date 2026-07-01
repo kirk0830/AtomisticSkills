@@ -15,7 +15,7 @@ To search for and retrieve metadata (title, authors, summary, DOI, etc.) of rese
 Search for papers containing specific keywords across all fields (title, abstract, authors, etc.).
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-arxiv-search/scripts/arxiv_search.py "machine learning interatomic potential" --max_results 5 --output mlip_papers.json
 ```
 
@@ -23,7 +23,7 @@ python .agents/skills/general-arxiv-search/scripts/arxiv_search.py "machine lear
 Combine multiple criteria to narrow down search results.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-arxiv-search/scripts/arxiv_search.py --authors "Ceder" --categories mtrl-sci --max_results 10 --output ceder_papers.json
 ```
 
@@ -39,7 +39,7 @@ python .agents/skills/general-arxiv-search/scripts/arxiv_search.py --authors "Ce
 Restrict the search to only the paper titles.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-arxiv-search/scripts/arxiv_search.py --title "perovskite stability" --max_results 5
 ```
 
@@ -47,13 +47,13 @@ python .agents/skills/general-arxiv-search/scripts/arxiv_search.py --title "pero
 
 ### Retrieval of Recent MACE Related Papers
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-arxiv-search/scripts/arxiv_search.py "MACE force field" --max_results 3 --output mace_results.json
 ```
 
 ### Searching for Specific Authors in Materials Science
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-arxiv-search/scripts/arxiv_search.py --authors "Boris Kozinsky" --categories mtrl-sci --max_results 5
 ```
 

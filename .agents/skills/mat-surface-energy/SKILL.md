@@ -18,7 +18,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 2.  **Relax Bulk Reference**: Perform a high-accuracy relaxation of the bulk material to serve as the reference energy.
     ```bash
-    # Env: matgl-agent
+    # Env: matgl
     mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
     mcp_matgl_relax_structure(
         structure_data="bulk.cif",
@@ -31,7 +31,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 3.  **Generate Slabs**: Create oriented slabs for the target (hkl) planes.
     ```bash
-    # Env: base-agent
+    # Env: base
     python .agents/skills/mat-surface-energy/scripts/create_slabs.py \
         --bulk bulk_relaxation/relaxed_structure.cif \
         --max_index 1 \
@@ -43,7 +43,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 4.  **Relax Slabs**: Perform structural relaxation on all generated slabs.
     ```bash
-    # Env: matgl-agent
+    # Env: matgl
     mcp_matgl_load_model(model_name="CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES")
     mcp_matgl_relax_structure(
         structure_data="slabs/",
@@ -56,7 +56,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 5.  **Calculate Surface Energy**: Compute the surface energy for each plane.
     ```bash
-    # Env: base-agent
+    # Env: base
     python .agents/skills/mat-surface-energy/scripts/calculate_surface_energy.py \
         --bulk_energy_per_atom -4.567 \
         --slab_dir slab_relaxations/ \
@@ -68,7 +68,7 @@ To determine the surface energy ($\gamma$) of different crystallographic planes 
 
 6.  **Generate Wulff Shape**: Construct the Wulff shape from the calculated surface energies.
     ```bash
-    # Env: base-agent
+    # Env: base
     python .agents/skills/mat-surface-energy/scripts/generate_wulff.py \
         --energies_json surface_energies.json \
         --bulk bulk_relaxation/relaxed_structure.cif \

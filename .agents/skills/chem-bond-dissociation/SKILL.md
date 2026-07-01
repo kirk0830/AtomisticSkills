@@ -77,7 +77,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 
 **Homolytic only** (default, no charge/spin needed):
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
@@ -89,7 +89,7 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
 
 **Both homolytic and heterolytic** (MACE-OMOL):
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
@@ -101,7 +101,7 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
 
 **Both homolytic and heterolytic** (FairChem UMA omol):
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
@@ -114,7 +114,7 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
 
 **Heterolytic only** with FairChem UMA:
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
@@ -170,7 +170,7 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
 ### Ethanol — Homolytic BDE (MACE-OFF23)
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \
@@ -184,7 +184,7 @@ python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
 ### Methanol — Both Homo and Heterolytic BDE (FairChem UMA omol)
 
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CO \
     --all_bonds \

@@ -67,7 +67,7 @@ python .agents/skills/mat-dft-mixing-functionals/scripts/apply_correction.py /pa
 
 To run on a specific file with known energy:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-dft-mixing-functionals/scripts/apply_correction.py structure.cif --energy -123.45
 ```
 

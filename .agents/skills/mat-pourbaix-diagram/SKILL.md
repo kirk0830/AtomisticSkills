@@ -60,7 +60,7 @@ There are two ways to generate Pourbaix diagrams using this skill. **Prioritize 
 Use `calculate_pourbaix_mp.py` to fetch entries directly from Materials Project. This requires no local relaxation and uses MP's internal DFT energies.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-pourbaix-diagram/scripts/calculate_pourbaix_mp.py \
     --comp_dict "Li=1,Fe=1" \
     --output ./output_dir
@@ -75,7 +75,7 @@ Use this workflow to calculate stability using specific MLIP models. This involv
 Query all relevant solid phases and reference molecules:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-pourbaix-diagram/scripts/get_pourbaix_structures.py \
     --chemsys "Zn" \
     --output_dir ./structures/
@@ -141,7 +141,7 @@ mcp_fairchem_relax_structure(
 Construct the diagram using automated referencing (fetching elemental energies and deriving corrections internally):
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-pourbaix-diagram/scripts/calculate_pourbaix.py \
     --relaxed_solids ./relaxed_solids/ \
     --target "Zn" \

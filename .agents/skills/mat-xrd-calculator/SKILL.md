@@ -42,7 +42,7 @@ To calculate the XRD pattern for LiFePO4:
 
 ```bash
 ```bash
-conda activate base-agent
+pixi shell -e base
 python .agents/skills/mat-xrd-calculator/scripts/calculate_xrd.py .agents/skills/mat-xrd-calculator/examples/LiFePO4/LiFePO4.cif --output_dir .agents/skills/mat-xrd-calculator/examples/LiFePO4
 ```
 ```

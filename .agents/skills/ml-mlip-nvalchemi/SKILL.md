@@ -1,10 +1,15 @@
 ---
 name: ml-mlip-nvalchemi
-description: GPU-accelerated batched inference for MACE, MatGL (TensorNet/M3GNet/CHGNet), and FairChem MLIPs using NValchemi, enabling parallel static, relax, and MD workflows across multiple structures simultaneously.
+description: GPU-accelerated batched inference for MACE, MatGL (TensorNet/M3GNet/CHGNet), and FairChem MLIPs using NVIDIA ALCHEMI Toolkit (nvalchemi-toolkit), enabling parallel static, relax, and MD workflows across multiple structures simultaneously.
 category: machine-learning
 ---
 
 # ml-mlip-nvalchemi
+
+> **Note**: NVIDIA ALCHEMI Toolkit (nvalchemi-toolkit) is now open source!
+> - GitHub: https://github.com/NVIDIA/nvalchemi-toolkit
+> - PyPI: `pip install nvalchemi-toolkit`
+> - Docs: https://nvidia.github.io/nvalchemi-toolkit/
 
 ## Goal
 
@@ -134,7 +139,7 @@ Speedup comparison for a 100-step MD simulation under the `nvt_nose_hoover` ense
 ### Step 1 — Verify NValchemi is Available
 
 ```python
-# Env: mace-agent  (or matgl-agent, fairchem-agent)
+# Env: mace  (or matgl-agent, fairchem-agent)
 from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
 print(NVALCHEMI_AVAILABLE)  # must be True
 
@@ -150,7 +155,7 @@ print(nv)  # should be non-None MACEWrapper(nvalchemi)
 Pass a list of ASE Atoms objects to `static_calculation`. The result dict includes a `"backend": "nvalchemi"` key when the batch path was used:
 
 ```python
-# Env: mace-agent
+# Env: mace
 from ase.build import bulk
 import numpy as np
 
@@ -164,7 +169,7 @@ result = wrapper.static_calculation(structures)
 Identical API for MatGL and FairChem wrappers:
 
 ```python
-# Env: matgl-agent
+# Env: matgl
 from src.utils.mlips.matgl.matgl_wrapper import MatGLWrapper
 wrapper = MatGLWrapper(model_name="TensorNet-PES-MatPES-PBE-2025.2", device="cuda")
 wrapper.load()
@@ -172,7 +177,7 @@ result = wrapper.static_calculation(structures)
 ```
 
 ```python
-# Env: fairchem-agent
+# Env: fairchem
 from src.utils.mlips.fairchem.fairchem_wrapper import FAIRCHEMWrapper
 wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", device="cuda")
 wrapper.load()
@@ -182,7 +187,7 @@ result = wrapper.static_calculation(structures)
 ### Step 3 — Batch Geometry Relaxation
 
 ```python
-# Env: mace-agent
+# Env: mace
 result = wrapper.relax_structure(
     structure_data=structures,   # list of ASE Atoms
     fmax=0.05,                   # eV/Å convergence
@@ -199,7 +204,7 @@ Per-structure `relax.log` files (ASE FIRE format) are written incrementally to `
 ### Step 4 — Batch Molecular Dynamics
 
 ```python
-# Env: mace-agent
+# Env: mace
 result = wrapper.run_md(
     structure_data=structures,
     temperature=1000,
@@ -230,19 +235,19 @@ _nv.check_nvalchemi_available = lambda: True    # restore
 To re-run the full accuracy and speed benchmark for any environment:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
     --env mace \
     --n-repeat 3 \
     --output results_mace.json
 
-# Env: matgl-agent
+# Env: matgl
 python .agents/skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
     --env matgl \
     --n-repeat 3 \
     --output results_matgl.json
 
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/ml-mlip-nvalchemi/scripts/run_nvalchemi_benchmark.py \
     --env fairchem \
     --n-repeat 3 \

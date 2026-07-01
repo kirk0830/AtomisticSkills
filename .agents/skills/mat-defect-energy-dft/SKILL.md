@@ -24,7 +24,7 @@ mcp_base_search_materials_project_by_formula(formula="MgO", save_to_file="MgO.ci
 ### 2. Generate Defect Structures
 Use `pymatgen-analysis-defects` to generate all symmetry-unique defect supercells with charge states:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-defect-energy-dft/scripts/generate_defect_structures.py \
     --bulk MgO.cif \
     --supercell_size 3 3 3 \
@@ -63,7 +63,7 @@ mcp_atomate2_run_atomate2_vasp_calculation(
 ### Alternative: atomate2 `FormationEnergyMaker`
 For fully automated defect workflows with built-in corrections:
 ```python
-# Env: atomate2-agent (Python API)
+# Env: atomate2 (Python API)
 from atomate2.vasp.flows.defect import FormationEnergyMaker
 from pymatgen.analysis.defects.generators import VacancyGenerator
 from pymatgen.core import Structure
@@ -79,7 +79,7 @@ maker = FormationEnergyMaker()
 ### 4. Parse Results and Compute Formation Energies
 After DFT calculations complete:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-defect-energy-dft/scripts/parse_defect_results.py \
     --bulk_dir dft_bulk/ \
     --defect_dir dft_defect_calcs/ \

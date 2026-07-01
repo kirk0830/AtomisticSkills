@@ -62,7 +62,7 @@ JSON format (see [examples/example.json](examples/example.json)):
 
 Run the batch generation script:
 ```bash
-# Env: diffcsp-agent
+# Env: diffcsp
 python .agents/skills/ml-generative-diffcsp/scripts/batch_generate.py \
     --json_file .agents/skills/ml-generative-diffcsp/examples/example.json \
     --model mp_csp \
@@ -75,7 +75,7 @@ python .agents/skills/ml-generative-diffcsp/scripts/batch_generate.py \
 Generate structures from the training distribution without specifying composition. Requires a generation model (`mp_gen`, `perov_gen`, or `carbon_gen`).
 
 ```bash
-# Env: diffcsp-agent
+# Env: diffcsp
 python .agents/skills/ml-generative-diffcsp/scripts/unconditional_generate.py \
     --model mp_gen \
     --num_structures 100 \

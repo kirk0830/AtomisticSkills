@@ -19,7 +19,7 @@ You must obtain a legitimate `.tdb` (Thermodynamic Data Base) file for the chemi
 Use the provided python script to generate the $T-x$ boundary plot.
 
 ```bash
-# Env: calphad-agent
+# Env: calphad
 python .agents/skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py path/to/database.tdb --elements Element1 Element2 --t-range 300 1000 10 --output research_dir/phase_diagram.png
 ```
 
@@ -33,7 +33,7 @@ Use a visual inspection tool to verify the resulting `phase_diagram.png`. Ensure
 
 Plotting the classic Aluminum-Zinc Phase Diagram (Mey 1993):
 ```bash
-# Env: calphad-agent
+# Env: calphad
 python .agents/skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py .agents/skills/mat-calphad-phase-diagram/examples/Al-Zn/alzn_mey.tdb --elements Al Zn --t-range 300 1000 10 --output Al-Zn_diagram.png
 ```
 

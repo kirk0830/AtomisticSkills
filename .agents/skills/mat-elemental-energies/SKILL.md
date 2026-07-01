@@ -14,7 +14,7 @@ To provide a centralized library of the most stable phases (ground states) for e
 ### 1. Retrieve Elemental Energies
 To get the energies for a list of elements from a specific checkpoint:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-elemental-energies/scripts/get_elemental_energies.py --elements Li Fe O --checkpoint mace-mp-medium
 ```
 

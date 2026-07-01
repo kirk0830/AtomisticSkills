@@ -73,7 +73,7 @@ Fine-tune MatterGen on custom datasets using the skill scripts:
 
 ```bash
 cd /home/bdeng/projects/AtomisticSkills/.agents/skills/ml-generative-mattergen
-conda activate mattergen-agent
+pixi shell -e mattergen
 
 # Convert structures and properties to CSV format
 python scripts/prepare_training_data.py \

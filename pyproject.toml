@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atomistic-skills"
+version = "0.1.0"
+description = "AI-driven atomistic materials research framework"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "AtomisticSkills Team" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+
+# Core dependencies — kept minimal so this can be installed in any pixi env
+# Heavy dependencies (numpy, ase, pymatgen, etc.) are provided by the pixi env
+dependencies = []
+
+[project.optional-dependencies]
+# HPC job submission module (lightweight, only needs jinja2 + pyyaml)
+hpc = [
+    "jinja2>=3.0",
+    "pyyaml>=6.0",
+]
+
+# Full DFT support (ORCA + VASP)
+dft = [
+    "numpy>=1.24",
+    "ase>=3.22",
+    "pymatgen>=2024.1",
+]
+
+# MCP server support
+mcp = [
+    "mcp>=1.0",
+    "pydantic>=2.0",
+]
+
+# Development tools
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/learningmatter-mit/AtomisticSkills"
+Repository = "https://github.com/learningmatter-mit/AtomisticSkills"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-data]
+"src" = ["**/*.j2", "**/*.yaml", "**/*.json"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

@@ -30,7 +30,7 @@ In `pymatgen`, this exact analytical bounding is extracted using `PhaseDiagram.g
 To compute the intrinsic ECW of a material, utilize the `calculate_ecw.py` script. The script automatically handles Materials Project thermodynamic entries, phase diagram construction, and calculates the exact analytical grand-potential limits using `.get_transition_chempots()`.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-electrochemical-window/scripts/calculate_ecw.py --mp-id mp-1183147 --mobile-ion Li
 ```
 
@@ -45,7 +45,7 @@ python .agents/skills/mat-electrochemical-window/scripts/calculate_ecw.py --mp-i
 You can independently reproduce the exact intrinsic thermodynamic stability windows (Table 1) reported in the original Zhu et al. (2015) manuscript using the script provided in this skill.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-electrochemical-window/scripts/reproduce_table1.py
 ```
 
@@ -54,7 +54,7 @@ python .agents/skills/mat-electrochemical-window/scripts/reproduce_table1.py
 
 ## Constraints
 
-- **Environments**: The analytical scripts here rely strictly on standard `pymatgen` definitions and mp-api interactions, resolving comfortably within the `# Env: base-agent`.
+- **Environments**: The analytical scripts here rely strictly on standard `pymatgen` definitions and mp-api interactions, resolving comfortably within the `# Env: base`.
 - **Energy Consistency**: The `ComputedEntry` for the candidate phase must share identical calculation parameters (pseudopotentials, U-values, relaxations) with the baseline structures comprising the `PhaseDiagram` object.
 - **Reference Accuracy**: Ensure the Phase Diagram holds an accurate ground state reference for the metallic mobile ion.
 - **Phase Coverage**: To appropriately predict $V_{\text{red}}$ and $V_{\text{ox}}$, the supplied `pd` must be fully comprehensive of all thermodynamically competing phases occurring within the target generic chemical system (e.g., for `Li10GeP2S12`, the PD must include the entirety of the Li-Ge-P-S quaternary compositional space).

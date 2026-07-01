@@ -1,0 +1,764 @@
+# AtomisticSkills Pixi Configuration
+#
+# This configuration replaces the conda-envs/*/install.sh approach with
+# a declarative, reproducible, and isolated environment management system.
+#
+# Key improvements over Conda:
+# 1. No brutal env remove/create - incremental updates
+# 2. Environments isolated in .pixi/envs/ - no PATH pollution
+# 3. Lockfile (pixi.lock) ensures reproducibility
+# 4. Tasks replace shell scripts
+# 5. Multiple environments in one workspace
+
+[workspace]
+name = "atomistic-skills"
+description = "AI-driven atomistic materials research framework"
+authors = ["AtomisticSkills Team"]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64"]
+# Note: Some environments (orca, CUDA) are platform-specific
+
+# =============================================================================
+# FEATURE DEFINITIONS
+# Features are dependency groups that can be combined into environments
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Core Feature: Shared base dependencies for all environments
+# -----------------------------------------------------------------------------
+[feature.core.dependencies]
+python = ">=3.10,<3.13"
+pip = "*"
+numpy = ">=1.20"
+scipy = ">=1.7"
+pymatgen = "*"
+ase = ">=3.22"
+typing-extensions = "*"
+mcp = "*"
+
+[feature.core.pypi-dependencies]
+# PyPI-only packages
+optimade = { version = "*", extras = ["client"] }
+# Install atomistic_skills as editable local package
+# This makes `from src.utils...` importable in ALL pixi environments
+atomistic-skills = { path = ".", editable = true }
+jinja2 = ">=3.0"  # For HPC job template generation
+pyyaml = ">=6.0"  # For HPC config loading
+
+# -----------------------------------------------------------------------------
+# Chemistry Feature: Molecular chemistry tools
+# -----------------------------------------------------------------------------
+[feature.chemistry.dependencies]
+rdkit = "*"
+packmol = "*"
+
+# -----------------------------------------------------------------------------
+# PyTorch Base Feature: Shared PyTorch (CPU variant)
+# -----------------------------------------------------------------------------
+[feature.torch-base.dependencies]
+pytorch = ">=2.0"
+
+# -----------------------------------------------------------------------------
+# PyTorch CUDA Feature: GPU-accelerated PyTorch (linux-64 only)
+# -----------------------------------------------------------------------------
+[feature.torch-cuda]
+platforms = ["linux-64"]
+
+[feature.torch-cuda.dependencies]
+pytorch = { version = ">=2.0", build = "*cuda*" }
+# CUDA toolkit from conda-forge
+cuda-toolkit = "*"
+
+[feature.torch-cuda.channels]
+channels = ["nvidia", "pytorch", "conda-forge"]
+
+# -----------------------------------------------------------------------------
+# MLIP-MACE Feature: MACE machine learning interatomic potential
+# -----------------------------------------------------------------------------
+[feature.mlip-mace.pypi-dependencies]
+mace-torch = "==0.3.15"
+sella = "*"
+matcalc = "*"
+setuptools = "<70"  # Compatibility requirement
+nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
+
+# -----------------------------------------------------------------------------
+# MLIP-MatGL Feature: MatGL/CHGNet/TensorNet potentials
+# -----------------------------------------------------------------------------
+[feature.mlip-matgl.pypi-dependencies]
+matgl = "*"
+matcalc = "*"
+cython = "*"
+nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
+
+# -----------------------------------------------------------------------------
+# MLIP-FairChem Feature: FairChem/UMA/ESEN potentials
+# -----------------------------------------------------------------------------
+[feature.mlip-fairchem.pypi-dependencies]
+fairchem-core = ">=2.18.0"
+matcalc = "*"
+setuptools = "<70"
+nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
+
+# -----------------------------------------------------------------------------
+# LAMMPS-CPU Feature: conda-forge lammps (CPU variant, for FairChem)
+# Includes ML-IAP, MLIAP_ENABLE_PYTHON, ML-SNAP, USER-M3GNET, OPENMP, MPI
+# -----------------------------------------------------------------------------
+[feature.lammps-cpu.dependencies]
+lammps = "*"
+
+# -----------------------------------------------------------------------------
+# LAMMPS-CUDA Feature: conda-forge lammps with Kokkos+CUDA (for MatGL)
+# linux-64 only; requires CUDA 12.x runtime
+# Note: conda-forge builds with Kokkos_ARCH_MAXWELL50 (forward-compatible PTX)
+# -----------------------------------------------------------------------------
+[feature.lammps-cuda]
+platforms = ["linux-64"]
+
+[feature.lammps-cuda.system-requirements]
+cuda = "12"
+
+[feature.lammps-cuda.dependencies]
+lammps = { version = "*", build = "*cuda*" }
+
+# -----------------------------------------------------------------------------
+# LAMMPS-MACE-Build Feature: build tools for compiling ACEsuit/lammps fork
+# MACE's native pair_style requires PKG_ML-MACE, not available in conda-forge
+# The actual build is performed by the build-lammps-mace task
+# -----------------------------------------------------------------------------
+[feature.lammps-mace-build]
+platforms = ["linux-64"]
+
+[feature.lammps-mace-build.dependencies]
+cmake = "*"
+gxx = "*"
+openmpi = "*"        # provides mpicxx
+mkl-devel = "*"
+
+# -----------------------------------------------------------------------------
+# FairChem-LAMMPS Feature: pip package providing lmp_fc binary
+# Pairs with conda-forge lammps (lammps-cpu feature)
+# -----------------------------------------------------------------------------
+[feature.fairchem-lammps-pkg.pypi-dependencies]
+fairchem-lammps = "*"
+fairchem-core = { version = ">=2.18.0", extras = ["extras"] }
+
+# -----------------------------------------------------------------------------
+# DFT Feature: Atomate2 VASP workflows
+# -----------------------------------------------------------------------------
+[feature.dft.dependencies]
+python = ">=3.10,<3.11"  # Atomate2 requires Python 3.10
+
+[feature.dft.pypi-dependencies]
+atomate2 = "*"
+jobflow-remote = "*"
+amset = "*"
+lobsterpy = "*"
+ijson = "*"
+
+# -----------------------------------------------------------------------------
+# DFT-Orca Feature: SCINE/ReaDuct for molecular DFT (x86_64 only)
+# -----------------------------------------------------------------------------
+[feature.dft-orca]
+platforms = ["linux-64", "osx-64"]
+
+[feature.dft-orca.dependencies]
+python = ">=3.11,<3.12"
+scine-utilities-python = "*"
+scine-readuct-python = "*"
+
+[feature.dft-orca.pypi-dependencies]
+numpy = "<2"  # SCINE compatibility
+
+# -----------------------------------------------------------------------------
+# Generative-Base Feature: Shared dependencies for generative models
+# -----------------------------------------------------------------------------
+[feature.generative-base.pypi-dependencies]
+pytorch-lightning = ">=2.0"
+hydra-core = "==1.3.2"
+omegaconf = "==2.3.0"
+wandb = "*"
+
+# -----------------------------------------------------------------------------
+# Generative-DiffCSP Feature: Crystal structure generation
+# -----------------------------------------------------------------------------
+[feature.generative-diffcsp.pypi-dependencies]
+pyxtal = "*"
+torchdiffeq = "*"
+smact = "*"
+matminer = "*"
+einops = "*"
+
+# -----------------------------------------------------------------------------
+# Generative-MatterGen Feature: Diffusion-based material generation
+# -----------------------------------------------------------------------------
+[feature.generative-mattergen.pypi-dependencies]
+mattergen = "*"
+
+# -----------------------------------------------------------------------------
+# Generative-ADiT Feature: All-atom Diffusion Transformer
+# -----------------------------------------------------------------------------
+[feature.generative-adit]
+# Minimal dependencies - most installed via pip from source
+
+# -----------------------------------------------------------------------------
+# Generative-ReactOT Feature: Transition state generation
+# -----------------------------------------------------------------------------
+[feature.generative-reactot.dependencies]
+python = "==3.10.14"
+numpy = "==1.26.4"
+pytest = "*"
+
+# -----------------------------------------------------------------------------
+# Generative-SCD Feature: SelfConditionedDenoisingAtoms
+# -----------------------------------------------------------------------------
+[feature.generative-scd.dependencies]
+git = "*"  # For cloning external repo
+
+[feature.generative-scd.pypi-dependencies]
+lightning-utilities = "*"
+scikit-learn = ">=1.0"
+pandas = ">=1.3"
+datasets = ">=2.0"
+huggingface-hub = ">=0.10"
+fastmcp = "*"
+
+# -----------------------------------------------------------------------------
+# Thermodynamics Feature: CALPHAD phase diagrams
+# -----------------------------------------------------------------------------
+[feature.thermo-calphad.dependencies]
+numpy = "*"
+scipy = "*"
+matplotlib = "*"
+pandas = "*"
+xarray = "*"
+tinydb = "*"
+sympy = "*"
+jupyter = "*"
+ipyython = "*"
+
+[feature.thermo-calphad.pypi-dependencies]
+pycalphad = "*"
+
+# -----------------------------------------------------------------------------
+# PhaseField Feature: Cahn-Hilliard / Allen-Cahn simulations
+# -----------------------------------------------------------------------------
+[feature.phasefield.dependencies]
+fipy = "*"
+imageio = "*"
+tqdm = "*"
+
+# -----------------------------------------------------------------------------
+# ClusterExpansion Feature: smol for Monte Carlo
+# -----------------------------------------------------------------------------
+[feature.cluster-expansion.pypi-dependencies]
+smol = "*"
+polytope = "*"
+scikit-learn = "*"
+pyyaml = "*"
+
+# -----------------------------------------------------------------------------
+# DrugDiscovery Feature: Drug discovery tools
+# -----------------------------------------------------------------------------
+[feature.drugdiscovery.dependencies]
+vina = "*"
+pdbfixer = "*"
+fpocket = "*"
+
+[feature.drugdiscovery.pypi-dependencies]
+meeko = "*"
+gemmi = "*"
+openbabel-wheel = "*"
+biopython = "*"
+dimorphite_dl = "*"
+posebusters = "*"
+MDAnalysis = "*"
+
+# -----------------------------------------------------------------------------
+# OpenMM-MD Feature: OpenMM-based molecular dynamics for drug discovery
+# Includes OpenMM, OpenFF, ParmEd, ProLIF, and AmberTools (MMPBSA.py, cpptraj)
+# -----------------------------------------------------------------------------
+[feature.openmm-md.dependencies]
+openmm = "*"
+openmmforcefields = "*"
+ambertools = "*"
+parmed = "*"
+
+[feature.openmm-md.pypi-dependencies]
+openff-toolkit = "*"
+prolif = "*"
+matplotlib = "*"
+
+# -----------------------------------------------------------------------------
+# Spectroscopy-NMR Feature: NMR spectrum prediction
+# -----------------------------------------------------------------------------
+[feature.spectroscopy-nmr.dependencies]
+rdkit = "*"
+
+[feature.spectroscopy-nmr.pypi-dependencies]
+nmrsim = "*"
+opencv-python-headless = "*"
+Pillow = "*"
+
+# -----------------------------------------------------------------------------
+# Spectroscopy-MSMS Feature: Mass spectrum prediction (ICEBERG)
+# -----------------------------------------------------------------------------
+[feature.spectroscopy-msms.dependencies]
+python = "==3.10"
+cython = "*"
+rdkit = "*"
+python-graphviz = "*"
+pygraphviz = "*"
+pytorch = "==2.4.0"
+einops = "*"
+seaborn = "*"
+h5py = "*"
+
+[feature.spectroscopy-msms.pypi-dependencies]
+"ray[tune]" = "==2.7.2"
+pygmtools = "*"
+msbuddy = "*"
+lightgbm = "*"
+CairoSVG = "*"
+
+# -----------------------------------------------------------------------------
+# PorousMaterials Feature: VOID for sorption calculations
+# -----------------------------------------------------------------------------
+[feature.porous-materials.dependencies]
+numpy = "*"
+scikit-learn = "*"
+networkx = "*"
+rdkit = "*"
+
+[feature.porous-materials.pypi-dependencies]
+zeopp-lsmo = "*"
+# VOID: Voronoi Clustering for docking (git install, no patch needed)
+# Note: If network issues prevent git install, run `pixi run install-void` task
+void = { git = "https://github.com/learningmatter-mit/VOID.git", tag = "main" }
+
+# -----------------------------------------------------------------------------
+# Analysis Feature: Trajectory analysis, plotting, etc.
+# -----------------------------------------------------------------------------
+[feature.analysis.dependencies]
+h5py = "*"
+phonopy = "*"
+beautifulsoup4 = "*"
+
+[feature.analysis.pypi-dependencies]
+reaction-network = "*"
+pymatgen-analysis-diffusion = "*"
+
+# -----------------------------------------------------------------------------
+# XRD Feature: X-ray diffraction analysis
+# -----------------------------------------------------------------------------
+[feature.xrd.dependencies]
+# Inherits from core
+
+# =============================================================================
+# ENVIRONMENT DEFINITIONS
+# Environments combine features and define which MCP server they support
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Base Environment: Core tools and MCP server
+# -----------------------------------------------------------------------------
+[environments.base]
+features = ["core", "chemistry", "analysis"]
+
+# -----------------------------------------------------------------------------
+# MLIP Environments: Machine Learning Interatomic Potentials
+# Using solve-group "mlip" to share dependency resolution
+# -----------------------------------------------------------------------------
+
+[environments.mace]
+features = ["core", "torch-cuda", "mlip-mace", "analysis"]
+solve-group = "mlip-cuda"
+
+# MACE-LAMMPS: no conda-forge lammps; uses ACEsuit fork compiled via task
+[environments.mace-lammps]
+features = ["core", "torch-cuda", "mlip-mace", "lammps-mace-build", "analysis"]
+solve-group = "mlip-cuda"
+
+[environments.matgl]
+features = ["core", "torch-base", "mlip-matgl", "analysis"]
+solve-group = "mlip-base"
+
+# MatGL-LAMMPS: conda-forge lammps with CUDA (includes ML-IAP, USER-M3GNET)
+[environments.matgl-lammps]
+features = ["core", "torch-base", "mlip-matgl", "lammps-cuda", "analysis"]
+solve-group = "mlip-base"
+
+[environments.fairchem]
+features = ["core", "torch-cuda", "mlip-fairchem", "analysis"]
+solve-group = "mlip-cuda"
+
+# FairChem-LAMMPS: conda-forge lammps (CPU) + fairchem-lammps pip package (lmp_fc)
+[environments.fairchem-lammps]
+features = ["core", "torch-cuda", "mlip-fairchem", "lammps-cpu", "fairchem-lammps-pkg", "analysis"]
+solve-group = "mlip-cuda"
+
+# -----------------------------------------------------------------------------
+# DFT Environments: First-principles calculations
+# -----------------------------------------------------------------------------
+
+[environments.atomate2]
+features = ["core", "chemistry", "dft", "analysis"]
+
+[environments.orca]
+features = ["core", "chemistry", "dft-orca", "analysis"]
+platforms = ["linux-64", "osx-64"]
+
+# -----------------------------------------------------------------------------
+# Generative Environments: Structure generation models
+# -----------------------------------------------------------------------------
+
+[environments.diffcsp]
+features = ["core", "torch-base", "generative-base", "generative-diffcsp"]
+
+[environments.mattergen]
+features = ["core", "torch-base", "generative-base", "generative-mattergen"]
+
+[environments.adit]
+features = ["core", "torch-base", "generative-base", "generative-adit"]
+
+[environments.react-ot]
+features = ["core", "generative-reactot"]
+
+[environments.scd]
+features = ["core", "torch-base", "generative-base", "generative-scd"]
+
+# -----------------------------------------------------------------------------
+# Thermodynamics Environments: Phase diagrams and CALPHAD
+# -----------------------------------------------------------------------------
+
+[environments.calphad]
+features = ["core", "thermo-calphad"]
+
+[environments.phasefield]
+features = ["core", "phasefield"]
+
+[environments.smol]
+features = ["core", "chemistry", "cluster-expansion"]
+
+# -----------------------------------------------------------------------------
+# Drug Discovery Environment
+# -----------------------------------------------------------------------------
+
+[environments.drugdisc]
+features = ["core", "chemistry", "drugdiscovery"]
+
+# -----------------------------------------------------------------------------
+# Drug Discovery MD Environment (with OpenMM)
+# Extends drugdisc with OpenMM, OpenFF, ParmEd, AmberTools, ProLIF
+# -----------------------------------------------------------------------------
+
+[environments.drugmd]
+features = ["core", "chemistry", "drugdiscovery", "openmm-md"]
+
+# -----------------------------------------------------------------------------
+# Spectroscopy Environments
+# -----------------------------------------------------------------------------
+
+[environments.nmr]
+features = ["core", "chemistry", "spectroscopy-nmr"]
+
+[environments.msms]
+features = ["core", "chemistry", "torch-base", "spectroscopy-msms"]
+
+[environments.xrd]
+features = ["core", "chemistry", "xrd"]
+
+# -----------------------------------------------------------------------------
+# Porous Materials Environment
+# -----------------------------------------------------------------------------
+
+[environments.void]
+features = ["core", "chemistry", "porous-materials"]
+
+# =============================================================================
+# TASKS
+# Tasks replace shell scripts with declarative commands
+# =============================================================================
+
+# Common tasks
+[tasks.install]
+description = "Install all environments"
+cmd = "pixi install"
+
+[tasks.test-base]
+description = "Run base server tests"
+cmd = "pytest tests/base/"
+environment = "base"
+
+# MLIP tasks
+[tasks.test-mace]
+description = "Run MACE server tests"
+cmd = "pytest tests/mace/"
+environment = "mace"
+
+[tasks.test-matgl]
+description = "Run MatGL server tests"
+cmd = "pytest tests/matgl/"
+environment = "matgl"
+
+[tasks.test-fairchem]
+description = "Run FairChem server tests"
+cmd = "pytest tests/fairchem/"
+environment = "fairchem"
+
+# DFT tasks
+[tasks.test-atomate2]
+description = "Run Atomate2 server tests"
+cmd = "pytest tests/atomate2/"
+environment = "atomate2"
+
+# MACE LAMMPS build task
+# Compiles ACEsuit/lammps fork with PKG_ML-MACE into the mace-lammps environment.
+# Output: $CONDA_PREFIX/bin/lmp (usable only within mace-lammps environment)
+[tasks.build-lammps-mace]
+description = "Build LAMMPS with MACE pair_style from ACEsuit fork"
+cmd = """
+set -euo pipefail
+
+LAMMPS_GIT_URL="${LAMMPS_GIT_URL:-https://github.com/ACEsuit/lammps.git}"
+LAMMPS_REF="${LAMMPS_REF:-mace}"
+LAMMPS_BUILD_JOBS="${LAMMPS_BUILD_JOBS:-16}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/lammps-mace"
+
+PYTHON_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"
+TORCH_CMAKE_PREFIX="$(python -c 'import torch; print(torch.utils.cmake_prefix_path)')"
+
+if [ -z "$TORCH_CMAKE_PREFIX" ]; then
+  echo "ERROR: Torch CMake prefix not found. Is pytorch installed?" >&2
+  exit 1
+fi
+
+mkdir -p "$BUILD_DIR"
+
+if [ ! -d "$BUILD_DIR/src/.git" ]; then
+  echo "Cloning ACEsuit/lammps (ref=$LAMMPS_REF)..."
+  git clone --branch "$LAMMPS_REF" --depth 1 "$LAMMPS_GIT_URL" "$BUILD_DIR/src"
+else
+  echo "Using existing clone at $BUILD_DIR/src"
+fi
+
+echo "Configuring CMake..."
+cmake -S "$BUILD_DIR/src/cmake" \
+  -B "$BUILD_DIR/build" \
+  -D CMAKE_BUILD_TYPE=Release \
+  -D BUILD_MPI=ON \
+  -D BUILD_OMP=ON \
+  -D PKG_OPENMP=ON \
+  -D PKG_ML-MACE=ON \
+  -D CMAKE_CXX_STANDARD=17 \
+  -D CMAKE_CXX_COMPILER=mpicxx \
+  -D Python_EXECUTABLE="$PYTHON_EXECUTABLE" \
+  -D CMAKE_PREFIX_PATH="$TORCH_CMAKE_PREFIX;$CONDA_PREFIX" \
+  -D MKL_ROOT="$CONDA_PREFIX"
+
+echo "Building ($LAMMPS_BUILD_JOBS jobs)..."
+cmake --build "$BUILD_DIR/build" -j "$LAMMPS_BUILD_JOBS"
+
+LMP_BIN="$BUILD_DIR/build/lmp"
+LMP_HELP="$("$LMP_BIN" -h 2>&1 || true)"
+if echo "$LMP_HELP" | grep -q "ML-MACE"; then
+  echo "OK: ML-MACE detected in lmp -h output"
+else
+  echo "ERROR: ML-MACE not detected in lmp -h output" >&2
+  exit 1
+fi
+
+cp "$LMP_BIN" "$CONDA_PREFIX/bin/lmp"
+echo "Done: $CONDA_PREFIX/bin/lmp"
+"""
+environment = "mace-lammps"
+
+# -----------------------------------------------------------------------------
+# Git Clone Dependencies Installation Tasks
+# These replace install.sh scripts for dependencies that need special handling
+# -----------------------------------------------------------------------------
+
+# React-OT: Transition state structure generation
+# Requires 3 sed patches to pyproject.toml and _utils.py
+[tasks.install-react-ot]
+description = "Install react-ot with required patches (pyproject.toml + ASE NEB import)"
+cmd = """
+set -euo pipefail
+
+REACT_OT_REPO="${REACT_OT_REPO:-https://github.com/deepprinciple/react-ot.git}"
+REACT_OT_REF="${REACT_OT_REF:-main}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/react-ot"
+PATCH_SCRIPT="${PIXI_PROJECT_ROOT}/.agents/patches/react-ot/apply_patches.sh"
+
+if [ ! -f "$PATCH_SCRIPT" ]; then
+  echo "ERROR: Patch script not found: $PATCH_SCRIPT"
+  exit 1
+fi
+
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Using existing clone at $BUILD_DIR"
+else
+  echo "Cloning react-ot (ref=$REACT_OT_REF)..."
+  git clone --branch "$REACT_OT_REF" --depth 1 "$REACT_OT_REPO" "$BUILD_DIR"
+fi
+
+echo "Applying patches..."
+bash "$PATCH_SCRIPT" "$BUILD_DIR"
+
+echo "Installing..."
+pixi run -e react-ot pip install --no-deps "$BUILD_DIR"
+
+echo "Done: react-ot installed"
+"""
+environment = "react-ot"
+
+# VOID fallback task (if pixi git install fails due to network)
+[tasks.install-void]
+description = "Install VOID manually (fallback if pixi git dep fails)"
+cmd = """
+set -euo pipefail
+
+VOID_REPO="${VOID_REPO:-https://github.com/learningmatter-mit/VOID.git}"
+VOID_REF="${VOID_REF:-main}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/void"
+
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Using existing clone at $BUILD_DIR"
+else
+  echo "Cloning VOID (ref=$VOID_REF)..."
+  git clone --branch "$VOID_REF" --depth 1 "$VOID_REPO" "$BUILD_DIR"
+fi
+
+echo "Installing..."
+pixi run -e void pip install --no-deps "$BUILD_DIR"
+
+echo "Done: VOID installed"
+"""
+environment = "void"
+
+# SelfConditionedDenoisingAtoms (SCD): Property prediction with denoising
+# Requires torchmd kernel compilation
+[tasks.install-scd]
+description = "Install SelfConditionedDenoisingAtoms with TorchMD kernel"
+cmd = """
+set -euo pipefail
+
+SCD_REPO="${SCD_REPO:-https://github.com/robinweber/SelfConditionedDenoisingAtoms.git}"
+SCD_REF="${SCD_REF:-main}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/scd"
+
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Using existing clone at $BUILD_DIR"
+else
+  echo "Cloning SCD (ref=$SCD_REF)..."
+  git clone --branch "$SCD_REF" --depth 1 "$SCD_REPO" "$BUILD_DIR"
+fi
+
+echo "Installing dependencies..."
+pixi run -e scd pip install -r "$BUILD_DIR/requirements.txt"
+
+echo "Installing SCD..."
+pixi run -e scd pip install --no-deps "$BUILD_DIR"
+
+echo "Building TorchMD C++ extension..."
+cd "$BUILD_DIR/torchmd"
+pixi run -e scd python setup.py build_ext --inplace
+
+echo "Done: SCD installed with TorchMD kernel"
+"""
+environment = "scd"
+
+# ms-pred (ICEBERG): MS/MS spectrum prediction
+# WARNING: This script applies extensive patches to upstream code including:
+# - Rewriting setup.py to remove Cython extension
+# - Patching 9 Python source files
+# - Modifying DGL site-packages files
+# - Creating fake torchdata package
+# Consider forking ms-pred and applying patches there instead
+[tasks.install-msms-iceberg]
+description = "Install ms-pred (ICEBERG) with patched setup.py (pure Python, no Cython)"
+cmd = """
+set -euo pipefail
+
+MS_PRED_REPO="${MS_PRED_REPO:-https://github.com/coleygroup/ms-pred.git}"
+MS_PRED_REF="${MS_PRED_REF:-main}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/ms-pred"
+PATCH_FILE="${PIXI_PROJECT_ROOT}/.agents/patches/msms-iceberg/setup_patch.py"
+
+if [ ! -f "$PATCH_FILE" ]; then
+  echo "ERROR: Patch file not found: $PATCH_FILE"
+  exit 1
+fi
+
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Using existing clone at $BUILD_DIR"
+else
+  echo "Cloning ms-pred (ref=$MS_PRED_REF)..."
+  git clone --branch "$MS_PRED_REF" --depth 1 "$MS_PRED_REPO" "$BUILD_DIR"
+fi
+
+echo "Applying setup.py patch (removing Cython extension)..."
+cp "$PATCH_FILE" "$BUILD_DIR/setup.py"
+
+echo "Installing ms-pred..."
+pixi run -e msms pip install --no-deps "$BUILD_DIR"
+
+echo "Done: ms-pred installed (with setup.py patch)"
+"""
+environment = "msms"
+
+# PyG packages for ARM/aarch64 systems (MatterGen)
+# These packages require CUDA compilation on ARM systems like NVIDIA DGX Spark
+[tasks.install-pyg-aarch64]
+description = "Install PyG packages (torch-scatter, torch-cluster, torch-sparse) for ARM/aarch64"
+cmd = """
+set -euo pipefail
+
+echo "Installing PyG packages for ARM/aarch64..."
+export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
+export PATH="$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
+
+echo "CUDA_HOME=$CUDA_HOME"
+nvcc --version || echo "nvcc not found, CUDA may not be installed"
+
+echo "Installing torch-scatter..."
+pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_scatter.git --no-cache-dir
+
+echo "Installing torch-cluster..."
+pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_cluster.git --no-cache-dir
+
+echo "Installing torch-sparse..."
+pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_sparse.git --no-cache-dir || echo "torch-sparse failed - may need alternative approach"
+
+echo "Verifying..."
+pixi run -e mattergen python -c "import torch_scatter; print('torch-scatter:', torch_scatter.__version__)"
+
+echo "Done: PyG packages installed for ARM"
+"""
+environment = "mattergen"
+
+# =============================================================================
+# ACTIVATION SCRIPTS
+# Environment-specific activation (replaces source conda.sh)
+# =============================================================================
+
+[feature.mlip-mace.activation-scripts]
+# Set environment variables for MACE
+script = """
+export MACE_BACKEND=torch
+"""
+
+[feature.torch-cuda.activation-scripts]
+script = """
+export CUDA_LAUNCH_BLOCKING=1
+export TORCH_USE_CUDA_DSA=1
+"""
+
+# =============================================================================
+# PYTHON PATH CONFIGURATION
+# Instead of hardcoding PYTHONPATH, use workspace-relative paths
+# =============================================================================
+
+# The workspace PYTHONPATH is automatically set by Pixi when running tasks
+# No need for: PYTHONPATH=/home/user/projects/AtomisticSkills

@@ -1,6 +1,6 @@
 ---
 name: chem-dft-orca-advanced-calculation
-description: Write and run custom ORCA input files for advanced electronic structure methods or settings not available through the SCINE wrapper, including multi-reference methods, excited states, relativistic effects, advanced SCF, NMR/EPR, and more.
+description: Write and run custom ORCA input files for advanced electronic structure methods or settings not available through the SCINE wrapper, including multi-reference methods, excited states, relativistic effects, advanced SCF, NMR/EPR, and more. Supports local and HPC execution.
 category: [chemistry]
 ---
 
@@ -10,17 +10,28 @@ category: [chemistry]
 
 Enable advanced ORCA quantum chemistry calculations by constructing a custom ORCA input file from scratch. This skill covers methods and features not available through the SCINE wrapper, including multi-reference methods, excited states, relativistic effects, advanced SCF settings, NMR/EPR properties, and more.
 
+This skill supports two execution modes:
+1. **Local mode** — Runs ORCA directly on the current machine
+2. **HPC mode** — Submits the custom input file to an HPC cluster via Slurm
+
 > [!IMPORTANT]
 > For **standard DFT single-point** calculations (energy, gradients, Hessian), use the [singlepoint skill](../chem-dft-orca-singlepoint/SKILL.md) instead. For **geometry optimization**, use the [optimization skill](../chem-dft-orca-optimization/SKILL.md). This skill is for cases where those wrappers do not expose the needed method or settings.
 
 ## 1. Prerequisites
 
-- **Conda environment:** `orca-agent` with `ase` installed (SCINE not required for this skill)
+### Local Mode
+- **Pixi environment:** `orca` with `ase` installed (SCINE not required for this skill)
 - **ORCA binary:** The environment variable `ORCA_BINARY_PATH` must point to the ORCA executable
   ```bash
   export ORCA_BINARY_PATH=/path/to/orca
   ```
 - **ORCA documentation:** Consult the [ORCA 6.1 tutorials](https://www.faccts.de/docs/orca/6.1/tutorials/index.html) for method-specific input syntax, keyword blocks, and recommended settings
+
+### HPC Mode
+- **Pixi environment:** Any environment with `atomistic-skills` installed
+- **HPC cluster:** Slurm-based cluster (login node or SSH access)
+- **ORCA on cluster:** Loadable via `module load orca/...`
+- **HPC configuration:** See [HPC Configuration](#hpc-configuration) in the singlepoint skill
 
 ## 2. Workflow
 
@@ -92,9 +103,11 @@ end
 
 ### Step 3: Run the calculation
 
+#### Option A: Local execution
+
 ```bash
-# Env: orca-agent
-python .agent/skills/chem-dft-orca-advanced-calculation/scripts/run_orca_input.py \
+# Env: orca
+python .agents/skills/chem-dft-orca-advanced-calculation/scripts/run_orca_input.py \
     --input_file calculation.inp \
     --output_dir research/my_project/advanced_calc
 ```
@@ -106,12 +119,57 @@ The script will:
 4. Parse the final electronic energy from the output
 5. Save a `calculation_results.json` summary
 
+#### Option B: HPC cluster submission
+
+Submit the custom input file to an HPC cluster:
+
+```python
+# Env: orca (or any env with atomistic-skills installed)
+from src.utils.hpc import JobManager, JobSpec, HPCConfigLoader
+
+loader = HPCConfigLoader()
+manager = JobManager.from_config(loader.get_backend_config())
+
+# Resolve job spec with ORCA modules from config
+resolved = loader.resolve_job_spec(
+    {
+        "name": "orca_advanced",
+        "command": "orca calculation.inp > calculation.out",
+        "ntasks_per_node": 8,
+        "time_limit": "24:00:00",
+        "work_dir": "/work/your_username/advanced_calc",
+    },
+    app="orca",
+)
+job_spec = JobSpec.from_dict(resolved)
+
+# Upload input files
+manager.upload("calculation.inp", "/work/your_username/advanced_calc/calculation.inp")
+manager.upload("molecule.xyz", "/work/your_username/advanced_calc/molecule.xyz")
+
+# Submit and wait
+job_id = manager.submit(job_spec)
+print(f"Job submitted: {job_id}")
+
+status = manager.wait_for_completion(job_id, poll_interval=60)
+print(f"Final state: {status.state}")
+
+# Download and parse results
+manager.download(
+    "/work/your_username/advanced_calc/calculation.out",
+    "research/my_project/advanced_calc/calculation.out",
+)
+```
+
+> [!NOTE]
+> For HPC mode, ensure the `.xyz` file referenced in the input (via `* xyzfile`) is uploaded to the same directory as the `.inp` file.
+
 ### Step 4: Parse results
 
 For standard energies, the runner script already extracts the final energy. For other properties, use the dedicated parser:
 
 ```bash
-# Env: orca-agent
+# Env: orca
 python .agent/skills/chem-dft-orca-advanced-calculation/scripts/parse_orca_output.py \
     --output_file research/my_project/advanced_calc/calculation.out \
     --property energy orbitals

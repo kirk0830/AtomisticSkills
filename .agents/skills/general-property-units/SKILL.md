@@ -105,7 +105,7 @@ The sign flip is handled during VASP output parsing (e.g. in the `atomate2` MCP 
 ## Quick Reference: Python Conversions
 
 ```python
-# Env: base-agent
+# Env: base
 from ase import units
 
 # Stress conversions

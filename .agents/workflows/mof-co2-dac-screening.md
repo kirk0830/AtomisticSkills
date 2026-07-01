@@ -14,7 +14,7 @@ This workflow guides you through a two-stage computational screening pipeline to
 
 ### Step 1. Query MOF Database and Download Structures
 
-Use the `chem-db-mof` skill to download a candidate set from ARC-MOF or QMOF.
+Use the [chem-db-mof](../skills/chem-db-mof/SKILL.md) skill to download a candidate set from ARC-MOF or QMOF.
 
 ```bash
 # Env: base-agent

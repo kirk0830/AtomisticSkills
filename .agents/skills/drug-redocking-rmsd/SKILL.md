@@ -19,7 +19,7 @@ To quantitatively validate a docking protocol by computing the symmetry-correcte
 When the reference ligand is extracted from a PDB (HETATM records, no bond orders), provide the SMILES so the script can assign bond orders via template matching:
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
   --docked docking/ligand_docked.pdbqt \
   --reference crystal_ligand.pdb \
@@ -32,7 +32,7 @@ python .agents/skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
 When the reference ligand is an SDF with proper bond orders (e.g., from a database or ligand-prep), no SMILES is needed:
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
   --docked docking/ligand_docked.pdbqt \
   --reference crystal_ligand.sdf \
@@ -52,7 +52,7 @@ The default threshold is 2.0 A, which is the classical success criterion from th
 Below about 1.5 A is typically considered "good" and below 1.0 A is "very good" for modern docking of small rigid compounds. Above roughly 3 A, numeric ordering loses meaning (a 4 A pose is not usefully "better" than a 6 A pose; both are wrong).
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
   --docked docking/ligand_docked.pdbqt \
   --reference crystal_ligand.sdf \

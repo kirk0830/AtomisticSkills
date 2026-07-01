@@ -35,7 +35,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 Use the box-building script to create a solvated system with Packmol:
 
 ```bash
-# Env: base-agent
+# Env: base
 # Pure solvent box (64 water molecules)
 python .agents/skills/chem-solution-md/scripts/build_solvation_box.py \
     --solvent water \
@@ -115,7 +115,7 @@ mcp_mace_run_md(
 Run the analysis script on the production trajectory:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-solution-md/scripts/analyze_solution_md.py \
     --trajectory research/my_folder/nvt_production/trajectory.traj \
     --rdf_pairs "Na-O,Cl-O,O-O" \
@@ -147,7 +147,7 @@ python .agents/skills/chem-solution-md/scripts/analyze_solution_md.py \
 ### Pure Water Box
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-solution-md/scripts/build_solvation_box.py \
     --solvent water --num_solvent 64 \
     --output_dir .agents/skills/chem-solution-md/examples/pure_water
@@ -157,7 +157,7 @@ Expected: 192 atoms (64 × 3), box ~12.4 Å
 ### NaCl in Water
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-solution-md/scripts/build_solvation_box.py \
     --solute_smiles "[Na+].[Cl-]" --solvent water --num_solvent 64 \
     --output_dir .agents/skills/chem-solution-md/examples/NaCl_in_water

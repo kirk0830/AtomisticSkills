@@ -24,7 +24,7 @@ Use `query_mp.py` to search for materials by chemical system, formula, or elemen
 
 **Basic Query (Summary Endpoint)**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/query_mp.py \
     --chemsys "Li-S" \
     --properties energy_above_hull formation_energy_per_atom band_gap \
@@ -36,7 +36,7 @@ python .agents/skills/mat-db-mp/scripts/query_mp.py \
 
 **Detailed Thermodynamic Data (Thermo Endpoint)**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/query_mp.py \
     --chemsys "Li-O" \
     --endpoint thermo \
@@ -61,7 +61,7 @@ Use `get_elasticity.py` to retrieve bulk modulus, shear modulus, and elastic ten
 
 **Query Specific Material**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/get_elasticity.py \
     --material_id mp-149 \
     --output si_elasticity.json
@@ -69,7 +69,7 @@ python .agents/skills/mat-db-mp/scripts/get_elasticity.py \
 
 **Filter by Bulk Modulus Range**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/get_elasticity.py \
     --bulk_modulus_min 200 \
     --bulk_modulus_max 400 \
@@ -89,7 +89,7 @@ Use `get_magnetism.py` to retrieve magnetic ordering, magnetization, and site-sp
 
 **Query Specific Material**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/get_magnetism.py \
     --material_id mp-19770 \
     --output fe2o3_magnetism.json
@@ -97,7 +97,7 @@ python .agents/skills/mat-db-mp/scripts/get_magnetism.py \
 
 **Filter by Magnetic Ordering and Magnetization**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/get_magnetism.py \
     --ordering FM \
     --total_magnetization_min 10.0 \
@@ -117,14 +117,14 @@ Use `get_structure_by_id.py` to retrieve crystal structures directly by their Ma
 
 **Single Structure Retrieval**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/get_structure_by_id.py mp-149 \
     --output Si_diamond.cif
 ```
 
 **Batch Retrieval**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/get_structure_by_id.py \
     mp-149 mp-19017 mp-1143 \
     --output_dir structures/
@@ -144,7 +144,7 @@ Use `find_similar_structures.py` to find materials with similar crystal structur
 
 **Find Similar to MP Material**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/find_similar_structures.py \
     --material_id mp-149 \
     --top 15 \
@@ -153,7 +153,7 @@ python .agents/skills/mat-db-mp/scripts/find_similar_structures.py \
 
 **Find Similar to Custom Structure**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/find_similar_structures.py \
     --structure my_structure.cif \
     --top 20 \
@@ -162,7 +162,7 @@ python .agents/skills/mat-db-mp/scripts/find_similar_structures.py \
 
 **Filter by Chemical System**:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-db-mp/scripts/find_similar_structures.py \
     --material_id mp-149 \
     --top 20 \

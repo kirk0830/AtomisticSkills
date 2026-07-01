@@ -46,7 +46,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 Compute absolute H(T), S(T,P), G(T,P) for one species:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
     --molecule H2O \
     --temperature 298.15 \
@@ -61,7 +61,7 @@ python .agents/skills/chem-thermochemistry/scripts/calculate_thermochemistry.py 
 Compute ΔH, ΔS, ΔG for a balanced gas-phase reaction:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
     --reaction "2H2 + O2 -> 2H2O" \
     --temperature 298.15 \
@@ -100,7 +100,7 @@ python .agents/skills/chem-thermochemistry/scripts/calculate_thermochemistry.py 
 See `examples/H2O_formation/` for the water formation reaction:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
     --reaction "2H2 + O2 -> 2H2O" \
     --temperature 298.15 \

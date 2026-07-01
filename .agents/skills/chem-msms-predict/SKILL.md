@@ -51,7 +51,7 @@ The `ms_pred` Python package is installed from GitHub automatically by the insta
 ### Step 1 — Run inference and generate spectrum
 
 ```bash
-# Env: ms-gen
+# Env: msms
 python .agents/skills/chem-msms-predict/scripts/predict_msms.py \
     --smiles "c1ccccc1C(=O)OCCN" \
     --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
@@ -105,7 +105,7 @@ If an experimental spectrum is available, use the companion skill:
 ### 2-Aminoethyl benzoate (`c1ccccc1C(=O)OCCN`)
 
 ```bash
-# Env: ms-gen
+# Env: msms
 python .agents/skills/chem-msms-predict/examples/predict_smiles.py \
     --gen_ckpt downloads/iceberg_dag_gen_msg_best.ckpt \
     --inten_ckpt downloads/iceberg_dag_inten_msg_best.ckpt \
@@ -119,7 +119,7 @@ Expected output:
 
 ## Constraints
 
-- **Environment**: All scripts require the `ms-gen` conda environment. `ms_pred` is installed automatically from GitHub by `conda-envs/msms-agent/install.sh`.
+- **Environment**: All scripts require the `msms` Pixi environment. `ms_pred` (ICEBERG) is installed automatically from PyPI/GitHub.
 - **Checkpoints required**: Script raises `FileNotFoundError` if `--gen_ckpt` or `--inten_ckpt` are missing.
 - **Collision energy units**: Use absolute eV values. To convert NCE → eV, set `nce=True` in `iceberg_prediction()` directly.
 - **Non-binned output only**: This skill uses `binned_out=False` (high-precision m/z). Binned output disables fragment assignment.

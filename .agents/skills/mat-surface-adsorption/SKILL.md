@@ -53,7 +53,7 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 To calculate adsorption energies, use the `calculate_adsorption.py` script:
 
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk path/to/bulk_structure.cif \
     --adsorbate path/to/adsorbate.xyz \
@@ -107,7 +107,7 @@ The calculation generates the following files in the output directory:
 Calculate the adsorption energy of CO on the (111) surface of Cu using an Open Catalyst trained model:
 
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk examples/CO_on_Cu111/Cu_bulk.cif \
     --adsorbate examples/CO_on_Cu111/CO.xyz \
@@ -127,7 +127,7 @@ python .agents/skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
 Use a SMILES string to define the adsorbate:
 
 ```bash
-# Env: matgl-agent
+# Env: matgl
 python .agents/skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk Pt_bulk.cif \
     --adsorbate "O=C=O" \
@@ -142,7 +142,7 @@ python .agents/skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
 Calculate adsorption on a (100) surface:
 
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk Ni_bulk.cif \
     --adsorbate H2.xyz \

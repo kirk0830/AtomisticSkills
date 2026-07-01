@@ -58,7 +58,7 @@ Fairchem fine-tuning relies heavily on the `fairchem` CLI, which uses Hydra for 
 Usage:
 ```bash
 # 1. Prepare Data and Config
-conda run -n fairchem-agent python .agents/skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
+pixi run -e fairchem python .agents/skills/ml-fairchem-finetune/scripts/prepare_fairchem_data.py \
     --data /path/to/training_data.json \
     --model uma-s-1p1 \
     --epochs 10 \
@@ -70,10 +70,10 @@ conda run -n fairchem-agent python .agents/skills/ml-fairchem-finetune/scripts/p
 # 2. Run Training
 export PYTHONPATH=/path/to/research/my_dir/fairchem_finetuning/lmdb_output:$PYTHONPATH
 cd /path/to/research/my_dir/fairchem_finetuning/lmdb_output
-conda run -n fairchem-agent fairchem -c uma_sm_finetune_template.yaml job.run_dir=/path/to/research/my_dir/fairchem_finetuning/runs +job.timestamp_id=run_10ep
+pixi run -e fairchem fairchem -c uma_sm_finetune_template.yaml job.run_dir=/path/to/research/my_dir/fairchem_finetuning/runs +job.timestamp_id=run_10ep
 
 # 3. Extract Training Logs (Optional, to create standard training_history.json)
-conda run -n fairchem-agent python .agents/skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
+pixi run -e fairchem python .agents/skills/ml-fairchem-finetune/scripts/extract_fairchem_logs.py \
     --log /path/to/research/my_dir/fairchem_finetuning/runs/run_10ep/logs/trainer.log \
     --output-dir /path/to/research/my_dir/fairchem_finetuning/results
 ```

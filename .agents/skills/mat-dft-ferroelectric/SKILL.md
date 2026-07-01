@@ -18,7 +18,7 @@ Material spontaneous polarization arises when positive and negative charge cente
 Use the provided script to generate the sequence of calculation jobs evaluating the polarization across interpolated intermediate structures.
 
 ```bash
-# Env: atomate2-agent
+# Env: atomate2
 python .agents/skills/mat-dft-ferroelectric/scripts/generate_inputs.py --output ferroelectric_flow.json
 ```
 
@@ -33,7 +33,7 @@ The final job merges the electronic polarization and ionic dipoles for each inte
 Run the example demonstrating the DAG generation for Barium Titanate (BaTiO$_3$).
 
 ```bash
-# Env: atomate2-agent
+# Env: atomate2
 cd .agents/skills/mat-dft-ferroelectric/examples/BaTiO3
 python ../../scripts/generate_inputs.py --output batio3_flow.json
 ```

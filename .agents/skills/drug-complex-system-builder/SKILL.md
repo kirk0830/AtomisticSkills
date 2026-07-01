@@ -32,7 +32,7 @@ Required inputs:
 ### 2. Build the solvated complex
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-complex-system-builder/scripts/build_complex.py \
   --receptor docking/inputs/protein_prepared.pdb \
   --ligand docking/validation/valid_poses.sdf \
@@ -82,7 +82,7 @@ Common issues:
 ### Example: build TYK2 inhibitor complex
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-complex-system-builder/scripts/build_complex.py \
   --receptor tyk2/inputs/4GIH_prepared.pdb \
   --ligand tyk2/validation/valid_poses.sdf \
@@ -94,7 +94,7 @@ python .agents/skills/drug-complex-system-builder/scripts/build_complex.py \
 
 ## Constraints
 
-- **Environment**: Requires `drugmd-agent`.
+- **Environment**: Requires `drugmd`.
 - **Ligand size**: OpenFF Sage handles typical drug-like molecules well. For very large ligands (>100 heavy atoms) or metal-containing compounds, parameterization may require manual intervention.
 - **Protein force field**: Only Amber-family force fields (ff14SB, ff19SB) are supported through openmmforcefields. CHARMM support would require a different builder.
 - **Box shape**: Defaults to cubic. Dodecahedron and truncated octahedron are supported via `--box_shape` (requires OpenMM 8.0+).

@@ -28,7 +28,7 @@ export RXN_API_KEY="your-api-key-here"
 Use the wrapper script to submit the SMILES string to the IBM RXN API. The script will poll the server and return the predicted pathway and a confidence score for synthetic feasibility.
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py "target_smiles" --steps 3
 ```
 
@@ -36,7 +36,7 @@ python .agents/skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py "target_sm
 
 Evaluating the synthetic pathway for a fluorinated gas analog (e.g., 2,3,3,3-tetrafluoropropene: `FC(F)(F)C(F)=C`):
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 export RXN_API_KEY="api-key-here"
 python .agents/skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py "FC(F)(F)C(F)=C" --steps 3
 ```
