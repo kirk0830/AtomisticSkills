@@ -93,11 +93,47 @@ matcalc = "*"
 setuptools = "<70"
 
 # -----------------------------------------------------------------------------
-# LAMMPS Feature: Molecular dynamics with MLIP support
+# LAMMPS-CPU Feature: conda-forge lammps (CPU variant, for FairChem)
+# Includes ML-IAP, MLIAP_ENABLE_PYTHON, ML-SNAP, USER-M3GNET, OPENMP, MPI
 # -----------------------------------------------------------------------------
-[feature.lammps.dependencies]
+[feature.lammps-cpu.dependencies]
 lammps = "*"
-# LAMMPS from conda-forge includes ML-MACE, ML-IAP packages
+
+# -----------------------------------------------------------------------------
+# LAMMPS-CUDA Feature: conda-forge lammps with Kokkos+CUDA (for MatGL)
+# linux-64 only; requires CUDA 12.x runtime
+# Note: conda-forge builds with Kokkos_ARCH_MAXWELL50 (forward-compatible PTX)
+# -----------------------------------------------------------------------------
+[feature.lammps-cuda]
+platforms = ["linux-64"]
+
+[feature.lammps-cuda.system-requirements]
+cuda = "12"
+
+[feature.lammps-cuda.dependencies]
+lammps = { version = "*", build = "*cuda*" }
+
+# -----------------------------------------------------------------------------
+# LAMMPS-MACE-Build Feature: build tools for compiling ACEsuit/lammps fork
+# MACE's native pair_style requires PKG_ML-MACE, not available in conda-forge
+# The actual build is performed by the build-lammps-mace task
+# -----------------------------------------------------------------------------
+[feature.lammps-mace-build]
+platforms = ["linux-64"]
+
+[feature.lammps-mace-build.dependencies]
+cmake = "*"
+gxx = "*"
+openmpi = "*"        # provides mpicxx
+mkl-devel = "*"
+
+# -----------------------------------------------------------------------------
+# FairChem-LAMMPS Feature: pip package providing lmp_fc binary
+# Pairs with conda-forge lammps (lammps-cpu feature)
+# -----------------------------------------------------------------------------
+[feature.fairchem-lammps-pkg.pypi-dependencies]
+fairchem-lammps = "*"
+fairchem-core = { version = ">=2.18.0", extras = ["extras"] }
 
 # -----------------------------------------------------------------------------
 # DFT Feature: Atomate2 VASP workflows
@@ -312,24 +348,27 @@ features = ["core", "chemistry", "analysis"]
 features = ["core", "torch-cuda", "mlip-mace", "analysis"]
 solve-group = "mlip-cuda"
 
+# MACE-LAMMPS: no conda-forge lammps; uses ACEsuit fork compiled via task
 [environments.mace-lammps]
-features = ["core", "torch-cuda", "mlip-mace", "lammps", "analysis"]
+features = ["core", "torch-cuda", "mlip-mace", "lammps-mace-build", "analysis"]
 solve-group = "mlip-cuda"
 
 [environments.matgl]
 features = ["core", "torch-base", "mlip-matgl", "analysis"]
 solve-group = "mlip-base"
 
+# MatGL-LAMMPS: conda-forge lammps with CUDA (includes ML-IAP, USER-M3GNET)
 [environments.matgl-lammps]
-features = ["core", "torch-base", "mlip-matgl", "lammps", "analysis"]
+features = ["core", "torch-base", "mlip-matgl", "lammps-cuda", "analysis"]
 solve-group = "mlip-base"
 
 [environments.fairchem]
 features = ["core", "torch-cuda", "mlip-fairchem", "analysis"]
 solve-group = "mlip-cuda"
 
+# FairChem-LAMMPS: conda-forge lammps (CPU) + fairchem-lammps pip package (lmp_fc)
 [environments.fairchem-lammps]
-features = ["core", "torch-cuda", "mlip-fairchem", "lammps", "analysis"]
+features = ["core", "torch-cuda", "mlip-fairchem", "lammps-cpu", "fairchem-lammps-pkg", "analysis"]
 solve-group = "mlip-cuda"
 
 # -----------------------------------------------------------------------------
@@ -438,6 +477,67 @@ environment = "fairchem"
 description = "Run Atomate2 server tests"
 cmd = "pytest tests/atomate2/"
 environment = "atomate2"
+
+# MACE LAMMPS build task
+# Compiles ACEsuit/lammps fork with PKG_ML-MACE into the mace-lammps environment.
+# Output: $CONDA_PREFIX/bin/lmp (usable only within mace-lammps environment)
+[tasks.build-lammps-mace]
+description = "Build LAMMPS with MACE pair_style from ACEsuit fork"
+cmd = """
+set -euo pipefail
+
+LAMMPS_GIT_URL="${LAMMPS_GIT_URL:-https://github.com/ACEsuit/lammps.git}"
+LAMMPS_REF="${LAMMPS_REF:-mace}"
+LAMMPS_BUILD_JOBS="${LAMMPS_BUILD_JOBS:-16}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/lammps-mace"
+
+PYTHON_EXECUTABLE="$(python -c 'import sys; print(sys.executable)')"
+TORCH_CMAKE_PREFIX="$(python -c 'import torch; print(torch.utils.cmake_prefix_path)')"
+
+if [ -z "$TORCH_CMAKE_PREFIX" ]; then
+  echo "ERROR: Torch CMake prefix not found. Is pytorch installed?" >&2
+  exit 1
+fi
+
+mkdir -p "$BUILD_DIR"
+
+if [ ! -d "$BUILD_DIR/src/.git" ]; then
+  echo "Cloning ACEsuit/lammps (ref=$LAMMPS_REF)..."
+  git clone --branch "$LAMMPS_REF" --depth 1 "$LAMMPS_GIT_URL" "$BUILD_DIR/src"
+else
+  echo "Using existing clone at $BUILD_DIR/src"
+fi
+
+echo "Configuring CMake..."
+cmake -S "$BUILD_DIR/src/cmake" \
+  -B "$BUILD_DIR/build" \
+  -D CMAKE_BUILD_TYPE=Release \
+  -D BUILD_MPI=ON \
+  -D BUILD_OMP=ON \
+  -D PKG_OPENMP=ON \
+  -D PKG_ML-MACE=ON \
+  -D CMAKE_CXX_STANDARD=17 \
+  -D CMAKE_CXX_COMPILER=mpicxx \
+  -D Python_EXECUTABLE="$PYTHON_EXECUTABLE" \
+  -D CMAKE_PREFIX_PATH="$TORCH_CMAKE_PREFIX;$CONDA_PREFIX" \
+  -D MKL_ROOT="$CONDA_PREFIX"
+
+echo "Building ($LAMMPS_BUILD_JOBS jobs)..."
+cmake --build "$BUILD_DIR/build" -j "$LAMMPS_BUILD_JOBS"
+
+LMP_BIN="$BUILD_DIR/build/lmp"
+LMP_HELP="$("$LMP_BIN" -h 2>&1 || true)"
+if echo "$LMP_HELP" | grep -q "ML-MACE"; then
+  echo "OK: ML-MACE detected in lmp -h output"
+else
+  echo "ERROR: ML-MACE not detected in lmp -h output" >&2
+  exit 1
+fi
+
+cp "$LMP_BIN" "$CONDA_PREFIX/bin/lmp"
+echo "Done: $CONDA_PREFIX/bin/lmp"
+"""
+environment = "mace-lammps"
 
 # =============================================================================
 # ACTIVATION SCRIPTS
