@@ -196,8 +196,8 @@ pixi.lock
 | 依赖 | 处理方式 | 锁定版本 | Patch | 状态 |
 |------|----------|----------|-------|------|
 | VOID | Pixi git 依赖 | ✅ | ❌ | ✅ 已实施 |
-| react-ot | Pixi task | ✅ (env var) | ✅ (sed) | ✅ 已实施 |
-| SCD | Pixi task | ✅ (env var) | ✅ (编译) | ✅ 已实施 |
+| react-ot | Pixi task + 固化 patch | ✅ (env var) | ✅ (script) | ✅ 已实施 (patch 已固化) |
+| SCD | Pixi task | ✅ (env var) | ❌ (仅编译) | ✅ 已实施 |
 | ms-pred (ICEBERG) | Pixi task + 固化 patch | ✅ (env var) | ✅ (setup.py) | ✅ 已实施 (patch 已固化) |
 | PyG aarch64 | Pixi task | ✅ (env var) | ❌ | ✅ 已实施 |
 | LAMMPS (MACE) | Pixi task | ✅ (env var) | ❌ | ✅ 已实施 |
@@ -231,6 +231,31 @@ pixi.lock
 - nvalchemi-toolkit 是 NVIDIA 内部包，公开状态不明
 - 供应链风险：无法确认包的来源、版本、漏洞
 - 可重现性风险：其他用户可能无法安装此依赖
+
+### 11. react-ot Patch 固化
+
+**改动**:
+- 创建 [.agents/patches/react-ot/apply_patches.sh](file:///workspace/.agents/patches/react-ot/apply_patches.sh)
+- 将内联 sed patch 提取为独立 shell script
+- 更新 `install-react-ot` task 调用固化的 patch script
+
+**Patch 内容**:
+1. `pyproject.toml`: `include-package-data = false` → `true`
+2. `pyproject.toml`: `namespaces = false` → `true`
+3. `_utils.py`: `from ase.neb import NEB` → `from ase.mep import NEB` (ASE API 变化)
+
+**安全改进**:
+- ✅ Patch 内容可审计、可版本控制
+- ✅ 安装逻辑与 patch 内容分离
+- ✅ 每个 patch 都有注释说明用途
+
+### 12. SCD 无需固化 Patch
+
+**说明**:
+- SCD 的 `install-scd` task 没有 sed patch
+- 只包含 TorchMD C++ extension 编译步骤 (`python setup.py build_ext --inplace`)
+- 编译步骤是正常的安装流程，不涉及修改上游源码
+- **结论**: SCD 不需要额外的 patch 固化工作
 
 ---
 
@@ -283,6 +308,7 @@ MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 
 1. ~~**Git clone 依赖迁移到 Pixi**~~ ✅ 已完成
    - ~~react-ot, SCD, VOID, ms-pred, PyG aarch64, LAMMPS (MACE)~~
    - ~~msms-iceberg 运行时 patch 固化~~ ✅ 已完成
+   - ~~react-ot patch 固化~~ ✅ 已完成
    - **nvalchemi-toolkit Skill 已关闭**（状态不明，不使用）
 
 2. ~~**Skills 全面 Pixi 化**~~ ✅ 已完成
@@ -337,12 +363,12 @@ MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 
 
 **选项 A**: 验证现有 pixi.toml 能否正确解析（需要网络环境）
 **选项 B**: 生成 pixi.lock 并运行测试（需要网络环境）
-**选项 C**: react-ot / SCD 的 patch 也固化为 patch 文件（当前为内联 sed）
-**选项 D**: 其他安全改进（输入验证、日志脱敏等）
+**选项 C**: 其他安全改进（输入验证、日志脱敏等）
 
 > **已完成**:
 > - Skills Pixi 化 ✅
 > - install.sh 消除 ✅
 > - Git clone 依赖迁移 ✅
 > - msms-iceberg patch 固化 ✅
+> - react-ot patch 固化 ✅
 > - nvalchemi-toolkit Skill 关闭 ✅

@@ -550,13 +550,19 @@ environment = "mace-lammps"
 # React-OT: Transition state structure generation
 # Requires 3 sed patches to pyproject.toml and _utils.py
 [tasks.install-react-ot]
-description = "Install react-ot with required patches"
+description = "Install react-ot with required patches (pyproject.toml + ASE NEB import)"
 cmd = """
 set -euo pipefail
 
 REACT_OT_REPO="${REACT_OT_REPO:-https://github.com/deepprinciple/react-ot.git}"
 REACT_OT_REF="${REACT_OT_REF:-main}"
 BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/react-ot"
+PATCH_SCRIPT="${PIXI_PROJECT_ROOT}/.agents/patches/react-ot/apply_patches.sh"
+
+if [ ! -f "$PATCH_SCRIPT" ]; then
+  echo "ERROR: Patch script not found: $PATCH_SCRIPT"
+  exit 1
+fi
 
 if [ -d "$BUILD_DIR/.git" ]; then
   echo "Using existing clone at $BUILD_DIR"
@@ -566,9 +572,7 @@ else
 fi
 
 echo "Applying patches..."
-sed -i 's/include-package-data = false/include-package-data = true/' "$BUILD_DIR/pyproject.toml"
-sed -i 's/namespaces = false/namespaces = true/' "$BUILD_DIR/pyproject.toml"
-sed -i 's/from ase.neb import NEB/from ase.mep import NEB/' "$BUILD_DIR/reactot/diffusion/_utils.py"
+bash "$PATCH_SCRIPT" "$BUILD_DIR"
 
 echo "Installing..."
 pixi run -e react-ot pip install --no-deps "$BUILD_DIR"
