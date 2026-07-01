@@ -261,7 +261,9 @@ print(f"Energy: {result.energy_eV:.6f} eV")
 
 ## Developer Guide
 
-### Architecture
+### Architecture & Layer Map
+
+The framework uses a **three-layer hierarchy** — Workflows → Skills → MCP Tools. For a complete cross-reference of which skills use which MCP tools and which workflows compose which skills, see the [Skill / MCP Tool / Workflow Map](docs/skill_mcp_workflow_map.md).
 
 ```
 ┌─────────────────────────────────────────────────────────┐

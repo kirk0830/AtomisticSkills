@@ -32,26 +32,27 @@ All environments are defined in `pixi.toml`.
 | Environment | Description |
 | :--- | :--- |
 | `base` | Core: pymatgen, ase, rdkit, packmol |
-| `mace` | Core: mace-torch, pymatgen, ase (CUDA) |
-| `mace-lammps` | mace + LAMMPS (compiled from ACEsuit fork) |
-| `matgl` | Core: matgl, pymatgen, dgl (CPU) |
-| `matgl-lammps` | matgl + LAMMPS-Kokkos-CUDA (conda-forge) |
-| `fairchem` | Core: fairchem-core≥2.18, pymatgen, Python 3.12 (CUDA) |
-| `fairchem-lammps` | fairchem + LAMMPS + fairchem-lammps (conda-forge) |
-| `atomate2` | Core: atomate2, pymatgen |
-| `adit` | Core: ADiT, lightning, hydra, PyG |
-| `diffcsp` | Core: DiffCSP++, hydra, PyG, pyxtal |
-| `mattergen` | Core: MatterGen, PyG, lightning |
-| `smol` | Core: smol, pymatgen |
-| `drugdisc` | Core: rdkit, autodock-vina, pdbfixer, meeko |
-| `calphad` | Core: pycalphad, pymatgen |
-| `phasefield` | Core: fipy, scipy, numpy, imageio |
-| `nmr` | Core: nmrsim, rdkit |
-| `msms` | Core: ICEBERG/ms-pred, rdkit, torch, dgl |
-| `void` | Core: VOID, rdkit, networkx |
-| `orca` | Core: scine_utilities, scine_readuct, ase. Requires `ORCA_BINARY_PATH` env var. No MCP server, scripts only. |
-| `react-ot` | Core: PyTorch + react-ot. No MCP server, scripts only. |
-| `scd` | Core: SelfConditionedDenoisingAtoms, lightning, huggingface. No MCP server, scripts only. |
+| `mace` | MACE MLIP (MP, OMAT, MatPES heads) with CUDA support |
+| `mace-lammps` | MACE + LAMMPS (ACEsuit fork, compiled from source) |
+| `matgl` | MatGL (CHGNet, M3GNet, TensorNet) with CPU PyTorch |
+| `matgl-lammps` | MatGL + LAMMPS-Kokkos-CUDA (conda-forge) |
+| `fairchem` | FairChem (UMA/ESEN) with CUDA support |
+| `fairchem-lammps` | FairChem + LAMMPS + fairchem-lammps (conda-forge) |
+| `atomate2` | Atomate2 + Jobflow-remote + AMSET + Lobsterpy |
+| `adit` | ADiT generative model (all-atom diffusion transformer) |
+| `diffcsp` | DiffCSP++ crystal structure generation |
+| `mattergen` | MatterGen generative crystal design |
+| `react-ot` | React-OT transition state generation |
+| `scd` | SelfConditionedDenoisingAtoms property prediction |
+| `calphad` | CALPHAD phase diagrams (pycalphad) |
+| `phasefield` | Phase-field simulations (FiPy) |
+| `smol` | Cluster expansion + Monte Carlo (SMOL) |
+| `drugdisc` | Drug discovery tools (Vina, fpocket, RDKit, Meeko, PoseBusters) |
+| `nmr` | NMR prediction/analysis (nmrsim, RDKit) |
+| `msms` | MS/MS prediction (ICEBERG) |
+| `xrd` | XRD analysis (DARA) |
+| `void` | Porous materials docking (VOID) |
+| `orca` | Molecular DFT via ORCA (SCINE/ReaDuct). Scripts only — no MCP server. |
 
 ### Conda (Legacy)
 

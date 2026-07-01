@@ -65,7 +65,7 @@ MD stability monitoring is integrated directly into the `run_md` tool via ASE ca
 If a simulation explodes:
 1.  **Reduce Timestep**: Try 0.5 fs.
 2.  **Ramp Temperature**: Use a slower heating rate.
-3.  **Check Potential**: Consider if the chemistry is within the training range of the foundation potential. If not, use the [ml-mlip-training](../ml-mlip-training/SKILL.md) skill.
+3.  **Check Potential**: Consider if the chemistry is within the training range of the foundation potential. If not, use the [ml-mace-finetune](../ml-mace-finetune/SKILL.md) or [ml-matgl-finetune](../ml-matgl-finetune/SKILL.md) skill to fine-tune a model on your system.
 
 ## Examples
 

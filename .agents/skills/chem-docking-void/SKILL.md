@@ -25,7 +25,7 @@ You will need:
 A standard run accepts the chemical inputs and saves outputs to a designated folder.
 
 ```bash
-# Env: atomistic-agent
+# Env: void
 python .agents/skills/chem-docking-void/scripts/run_docking.py \
   --smiles "CC12C3C4C5C6C1C7C2C3C4C5C67" \
   --host_cif /path/to/host/material.cif \
@@ -63,7 +63,7 @@ python .agents/skills/chem-docking-void/scripts/run_docking.py \
 
 ## Constraints
 
-* **Environment**: Requires `atomistic-agent` conda environment where `VOID`, `rdkit`, and `pymatgen` are accessible.
+* **Environment**: Requires the `void` Pixi environment where `VOID`, `rdkit`, and `pymatgen` are accessible.
 * **Loading Size**: By default, this script handles single-guest loadings per unit cell. Heavy multiple guest loading (`--max_loading > 1`) may scale exponentially in computational time depending on pore size.
 * **Outputs**: Everything is standardized to CIF files for compatibility with subsequent DFT or MLIP workflows.
 

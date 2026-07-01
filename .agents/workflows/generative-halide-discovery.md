@@ -43,7 +43,7 @@ Use Molecular Dynamics to evaluate and predict the ionic conductivity of the top
 - **Auto-Monitoring**: Enable the `diffusion` monitor to stop simulations once MSD has converged.
 
 ## 7. Transport Analysis & Visualization
-- **Arrhenius Analysis**: Use the `mat-diffusion-analysis` skill to ingest the aggregated multi-temperature `diffusion_Li.json` files and fit the activation energy ($E_a$).
+- **Arrhenius Analysis**: Use the [mat-diffusion-analysis](../skills/mat-diffusion-analysis/SKILL.md) skill to ingest the aggregated multi-temperature `diffusion_Li.json` files and fit the activation energy ($E_a$).
 - **Probability Density**: For top conductors, use `mat-md-probability-density` to visualize the Li-ion diffusion pathways and identify the dimensionality of conduction (1D, 2D, or 3D).
 
 ## 8. Structural Novelty & Literature Verification

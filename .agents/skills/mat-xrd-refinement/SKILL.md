@@ -90,7 +90,8 @@ Results: `examples/LiFePO4/refinement_results/LiFePO4/` (refinement_result.json,
 ### Example 2: CaNi(PO3)4 (path with parentheses — must quote)
 
 ```bash
-# Env: xrd. Quote the path because of (PO3), (OH), (NH4).
+# Env: xrd
+# Note: Quote the path because of (PO3), (OH), (NH4).
 python .agents/skills/mat-xrd-refinement/scripts/refine.py \
   --xrd_data ".agents/skills/mat-xrd-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
 
@@ -138,7 +139,7 @@ You can independently edit `plot.py` directly to adjust any of the `matplotlib`/
   - Use this skill to digitize an image or screenshot of an XRD plot into an `.xy` file if you do not have raw experimental data.
 - **[mat-xrd-calculator](../mat-xrd-calculator/SKILL.md)**:
   - Calculate theoretical XRD patterns from crystal structures.
-- **[foundation-potentials](../foundation-potentials/SKILL.md)**:
+- **[ml-foundation-potentials](../ml-foundation-potentials/SKILL.md)**:
   - Relax structures before XRD for better agreement with experiment.
 
 ---

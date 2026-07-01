@@ -14,14 +14,14 @@ Often in literature analysis or quick experimental checks, raw diffractometer da
 ### Step 1: Visual Peak Extraction and Digitization
 Provide the AtomisticSkills Agent with the image of the XRD plot and the target chemical system.
 
-- **Skill:** Use the `mat-xrd-digitizer` skill.
+- **Skill:** Use the [mat-xrd-digitizer](../skills/mat-xrd-digitizer/SKILL.md) skill.
 - **Action:** Instruct the Agent to use its vision capabilities to extract the 2-theta positions and relative intensities of the major peaks in the image into a `peaks.json` file. The Agent will then run the `digitize_plot.py` script on the `peaks.json` file to fit mathematical pseudo-Voigt profiles to the extracted peaks, synthesizing a realistic diffraction curve.
 - **Output:** An `example.xy` data file and a verification `example.png` plot.
 
 ### Step 2: Phase Identification
 Search the numerical dataset against a structural database to find the matching phases.
 
-- **Skill:** Use the `mat-xrd-phase-analysis` skill.
+- **Skill:** Use the [mat-xrd-phase-analysis](../skills/mat-xrd-phase-analysis/SKILL.md) skill.
 - **Action:** The Agent will query the database (e.g., COD) for Candidate CIFs using the provided chemical system. It will then use DARA's BGMN-backed tree search to match the experimental `.xy` pattern against combinations of these CIFs.
 - **Decision:** Review the $R_{wp}$ (Weighted Profile R-factor) of the resulting solutions. If the $R_{wp}$ is very high or the residual plot is poor, you may need to ask the Agent to re-extract the peaks more carefully in Step 1, or try a different chemical system.
 - **Output:** A `results_summary.json` ranking the best matching phases, and refined fit plots bridging the digitized input with the theoretical models.
@@ -29,13 +29,13 @@ Search the numerical dataset against a structural database to find the matching 
 ### Optional Step 3: Refinement
 If you already know the phases and simply want to refine their lattice parameters or weight fractions against the digitized plot.
 
-- **Skill:** Use the `mat-xrd-refinement` skill.
+- **Skill:** Use the [mat-xrd-refinement](../skills/mat-xrd-refinement/SKILL.md) skill.
 - **Action:** Provide the specific `.cif` files directly to the DARA refinement script along with the digitized `.xy` file.
 
 ### Step 4: Synthesis Recommendation
 Once the correct phase or target material is successfully identified, determine how to synthesize it experimentally.
 
-- **Skill:** Use the `mat-synthesis-recommendation` skill.
+- **Skill:** Use the [mat-synthesis-recommendation](../skills/mat-synthesis-recommendation/SKILL.md) skill.
 - **Action:** Query the experimental synthesis database (such as the Materials Project text-mined database) for the identified phase's chemical formula or exact material ID.
 - **Output:** A ranked list of literature-backed synthesis recipes, detailing the precursors, heating procedures, operations, and associated publication references.
 

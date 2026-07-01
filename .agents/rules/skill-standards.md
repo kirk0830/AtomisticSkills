@@ -182,15 +182,22 @@ def process_structure(atoms: Atoms, threshold: float = 0.5) -> dict:
 Every script execution in `SKILL.md` **MUST** include a `# Env: <conda-environment-name>` annotation in the code block. This ensures the agent and the user know exactly which environment to activate before running the script.
 
 ### 2. Environment Mapping
-Refer to `mcp-environments.md` for the standard environment mapping:
-- `base-agent`: General materials tools, Materials Project API, and parsing.
-- `matgl-agent`: MatGL calculations, training, and utilities.
-- `mace-agent`: MACE calculations and training.
-- `fairchem-agent`: FairChem/OCP/UMA calculations.
-- `atomate2-agent`: Atomate2/Jobflow workflows and DB querying.
-- `smol-agent`: Cluster expansion and Monte Carlo simulations.
-- `mattergen-agent`: MatterGen structure generation.
-- `drugdisc-agent`: Drug discovery, docking, and molecular tools.
+Refer to `mcp-environments.md` for the standard environment mapping (Pixi environment names, no `-agent` suffix):
+- `base`: General materials tools, Materials Project API, and parsing.
+- `matgl`: MatGL calculations, training, and utilities.
+- `mace`: MACE calculations and training.
+- `fairchem`: FairChem/OCP/UMA calculations.
+- `atomate2`: Atomate2/Jobflow workflows and DB querying.
+- `smol`: Cluster expansion and Monte Carlo simulations.
+- `mattergen`: MatterGen structure generation.
+- `drugdisc`: Drug discovery, docking, and molecular tools.
+- `orca`: ORCA molecular DFT (scripts only, no MCP server).
+- `nmr`: NMR prediction and analysis.
+- `msms`: MS/MS spectrum prediction.
+- `xrd`: XRD phase analysis and refinement.
+- `void`: Porous materials docking.
+- `calphad`: CALPHAD phase diagrams.
+- `phasefield`: Phase-field simulations.
 
 ### 3. Documentation Consistency
 The required environment must be consistent across:
