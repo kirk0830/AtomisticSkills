@@ -159,6 +159,7 @@ If they set up a MLIP (e.g., MACE): "Predict the forces and energy for this LiFe
 
 - **Leverage Local GPUs**: We highly recommend running the framework on a machine with local GPU resources so MLIP tasks can evaluate quickly without external compute costs.
 - **Use HPC for DFT**: Submit ORCA/VASP calculations to HPC clusters via the unified module (see [HPC Job Submission docs](hpc_job_submission.md)).
+- **Chatbot frameworks**: To expose AtomisticSkills through a chat platform (QQ, Telegram, etc.), see the [AstrBot Integration Guide](astrbot-integration.md). AstrBot sandboxes the agent to its `data/` directory, so we use per-skill symlinks + MCP server configs.
 - **Customize**: Add your own specialized SKILLs, MCP tools, and Workflows directly to the project structure to tailor it to your research needs.
 - **Contribute Back**: If you develop a robust, generalized tool or SKILL, please submit a PR to the main branch! We actively acknowledge all open-source contributors.
 

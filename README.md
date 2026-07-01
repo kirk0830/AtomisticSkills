@@ -151,13 +151,17 @@ AtomisticSkills uses **Pixi** for reproducible, isolated environment management.
    | **Cursor** | `.cursor/mcp.json` | `~/.cursor/mcp.json` |
    | **Gemini CLI** | `.gemini/settings.json` | `~/.gemini/settings.json` |
    | **Codex CLI** | `.codex/config.toml` | `~/.codex/config.toml` |
+   | **AstrBot** | n/a — see [AstrBot Integration](docs/astrbot-integration.md) | n/a |
 
    ```bash
-   # Project scope (tools available in this repo only)
+   # IDE-embedded agents (project scope)
    pixi run -e base python configure_mcp.py
 
-   # Global scope (tools available everywhere)
+   # IDE-embedded agents (global scope)
    pixi run -e base python configure_mcp.py --scope global
+
+   # AstrBot chatbot framework (uses symlinks into data/skills/ + WebUI MCP config)
+   pixi run -e base python configure_astrbot.py --data-dir /path/to/astrbot/data
    ```
 
 ### Available Environments
@@ -301,7 +305,8 @@ AtomisticSkills/
 ├── .pixi/
 │   └ envs/                # Isolated environments
 │   └ build/               # Build artifacts for git deps
-└── configure_mcp.py       # MCP configuration generator
+├── configure_mcp.py       # MCP configuration generator (IDE agents)
+└── configure_astrbot.py   # AstrBot chatbot framework configurator
 ```
 
 ### Adding a New Skill

@@ -289,6 +289,71 @@ pixi.lock
 | 供应链风险 | 高 | 低（可审计） |
 | 可重现性 | 低 | 高（版本锁定） |
 
+### 14. AstrBot 兼容性（MCP-first + 软链接方案）
+
+**背景**: AtomisticSkills 之前的文件结构只对 IDE embedded code agent（Claude Code / Cursor / Codex 等）友好，对 AstrBot 这类聊天机器人框架不友好。
+
+**AstrBot 关键限制**:
+1. 智能体启动时在当前目录生成 `data/` 目录
+2. 智能体文件访问被沙盒限制在 `data/` 内（特别是 `data/skills/`）
+3. Skills 文件结构与 `.agents/skills/` 完全一致
+4. stdio 模式 MCP 启动器只允许 `python`/`node`/`uv` 命令，禁止 `bash`/`ssh`/`curl`
+5. MCP 服务器配置通过 WebUI 添加（每次一个 JSON 块）
+
+**评估过的方案**:
+- **方案 A (MCP-first + 软链接)** ✅ 已采用 — SKILL.md 通过软链接放入 `data/skills/`，MCP 服务器通过绝对路径启动（不受沙盒限制），`atomistic-skills` 包已 editable 安装可自由 import
+- **方案 B (Script runner)** ❌ 未采用 — 添加 `run_skill_script` MCP 工具间接执行脚本，会增加复杂度且偏离 MCP-first 原则
+
+**改动**:
+1. **新增 [configure_astrbot.py](file:///workspace/configure_astrbot.py) 脚本**
+   - 自动检测 AstrBot data 目录（`./data`、`../astrbot/data`、`~/astrbot/data`）
+   - 为每个项目 skill 创建符号链接：`<astrbot>/data/skills/<name>` → `.agents/skills/<name>`
+   - 写入索引 skill：`<astrbot>/data/skills/atomisticskills/SKILL.md`（带 marker，可刷新）
+   - 打印每个 MCP 服务器的 JSON 配置（AstrBot WebUI 一次只添加一个）
+   - 可选写入 `<astrbot>/data/config/atomisticskills_mcp.json` 参考文件
+   - 幂等性：重新运行会跳过已存在的链接，自动清理失效链接（指向已删除 skill）
+   - CLI 参数：`--data-dir`、`--skills-only`、`--mcp-only`、`--write-mcp-config`、`--list-servers`
+
+2. **新增 [docs/astrbot-integration.md](file:///workspace/docs/astrbot-integration.md) 部署指南**
+   - 架构图说明 MCP-first 方案
+   - 6 步骤部署流程（Pixi envs → 配置 → 运行脚本 → WebUI 添加 → 重启 → 验证）
+   - AstrBot 拒绝绝对路径时的备选 `env` + `uv` 启动模式
+   - 文件访问限制说明（输出需写入 `data/` 才能在聊天中分享）
+   - HPC 提交流程（SSH 配置在 `~/.atomistic_skills.yaml`，MCP 服务器调用 `src.utils.hpc`）
+   - 故障排查指南
+
+**架构**:
+```
+AstrBot Chatbot (sandboxed to data/)
+├── data/skills/
+│   ├── atomisticskills/SKILL.md          # 索引（脚本写入）
+│   ├── chem-dft-orca-singlepoint/        # symlink → .agents/skills/...
+│   ├── mat-stability/                    # symlink → .agents/skills/...
+│   └── ... (127 个软链接)
+└── data/config/atomisticskills_mcp.json  # 可选参考文件
+
+AtomisticSkills Host (不受沙盒限制)
+├── .agents/skills/                       # 真实 skill 文件
+├── src/mcp_server/*.py                   # MCP 服务器入口
+├── src/utils/                            # 共享工具（HPC, DFT, MLIP）
+├── .pixi/envs/<name>/                    # 隔离的 Python 环境
+└── ~/.atomistic_skills.yaml              # API 密钥 + HPC SSH 配置
+```
+
+**安全收益**:
+- ✅ 智能体沙盒化：AstrBot 智能体只能读取 `data/skills/` 下的 SKILL.md，无法访问项目源码
+- ✅ MCP 服务器隔离：每个 MCP 服务器在自己的 Pixi 环境中运行，不暴露完整项目
+- ✅ 无密码泄露：SSH 密钥从 `~/.atomistic_skills.yaml` 读取，绝不硬编码
+- ✅ 无 shell 注入风险：智能体不能运行 `pixi run` / `conda activate`，所有计算通过 MCP 工具
+- ✅ 重计算卸载：DFT/MD 通过 HPC 提交，不阻塞聊天机器人
+
+**测试**:
+- ✅ 脚本语法验证 (`ast.parse`)
+- ✅ `--list-servers` 输出 10 个 MCP 服务器
+- ✅ 端到端测试：在 `/tmp/astrbot_test/data` 下创建 127 个符号链接 + 索引 SKILL.md
+- ✅ 幂等性测试：重新运行跳过所有已存在的链接（127 skipped, 0 linked）
+- ✅ MCP 配置 JSON 格式正确（含 `command`/`args`/`env` 字段）
+
 ---
 
 ## 讨论过但未实施的内容 📋
