@@ -182,7 +182,7 @@ pixi.lock
    - `install-react-ot` — 克隆 + sed patch + pip install
    - `install-void` — 克隆 + cmake 构建
    - `install-scd` — 克隆 + C++ 扩展编译
-   - `install-msms-iceberg` — 克隆 + 大量 patch（标记 HIGH RISK）
+   - `install-msms-iceberg` — 克隆 + setup.py patch（patch 文件已固化）
    - `install-pyg-aarch64` — ARM64 PyG 安装
 
 **安全改进**:
@@ -190,7 +190,7 @@ pixi.lock
 - ✅ 所有 git clone 目标路径隔离在 `.pixi/build/` 内
 - ✅ 可通过环境变量锁定 commit hash（如 `REACT_OT_REF`、`VOID_REF`）
 - ✅ 安装逻辑声明式、可审计、可重现
-- ⚠️ msms-iceberg 仍有运行时 patch，标记为 HIGH RISK（需后续 fork 固化）
+- ✅ msms-iceberg 的 setup.py patch 已固化为独立文件（第 9 节）
 
 **Git Clone 依赖状态**:
 | 依赖 | 处理方式 | 锁定版本 | Patch | 状态 |
@@ -198,10 +198,39 @@ pixi.lock
 | VOID | Pixi git 依赖 | ✅ | ❌ | ✅ 已实施 |
 | react-ot | Pixi task | ✅ (env var) | ✅ (sed) | ✅ 已实施 |
 | SCD | Pixi task | ✅ (env var) | ✅ (编译) | ✅ 已实施 |
-| ms-pred (ICEBERG) | Pixi task | ✅ (env var) | ⚠️ (大量) | ✅ 已实施 (HIGH RISK) |
+| ms-pred (ICEBERG) | Pixi task + 固化 patch | ✅ (env var) | ✅ (setup.py) | ✅ 已实施 (patch 已固化) |
 | PyG aarch64 | Pixi task | ✅ (env var) | ❌ | ✅ 已实施 |
 | LAMMPS (MACE) | Pixi task | ✅ (env var) | ❌ | ✅ 已实施 |
-| nvalchemi-toolkit | 状态不明 | ❓ | ❓ | ⏸️ 待处理 |
+| nvalchemi-toolkit | Skill 已废弃 | ❌ | ❌ | ✅ Skill 已关闭 |
+
+### 9. msms-iceberg Patch 固化
+
+**改动**:
+- 创建 [.agents/patches/msms-iceberg/setup_patch.py](file:///workspace/.agents/patches/msms-iceberg/setup_patch.py)
+- 将内联 heredoc 中的 setup.py patch 提取为独立文件
+- 更新 `install-msms-iceberg` task 使用 `cp` 应用 patch 文件
+- 移除 "HIGH RISK" 标记（实际只有 setup.py 重写，并非大量 Python 源码 patch）
+
+**安全改进**:
+- ✅ Patch 内容可审计、可版本控制
+- ✅ 安装逻辑与 patch 内容分离，透明度更高
+- ✅ 后续如需新增 patch，直接添加文件即可
+
+### 10. nvalchemi-toolkit Skill 关闭
+
+**改动**:
+- [ml-mlip-nvalchemi/SKILL.md](file:///workspace/.agents/skills/ml-mlip-nvalchemi/SKILL.md) 标记为 DEPRECATED
+- frontmatter 添加 `deprecated: true` 和 `deprecation_reason`
+- 顶部添加醒目警告横幅
+
+**保留内容**:
+- `src/utils/mlips/nvalchemi/` 代码保留（通过 try/except 优雅降级）
+- 现有 MLIP wrapper 中的 NValchemi 集成保留（不可用时自动回退到顺序执行）
+
+**原因**:
+- nvalchemi-toolkit 是 NVIDIA 内部包，公开状态不明
+- 供应链风险：无法确认包的来源、版本、漏洞
+- 可重现性风险：其他用户可能无法安装此依赖
 
 ---
 
@@ -253,8 +282,8 @@ MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 
 
 1. ~~**Git clone 依赖迁移到 Pixi**~~ ✅ 已完成
    - ~~react-ot, SCD, VOID, ms-pred, PyG aarch64, LAMMPS (MACE)~~
-   - **nvalchemi-toolkit 状态不明**，待后续处理
-   - **msms-iceberg 运行时 patch 风险**，建议 fork 固化
+   - ~~msms-iceberg 运行时 patch 固化~~ ✅ 已完成
+   - **nvalchemi-toolkit Skill 已关闭**（状态不明，不使用）
 
 2. ~~**Skills 全面 Pixi 化**~~ ✅ 已完成
    - ~~替换 `# Env: x-agent` 为 `# Env: x`（Pixi 环境名）~~
@@ -306,10 +335,14 @@ MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 
 
 根据用户决策，下一步可以选择：
 
-**选项 A**: 处理 nvalchemi-toolkit（状态不明，需确认）
-**选项 B**: fork msms-iceberg 并固化运行时 patch（消除 HIGH RISK）
-**选项 C**: 验证现有 pixi.toml 能否正确解析（需要网络环境）
-**选项 D**: 生成 pixi.lock 并运行测试（需要网络环境）
-**选项 E**: 其他安全改进（输入验证、日志脱敏等）
+**选项 A**: 验证现有 pixi.toml 能否正确解析（需要网络环境）
+**选项 B**: 生成 pixi.lock 并运行测试（需要网络环境）
+**选项 C**: react-ot / SCD 的 patch 也固化为 patch 文件（当前为内联 sed）
+**选项 D**: 其他安全改进（输入验证、日志脱敏等）
 
-> **已完成**: Skills Pixi 化 ✅、install.sh 消除 ✅、Git clone 依赖迁移 ✅
+> **已完成**:
+> - Skills Pixi 化 ✅
+> - install.sh 消除 ✅
+> - Git clone 依赖迁移 ✅
+> - msms-iceberg patch 固化 ✅
+> - nvalchemi-toolkit Skill 关闭 ✅
