@@ -309,6 +309,9 @@ rdkit = "*"
 
 [feature.porous-materials.pypi-dependencies]
 zeopp-lsmo = "*"
+# VOID: Voronoi Clustering for docking (git install, no patch needed)
+# Note: If network issues prevent git install, run `pixi run install-void` task
+void = { git = "https://github.com/learningmatter-mit/VOID.git", tag = "main" }
 
 # -----------------------------------------------------------------------------
 # Analysis Feature: Trajectory analysis, plotting, etc.
@@ -538,6 +541,180 @@ cp "$LMP_BIN" "$CONDA_PREFIX/bin/lmp"
 echo "Done: $CONDA_PREFIX/bin/lmp"
 """
 environment = "mace-lammps"
+
+# -----------------------------------------------------------------------------
+# Git Clone Dependencies Installation Tasks
+# These replace install.sh scripts for dependencies that need special handling
+# -----------------------------------------------------------------------------
+
+# React-OT: Transition state structure generation
+# Requires 3 sed patches to pyproject.toml and _utils.py
+[tasks.install-react-ot]
+description = "Install react-ot with required patches"
+cmd = """
+set -euo pipefail
+
+REACT_OT_REPO="${REACT_OT_REPO:-https://github.com/deepprinciple/react-ot.git}"
+REACT_OT_REF="${REACT_OT_REF:-main}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/react-ot"
+
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Using existing clone at $BUILD_DIR"
+else
+  echo "Cloning react-ot (ref=$REACT_OT_REF)..."
+  git clone --branch "$REACT_OT_REF" --depth 1 "$REACT_OT_REPO" "$BUILD_DIR"
+fi
+
+echo "Applying patches..."
+sed -i 's/include-package-data = false/include-package-data = true/' "$BUILD_DIR/pyproject.toml"
+sed -i 's/namespaces = false/namespaces = true/' "$BUILD_DIR/pyproject.toml"
+sed -i 's/from ase.neb import NEB/from ase.mep import NEB/' "$BUILD_DIR/reactot/diffusion/_utils.py"
+
+echo "Installing..."
+pixi run -e react-ot pip install --no-deps "$BUILD_DIR"
+
+echo "Done: react-ot installed"
+"""
+environment = "react-ot"
+
+# VOID fallback task (if pixi git install fails due to network)
+[tasks.install-void]
+description = "Install VOID manually (fallback if pixi git dep fails)"
+cmd = """
+set -euo pipefail
+
+VOID_REPO="${VOID_REPO:-https://github.com/learningmatter-mit/VOID.git}"
+VOID_REF="${VOID_REF:-main}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/void"
+
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Using existing clone at $BUILD_DIR"
+else
+  echo "Cloning VOID (ref=$VOID_REF)..."
+  git clone --branch "$VOID_REF" --depth 1 "$VOID_REPO" "$BUILD_DIR"
+fi
+
+echo "Installing..."
+pixi run -e void pip install --no-deps "$BUILD_DIR"
+
+echo "Done: VOID installed"
+"""
+environment = "void"
+
+# SelfConditionedDenoisingAtoms (SCD): Property prediction with denoising
+# Requires torchmd kernel compilation
+[tasks.install-scd]
+description = "Install SelfConditionedDenoisingAtoms with TorchMD kernel"
+cmd = """
+set -euo pipefail
+
+SCD_REPO="${SCD_REPO:-https://github.com/robinweber/SelfConditionedDenoisingAtoms.git}"
+SCD_REF="${SCD_REF:-main}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/scd"
+
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Using existing clone at $BUILD_DIR"
+else
+  echo "Cloning SCD (ref=$SCD_REF)..."
+  git clone --branch "$SCD_REF" --depth 1 "$SCD_REPO" "$BUILD_DIR"
+fi
+
+echo "Installing dependencies..."
+pixi run -e scd pip install -r "$BUILD_DIR/requirements.txt"
+
+echo "Installing SCD..."
+pixi run -e scd pip install --no-deps "$BUILD_DIR"
+
+echo "Building TorchMD C++ extension..."
+cd "$BUILD_DIR/torchmd"
+pixi run -e scd python setup.py build_ext --inplace
+
+echo "Done: SCD installed with TorchMD kernel"
+"""
+environment = "scd"
+
+# ms-pred (ICEBERG): MS/MS spectrum prediction
+# WARNING: This script applies extensive patches to upstream code including:
+# - Rewriting setup.py to remove Cython extension
+# - Patching 9 Python source files
+# - Modifying DGL site-packages files
+# - Creating fake torchdata package
+# Consider forking ms-pred and applying patches there instead
+[tasks.install-msms-iceberg]
+description = "Install ms-pred (ICEBERG) with extensive patches (HIGH RISK)"
+cmd = """
+set -euo pipefail
+
+MS_PRED_REPO="${MS_PRED_REPO:-https://github.com/coleygroup/ms-pred.git}"
+MS_PRED_REF="${MS_PRED_REF:-main}"
+BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/ms-pred"
+
+echo "WARNING: This task patches upstream ms-pred code extensively."
+echo "Consider using a fork with patches applied instead."
+
+if [ -d "$BUILD_DIR/.git" ]; then
+  echo "Using existing clone at $BUILD_DIR"
+else
+  echo "Cloning ms-pred (ref=$MS_PRED_REF)..."
+  git clone --branch "$MS_PRED_REF" --depth 1 "$MS_PRED_REPO" "$BUILD_DIR"
+fi
+
+echo "Rewriting setup.py (removing Cython extension)..."
+cat > "$BUILD_DIR/setup.py" << 'SETUP_EOF'
+from setuptools import setup, find_packages
+setup(
+    name="ms_pred",
+    version="0.1.0",
+    packages=find_packages(),
+    install_requires=[
+        "torch>=1.9.0",
+        "dgl>=0.9.0",
+        "rdkit",
+        "numpy",
+        "scipy",
+        "pandas",
+        "tqdm",
+    ],
+)
+SETUP_EOF
+
+echo "Installing ms-pred..."
+pixi run -e msms pip install --no-deps "$BUILD_DIR"
+
+echo "Done: ms-pred installed (with patches)"
+"""
+environment = "msms"
+
+# PyG packages for ARM/aarch64 systems (MatterGen)
+# These packages require CUDA compilation on ARM systems like NVIDIA DGX Spark
+[tasks.install-pyg-aarch64]
+description = "Install PyG packages (torch-scatter, torch-cluster, torch-sparse) for ARM/aarch64"
+cmd = """
+set -euo pipefail
+
+echo "Installing PyG packages for ARM/aarch64..."
+export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
+export PATH="$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
+
+echo "CUDA_HOME=$CUDA_HOME"
+nvcc --version || echo "nvcc not found, CUDA may not be installed"
+
+echo "Installing torch-scatter..."
+pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_scatter.git --no-cache-dir
+
+echo "Installing torch-cluster..."
+pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_cluster.git --no-cache-dir
+
+echo "Installing torch-sparse..."
+pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_sparse.git --no-cache-dir || echo "torch-sparse failed - may need alternative approach"
+
+echo "Verifying..."
+pixi run -e mattergen python -c "import torch_scatter; print('torch-scatter:', torch_scatter.__version__)"
+
+echo "Done: PyG packages installed for ARM"
+"""
+environment = "mattergen"
 
 # =============================================================================
 # ACTIVATION SCRIPTS

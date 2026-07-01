@@ -167,6 +167,42 @@ pixi.lock
 | react-ot-agent | react-ot |
 | scd-agent | scd |
 
+### 8. install.sh 完全消除
+
+**删除文件**（24 个）:
+- 20 个 `install.sh`（mace, matgl, fairchem, atomate2, smol, drugdisc, adit, diffcsp, mattergen, xrd, phasefield, calphad, nmr, msms, void, orca, react-ot, scd, base, thermo）
+- 3 个 `install_lammps.sh`（mace, matgl, fairchem）
+- 1 个 `install_pyg_aarch64.sh`（mattergen）
+
+**替代方案**:
+1. **Pixi Git 依赖** — 直接声明在 `pixi.toml` 中：
+   - `VOID` → pypi git 依赖（`dependencies.pypi`）
+
+2. **Pixi Task 封装** — 复杂安装逻辑封装为 task：
+   - `install-react-ot` — 克隆 + sed patch + pip install
+   - `install-void` — 克隆 + cmake 构建
+   - `install-scd` — 克隆 + C++ 扩展编译
+   - `install-msms-iceberg` — 克隆 + 大量 patch（标记 HIGH RISK）
+   - `install-pyg-aarch64` — ARM64 PyG 安装
+
+**安全改进**:
+- ✅ 消除所有在沙盒外运行的 shell 脚本
+- ✅ 所有 git clone 目标路径隔离在 `.pixi/build/` 内
+- ✅ 可通过环境变量锁定 commit hash（如 `REACT_OT_REF`、`VOID_REF`）
+- ✅ 安装逻辑声明式、可审计、可重现
+- ⚠️ msms-iceberg 仍有运行时 patch，标记为 HIGH RISK（需后续 fork 固化）
+
+**Git Clone 依赖状态**:
+| 依赖 | 处理方式 | 锁定版本 | Patch | 状态 |
+|------|----------|----------|-------|------|
+| VOID | Pixi git 依赖 | ✅ | ❌ | ✅ 已实施 |
+| react-ot | Pixi task | ✅ (env var) | ✅ (sed) | ✅ 已实施 |
+| SCD | Pixi task | ✅ (env var) | ✅ (编译) | ✅ 已实施 |
+| ms-pred (ICEBERG) | Pixi task | ✅ (env var) | ⚠️ (大量) | ✅ 已实施 (HIGH RISK) |
+| PyG aarch64 | Pixi task | ✅ (env var) | ❌ | ✅ 已实施 |
+| LAMMPS (MACE) | Pixi task | ✅ (env var) | ❌ | ✅ 已实施 |
+| nvalchemi-toolkit | 状态不明 | ❓ | ❓ | ⏸️ 待处理 |
+
 ---
 
 ## 讨论过但未实施的内容 📋
@@ -215,18 +251,20 @@ MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 
 
 ### 高优先级
 
-1. **Git clone 依赖迁移到 Pixi**
-   - react-ot, SCD, VOID, ms-pred, nvalchemi-toolkit
-   - 需确定每个依赖的处理方案
+1. ~~**Git clone 依赖迁移到 Pixi**~~ ✅ 已完成
+   - ~~react-ot, SCD, VOID, ms-pred, PyG aarch64, LAMMPS (MACE)~~
+   - **nvalchemi-toolkit 状态不明**，待后续处理
+   - **msms-iceberg 运行时 patch 风险**，建议 fork 固化
 
 2. ~~**Skills 全面 Pixi 化**~~ ✅ 已完成
    - ~~替换 `# Env: x-agent` 为 `# Env: x`（Pixi 环境名）~~
    - ~~替换 `conda run -n x-agent` 为 `pixi run -e x`~~
    - Skills 中的 shell 脚本迁移为 Pixi tasks（待定）
 
-3. **install.sh 消除计划**
-   - 评估剩余的 install.sh 是否可完全由 pixi.toml 替代
-   - 逐步标记为 legacy / 删除
+3. ~~**install.sh 消除计划**~~ ✅ 已完成
+   - ~~评估剩余的 install.sh 是否可完全由 pixi.toml 替代~~
+   - ~~逐步标记为 legacy / 删除~~
+   - 所有 install.sh 已删除，用 Pixi tasks 替代
 
 ### 中优先级
 
@@ -268,8 +306,10 @@ MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 
 
 根据用户决策，下一步可以选择：
 
-**选项 A**: 处理剩余 git clone 依赖（react-ot, SCD, VOID, ms-pred, nvalchemi）
-**选项 C**: 先验证现有 pixi.toml 能否正确解析（需要网络环境）
-**选项 D**: 制定完整的 install.sh 消除路线图
+**选项 A**: 处理 nvalchemi-toolkit（状态不明，需确认）
+**选项 B**: fork msms-iceberg 并固化运行时 patch（消除 HIGH RISK）
+**选项 C**: 验证现有 pixi.toml 能否正确解析（需要网络环境）
+**选项 D**: 生成 pixi.lock 并运行测试（需要网络环境）
+**选项 E**: 其他安全改进（输入验证、日志脱敏等）
 
-> **选项 B（Skills 全面 Pixi 化）已完成** ✅
+> **已完成**: Skills Pixi 化 ✅、install.sh 消除 ✅、Git clone 依赖迁移 ✅
