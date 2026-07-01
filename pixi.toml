@@ -75,6 +75,7 @@ mace-torch = "==0.3.15"
 sella = "*"
 matcalc = "*"
 setuptools = "<70"  # Compatibility requirement
+nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
 
 # -----------------------------------------------------------------------------
 # MLIP-MatGL Feature: MatGL/CHGNet/TensorNet potentials
@@ -83,6 +84,7 @@ setuptools = "<70"  # Compatibility requirement
 matgl = "*"
 matcalc = "*"
 cython = "*"
+nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
 
 # -----------------------------------------------------------------------------
 # MLIP-FairChem Feature: FairChem/UMA/ESEN potentials
@@ -91,6 +93,7 @@ cython = "*"
 fairchem-core = ">=2.18.0"
 matcalc = "*"
 setuptools = "<70"
+nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
 
 # -----------------------------------------------------------------------------
 # LAMMPS-CPU Feature: conda-forge lammps (CPU variant, for FairChem)

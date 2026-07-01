@@ -1,24 +1,15 @@
 ---
 name: ml-mlip-nvalchemi
-description: (DEPRECATED) GPU-accelerated batched inference for MACE, MatGL (TensorNet/M3GNet/CHGNet), and FairChem MLIPs using NValchemi. Deprecated due to nvalchemi-toolkit being an internal NVIDIA package with unknown status and availability.
+description: GPU-accelerated batched inference for MACE, MatGL (TensorNet/M3GNet/CHGNet), and FairChem MLIPs using NVIDIA ALCHEMI Toolkit (nvalchemi-toolkit), enabling parallel static, relax, and MD workflows across multiple structures simultaneously.
 category: machine-learning
-deprecated: true
-deprecation_reason: "nvalchemi-toolkit is an NVIDIA internal package with unknown public availability status. The skill is kept for reference but should not be used without verifying toolkit access."
 ---
 
-> **⚠️ DEPRECATED — DO NOT USE**
->
-> This skill has been **deprecated** because `nvalchemi-toolkit` is an NVIDIA internal
-> package whose public availability status is unknown. Using it introduces supply chain
-> and reproducibility risks.
->
-> The underlying code in `src/utils/mlips/nvalchemi/` is preserved and will gracefully
-> fall back to sequential processing when the toolkit is unavailable (via
-> `NVALCHEMI_AVAILABLE` flag).
->
-> **Status**: Disabled — kept for reference only.
+# ml-mlip-nvalchemi
 
-# ml-mlip-nvalchemi (Deprecated)
+> **Note**: NVIDIA ALCHEMI Toolkit (nvalchemi-toolkit) is now open source!
+> - GitHub: https://github.com/NVIDIA/nvalchemi-toolkit
+> - PyPI: `pip install nvalchemi-toolkit`
+> - Docs: https://nvidia.github.io/nvalchemi-toolkit/
 
 ## Goal
 

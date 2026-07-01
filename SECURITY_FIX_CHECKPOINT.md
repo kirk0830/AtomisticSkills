@@ -201,7 +201,7 @@ pixi.lock
 | ms-pred (ICEBERG) | Pixi task + 固化 patch | ✅ (env var) | ✅ (setup.py) | ✅ 已实施 (patch 已固化) |
 | PyG aarch64 | Pixi task | ✅ (env var) | ❌ | ✅ 已实施 |
 | LAMMPS (MACE) | Pixi task | ✅ (env var) | ❌ | ✅ 已实施 |
-| nvalchemi-toolkit | Skill 已废弃 | ❌ | ❌ | ✅ Skill 已关闭 |
+| nvalchemi-toolkit | PyPI 依赖 (开源) | ✅ | ❌ | ✅ 已恢复 (第 13 节) |
 
 ### 9. msms-iceberg Patch 固化
 
@@ -216,21 +216,24 @@ pixi.lock
 - ✅ 安装逻辑与 patch 内容分离，透明度更高
 - ✅ 后续如需新增 patch，直接添加文件即可
 
-### 10. nvalchemi-toolkit Skill 关闭
+### 10. nvalchemi-toolkit Skill 关闭（已恢复）
 
-**改动**:
-- [ml-mlip-nvalchemi/SKILL.md](file:///workspace/.agents/skills/ml-mlip-nvalchemi/SKILL.md) 标记为 DEPRECATED
-- frontmatter 添加 `deprecated: true` 和 `deprecation_reason`
-- 顶部添加醒目警告横幅
+> **注**: 此节记录最初的关闭决策。第 13 节记录了基于开源发现后的恢复决策。
 
-**保留内容**:
-- `src/utils/mlips/nvalchemi/` 代码保留（通过 try/except 优雅降级）
-- 现有 MLIP wrapper 中的 NValchemi 集成保留（不可用时自动回退到顺序执行）
+**原始改动**（已撤销）:
+- ~~[ml-mlip-nvalchemi/SKILL.md](file:///workspace/.agents/skills/ml-mlip-nvalchemi/SKILL.md) 标记为 DEPRECATED~~
+- ~~frontmatter 添加 `deprecated: true`~~
+- ~~顶部添加警告横幅~~
 
-**原因**:
-- nvalchemi-toolkit 是 NVIDIA 内部包，公开状态不明
-- 供应链风险：无法确认包的来源、版本、漏洞
-- 可重现性风险：其他用户可能无法安装此依赖
+**保留内容**（始终保留）:
+- `src/utils/mlips/nvalchemi/` 代码（通过 try/except 优雅降级）
+- 现有 MLIP wrapper 中的 NValchemi 集成（不可用时自动回退到顺序执行）
+
+**原始关闭原因**（现已不成立）:
+- ~~nvalchemi-toolkit 是 NVIDIA 内部包，公开状态不明~~
+- ~~供应链风险：无法确认包的来源、版本、漏洞~~
+
+**现状**: NVIDIA ALCHEMI Toolkit 已开源，见第 13 节。
 
 ### 11. react-ot Patch 固化
 
@@ -256,6 +259,35 @@ pixi.lock
 - 只包含 TorchMD C++ extension 编译步骤 (`python setup.py build_ext --inplace`)
 - 编译步骤是正常的安装流程，不涉及修改上游源码
 - **结论**: SCD 不需要额外的 patch 固化工作
+
+### 13. nvalchemi-toolkit 恢复（已开源）
+
+**重大发现**: NVIDIA ALCHEMI Toolkit (nvalchemi-toolkit) 已在 Supercomputing 2024 发布并开源！
+
+- GitHub: https://github.com/NVIDIA/nvalchemi-toolkit
+- PyPI: `pip install nvalchemi-toolkit`
+- 文档: https://nvidia.github.io/nvalchemi-toolkit/
+
+**改动**:
+1. **恢复 ml-mlip-nvalchemi Skill**
+   - 移除 `deprecated` frontmatter 标记
+   - 移除警告横幅
+   - 添加开源信息提示
+
+2. **添加 PyPI 依赖**
+   - `nvalchemi-toolkit = "*"` 添加到三个 MLIP feature：
+     - `mlip-mace.pypi-dependencies`
+     - `mlip-matgl.pypi-dependencies`
+     - `mlip-fairchem.pypi-dependencies`
+   - 标记为 optional（代码有 try/except 优雅降级）
+
+**安全状态变更**:
+| 项目 | 原状态 | 新状态 |
+|------|--------|--------|
+| 来源 | 内部包（状态不明） | 官方开源（GitHub NVIDIA） |
+| 安装 | 未知 PyPI 源 | 官方 PyPI (`nvalchemi-toolkit`) |
+| 供应链风险 | 高 | 低（可审计） |
+| 可重现性 | 低 | 高（版本锁定） |
 
 ---
 
@@ -309,7 +341,7 @@ MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 
    - ~~react-ot, SCD, VOID, ms-pred, PyG aarch64, LAMMPS (MACE)~~
    - ~~msms-iceberg 运行时 patch 固化~~ ✅ 已完成
    - ~~react-ot patch 固化~~ ✅ 已完成
-   - **nvalchemi-toolkit Skill 已关闭**（状态不明，不使用）
+   - **nvalchemi-toolkit 已恢复**（已开源，PyPI 安装，第 13 节）
 
 2. ~~**Skills 全面 Pixi 化**~~ ✅ 已完成
    - ~~替换 `# Env: x-agent` 为 `# Env: x`（Pixi 环境名）~~
@@ -371,4 +403,4 @@ MACE 官方推荐使用 `pair_style mliap unified` 接口，而非 ACEsuit fork 
 > - Git clone 依赖迁移 ✅
 > - msms-iceberg patch 固化 ✅
 > - react-ot patch 固化 ✅
-> - nvalchemi-toolkit Skill 关闭 ✅
+> - nvalchemi-toolkit 恢复 ✅（已开源）
