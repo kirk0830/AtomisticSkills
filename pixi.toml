@@ -242,6 +242,10 @@ cuda-toolkit = "==11.8"
 torch = "==2.2.1+cu118"
 mattergen = "*"
 
+[feature.generative-mattergen.activation.env]
+# MatterGen declares cuda = "11.8"; allow it to run on CPU-only hosts.
+CONDA_OVERRIDE_CUDA = "11.8"
+
 # -----------------------------------------------------------------------------
 # Generative-ADiT Feature: All-atom Diffusion Transformer
 # -----------------------------------------------------------------------------
@@ -806,6 +810,9 @@ default-environment = "mattergen"
 MACE_BACKEND = "torch"
 
 [feature.torch-cuda.activation.env]
+# Allow these environments to run on machines without a GPU by overriding the
+# CUDA virtual package version used by Pixi/Rattler.
+CONDA_OVERRIDE_CUDA = "12"
 CUDA_LAUNCH_BLOCKING = "1"
 TORCH_USE_CUDA_DSA = "1"
 

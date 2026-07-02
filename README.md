@@ -106,6 +106,17 @@ Workflows represent **complete, high-level research goals** that may span multip
 
 ## Installation
 
+> ⚠️ **Disk space requirement**: AtomisticSkills environments contain large scientific
+> packages (PyTorch, RDKit, OpenMM, CUDA toolkits, etc.). Before installing, check
+> available space with `df -h .`.
+>
+> | Install scope | Approx. disk required |
+> |---------------|----------------------:|
+> | Minimal (`base` only) | ~3 GB |
+> | Lightweight (no VASP/ORCA/LAMMPS) | ~80–100 GB |
+> | Full (all environments) | ≥150 GB, prefer 200 GB |
+> | Full + optional build tasks (VOID, SCD, react-ot, ICEBERG) | 200 GB+ |
+
 AtomisticSkills uses **Pixi** for reproducible, isolated environment management. This replaces the previous Conda-based approach with significant improvements:
 
 - **No PATH pollution**: Environments isolated in `.pixi/envs/`
@@ -113,6 +124,28 @@ AtomisticSkills uses **Pixi** for reproducible, isolated environment management.
 - **No brutal delete/recreate**: Incremental updates
 - **Declarative config**: All dependencies in `pixi.toml`
 - **Python package**: `atomistic-skills` installed as editable package in all environments
+
+### System Requirements & Disk Space
+
+Before installing, ensure you have enough free disk space. The `.pixi/` directory
+contains one isolated environment per research area and grows quickly.
+
+Recommended free space:
+
+- **Minimal / single environment**: ~3 GB for `base`
+- **Lightweight install** (no VASP, ORCA, or LAMMPS): ~80–100 GB
+- **Full install** (all `pixi.toml` environments): ≥150 GB, 200 GB recommended
+- **Full install + optional build tasks**: 200 GB+
+
+Check available space before you start:
+
+```bash
+df -h .
+```
+
+If disk space is limited, install only the environments you need instead of running
+`pixi install` for all environments. See the **Available Environments** table below
+for per-environment notes and sizes.
 
 ### Quick Start
 
@@ -129,12 +162,12 @@ AtomisticSkills uses **Pixi** for reproducible, isolated environment management.
 
 3. **Install environments**:
    ```bash
-   # Install all environments
+   # Install all environments (requires ≥150 GB free disk space)
    pixi install
 
-   # Or install specific environments only
+   # Or install specific environments only to save space
    pixi install -e base
-   pixi install -e mace
+   pixi install -e base -e mace
    pixi install -e matgl
    ```
 
@@ -166,21 +199,21 @@ AtomisticSkills uses **Pixi** for reproducible, isolated environment management.
 
 ### Available Environments
 
-| Environment | Description |
-|-------------|-------------|
-| `base` | Materials Project queries, VASP I/O, base tools (recommended) |
-| `mace` | MACE models (MP, OMAT, MatPES) |
-| `matgl` | MatGL models (CHGNet, M3GNet, TensorNet) |
-| `fairchem` | FairChem models (UMA, ESEN) |
-| `atomate2` | DFT workflow management via Atomate2 + jobflow-remote |
-| `smol` | Cluster expansion and Monte Carlo |
-| `drugdisc` | Drug discovery tools (docking, ADMET, fingerprints) |
-| `mattergen` | Generative crystal design |
-| `orca` | Molecular DFT via ORCA (local or HPC) |
-| `react-ot` | Transition state generation |
-| `lammps-mace` | LAMMPS with MACE backend |
-| `lammps-matgl` | LAMMPS with MatGL backend |
-| `lammps-fairchem` | LAMMPS with FairChem backend |
+| Environment | Description | Size / Notes |
+|-------------|-------------|--------------|
+| `base` | Materials Project queries, VASP I/O, base tools (recommended) | ~2–3 GB |
+| `mace` | MACE models (MP, OMAT, MatPES) | ~15 GB, CUDA 12 |
+| `matgl` | MatGL models (CHGNet, M3GNet, TensorNet) | ~12 GB |
+| `fairchem` | FairChem models (UMA, ESEN) | ~16 GB, CUDA 12 |
+| `atomate2` | DFT workflow management via Atomate2 + jobflow-remote | Heavy (~5–10 GB), VASP workflows |
+| `smol` | Cluster expansion and Monte Carlo | ~2 GB |
+| `drugdisc` | Drug discovery tools (docking, ADMET, fingerprints) | ~2–3 GB |
+| `mattergen` | Generative crystal design | ~15 GB, CUDA 11.8 |
+| `orca` | Molecular DFT via ORCA (local or HPC) | Heavy (~3–5 GB), requires external ORCA binary |
+| `react-ot` | Transition state generation | ~1 GB, optional git build |
+| `lammps-mace` | LAMMPS with MACE backend | Very heavy, source build required |
+| `lammps-matgl` | LAMMPS with MatGL backend | Very heavy, source build required |
+| `lammps-fairchem` | LAMMPS with FairChem backend | Very heavy, source build required |
 
 ### Configuration
 
@@ -343,6 +376,7 @@ See [`.agents/rules/skill-standards.md`](.agents/rules/skill-standards.md) for d
 |-------|-----|
 | MCP tools not showing | Verify JSON syntax in config file, restart IDE |
 | `pixi install` fails | Check network connection, try `pixi install --frozen` |
+| `pixi install` fails with “No space left on device” | Free up disk or install only needed environments (`pixi install -e <env>`). Lightweight install needs ~80–100 GB; full install needs ≥150 GB. |
 | HPC submission fails | Verify SSH key, check `HPC_MODE` and `HPC_SSH_*` env vars |
 | Import errors | Run `pixi install` to ensure package is installed |
 | MLIP environment conflicts | Use separate pixi environments (each is isolated) |

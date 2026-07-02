@@ -21,6 +21,7 @@
         "CONDA_PREFIX": "PIXI_PROJECT/.pixi/envs/mace",
         "TRITON_PTXAS_BLACKWELL_PATH": "PIXI_PROJECT/.pixi/envs/mace/bin/ptxas",
         "PATH": "PIXI_PROJECT/.pixi/envs/mace/bin:/usr/local/cuda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "CONDA_OVERRIDE_CUDA": "12",
         "CUDA_LAUNCH_BLOCKING": "1",
         "TORCH_USE_CUDA_DSA": "1"
       }
@@ -33,7 +34,8 @@
       ],
       "env": {
         "PYTHONPATH": "PIXI_PROJECT",
-        "MATGL_BACKEND": "DGL"
+        "MATGL_BACKEND": "DGL",
+        "CONDA_OVERRIDE_CUDA": "12"
       }
     },
     "fairchem": {
@@ -43,17 +45,8 @@
         "src.mcp_server.fairchem_server"
       ],
       "env": {
-        "PYTHONPATH": "PIXI_PROJECT"
-      }
-    },
-    "atomate2": {
-      "command": "PIXI_PROJECT/.pixi/envs/atomate2/bin/python",
-      "args": [
-        "-m",
-        "src.mcp_server.atomate2_server"
-      ],
-      "env": {
-        "PYTHONPATH": "PIXI_PROJECT"
+        "PYTHONPATH": "PIXI_PROJECT",
+        "CONDA_OVERRIDE_CUDA": "12"
       }
     },
     "smol": {
@@ -103,7 +96,8 @@
         "src.mcp_server.mattergen_server"
       ],
       "env": {
-        "PYTHONPATH": "PIXI_PROJECT"
+        "PYTHONPATH": "PIXI_PROJECT",
+        "CONDA_OVERRIDE_CUDA": "11.8"
       }
     }
   }
