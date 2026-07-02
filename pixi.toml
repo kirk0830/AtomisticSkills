@@ -15,8 +15,19 @@ name = "atomistic-skills"
 description = "AI-driven atomistic materials research framework"
 authors = ["AtomisticSkills Team"]
 channels = ["conda-forge"]
-platforms = ["linux-64", "osx-arm64", "osx-64"]
+platforms = ["linux-64"]
 # Note: Some environments (orca, CUDA) are platform-specific
+
+# -----------------------------------------------------------------------------
+# PyPI Options: use Tsinghua mirror for default PyPI and PyTorch CUDA 11.8 index
+# for mattergen's torch==2.2.1+cu118 requirement.
+# -----------------------------------------------------------------------------
+[pypi-options]
+index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+extra-index-urls = ["https://download.pytorch.org/whl/cu118"]
+# PyG wheels for torch==2.2.1+cu118 are downloaded locally because uv cannot
+# fetch https://data.pyg.org in this network environment (TLS handshake issue).
+find-links = [{ path = ".pixi/wheels/pyg-cu118" }]
 
 # =============================================================================
 # FEATURE DEFINITIONS
@@ -63,18 +74,22 @@ pytorch = ">=2.0"
 # -----------------------------------------------------------------------------
 [feature.torch-cuda]
 platforms = ["linux-64"]
+channels = ["nvidia", "pytorch", "conda-forge"]
+
+[feature.torch-cuda.system-requirements]
+cuda = "12"
 
 [feature.torch-cuda.dependencies]
 pytorch = { version = ">=2.0", build = "*cuda*" }
 # CUDA toolkit from conda-forge
 cuda-toolkit = "*"
 
-[feature.torch-cuda.channels]
-channels = ["nvidia", "pytorch", "conda-forge"]
-
 # -----------------------------------------------------------------------------
 # MLIP-MACE Feature: MACE machine learning interatomic potential
 # -----------------------------------------------------------------------------
+[feature.mlip-mace.dependencies]
+setuptools = "<70"  # Compatibility requirement, also pinned for conda solve
+
 [feature.mlip-mace.pypi-dependencies]
 mace-torch = "==0.3.15"
 sella = "*"
@@ -94,6 +109,14 @@ nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (opt
 # -----------------------------------------------------------------------------
 # MLIP-FairChem Feature: FairChem/UMA/ESEN potentials
 # -----------------------------------------------------------------------------
+[feature.mlip-fairchem.dependencies]
+setuptools = "<70"  # Compatibility requirement, also pinned for conda solve
+# fairchem-core (>=2.18.0) requires torch>=2.8,<2.9; keep the conda pytorch pin aligned
+pytorch = { version = ">=2.0,<2.9", build = "*cuda*" }
+# hydra-core (pulled in by fairchem-core) pins antlr4-python3-runtime==4.9.3; provide it via conda-forge
+# to avoid slow/unreliable PyPI mirror fetches during lock.
+antlr4-python3-runtime = "==4.9.3"
+
 [feature.mlip-fairchem.pypi-dependencies]
 fairchem-core = ">=2.18.0"
 matcalc = "*"
@@ -148,6 +171,8 @@ fairchem-core = { version = ">=2.18.0", extras = ["extras"] }
 # -----------------------------------------------------------------------------
 [feature.dft.dependencies]
 python = ">=3.10,<3.11"  # Atomate2 requires Python 3.10
+# jobflow-remote requires rich<15; keep conda rich aligned
+rich = "<15"
 
 [feature.dft.pypi-dependencies]
 atomate2 = "*"
@@ -173,10 +198,13 @@ numpy = "<2"  # SCINE compatibility
 # -----------------------------------------------------------------------------
 # Generative-Base Feature: Shared dependencies for generative models
 # -----------------------------------------------------------------------------
+[feature.generative-base.dependencies]
+# Use conda-forge versions to avoid PyPI sdist lock contention for antlr4-python3-runtime
+hydra-core = ">=1.3.1,<1.4"
+omegaconf = "==2.3.0"
+
 [feature.generative-base.pypi-dependencies]
 pytorch-lightning = ">=2.0"
-hydra-core = "==1.3.2"
-omegaconf = "==2.3.0"
 wandb = "*"
 
 # -----------------------------------------------------------------------------
@@ -192,7 +220,26 @@ einops = "*"
 # -----------------------------------------------------------------------------
 # Generative-MatterGen Feature: Diffusion-based material generation
 # -----------------------------------------------------------------------------
+[feature.generative-mattergen]
+channels = ["pytorch", "nvidia", "conda-forge"]
+channel-priority = "disabled"
+
+[feature.generative-mattergen.system-requirements]
+cuda = "11.8"
+
+[feature.generative-mattergen.dependencies]
+# mattergen 1.0.3 has strict transitive pins; align conda packages accordingly
+python = "3.10.*"  # PyG wheels in .pixi/wheels/pyg-cu118 are built for cp310
+numpy = "<2"
+monty = "==2024.7.30"
+matplotlib = "==3.8.4"
+hydra-core = "==1.3.1"
+cuda-toolkit = "==11.8"
+
 [feature.generative-mattergen.pypi-dependencies]
+# Use PyPI torch with the exact CUDA 11.8 local version that mattergen requires.
+# The conda pytorch package cannot satisfy torch==2.2.1+cu118.
+torch = "==2.2.1+cu118"
 mattergen = "*"
 
 # -----------------------------------------------------------------------------
@@ -235,7 +282,7 @@ xarray = "*"
 tinydb = "*"
 sympy = "*"
 jupyter = "*"
-ipyython = "*"
+ipython = "*"
 
 [feature.thermo-calphad.pypi-dependencies]
 pycalphad = "*"
@@ -264,6 +311,8 @@ pyyaml = "*"
 vina = "*"
 pdbfixer = "*"
 fpocket = "*"
+# dimorphite-dl (PyPI) requires rdkit<2026; keep conda rdkit aligned
+rdkit = "<2026"
 
 [feature.drugdiscovery.pypi-dependencies]
 meeko = "*"
@@ -294,11 +343,17 @@ matplotlib = "*"
 # -----------------------------------------------------------------------------
 [feature.spectroscopy-nmr.dependencies]
 rdkit = "*"
+# nmrsim -> sparse -> numba; keep numpy compatible with recent numba wheels
+numpy = "<2.5"
 
 [feature.spectroscopy-nmr.pypi-dependencies]
-nmrsim = "*"
-opencv-python-headless = "*"
-Pillow = "*"
+# Pin to versions that provide wheels for Python 3.10+ and avoid old sdists with py<3.10 guards
+nmrsim = ">=0.6.0.post1"
+opencv-python-headless = ">=4.8"
+Pillow = ">=10.0"
+# nmrsim -> sparse -> numba; force a numba/llvmlite with Python 3.12 wheels
+numba = ">=0.60"
+llvmlite = ">=0.43.0"
 
 # -----------------------------------------------------------------------------
 # Spectroscopy-MSMS Feature: Mass spectrum prediction (ICEBERG)
@@ -315,7 +370,7 @@ seaborn = "*"
 h5py = "*"
 
 [feature.spectroscopy-msms.pypi-dependencies]
-"ray[tune]" = "==2.7.2"
+ray = { version = "==2.7.2", extras = ["tune"] }
 pygmtools = "*"
 msbuddy = "*"
 lightgbm = "*"
@@ -329,12 +384,11 @@ numpy = "*"
 scikit-learn = "*"
 networkx = "*"
 rdkit = "*"
+zeopp-lsmo = "*"
 
 [feature.porous-materials.pypi-dependencies]
-zeopp-lsmo = "*"
-# VOID: Voronoi Clustering for docking (git install, no patch needed)
-# Note: If network issues prevent git install, run `pixi run install-void` task
-void = { git = "https://github.com/learningmatter-mit/VOID.git", tag = "main" }
+# VOID: Voronoi Clustering for docking is installed manually via `pixi run install-void`
+# because the git dependency is not reachable during lock generation in this network environment.
 
 # -----------------------------------------------------------------------------
 # Analysis Feature: Trajectory analysis, plotting, etc.
@@ -343,9 +397,12 @@ void = { git = "https://github.com/learningmatter-mit/VOID.git", tag = "main" }
 h5py = "*"
 phonopy = "*"
 beautifulsoup4 = "*"
+# reaction-network (>=6.1.1) requires numba; recent numba supports numpy<2.5.
+# fairchem-core also requires numpy>=2.0,<2.5. Pin here to keep analysis environments compatible.
+numpy = "<2.5"
 
 [feature.analysis.pypi-dependencies]
-reaction-network = "*"
+reaction-network = ">=6.1.1,<9"
 pymatgen-analysis-diffusion = "*"
 
 # -----------------------------------------------------------------------------
@@ -390,12 +447,13 @@ solve-group = "mlip-base"
 
 [environments.fairchem]
 features = ["core", "torch-cuda", "mlip-fairchem", "analysis"]
-solve-group = "mlip-cuda"
+# Separate solve-group from mace because mace-torch pins e3nn==0.4.4 while fairchem-core requires e3nn>=0.5
+solve-group = "fairchem-cuda"
 
 # FairChem-LAMMPS: conda-forge lammps (CPU) + fairchem-lammps pip package (lmp_fc)
 [environments.fairchem-lammps]
 features = ["core", "torch-cuda", "mlip-fairchem", "lammps-cpu", "fairchem-lammps-pkg", "analysis"]
-solve-group = "mlip-cuda"
+solve-group = "fairchem-cuda"
 
 # -----------------------------------------------------------------------------
 # DFT Environments: First-principles calculations
@@ -406,7 +464,6 @@ features = ["core", "chemistry", "dft", "analysis"]
 
 [environments.orca]
 features = ["core", "chemistry", "dft-orca", "analysis"]
-platforms = ["linux-64", "osx-64"]
 
 # -----------------------------------------------------------------------------
 # Generative Environments: Structure generation models
@@ -416,7 +473,8 @@ platforms = ["linux-64", "osx-64"]
 features = ["core", "torch-base", "generative-base", "generative-diffcsp"]
 
 [environments.mattergen]
-features = ["core", "torch-base", "generative-base", "generative-mattergen"]
+# torch-base is omitted; mattergen requires the PyPI torch==2.2.1+cu118 wheel
+features = ["core", "generative-base", "generative-mattergen"]
 
 [environments.adit]
 features = ["core", "torch-base", "generative-base", "generative-adit"]
@@ -488,29 +546,29 @@ cmd = "pixi install"
 [tasks.test-base]
 description = "Run base server tests"
 cmd = "pytest tests/base/"
-environment = "base"
+default-environment = "base"
 
 # MLIP tasks
 [tasks.test-mace]
 description = "Run MACE server tests"
 cmd = "pytest tests/mace/"
-environment = "mace"
+default-environment = "mace"
 
 [tasks.test-matgl]
 description = "Run MatGL server tests"
 cmd = "pytest tests/matgl/"
-environment = "matgl"
+default-environment = "matgl"
 
 [tasks.test-fairchem]
 description = "Run FairChem server tests"
 cmd = "pytest tests/fairchem/"
-environment = "fairchem"
+default-environment = "fairchem"
 
 # DFT tasks
 [tasks.test-atomate2]
 description = "Run Atomate2 server tests"
 cmd = "pytest tests/atomate2/"
-environment = "atomate2"
+default-environment = "atomate2"
 
 # MACE LAMMPS build task
 # Compiles ACEsuit/lammps fork with PKG_ML-MACE into the mace-lammps environment.
@@ -571,7 +629,7 @@ fi
 cp "$LMP_BIN" "$CONDA_PREFIX/bin/lmp"
 echo "Done: $CONDA_PREFIX/bin/lmp"
 """
-environment = "mace-lammps"
+default-environment = "mace-lammps"
 
 # -----------------------------------------------------------------------------
 # Git Clone Dependencies Installation Tasks
@@ -610,7 +668,7 @@ pixi run -e react-ot pip install --no-deps "$BUILD_DIR"
 
 echo "Done: react-ot installed"
 """
-environment = "react-ot"
+default-environment = "react-ot"
 
 # VOID fallback task (if pixi git install fails due to network)
 [tasks.install-void]
@@ -634,7 +692,7 @@ pixi run -e void pip install --no-deps "$BUILD_DIR"
 
 echo "Done: VOID installed"
 """
-environment = "void"
+default-environment = "void"
 
 # SelfConditionedDenoisingAtoms (SCD): Property prediction with denoising
 # Requires torchmd kernel compilation
@@ -666,7 +724,7 @@ pixi run -e scd python setup.py build_ext --inplace
 
 echo "Done: SCD installed with TorchMD kernel"
 """
-environment = "scd"
+default-environment = "scd"
 
 # ms-pred (ICEBERG): MS/MS spectrum prediction
 # WARNING: This script applies extensive patches to upstream code including:
@@ -705,7 +763,7 @@ pixi run -e msms pip install --no-deps "$BUILD_DIR"
 
 echo "Done: ms-pred installed (with setup.py patch)"
 """
-environment = "msms"
+default-environment = "msms"
 
 # PyG packages for ARM/aarch64 systems (MatterGen)
 # These packages require CUDA compilation on ARM systems like NVIDIA DGX Spark
@@ -736,24 +794,20 @@ pixi run -e mattergen python -c "import torch_scatter; print('torch-scatter:', t
 
 echo "Done: PyG packages installed for ARM"
 """
-environment = "mattergen"
+default-environment = "mattergen"
 
 # =============================================================================
 # ACTIVATION SCRIPTS
 # Environment-specific activation (replaces source conda.sh)
 # =============================================================================
 
-[feature.mlip-mace.activation-scripts]
+[feature.mlip-mace.activation.env]
 # Set environment variables for MACE
-script = """
-export MACE_BACKEND=torch
-"""
+MACE_BACKEND = "torch"
 
-[feature.torch-cuda.activation-scripts]
-script = """
-export CUDA_LAUNCH_BLOCKING=1
-export TORCH_USE_CUDA_DSA=1
-"""
+[feature.torch-cuda.activation.env]
+CUDA_LAUNCH_BLOCKING = "1"
+TORCH_USE_CUDA_DSA = "1"
 
 # =============================================================================
 # PYTHON PATH CONFIGURATION
