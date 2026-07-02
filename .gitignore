@@ -22,6 +22,8 @@ clean_root.sh
 
 # Python
 /*.py
+!configure_mcp.py
+!configure_astrbot.py
 __pycache__/
 *.py[cod]
 *$py.class

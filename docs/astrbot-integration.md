@@ -114,6 +114,9 @@ pixi run -e base python configure_astrbot.py --data-dir /path/to/astrbot/data
 
 # Also save a reference MCP config JSON to <data-dir>/config/
 pixi run -e base python configure_astrbot.py --data-dir /path/to/astrbot/data --write-mcp-config
+
+# If AstrBot rejects absolute Python paths in the command field, use the uv form
+pixi run -e base python configure_astrbot.py --data-dir /path/to/astrbot/data --use-uv
 ```
 
 This will:
