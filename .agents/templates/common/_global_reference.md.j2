@@ -1,0 +1,18 @@
+# AtomisticSkills Global Reference
+
+If your current workspace is NOT {{ project_root }} (or any of its subdirectories), and the task involves atomistic research, materials simulation, drug discovery, spectroscopy, ML interatomic potentials, or related scientific workflows:
+- The AtomisticSkills repository is installed at {{ project_root }}.
+- Rules live at {{ project_root }}/.agents/rules/.
+- Skills live at {{ project_root }}/.agents/skills/.
+- Workflows live at {{ project_root }}/.agents/workflows/.
+- First read these rules:
+  - {{ project_root }}/.agents/rules/research-standards.md
+  - {{ project_root }}/.agents/rules/coding-standards.md
+  - {{ project_root }}/.agents/rules/mcp-environments.md
+- For skill discovery, scan descriptions with:
+  grep -r "^description:" {{ project_root }}/.agents/skills/*/SKILL.md
+- For end-to-end protocols, inspect:
+  find {{ project_root }}/.agents/workflows -maxdepth 2 -type f
+- Read the full SKILL.md or workflow file before following it.
+
+If your current workspace IS {{ project_root }} or one of its subdirectories, ignore this global reference because the project-local AGENTS.md and project skills are already available.

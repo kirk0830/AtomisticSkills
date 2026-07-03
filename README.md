@@ -106,6 +106,26 @@ Workflows represent **complete, high-level research goals** that may span multip
 
 ## Installation
 
+> [!CAUTION]
+> **🔒 安全声明 — 关于本 Fork 的安全改进**
+>
+> 本 fork 仓库 (`kirk0830/AtomisticSkills`) 针对 upstream 仓库进行了以下安全性和可维护性改进：
+>
+> - **🛡️ 存储空间安全**：安装前强制检查磁盘空间，避免因磁盘耗尽导致的系统故障
+> - **🛡️ 环境隔离保护**：所有依赖通过 Pixi 严格隔离，杜绝 PATH 污染和全局环境破坏
+> - **🛡️ 文件操作安全**：配置脚本采用幂等设计，避免意外覆盖用户已有文件
+> - **🛡️ AstrBot 安全适配**：通过软连接机制实现技能映射，避免文件复制带来的权限风险
+> - **🛡️ 模块化代码结构**：配置逻辑按 agent 类型拆分，降低代码复杂度和安全审计难度
+> - **🛡️ 模板化文档生成**：使用 Jinja2 模板统一管理配置文档，减少手动出错风险
+>
+> **与 upstream 的主要区别：**
+> - 新增 AstrBot 聊天机器人框架完整支持（技能软连接、人格设定、MCP 配置生成）
+> - 新增 Jinja2 模板引擎用于配置和文档生成
+> - 配置代码模块化拆分，提高可维护性
+> - 全中文人格设定和文档支持
+>
+> *All refactor works are empowered by Trae Work.*
+
 > ⚠️ **Disk space requirement**: AtomisticSkills environments contain large scientific
 > packages (PyTorch, RDKit, OpenMM, CUDA toolkits, etc.). Before installing, check
 > available space with `df -h .`.
@@ -151,7 +171,8 @@ for per-environment notes and sizes.
 
 1. **Clone the repository**:
    ```bash
-   git clone git@github.com:learningmatter-mit/AtomisticSkills.git
+   # 本 fork 仓库 (kirk0830/AtomisticSkills) - 包含安全改进和 AstrBot 支持
+   git clone https://github.com/kirk0830/AtomisticSkills.git
    cd AtomisticSkills
    ```
 

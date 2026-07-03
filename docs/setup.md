@@ -7,7 +7,8 @@ Guide the user step-by-step through setting up AtomisticSkills with Pixi.
 Ask the user to run this in their terminal *(Optional: Ask them to fork the repository first if they plan to contribute, and clone their fork instead)*:
 
 ```bash
-git clone git@github.com:learningmatter-mit/AtomisticSkills.git
+# 本 fork 仓库 (kirk0830/AtomisticSkills) - 包含安全改进和 AstrBot 支持
+git clone https://github.com/kirk0830/AtomisticSkills.git
 cd AtomisticSkills
 ```
 
