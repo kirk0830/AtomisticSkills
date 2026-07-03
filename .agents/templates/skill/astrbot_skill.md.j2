@@ -1,0 +1,98 @@
+---
+name: atomisticskills
+description: Use AtomisticSkills from {{ project_root }} for atomistic research, materials simulation, molecular modeling, spectroscopy, MLIP, drug discovery, and scientific workflow tasks. Contains rules, workflows, MCP server info, and all skill references. This is the PRIMARY entry point — always read this first.
+---
+
+# AtomisticSkills — Primary Reference
+
+> **CRITICAL: Always read this skill first before any task.**
+>
+> This skill is your entry point into the AtomisticSkills framework. It contains
+> the **rules**, **workflows**, **MCP server documentation**, and pointers to
+> all individual research skills. **Read the rules below and the relevant
+> workflow BEFORE starting any research task.**
+
+The AtomisticSkills repository is installed at:
+
+`{{ project_root }}`
+
+---
+
+## 🔴 Before Doing Anything — Read These Rules
+
+These rules define how you operate as an AtomisticSkills research agent.
+**Read them now and re-read whenever you are unsure about protocol.**
+
+{% include "common/_rules_table.md.j2" with context %}
+
+All rule files are also available as symlinks in the `rules/` subdirectory
+next to this SKILL.md:
+```
+{{ index_dir }}/rules
+```
+
+---
+
+## 📋 Workflows — End-to-End Research Protocols
+
+Workflows are complete research blueprints that chain multiple skills.
+**Always check if a workflow matches the user's goal before assembling steps
+from individual skills.**
+
+Available workflows (also symlinked in `workflows/`):
+
+{% include "common/_workflows_list.md.j2" with context %}
+
+All workflow files are also available as symlinks in the `workflows/`
+subdirectory next to this SKILL.md:
+```
+{{ index_dir }}/workflows
+```
+
+---
+
+## 🛠 MCP Servers — Computational Tools
+
+MCP servers provide the low-level tools (relaxation, MD, database queries, etc.)
+that skills and workflows orchestrate. Server configs must be added separately
+in AstrBot's WebUI (see the `mcpservers/` directory for reference).
+
+{% include "common/_mcp_servers_table.md.j2" with context %}
+
+MCP reference files are in the `mcpservers/` subdirectory next to this SKILL.md:
+```
+{{ index_dir }}/mcpservers
+```
+- `mcpservers/mcp_config.json` — full server config template
+- `mcpservers/servers/` — source code of each MCP server
+
+---
+
+## 🧪 Individual Skills
+
+All individual skills are symlinked directly in AstrBot's skills directory:
+```
+{{ index_dir.parent }}
+```
+
+Scan `SKILL.md` files to find the right skill for each sub-task. Each skill
+contains step-by-step instructions, helper scripts, and examples.
+
+**Skill categories:**
+- **Materials (mat-*)**: Structure, stability, phonons, diffusion, defects, surfaces, phase diagrams, XRD, etc.
+- **Chemistry (chem-*)**: Molecular DFT, bonding, conformers, spectroscopy, sorption, solution MD, etc.
+- **Drug Discovery (drug-*)**: Docking, ADMET, MD, retrosynthesis, fingerprints, etc.
+- **Machine Learning (ml-*)**: MLIP benchmarking, fine-tuning, generative models, property prediction.
+- **General (general-*)**: Literature search, peer review, plotting, presentations, etc.
+
+---
+
+## Operating Principles
+
+1. **Rules first** — always know and follow the research standards and coding standards.
+2. **Workflow before skills** — check if a workflow covers the goal before assembling individual skills.
+3. **Skills before custom code** — prefer existing skills and MCP tools; only write custom scripts when nothing fits.
+4. **Plan before acting** — for computational research tasks, create a research plan artifact and get user approval.
+5. **Use the right tool** — pick the correct MCP server and environment for each operation.
+
+If the current workspace is already `{{ project_root }}` or one of its subdirectories, prefer the project-local AGENTS.md and project-local skills to avoid duplicate context.
