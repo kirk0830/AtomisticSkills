@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 """Configure AtomisticSkills for AstrBot.
 
-AstrBot (https://docs.astrbot.app/) is a chatbot framework that sandboxes the
-LLM agent to its own ``data/`` directory.  This script bridges that gap by:
-
-1. Symlinking every project skill into ``<astrbot-data>/skills/`` so the agent
-   can discover SKILL.md files.
-2. Writing an index ``atomisticskills/SKILL.md`` that explains the framework.
-3. Printing (and optionally saving) ready-to-paste MCP server JSON configs,
-   with absolute paths rewritten for the local machine.
+This is a legacy wrapper that delegates to the new `atomisticskills configure` CLI.
+For the new unified interface, use:
+    atomisticskills configure --agent astrbot --data-dir /path/to/astrbot/data
 
 Usage:
     python configure_astrbot.py
@@ -26,7 +21,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from src.config.agents import astrbot as astrbot_config
+from src.cli import main as cli_main
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 
@@ -92,60 +87,25 @@ Examples:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    project_root = Path(args.project_root).expanduser().resolve()
 
     if args.list_servers:
-        from src.config.mcp_loader import load_mcp_servers
-
-        servers = load_mcp_servers(pixi_root=str(project_root))
-        for name in servers:
-            print(name)
+        cli_main(["list-servers"])
         return 0
 
+    cli_args = ["configure", "--agent", "astrbot"]
+
+    if args.data_dir:
+        cli_args.extend(["--data-dir", args.data_dir])
+    if args.skills_only:
+        cli_args.append("--skills-only")
     if args.mcp_only:
-        servers = astrbot_config.generate_astrbot_mcp_configs(
-            project_root, use_uv=args.use_uv
-        )
-        astrbot_config.print_mcp_configs(servers)
-        return 0
+        cli_args.append("--mcp-only")
+    if args.write_mcp_config:
+        cli_args.append("--write-mcp-config")
+    if args.use_uv:
+        cli_args.append("--use-uv")
 
-    try:
-        data_dir = astrbot_config.detect_astrbot_data_dir(args.data_dir)
-    except FileNotFoundError as exc:
-        print(f"[ERROR] {exc}", file=sys.stderr)
-        return 1
-
-    print(f"[AstrBot data dir] {data_dir}")
-
-    stats = astrbot_config.link_skills_to_astrbot(data_dir, project_root)
-    print(
-        "[skills] "
-        f"Linked {stats['linked']}, refreshed {stats['refreshed']}, "
-        f"skipped {stats['skipped']}, removed {stats['removed_stale']} stale"
-    )
-    if stats["conflicts"]:
-        print(
-            "[skills] Conflicts (non-symlink entries, left untouched): "
-            + ", ".join(str(x) for x in stats["conflicts"]),
-            file=sys.stderr,
-        )
-    print(
-        f"  Index SKILL.md -> {data_dir / 'skills' / astrbot_config.INDEX_SKILL_NAME / 'SKILL.md'}"
-    )
-
-    if not args.skills_only:
-        servers = astrbot_config.generate_astrbot_mcp_configs(
-            project_root, use_uv=args.use_uv
-        )
-        astrbot_config.print_mcp_configs(servers)
-        if args.write_mcp_config:
-            config_file = astrbot_config.write_mcp_config_file(data_dir, servers)
-            print(f"[mcp] Wrote reference config -> {config_file}")
-
-    persona_path = astrbot_config.write_persona_file(data_dir, project_root)
-    astrbot_config.print_persona_prompt(persona_path)
-
-    return 0
+    return cli_main(cli_args)
 
 
 if __name__ == "__main__":

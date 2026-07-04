@@ -62,6 +62,9 @@ Repository = "https://github.com/learningmatter-mit/AtomisticSkills"
 where = ["."]
 include = ["src*"]
 
+[project.scripts]
+atomisticskills = "src.cli:main"
+
 [tool.setuptools.package-data]
 "src" = ["**/*.j2", "**/*.yaml", "**/*.json"]
 
