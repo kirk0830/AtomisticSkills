@@ -14,7 +14,7 @@ Execute the probability density extraction script. This maps the fractional coor
 Because this is a relatively short trajectory, it contains "sparse" hopping events. We utilize the `--log` compression flag to mathematically enhance the visibility of intermediate saddle points in the diffusion pathway without diluting the background noise.
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-md-probability-density/scripts/calculate_probability_density.py \
     .agents/skills/mat-md-probability-density/examples/LiErBr/Br48Er12Li12_500.0K_nvt.traj \
     --species Li \

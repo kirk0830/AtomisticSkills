@@ -12,8 +12,8 @@ To query the modern Materials Project database (using the MP2020 compatibility s
 Run the automated reproduction script directly from the project root:
 
 ```bash
-# Env: base-agent
-conda activate base-agent
+# Env: base
+pixi shell -e base
 export MP_API_KEY=\"your_api_key_here\" # Ensure your environment has MP access
 python .agents/skills/mat-electrochemical-window/scripts/reproduce_table1.py
 ```

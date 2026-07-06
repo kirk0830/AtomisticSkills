@@ -11,7 +11,7 @@ This example demonstrates the new **K-Means clustering** mode for deduplication,
 Run from the project root:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-conformer-search/scripts/conformer_search.py \
     --smiles "CC(C)CC1=CC=C(C=C1)C(C)C(=O)O" \
     --num_conformers 50 \

@@ -5,7 +5,7 @@ Example elastic tensor calculation for FCC copper using MACE-OMAT-0-small.
 ## Run
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-elasticity/scripts/calculate_elasticity.py \
     --structure .agents/skills/mat-elasticity/examples/Cu/Cu.cif \
     --model_type mace \

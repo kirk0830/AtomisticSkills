@@ -26,7 +26,7 @@ The plot shows the real and imaginary parts of the frequency-dependent dielectri
 The dielectric-response plot was generated using:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agent/skills/mat-dielectric-response/scripts/plot_dielectric.py \
     SiC_optics \
     --output SiC_dielectric_response.png \
@@ -37,7 +37,7 @@ python .agent/skills/mat-dielectric-response/scripts/plot_dielectric.py \
 For anisotropic materials, the diagonal tensor components can be plotted separately using:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agent/skills/mat-dielectric-response/scripts/plot_dielectric.py \
     SiC_optics \
     --output SiC_dielectric_components.png \

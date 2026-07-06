@@ -34,7 +34,7 @@ python .agents/skills/mat-calphad-property-diagram/scripts/plot_phase_fractions.
 ```
 
 ## Constraints
-- **Environments**: Scripts require the `calphad-agent` Conda environment.
+- **Environments**: Scripts require the `calphad` Pixi environment.
 - Only plots equilibrium step (lever-rule). For non-equilibrium fast solidification (Scheil), custom scripting is required.
 
 ## References

@@ -13,7 +13,7 @@ Usage:
     python generate_random_structures.py --composition Li2ZrCl6 --num_structures 50 --spacegroups 12,14,62,166
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, numpy
 """
 

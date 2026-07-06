@@ -8,7 +8,7 @@ These rules are universally applied across all aspects of this project. **You MU
 
 ## 1. Global Agent Guidelines
 1. **Language**: All code and comments must be in **English**.
-2. **Temporary Files**: All temporary log, validation, testing, and summary files must be created under `<project_root>/.agents/test` to maintain a clean project structure.
+2. **Temporary Files**: All temporary log, validation, testing, and summary files must be created under `.agents/test` in the project root to maintain a clean project structure.
 3. **Error Handling**: Avoid using `try...except` blocks unless absolutely necessary; ensure the code output expectation is static and predictable.
 4. **Cleanup**: After implementation changes, clean up temporary test code for previous deprecated functions.
 5. **Reusability**: Before implementing a new function, search whether the same function already exists in dependency packages. Do not reinvent the wheel.
@@ -19,8 +19,8 @@ These rules are universally applied across all aspects of this project. **You MU
 10. **URL Validation**: After generating any URLs, always test whether the URL is valid by verifying it directly (e.g., curling).
 
 ## 2. Environment and Dependency Management
-- **Environment Isolation**: You must use the appropriate isolated Conda environment depending on the module or skill being developed (see `@.agents/rules/mcp-environments.md`). The `base-agent` environment serves as the generic fallback for standard processing.
-- **Dependency Versions**: Never globally force arbitrary PyTorch or library versions (e.g., do not globally demand `torch 2.9.1`). PyTorch and critical packages are rigorously managed per-environment by their respective `core_env.yaml` schemas in `conda-envs/*`.
+- **Environment Isolation**: You must use the appropriate isolated Pixi environment depending on the module or skill being developed (see `@.agents/rules/mcp-environments.md`). The `base` environment serves as the generic fallback for standard processing.
+- **Dependency Versions**: Never globally force arbitrary PyTorch or library versions (e.g., do not globally demand `torch 2.9.1`). PyTorch and critical packages are rigorously managed per-environment in `pixi.toml`.
 - **Failures**: NEVER implement fallback functions when package imports fail. Debug the root cause and fix the environment configuration.
 
 

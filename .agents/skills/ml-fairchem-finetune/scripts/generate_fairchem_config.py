@@ -250,7 +250,7 @@ def main():
     print(f"Runner script written to: {run_script_path}")
     print("=======================================================\\n")
     print("To evaluate zero-shot performance and then start training, run:")
-    print("  conda activate fairchem-agent")
+    print("  pixi shell -e fairchem")
     print(f"  export PYTHONPATH={save_dir.absolute()}:$PYTHONPATH")
     print(f"  cd {save_dir.absolute()}")
     print(f"  python {run_script_path.name} | tee fairchem_cli_output.log")

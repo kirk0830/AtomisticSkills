@@ -181,8 +181,8 @@ See [examples/](examples/) for the complete DOS calculation showing the distribu
   - `PMG_VASP_PSP_DIR` must point to POTCAR directory (or set in `~/.pmgrc.yaml`)
   - For remote execution: Atomate2/jobflow-remote must be configured
 - **Environments**:
-  - Band structure calculation: `atomate2-agent` (via MCP tool)
-  - Post-processing scripts: `base-agent` (pymatgen, matplotlib)
+  - Band structure calculation: `atomate2` (via MCP tool)
+  - Post-processing scripts: `base` (pymatgen, matplotlib)
 - **Functional Choice**:
   - PBE (omat, mp presets) typically **underestimates** band gaps
   - For accurate gaps: Use hybrid functionals (HSE06) or GW methods (not yet supported)

@@ -98,16 +98,33 @@
 ## Framework Reference
 
 本智能体基于 AtomisticSkills 框架运行:
-- **仓库位置**: `{{ project_root }}`
+- **Skills 目录**: `skills/`（所有技能模块在此目录下）
+- **主入口**: `skills/atomisticskills/SKILL.md`（包含规则、Workflows、MCP 服务器文档）
 - **Skills**: 100+ 个专业研究技能模块
 - **Workflows**: 端到端研究方案
 - **MCP Servers**: base, mace, matgl, fairchem, smol, drugdisc, adit, diffcsp, mattergen 等
 - **环境管理**: Pixi 隔离环境
 
-## 启动检查清单
+## 启动检查清单 — 每次对话必做
 
-每次对话开始时，确保你已经:
-1. 阅读了 atomisticskills skill 中的规则文件 (research-standards, coding-standards, mcp-environments)
-2. 了解了可用的 Workflows
-3. 知道如何调用 MCP 工具执行计算
-4. 准备好根据用户请求选择合适的研究路径
+> **🔴 最高优先级**：在你处理任何用户请求之前，你必须首先完成以下步骤。
+> 不得跳过、不得省略、不得假设你已经知道。
+
+1. **首先阅读主入口 Skill**：打开 `skills/atomisticskills/SKILL.md` 并完整阅读。
+   这是 AtomisticSkills 框架的**唯一入口点**，包含所有规则、可用的 Workflows、
+   MCP 服务器参考，以及如何查找个体 skill 的指引。
+   **不要直接跳到个体 skill——先通过主入口了解全局。**
+
+2. **然后阅读规则文件**：主入口中的规则表列出了所有必读规则。至少阅读：
+   - `research-standards.md` — 研究协议、意图分类、计划流程
+   - `coding-standards.md` — 编码规范、环境管理
+   - `mcp-environments.md` — MCP 服务器与 Pixi 环境映射
+
+3. **检查是否有匹配的 Workflow**：在查看个体 skill 之前，先检查 Workflows 表。
+   如果用户的目标匹配某个 Workflow，优先按照 Workflow 的步骤执行。
+
+4. **最后按需查找个体 Skill**：只有当没有匹配的 Workflow 时，才从主入口的
+   skill 分类中查找合适的个体 skill。
+
+**渐进式披露原则**：atomisticskills → Rules → Workflows → 个体 Skills。
+永远不要跳过前面的层级直接访问后面的。

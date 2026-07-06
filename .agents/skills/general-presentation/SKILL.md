@@ -90,7 +90,7 @@ See [amorphorization example](examples/amorphorization/) for a complete runnable
 
 ## Constraints
 
-- **Environment**: Scripts require `base-agent` with `python-pptx` installed.
+- **Environment**: Scripts require `base` with `python-pptx` installed.
 - **Image formats**: PNG, JPG, BMP, GIF, TIFF supported.
 - **Slide dimensions**: Default 16:9 (13.333 × 7.5 inches). Override via `THEME["width"]` / `THEME["height"]`.
 - **Tables**: Large tables (>15 rows) may overflow the slide — split across multiple slides.

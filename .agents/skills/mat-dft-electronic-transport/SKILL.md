@@ -47,7 +47,7 @@ python ../../scripts/generate_inputs.py --output gaas_flow.json
 
 ## Constraints
 - **Computational Cost**: Extremely high. The dense uniform band structure and multiple deformations require significant CPU hours per material.
-- **Environments**: Scripts require `atomate2-agent` with both `atomate2` and `amset` installed.
+- **Environments**: Scripts require `atomate2` with both `atomate2` and `amset` installed.
 - **K-Point Convergence**: Default parameters assume qualitative screening; strict literature matching requires extremely dense k-meshes (e.g., `40x40x40`).
 
 ## References

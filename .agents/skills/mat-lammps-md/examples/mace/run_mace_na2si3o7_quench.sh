@@ -4,11 +4,11 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../../../.." && pwd)"
 
-# Env: mace-agent
+# Env: mace
 # Thermal quench example for Na2Si3O7.
 
 OUT_DIR="${OUT_DIR:-./out-mace-na2si3o7-quench}"
-LMP_BIN="${LMP_BIN:-${PROJECT_ROOT}/lammps/mace-agent/lmp}"
+LMP_BIN="${LMP_BIN:-${PROJECT_ROOT}/lammps/mace/lmp}"
 INPUT_STRUCTURE="${INPUT_STRUCTURE:-}"
 MODEL_FILE="${MODEL_FILE:-}"
 MODEL_CHECKPOINT="${MODEL_CHECKPOINT:-}"

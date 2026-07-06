@@ -39,7 +39,7 @@ python ../../scripts/generate_inputs.py --output si_flow.json
 ```
 
 ## Constraints
-- **Environments**: Scripts require the `atomate2-agent` environment containing `phonopy`.
+- **Environments**: Scripts require the `atomate2` environment containing `phonopy`.
 - **Phase Stability**: The material must be strictly stable. If imaginary modes exist in the phonon branch, thermal displacement mapping will fail catastrophically since occupations of negative frequencies diverge.
 - **Supercells**: Accuracy is critically bound to taking a large enough supercell (`supercell_matrix`) to capture long-wavelength phonons correctly.
 

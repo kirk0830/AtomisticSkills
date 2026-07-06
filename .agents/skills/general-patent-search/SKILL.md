@@ -39,7 +39,7 @@ python .agents/skills/general-patent-search/scripts/query_google_patents.py "ass
 ```
 
 ## Constraints
-- **Environments**: The script requires the `base-agent` Conda environment.
+- **Environments**: The script requires the `base` Pixi environment.
 - **Google Patents Limits**: The scraping script is sensitive to IP rate-limiting. Do not set `--limit` excessively high (keep under 50).
 - **Chemical Structures**: This tool performs **text-based** searches. It does not perform exact Substructure or Tanimoto similarity searches natively. You must provide textual synonyms (e.g., IUPAC names, trade names) for accurate chemical retrieval.
 

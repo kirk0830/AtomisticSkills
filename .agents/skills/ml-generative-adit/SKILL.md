@@ -15,7 +15,7 @@ Generate novel crystal structures and molecules using ADiT (All-atom Diffusion T
 > [!IMPORTANT]
 > **GPU Required**: ADiT requires a CUDA-compatible GPU. CPU inference is extremely slow.
 
-- The `adit-agent` conda environment must be installed and configured.
+- The `adit` pixi environment must be installed and configured.
 - The AADT repository must be cloned to `.agents/tmp/adit/`.
 - Pre-trained weights are automatically downloaded from HuggingFace on first use.
 

@@ -13,7 +13,7 @@ Demonstrate all three binding-site definition modes using the HIV-1 protease co-
 ### Mode A: Box from co-crystal ligand
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-binding-site-definition/scripts/define_binding_site.py \
   --mode ligand \
   --ligand_file .agents/skills/drug-binding-site-definition/examples/hiv1-protease/MK1_ligand.pdb \
@@ -24,7 +24,7 @@ python .agents/skills/drug-binding-site-definition/scripts/define_binding_site.p
 ### Mode B: Box from active-site residues
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-binding-site-definition/scripts/define_binding_site.py \
   --mode residues \
   --protein_file .agents/skills/drug-binding-site-definition/examples/hiv1-protease/1HSG_protein.pdb \
@@ -36,7 +36,7 @@ python .agents/skills/drug-binding-site-definition/scripts/define_binding_site.p
 ### Mode C: Reload saved box
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-binding-site-definition/scripts/define_binding_site.py \
   --mode json \
   --input_json binding_site_ligand.json
@@ -45,7 +45,7 @@ python .agents/skills/drug-binding-site-definition/scripts/define_binding_site.p
 ### Visualize the box (optional)
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-binding-site-definition/scripts/visualize_box.py \
   --protein .agents/skills/drug-binding-site-definition/examples/hiv1-protease/1HSG_protein.pdb \
   --box binding_site_ligand.json \

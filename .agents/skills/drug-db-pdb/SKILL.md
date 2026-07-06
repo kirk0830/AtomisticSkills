@@ -109,7 +109,7 @@ python .agents/skills/drug-db-pdb/scripts/query_pdb.py \
 - **Ligand metadata**: "Ligands" here refer to non-polymer entities in the PDB hierarchy. The script enumerates non-polymer entity IDs from the entry container identifiers and queries each nonpolymer entity object.
 - **File formats**: Prefer mmCIF for robustness; legacy PDB may be incomplete or unavailable for some entries.
 - **Quality selection**: For drug discovery, do not select structures using resolution alone -- use wwPDB validation reports and ligand-quality metrics when available.
-- **Environment**: Requires the `base-agent` conda environment.
+- **Environment**: Requires the `base` pixi environment.
 ---
 
 **Author:** Matthew Cox

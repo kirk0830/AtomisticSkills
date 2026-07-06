@@ -11,7 +11,7 @@ Usage:
         --output_dir outputs
 
 Requirements:
-    - Conda environment: diffcsp-agent
+    - Pixi environment: diffcsp
     - Required packages: torch, pyxtal, pymatgen, hydra-core
     - A generation model (mp_gen, perov_gen, or carbon_gen)
 """

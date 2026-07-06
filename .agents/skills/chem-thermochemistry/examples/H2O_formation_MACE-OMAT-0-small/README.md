@@ -7,7 +7,7 @@
 ## Command
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-thermochemistry/scripts/calculate_thermochemistry.py \
     --reaction "2H2 + O2 -> 2H2O" \
     --temperature 298.15 \

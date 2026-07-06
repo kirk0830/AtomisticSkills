@@ -4,8 +4,8 @@ This example demonstrates the step three in lattice thermal conductivity calcula
 
 ## Command
 ```bash
-# Env: mace-agent
-conda activate mace-agent
+# Env: mace
+pixi shell -e mace
 python .agents/skills/mat-lattice-thermal-conductivity/scripts/calculate_thermal_conductivity.py \
     --structure tests/Si.cif \
     --model_type mace \

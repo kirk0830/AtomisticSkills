@@ -6,7 +6,7 @@ To demonstrate how to look up the bulk averaged price of elemental Lithium, and 
 ## Instructions
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-chemical-pricing/scripts/get_pricing.py Lithium
 ```
 
@@ -27,7 +27,7 @@ Note: Follow the link to see a list of commercial suppliers and purchase the com
 
 To look up pricing vendor links for a specific compound precursor:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-chemical-pricing/scripts/get_pricing.py "Lithium carbonate"
 ```
 

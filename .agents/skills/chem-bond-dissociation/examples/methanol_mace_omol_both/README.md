@@ -8,7 +8,7 @@
 ## How to Reproduce
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CO \
     --all_bonds \

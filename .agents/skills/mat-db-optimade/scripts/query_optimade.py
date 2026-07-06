@@ -12,7 +12,7 @@ def main():
         python query_optimade.py results.json --filter 'elements HAS ALL "Na", "Cl"' --provider cod
 
     Requirements:
-        - Conda environment: base-agent
+        - Pixi environment: base
         - Required packages: optimade[client]
     """
     parser = argparse.ArgumentParser(description="Query OPTIMADE-compliant databases.")

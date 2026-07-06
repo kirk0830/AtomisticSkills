@@ -10,7 +10,7 @@ ASE + CHGNet. The script:
    (e.g., abrupt energy/volume slope change).
 
 ```bash
-# Env: matgl-agent
+# Env: matgl
 bash .agents/skills/mat-lammps-md/examples/matgl/run_matgl_cu_phase_transition.sh
 ```
 

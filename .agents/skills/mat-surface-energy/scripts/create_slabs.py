@@ -5,7 +5,7 @@ Usage:
     python create_slabs.py --bulk bulk.cif --max_index 1 --min_thickness 10.0 --vacuum 15.0 --output slabs/
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, ase
 """
 

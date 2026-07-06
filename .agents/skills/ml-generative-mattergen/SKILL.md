@@ -13,7 +13,7 @@ This skill provides tools for generating novel inorganic material structures usi
 > [!IMPORTANT]
 > **ARM/aarch64 Support**: MatterGen CAN work on ARM-based systems like NVIDIA DGX Spark. However, PyG dependencies (torch-scatter, torch-cluster) must be compiled from source with CUDA_HOME properly configured. See installation guide below.
 
-- The `mattergen-agent` conda environment must be installed and configured.
+- The `mattergen` pixi environment must be installed and configured.
 - MatterGen requires Python 3.10 and CUDA 13.0 compatible GPU for efficient generation.
 - **For ARM/aarch64 systems**: See [Installing torch-scatter on ARM](../../docs/installing_torch_scatter_arm.md) for detailed installation instructions.
 

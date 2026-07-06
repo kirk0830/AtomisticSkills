@@ -12,7 +12,7 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 **Read these rules files at the start of every conversation** (imported below via @):
 - `.agents/rules/research-standards.md` — research protocol, intent classification, plan workflow
 - `.agents/rules/coding-standards.md` — coding rules, environment management, MCP stability
-- `.agents/rules/mcp-environments.md` — conda environment to MCP server mapping
+- `.agents/rules/mcp-environments.md` — Pixi environment to MCP server mapping
 
 @.agents/rules/coding-standards.md
 @.agents/rules/mcp-environments.md
@@ -54,9 +54,9 @@ python .agents/skills/mat-melting-point/scripts/create_interface.py ...
 ```
 Run with:
 ```bash
-mamba activate <env-name>
+pixi run -e <env-name> python <path-to-script> [args]
 # or
-conda run -n <env-name> python <path-to-script> [args]
+pixi shell -e <env-name>
 ```
 
 ### MCP tool calls
@@ -64,11 +64,11 @@ Skills that reference `mcp_*` functions require MCP servers to be configured. If
 
 ## MCP Server Setup
 
-Run `configure_mcp.py` to write configs for your agent:
+Run `atomisticskills configure` to write configs for your agent:
 ```bash
-python configure_mcp.py                    # auto-detect installed agents
-python configure_mcp.py --agent claude    # Claude Code only
-python configure_mcp.py --scope global    # write to global user config
+atomisticskills configure                        # auto-detect installed agents
+atomisticskills configure --agent claude         # Claude Code only
+atomisticskills configure --agent claude --scope global  # write to global config
 ```
 
 See `README.md` for full installation instructions.

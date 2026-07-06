@@ -8,7 +8,7 @@ Usage:
     python biorxiv_search.py --server medrxiv "COVID vaccine" --max_results 5
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: requests
 """
 

@@ -16,7 +16,7 @@ Usage:
     python find_structures_for_composition.py --composition Li2ZrCl6 --threshold 0.01
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, mp-api
     - Environment variable: MP_API_KEY
 """

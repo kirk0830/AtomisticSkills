@@ -130,9 +130,9 @@ python .agents/skills/mat-defect-energy-dft/scripts/parse_defect_results.py \
 - **Dielectric constant**: The Freysoldt correction requires the static dielectric constant of the host material. Use experimental or computed values.
 - **Functional**: PBE underestimates band gaps → transition levels may be shifted. For accurate results, use HSE06 hybrid functional (requires custom INCAR settings).
 - **Environments**:
-  - Structure generation: `base-agent` (pymatgen-analysis-defects)
-  - DFT submission: `atomate2-agent` (via MCP tool)
-  - Post-processing: `base-agent`
+  - Structure generation: `base` (pymatgen-analysis-defects)
+  - DFT submission: `atomate2` (via MCP tool)
+  - Post-processing: `base`
 - **For neutral defects only (no DFT)**: See [mat-defect-energy](../mat-defect-energy/SKILL.md) for MLIP-based approach.
 
 ---

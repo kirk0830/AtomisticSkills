@@ -3,7 +3,7 @@
 ## Usage
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CCO \
     --all_bonds \

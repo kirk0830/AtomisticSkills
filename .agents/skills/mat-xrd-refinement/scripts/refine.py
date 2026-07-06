@@ -9,7 +9,7 @@ Usage:
     python refine.py --xrd_data pattern.xy --cifs phase1.cif phase2.cif --output_dir results/
 
 Requirements:
-    - Conda environment: xrd-agent
+    - Pixi environment: xrd
     - Required packages: dara-xrd, pymatgen
 """
 

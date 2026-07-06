@@ -16,7 +16,7 @@ Usage:
         --output_dir . --fmax 0.01
 
 Requirements:
-    pymatgen, ase, numpy (base-agent or mace-agent env)
+    pymatgen, ase, numpy (base or mace env)
 """
 
 from __future__ import annotations

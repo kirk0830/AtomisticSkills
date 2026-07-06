@@ -10,17 +10,17 @@ python train.py --conf configs/finetune_qm9.yaml --load-hf ct-scd-pcq --job-id s
 
 ## Contents
 
-1. `run_ct_scd_qm9.py`: a wrapper script that locates the `SelfConditionedDenoisingAtoms` checkout, relaunches itself inside the `scd-agent` environment when needed, and runs a safe smoke test by default.
+1. `run_ct_scd_qm9.py`: a wrapper script that locates the `SelfConditionedDenoisingAtoms` checkout, relaunches itself inside the `scd` environment when needed, and runs a safe smoke test by default.
 
 ## Running the Example
 
-From a general environment, let the script restart itself inside `scd-agent`:
+From a general environment, let the script restart itself inside `scd`:
 
 ```bash
 python run_ct_scd_qm9.py --dry-run
 ```
 
-Inside `scd-agent`, you can run it directly:
+Inside `scd`, you can run it directly:
 
 ```bash
 python run_ct_scd_qm9.py
@@ -29,7 +29,7 @@ python run_ct_scd_qm9.py
 For first-run smoke tests, prefer observing live stdout instead of launching through buffered wrappers. This is general guidance for SCD runs, not just this example. A good pattern is:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
+conda run --no-capture-output -n scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
 ```
 
 This makes checkpoint downloads, dataset downloads, split creation, and normalization startup visible in the terminal.
@@ -45,18 +45,18 @@ On shared machines, prefer a GPU with no active compute job and low memory usage
 If you want one selected GPU, expose it explicitly:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
+conda run --no-capture-output -n scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1
 ```
 
 If you want all selected visible GPUs, expose them and tell the wrapper to use them all:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
+conda run --no-capture-output -n scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_qm9.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
 ```
 
 The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is requested.
 
-Use `--dry-run` first to verify the resolved command, repo root, and conda environment without launching training:
+Use `--dry-run` first to verify the resolved command, repo root, and pixi environment without launching training:
 
 ```bash
 python run_ct_scd_qm9.py --dry-run --property gap
@@ -118,7 +118,7 @@ python run_ct_scd_qm9.py --property lumo --config configs/finetune_qm9_lumo.yaml
 - Actual training requires a CUDA-visible GPU. On CPU-only hosts the wrapper now exits early with a clear message instead of letting `train.py` fail later inside PyTorch Lightning.
 - If the default Matplotlib config directory is not writable, the wrapper automatically uses a temporary `MPLCONFIGDIR`.
 - If the TorchMD compiled graph kernel is not built, the wrapper automatically adds `--noise_in_loader True`, matching the upstream README guidance.
-- The default target environment is `scd-agent`, matching the environment created in `AtomisticSkills/conda-envs/scd-agent`.
+- The default target environment is `scd`, matching the environment created in `AtomisticSkills/conda-envs/scd`.
 - Training outputs are written under `SelfConditionedDenoisingAtoms/experiments/<job_id>`.
 - The W&B project for this example is derived by `train.py` from `dataset: QM9`, so it appears as `SCD_bench_QM9`.
 - In practice, QM9 smoke runs can spend substantial startup time computing dataset normalization statistics before the short training loop begins.

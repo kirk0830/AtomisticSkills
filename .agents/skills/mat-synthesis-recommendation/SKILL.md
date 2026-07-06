@@ -91,7 +91,7 @@ python .agents/skills/mat-synthesis-recommendation/scripts/recommend_synthesis.p
 ## Constraints
 
 - **API Key Required**: Requires Materials Project API key via `MP_API_KEY` environment variable or `~/.atomistic_skills.yaml` configuration
-- **Conda Environment**: This skill requires the `base-agent` environment (includes `mp-api`, `pymatgen`)
+- **Conda Environment**: This skill requires the `base` environment (includes `mp-api`, `pymatgen`)
 - **Coverage Limitations**: Not all materials have synthesis recipes in the database
   - Database contains ~55,000 recipes for common inorganic materials
   - Coverage is best for battery materials, ceramics, and metal oxides

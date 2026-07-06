@@ -15,7 +15,7 @@ Usage:
     python digitize_pipeline.py plot.png --metadata-only --output-dir ./output
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: opencv, scikit-image, numpy, pandas
     - Optional for --metadata-only: google-generativeai or openai
 """

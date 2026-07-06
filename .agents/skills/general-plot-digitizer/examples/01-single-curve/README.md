@@ -7,7 +7,7 @@ A single blue Raman spectrum (PMMA) on a white background with clearly labeled a
 ## Command
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py \
   .agents/skills/general-plot-digitizer/examples/01-single-curve/source.png \
   --full \

@@ -38,10 +38,10 @@ downloads/
 
 **Flag error and stop** if either checkpoint is missing.
 
-### 2. Set up the conda environment
+### 2. Set up the pixi environment
 
 ```bash
-bash conda-envs/msms-agent/install.sh
+bash pixi.toml (feature: msms) / install.sh
 ```
 
 The `ms_pred` Python package is installed from GitHub automatically by the install script.

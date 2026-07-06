@@ -15,7 +15,7 @@ It is **not** a production-quality free-energy workflow. For production calculat
 ## Run
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-solid-free-energy/scripts/run_frenkel_ladd.py \
     --structure .agents/skills/mat-solid-free-energy/examples/Si_MACE/Si.cif \
     --name Si_demo \

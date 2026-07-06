@@ -7,7 +7,7 @@ Same plot as example 02, but focused on high-quality extraction of the black cur
 ## Command
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py \
   .agents/skills/general-plot-digitizer/examples/03-black-curve-text-mask/source.png \
   --full \

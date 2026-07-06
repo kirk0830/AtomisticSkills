@@ -7,7 +7,7 @@ Usage:
         --steps 100000 --temperature-K 298 --pressure-bar 1
 
 Requirements:
-    - Conda environment: Varies based on `--calculator`
+    - Pixi environment: Varies based on `--calculator`
     - Required packages: ase, ase-mc, numpy, matplotlib, torch, MLIP backend package
 """
 

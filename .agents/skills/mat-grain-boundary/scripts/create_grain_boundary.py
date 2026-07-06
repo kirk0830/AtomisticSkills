@@ -13,7 +13,7 @@ Usage:
         --output-dir gb_structures/
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen
 """
 

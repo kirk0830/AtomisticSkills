@@ -3,13 +3,13 @@
 This directory contains a complete, self-contained example demonstrating how to use the `.agents/skills/ml-property-predictor/scripts/train_mace_property.py` script to fine-tune a MACE internal property head to predict materials' **bulk modulus** (an intensive property).
 
 ## Contents
-1. `run_mace.py`: A Python wrapper script that automates generating the training curve, running the `.agents/test/mp_bulk_modulus.json` dataset through `mace-agent`, and crucially **automatically cleaning up** the massive `epoch_*.pt` internal model checkpoints to save disk space, leaving only the final `*.model` compiled blueprint for inference!
+1. `run_mace.py`: A Python wrapper script that automates generating the training curve, running the `.agents/test/mp_bulk_modulus.json` dataset through `mace`, and crucially **automatically cleaning up** the massive `epoch_*.pt` internal model checkpoints to save disk space, leaving only the final `*.model` compiled blueprint for inference!
 
 ## Running the Example
-First, ensure you are operating from the `base-agent` environment to kick off the master pipeline. The script will automatically trigger a sub-process inside the designated `mace-agent` conda environment.
+First, ensure you are operating from the `base` environment to kick off the master pipeline. The script will automatically trigger a sub-process inside the designated `mace` pixi environment.
 
 ```bash
-conda run -n base-agent python run_mace.py
+pixi run -e base python run_mace.py
 ```
 
 ### Outputs

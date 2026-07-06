@@ -5,7 +5,7 @@ Usage:
     python generate_wulff.py --energies_json surface_energies.json --bulk bulk.cif --output wulff_shape.png
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, matplotlib
 """
 

@@ -4,10 +4,10 @@ This example compares the synthesis pathways for $\text{LiZnPO}_4$ using traditi
 
 ## Running the Example
 
-Activate the appropriate Conda environment (`base-agent`) and run the included bash script:
+Activate the appropriate Pixi environment (`base`) and run the included bash script:
 
 ```bash
-conda activate base-agent
+pixi shell -e base
 ./run.sh
 ```
 

@@ -148,7 +148,7 @@ python .agents/skills/drug-db-chembl/scripts/query_chembl.py \
   * Prefer standardized fields (`standard_type/value/units/relation`) and pChEMBL for comparable potency where appropriate.
   * Do **not** mix censored relations (`>`, `<`) into regression labels unless you explicitly model censoring.
 * **Target mapping confidence**: ChEMBL assigns a 0-9 confidence score to assay-to-target mappings; consider using it when building high-precision datasets.
-* **Environment**: Requires `base-agent` conda environment.
+* **Environment**: Requires `base` pixi environment.
 * **Dependencies**: Standard library only (`urllib`, `json`, `csv`, etc.).
 
 ---

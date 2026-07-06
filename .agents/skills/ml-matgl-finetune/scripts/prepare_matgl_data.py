@@ -142,7 +142,7 @@ def main():
     print(f"Data written to: {output_path}")
     print("=======================================================\n")
     print("To generate training config and start training, run:")
-    print("  conda activate matgl-agent")
+    print("  pixi shell -e matgl")
     print(
         f"  python generate_matgl_config.py --train-data {train_path.absolute()} "
         + (f"--val-data {val_path.absolute()} " if val_data else "")

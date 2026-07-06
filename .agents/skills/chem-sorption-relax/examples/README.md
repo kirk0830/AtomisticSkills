@@ -37,8 +37,8 @@ bash test_relax.sh
 
 ## Requirements
 
-- `fairchem-agent` conda environment activated
-- `base-agent` conda environment for supercell generation
+- `fairchem` pixi environment activated
+- `base` pixi environment for supercell generation
 - UMA-S-1p1 model downloaded and configured
 
 ## Notes

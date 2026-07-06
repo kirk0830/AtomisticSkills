@@ -5,7 +5,7 @@ Usage:
     python query_elements.py --elements H Li Fe O Si --output_dir ../resources/structures
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, mp_api
 """
 

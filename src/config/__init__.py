@@ -24,7 +24,6 @@ from .base import (
 from .mcp_loader import (
     load_mcp_servers,
     detect_pixi_project_root,
-    detect_conda_base,
     MCP_SOURCE,
 )
 
@@ -45,6 +44,5 @@ __all__ = [
     "build_global_reference_block",
     "load_mcp_servers",
     "detect_pixi_project_root",
-    "detect_conda_base",
     "MCP_SOURCE",
 ]

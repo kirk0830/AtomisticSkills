@@ -24,7 +24,7 @@ Usage:
         --output_dir docking_analysis/
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Pixi environment: drugdisc
     - Required packages: rdkit, numpy, scipy, matplotlib
 """
 

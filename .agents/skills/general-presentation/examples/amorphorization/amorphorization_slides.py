@@ -2,11 +2,11 @@
 Generate a presentation about the mat-amorphorization skill example (LiCl).
 
 Usage:
-    # Env: base-agent
+    # Env: base
     python .agents/skills/general-presentation/examples/amorphorization/amorphorization_slides.py
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: python-pptx, Pillow
 """
 

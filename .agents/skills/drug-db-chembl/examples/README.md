@@ -12,7 +12,7 @@ This example demonstrates querying ChEMBL for human EGFR (Epidermal Growth Facto
 From the project root:
 
 ```bash
-# Env: base-agent
+# Env: base
 # Step 1: Search for EGFR targets
 python .agents/skills/drug-db-chembl/scripts/query_chembl.py \
   --target "EGFR" \

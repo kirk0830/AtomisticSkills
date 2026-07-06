@@ -24,7 +24,7 @@ The skill uses MatCalc's `AdsorptionCalc` to automate the full workflow: bulk re
 ## Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`)
-- `matcalc`, `pymatgen`, and `ase` must be installed in the relevant conda environment
+- `matcalc`, `pymatgen`, and `ase` must be installed in the relevant pixi environment
 - A bulk crystalline structure file (CIF, POSCAR, etc.)
 - An adsorbate molecule structure file (XYZ, CIF) or SMILES string
 
@@ -187,7 +187,7 @@ The `adsorption_results.json` file contains:
   - Critical for accurate energy calculations
 
 - **Environments**:
-  - Scripts require specific Conda environments (mace-agent, matgl-agent, or fairchem-agent)
+  - Scripts require specific Conda environments (mace, matgl, or fairchem)
   - **Each code block MUST specify the environment** using `# Env:` annotation
 
 - **Computational Cost**:

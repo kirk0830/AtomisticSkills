@@ -20,7 +20,7 @@ Usage:
         --output_dir mmgbsa/
 
 Requirements:
-    - Conda environment: drugmd-agent
+    - Pixi environment: drugmd
     - Required packages: openmm, openmmforcefields, openff-toolkit, rdkit, MDAnalysis
 """
 

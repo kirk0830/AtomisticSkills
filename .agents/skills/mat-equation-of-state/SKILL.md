@@ -15,7 +15,7 @@ Calculate the equation of state for a material by applying volumetric strains, c
 ## 1. Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
-- `matcalc` must be installed in the relevant conda environment.
+- `matcalc` must be installed in the relevant pixi environment.
 - A relaxed structure file (CIF, POSCAR, or other ASE-readable format).
 
 ## 2. Choosing a Foundation Potential
@@ -62,9 +62,9 @@ See `examples/` for detailed usage scenarios, including Silicon EOS calculation.
 ## 6. Constraints
 
 - **Environment**: Scripts require conda environments with MLIP packages installed:
-  - `mace-agent` for MACE models
-  - `matgl-agent` for MatGL/CHGNet models
-  - `fairchem-agent` for FairChem/UMA models
+  - `mace` for MACE models
+  - `matgl` for MatGL/CHGNet models
+  - `fairchem` for FairChem/UMA models
 - **Structure Relaxation**: It is highly recommended to start with a pre-relaxed structure and use `--relax_structure` to relax atomic positions at each strain point.
 - **Strain Range**: The default ±10% strain is suitable for most materials. For very soft or very hard materials, adjust `--max_abs_strain` accordingly.
 - **Fitting Model**: MatCalc uses the Birch-Murnaghan equation of state by default.

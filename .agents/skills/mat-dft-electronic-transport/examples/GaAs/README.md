@@ -9,7 +9,7 @@ To predict the room temperature phonon-limited electron mobility and electrical 
 
 Run the workflow generation script:
 ```bash
-# Env: atomate2-agent
+# Env: atomate2
 python ../../scripts/generate_inputs.py --output gaas_flow.json
 ```
 

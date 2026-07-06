@@ -14,7 +14,7 @@ This skill provides tools for calculating lattice thermal conductivity of materi
 ## 1. Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
-- `matcalc`, `phonopy`, and `phono3py` must be installed in the relevant conda environment.
+- `matcalc`, `phonopy`, and `phono3py` must be installed in the relevant pixi environment.
 
 ### Required Patch for phono3py ≥ 3.x
 

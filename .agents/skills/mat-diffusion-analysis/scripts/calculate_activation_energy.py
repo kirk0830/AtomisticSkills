@@ -9,7 +9,7 @@ Usage:
     python calculate_activation_energy.py <root_dir>
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: numpy, matplotlib, pymatgen
 """
 

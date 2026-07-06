@@ -6,17 +6,17 @@ under nvt_nose_hoover, comparing NValchemi batch vs sequential (NValchemi disabl
 wall time. Best-of-N timing is used.
 
 Usage:
-    # mace-agent
+    # mace
     python .agents/skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env mace
 
-    # matgl-agent
+    # matgl
     python .agents/skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env matgl
 
-    # fairchem-agent
+    # fairchem
     python .agents/skills/ml-mlip-nvalchemi/scripts/run_md_benchmark.py --env fairchem
 
 Requirements:
-    - Correct conda environment per env flag (mace-agent / matgl-agent / fairchem-agent)
+    - Correct pixi environment per env flag (mace / matgl / fairchem)
     - nvalchemi-toolkit installed in the environment
 """
 

@@ -119,12 +119,12 @@ Workflows represent **complete, high-level research goals** that may span multip
 > - **🛡️ 模板化文档生成**：使用 Jinja2 模板统一管理配置文档，减少手动出错风险
 >
 > **与 upstream 的主要区别：**
+> - 环境管理从 Conda 完全迁移至 Pixi（隔离环境、可复现锁文件）
 > - 新增 AstrBot 聊天机器人框架完整支持（技能软连接、人格设定、MCP 配置生成）
-> - 新增 Jinja2 模板引擎用于配置和文档生成
+> - 统一 CLI 入口 `atomisticskills`（整合 configure / list-agents / list-servers）
 > - 配置代码模块化拆分，提高可维护性
-> - 全中文人格设定和文档支持
->
-> *All refactor works are empowered by Trae Work.*
+> - Jinja2 模板引擎用于配置和文档生成
+> - 中文人格设定和文档支持
 
 > ⚠️ **Disk space requirement**: AtomisticSkills environments contain large scientific
 > packages (PyTorch, RDKit, OpenMM, CUDA toolkits, etc.). Before installing, check
@@ -137,13 +137,14 @@ Workflows represent **complete, high-level research goals** that may span multip
 > | Full (all environments) | ≥150 GB, prefer 200 GB |
 > | Full + optional build tasks (VOID, SCD, react-ot, ICEBERG) | 200 GB+ |
 
-AtomisticSkills uses **Pixi** for reproducible, isolated environment management. This replaces the previous Conda-based approach with significant improvements:
+AtomisticSkills uses **Pixi** for reproducible, isolated environment management:
 
 - **No PATH pollution**: Environments isolated in `.pixi/envs/`
 - **Lockfile reproducibility**: `pixi.lock` ensures identical environments
 - **No brutal delete/recreate**: Incremental updates
 - **Declarative config**: All dependencies in `pixi.toml`
 - **Python package**: `atomistic-skills` installed as editable package in all environments
+- **Unified CLI**: `atomisticskills configure --agent <name>` for all agent setup
 
 ### System Requirements & Disk Space
 
@@ -194,7 +195,7 @@ for per-environment notes and sizes.
 
 4. **Configure MCP servers**:
    ```bash
-   pixi run -e base python configure_mcp.py
+   pixi run -e base atomisticskills configure
    ```
 
 5. **Add to your AI assistant**:
@@ -209,13 +210,13 @@ for per-environment notes and sizes.
 
    ```bash
    # IDE-embedded agents (project scope)
-   pixi run -e base python configure_mcp.py
+   pixi run -e base atomisticskills configure
 
    # IDE-embedded agents (global scope)
-   pixi run -e base python configure_mcp.py --scope global
+   pixi run -e base atomisticskills configure --scope global
 
    # AstrBot chatbot framework (uses symlinks into data/skills/ + WebUI MCP config)
-   pixi run -e base python configure_astrbot.py --data-dir /path/to/astrbot/data
+   pixi run -e base atomisticskills configure --agent astrbot --data-dir /path/to/astrbot/data
    ```
 
 ### Available Environments
@@ -345,24 +346,27 @@ AtomisticSkills/
 ├── pyproject.toml         # Python package configuration
 ├── pixi.lock              # Lockfile (reproducibility)
 ├── src/
+│   ├── cli.py             # Unified CLI entry point
+│   ├── config/            # Agent-specific configuration modules
 │   ├── mcp_server/        # MCP server implementations
 │   └── utils/             # Utility modules
 │       ├── hpc/           # HPC job submission module
 │       ├── mlips/         # MLIP wrappers (MACE, MatGL, FairChem)
-│       └ dft/             # DFT utilities (VASP, ORCA)
-│       └ drugdisc/        # Drug discovery utilities
-│       └ generative/      # Generative model wrappers
-│       └ ...
+│       ├── dft/           # DFT utilities (VASP, ORCA)
+│       ├── drugdisc/      # Drug discovery utilities
+│       ├── generative/    # Generative model wrappers
+│       └── ...
 ├── .agents/
 │   ├── rules/             # Project-specific standards
 │   ├── skills/            # Skill definitions (129+ skills)
-│   └ workflows/           # Workflow definitions
-│   └ patches/             # Git dependency patches
+│   ├── workflows/         # Workflow definitions
+│   ├── templates/         # Jinja2 templates for config/doc generation
+│   └── patches/           # Git dependency patches
 ├── .pixi/
-│   └ envs/                # Isolated environments
-│   └ build/               # Build artifacts for git deps
-├── configure_mcp.py       # MCP configuration generator (IDE agents)
-└── configure_astrbot.py   # AstrBot chatbot framework configurator
+│   ├── envs/              # Isolated Pixi environments
+│   └── build/             # Build artifacts for git deps
+├── configure_mcp.py       # [deprecated] use atomisticskills configure instead
+└── configure_astrbot.py   # [deprecated] use atomisticskills configure --agent astrbot
 ```
 
 ### Adding a New Skill

@@ -5,7 +5,7 @@ This example demonstrates synthesis recipe recommendations for lithium iron phos
 ## Query Command
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-synthesis-recommendation/scripts/recommend_synthesis.py "LiFePO4" --limit 5 --output synthesis_recipes.json
 ```
 

@@ -50,8 +50,8 @@ def relax_structures(structures, mlip_model, output_dir):
         "/home/bdeng/projects/AtomisticSkills/.agents/skills/mat-disorder/scripts/relax_wrapper.py"
     )
 
-    # Determine python executable for mace-agent
-    python_exe = "/home/bdeng/miniforge3/envs/mace-agent/bin/python"
+    # Determine python executable for mace
+    python_exe = "/home/bdeng/miniforge3/envs/mace/bin/python"
 
     cmd = [
         python_exe,
@@ -311,7 +311,7 @@ def main():
         from order_disorder_sampler import OrderDisorderSampler
     except ImportError:
         logger.error(
-            "Failed to import smol or local modules. Make sure you are in the 'smol-agent' environment."
+            "Failed to import smol or local modules. Make sure you are in the 'smol' environment."
         )
         return
 

@@ -51,7 +51,7 @@ bash test_gcmc.sh
 
 ## Requirements
 
-- `fairchem-agent` conda environment activated
+- `fairchem` pixi environment activated
 - Pre-relaxed `.cif` structure (typically from `chem-sorption-relax`)
 - UMA-S-1p1 model downloaded and configured
 

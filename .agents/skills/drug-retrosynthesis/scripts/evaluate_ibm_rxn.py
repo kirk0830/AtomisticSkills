@@ -6,7 +6,7 @@ Usage:
     python evaluate_ibm_rxn.py "FC(F)(F)C(F)=C" --steps 3
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Pixi environment: drugdisc
     - Required packages: rxn4chemistry
 """
 

@@ -19,11 +19,11 @@ Use [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
 
 1. Rebuild the doc site to get accurate public counts:
    ```bash
-   conda run -n base-agent python site/build_skills.py
+   pixi run -e base python site/build_skills.py
    ```
 2. Read counts from `site/skills_index.js` and git (source of truth):
    ```bash
-   # skills, tools, servers (= conda-env dirs) — from rebuilt index
+   # skills, tools, servers (= pixi envs) — from rebuilt index
    python3 -c "
    import re
    content = open('site/skills_index.js').read()

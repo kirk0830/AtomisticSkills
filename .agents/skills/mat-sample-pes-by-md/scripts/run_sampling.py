@@ -10,7 +10,7 @@ Usage:
     python run_sampling.py disordered.cif --sampling_type order_disorder --n_structures 50 --output_dir ordered_dir
 
 Requirements:
-    - Conda environment: matgl-agent (for MatGL/CHGNet), mace-agent (for MACE), or base-agent (for Order-Disorder)
+    - Pixi environment: matgl (for MatGL/CHGNet), mace (for MACE), or base (for Order-Disorder)
     - Required packages: ase, pymatgen, matgl/mace, matcalc
 """
 

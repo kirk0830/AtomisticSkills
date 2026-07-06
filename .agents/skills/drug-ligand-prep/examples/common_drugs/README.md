@@ -15,7 +15,7 @@ This example demonstrates ligand preparation for three well-known drug molecules
 To reproduce the results, run the following command from the project root:
 
 ```bash
-conda activate drugdisc-agent
+pixi shell -e drugdisc
 python .agents/skills/drug-ligand-prep/scripts/prepare_ligand.py \
   --smiles_file .agents/skills/drug-ligand-prep/examples/common_drugs/compounds.smi \
   --output_dir .agents/skills/drug-ligand-prep/examples/common_drugs/output \
@@ -28,7 +28,7 @@ python .agents/skills/drug-ligand-prep/scripts/prepare_ligand.py \
 Aspirin and ibuprofen both have a carboxylic acid that can be ionized at physiological pH. To enumerate protomers:
 
 ```bash
-conda activate drugdisc-agent
+pixi shell -e drugdisc
 python .agents/skills/drug-ligand-prep/scripts/prepare_ligand.py \
   --smiles_file .agents/skills/drug-ligand-prep/examples/common_drugs/compounds.smi \
   --output_dir ligand_prep/common_drugs_states \

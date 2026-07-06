@@ -12,7 +12,7 @@ Usage:
     python calculate_vibrations.py --structure mol.xyz --model_type mace --no_relax --output_dir results
 
 Requirements:
-    - Conda environment: mace-agent, matgl-agent, or fairchem-agent
+    - Pixi environment: mace, matgl, or fairchem
     - Required packages: ase, numpy
 """
 

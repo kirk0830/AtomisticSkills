@@ -14,7 +14,7 @@ To demonstrate how the `mat-xrd-digitizer` skill translates manually extracted v
 2. **Generate `.xy` plot**: Run the `digitize_plot.py` script.
 
 ```bash
-# Env: base-agent
+# Env: base
 python ../../scripts/digitize_plot.py peaks.json --output example_ybco.xy --min-x 5.0 --max-x 80.0
 ```
 

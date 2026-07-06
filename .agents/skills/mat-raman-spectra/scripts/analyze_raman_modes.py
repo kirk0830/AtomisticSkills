@@ -27,7 +27,7 @@ Usage
 
 Requirements
 ------------
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: phonopy, pymatgen, numpy, matplotlib
 """
 

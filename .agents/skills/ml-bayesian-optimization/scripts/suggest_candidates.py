@@ -22,7 +22,7 @@ Usage:
         --output_dir bo_campaign/
 
 Requirements:
-    Conda environment: base-agent
+    Pixi environment: base
     Packages: scikit-learn, scipy, numpy, pandas, pyyaml
 """
 

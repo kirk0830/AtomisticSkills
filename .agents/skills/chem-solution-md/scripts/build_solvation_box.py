@@ -11,7 +11,7 @@ Usage:
     python build_solvation_box.py --solute_file solute.xyz --solvent_smiles "O" --num_solvent 100 --output_dir my_box
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, rdkit, ase, pyyaml
     - External binary: packmol (must be on PATH)
 """

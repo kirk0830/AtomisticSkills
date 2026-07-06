@@ -20,7 +20,7 @@ Usage:
         --output-dir gb_results/
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, numpy, matplotlib
 """
 

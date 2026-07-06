@@ -75,7 +75,7 @@ notify_user(
 To initiate deep research:
 ```bash
 # Agent internally executes Step 1 to Step 5.
-# (No specific conda environment required since it's an agentic skill relying on MCP tools).
+# (No specific pixi environment required since it's an agentic skill relying on MCP tools).
 ```
 
 ---

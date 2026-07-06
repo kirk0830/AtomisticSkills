@@ -1,25 +1,25 @@
 """Integration tests for NValchemi GPU-accelerated batch operations.
 
-These tests require the appropriate conda environment with nvalchemi installed
+These tests require the appropriate Pixi environment with nvalchemi installed
 and at least one MLIP model available.
 
 Run individual groups:
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestFallback -v
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchRelaxMACE -v
-    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchRelaxM3GNet -v
-    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchRelaxCHGNet -v
-    conda run -n fairchem-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchStaticFairChem -v
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestBatchMDNVT -v
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxMACE -v
-    conda run -n fairchem-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxFairChem -v
-    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxM3GNet -v
-    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxTensorNet -v
-    conda run -n matgl-agent pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxCHGNet -v
+    pixi run -e mace pytest tests/utils/test_nvalchemi_batch.py::TestFallback -v
+    pixi run -e mace pytest tests/utils/test_nvalchemi_batch.py::TestBatchRelaxMACE -v
+    pixi run -e matgl pytest tests/utils/test_nvalchemi_batch.py::TestBatchRelaxM3GNet -v
+    pixi run -e matgl pytest tests/utils/test_nvalchemi_batch.py::TestBatchRelaxCHGNet -v
+    pixi run -e fairchem pytest tests/utils/test_nvalchemi_batch.py::TestBatchStaticFairChem -v
+    pixi run -e mace pytest tests/utils/test_nvalchemi_batch.py::TestBatchMDNVT -v
+    pixi run -e mace pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxMACE -v
+    pixi run -e fairchem pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxFairChem -v
+    pixi run -e matgl pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxM3GNet -v
+    pixi run -e matgl pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxTensorNet -v
+    pixi run -e matgl pytest tests/utils/test_nvalchemi_batch.py::TestInflightRelaxCHGNet -v
 
 Backend key and MCP signature tests (any environment with nvalchemi + MACE):
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestBackendKeyAllPaths -v
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestRelaxLogFixedBatch -v
-    conda run -n mace-agent pytest tests/utils/test_nvalchemi_batch.py::TestMCPServerParamCoverage -v
+    pixi run -e mace pytest tests/utils/test_nvalchemi_batch.py::TestBackendKeyAllPaths -v
+    pixi run -e mace pytest tests/utils/test_nvalchemi_batch.py::TestRelaxLogFixedBatch -v
+    pixi run -e mace pytest tests/utils/test_nvalchemi_batch.py::TestMCPServerParamCoverage -v
 """
 
 from __future__ import annotations

@@ -82,11 +82,11 @@ Skills that reference `mcp_*` functions require MCP servers to be configured. If
 
 ## MCP Server Setup
 
-Run `configure_mcp.py` to write configs for your agent:
+Run `atomisticskills configure` to write configs for your agent:
 ```bash
-python configure_mcp.py                    # auto-detect installed agents
-python configure_mcp.py --agent gemini     # Gemini CLI only
-python configure_mcp.py --scope global    # write to global user config
+atomisticskills configure                        # auto-detect installed agents
+atomisticskills configure --agent gemini         # Gemini CLI only
+atomisticskills configure --agent gemini --scope global  # write to global config
 ```
 
 See `README.md` for full installation instructions.

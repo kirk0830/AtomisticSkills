@@ -7,7 +7,7 @@ Usage:
         --defect_type vacancy --charge_range -2 2 --output dft_defects/
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, pymatgen-analysis-defects
 """
 

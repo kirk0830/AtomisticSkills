@@ -10,7 +10,7 @@ Usage:
         --env mace --device cuda --n-repeat 3 --output results.json
 
 Requirements:
-    - Conda environment: mace-agent, matgl-agent, or fairchem-agent
+    - Pixi environment: mace, matgl, or fairchem
     - nvalchemi-toolkit installed in the environment
 """
 

@@ -21,7 +21,7 @@ Save as: `.agents/skills/mat-synthesis-extraction/examples/pt-cu-alloy-co-oxidat
 ### 2. Parse PDF to text
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-synthesis-extraction/scripts/parse_pdfs.py \
     --pdf-dir .agents/skills/mat-synthesis-extraction/examples/pt-cu-alloy-co-oxidation \
     --output-dir .agents/skills/mat-synthesis-extraction/examples/pt-cu-alloy-co-oxidation/output

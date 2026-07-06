@@ -14,7 +14,7 @@ Usage:
         --output_dir results/msms_prediction
 
 Requirements:
-    - Conda environment: ms-gen
+    - Pixi environment: ms-gen
     - Checkpoints: downloads/iceberg_dag_gen_msg_best.ckpt
                    downloads/iceberg_dag_inten_msg_best.ckpt
 """

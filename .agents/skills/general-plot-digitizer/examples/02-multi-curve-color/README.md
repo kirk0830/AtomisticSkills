@@ -7,7 +7,7 @@ Two Raman spectra plotted on the same axes: a black curve (citric acid aqueous s
 ## Command
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-plot-digitizer/scripts/digitize_pipeline.py \
   .agents/skills/general-plot-digitizer/examples/02-multi-curve-color/source.png \
   --full \

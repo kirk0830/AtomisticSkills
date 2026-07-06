@@ -8,7 +8,7 @@ set -e
 SCRIPT_PATH="../../scripts/find_pathways.py"
 
 echo "=== 1. Traditional Precursors (B2O3 + BaO + Li2O) ==="
-conda run --no-capture-output -n base-agent python -u $SCRIPT_PATH \
+conda run --no-capture-output -n base python -u $SCRIPT_PATH \
     --target BaLiBO3 \
     --precursors B2O3 BaO Li2O \
     --temperature 1000 \
@@ -16,7 +16,7 @@ conda run --no-capture-output -n base-agent python -u $SCRIPT_PATH \
     --output traditional_output.json
 
 echo "=== 2. Predicted Precursors (LiBO2 + BaO) ==="
-conda run --no-capture-output -n base-agent python -u $SCRIPT_PATH \
+conda run --no-capture-output -n base python -u $SCRIPT_PATH \
     --target BaLiBO3 \
     --precursors LiBO2 BaO \
     --temperature 1000 \

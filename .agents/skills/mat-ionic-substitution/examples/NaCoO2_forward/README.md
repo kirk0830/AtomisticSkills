@@ -7,7 +7,7 @@ Propose all high-probability ion-substituted variants of NaCoO₂, a layered cat
 ## Command
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-ionic-substitution/scripts/propose_substitutions.py \
     --structure NaCoO2.cif \
     --threshold 0.001 \

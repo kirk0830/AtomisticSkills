@@ -9,7 +9,7 @@ Usage:
     python calculate_elasticity.py --structure Cu.cif --model_type mace --output_dir elasticity_results
 
 Requirements:
-    - Conda environment: mace-agent, matgl-agent, or fairchem-agent
+    - Pixi environment: mace, matgl, or fairchem
     - Required packages: ase, matcalc, pymatgen
 """
 

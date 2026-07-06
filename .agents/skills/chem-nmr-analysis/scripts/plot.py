@@ -11,7 +11,7 @@ Usage:
         --labels 0min 30min 60min --output time_series.png
 
 Requirements:
-    # Env: nmr-agent
+    # Env: nmr
     - Required packages: numpy, matplotlib
 """
 

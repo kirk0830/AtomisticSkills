@@ -10,7 +10,7 @@ mkdir -p ./out_zn
 
 # Run the query script in the correct environment
 export PYTHONPATH=$(dirname $(dirname $(dirname $(dirname "$PWD"))))
-conda run -n base-agent python ../scripts/query_qmof.py \
+pixi run -e base python ../scripts/query_qmof.py \
     --formula "Zn" \
     --max-results 1 \
     --output-dir ./out_zn

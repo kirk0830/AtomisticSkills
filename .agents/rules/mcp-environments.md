@@ -8,15 +8,13 @@ When running scripts or debugging code related to specific MCP servers, you MUST
 
 For general development logic that cuts across tools, usually the `base` environment is sufficient, but when importing specific libraries that are isolated (like `atomate2`, `jobflow_remote`, `mace`, `fairchem`), you must use the correct environment.
 
-## Environment Management: Pixi (Preferred) vs Conda
+## Environment Management: Pixi
 
-This project supports both Pixi and Conda environments. **Pixi is the preferred and recommended approach** because:
+All environments are managed through **Pixi**:
 - Environments are isolated within `.pixi/envs/` (no global PATH pollution)
 - `pixi.lock` guarantees reproducible installs
 - Declarative configuration in `pixi.toml`
-- No `conda env remove` brute-force reinstalls
-
-Conda is still supported for backward compatibility. If `pixi.toml` exists in the project root, `configure_mcp.py` will automatically use Pixi environments.
+- No brutal delete/recreate — incremental updates
 
 ## Installation Instructions
 
@@ -55,23 +53,6 @@ All environments are defined in `pixi.toml`.
 | `void` | Porous materials docking (VOID) |
 | `orca` | Molecular DFT via ORCA (SCINE/ReaDuct). Scripts only — no MCP server. |
 
-### Conda (Legacy)
-
-For detailed installation instructions, please refer to the `README.md` and `install.sh` located in each environment's directory under `conda-envs/<env_name>/`.
-
-| MCP Server | Conda Environment | Python Path |
-| :--- | :--- | :--- |
-| base | `base-agent` | `<conda_base>/envs/base-agent/bin/python` |
-| mace | `mace-agent` | `<conda_base>/envs/mace-agent/bin/python` |
-| matgl | `matgl-agent` | `<conda_base>/envs/matgl-agent/bin/python` |
-| fairchem | `fairchem-agent` | `<conda_base>/envs/fairchem-agent/bin/python` |
-| atomate2 | `atomate2-agent` | `<conda_base>/envs/atomate2-agent/bin/python` |
-| smol | `smol-agent` | `<conda_base>/envs/smol-agent/bin/python` |
-| adit | `adit-agent` | `<conda_base>/envs/adit-agent/bin/python` |
-| diffcsp | `diffcsp-agent` | `<conda_base>/envs/diffcsp-agent/bin/python` |
-| mattergen | `mattergen-agent` | `<conda_base>/envs/mattergen-agent/bin/python` |
-| drugdisc | `drugdisc-agent` | `<conda_base>/envs/drugdisc-agent/bin/python` |
-
 ## Running Scripts in the Right Environment
 
 ### Pixi
@@ -82,16 +63,6 @@ pixi run -e <env-name> <command>
 
 # Or activate the environment shell
 pixi shell -e <env-name>
-```
-
-### Conda (Legacy)
-
-```bash
-# Run with conda run
-conda run -n <env-name> python <script>
-
-# Or activate
-conda activate <env-name>
 ```
 
 ## Skill Environment Annotations
@@ -107,4 +78,4 @@ With Pixi, this translates to:
 pixi run -e mace python .agents/skills/ml-mace-finetune/scripts/train_mace.py
 ```
 
-Note: Conda environment names use the `-agent` suffix (e.g., `mace-agent`), while Pixi environment names do not (e.g., `mace`).
+Note: Pixi environment names do not use the `-agent` suffix — use `mace`, `matgl`, `base`, etc.

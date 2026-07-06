@@ -25,7 +25,7 @@ The transition state is an eclipsed conformation where eclipsing strain raises t
 ## Usage
 
 ```bash
-conda activate mace-agent
+pixi shell -e mace
 cd <project_root>
 python .agents/skills/chem-neb-barrier/examples/butane_conformer/run_example.py
 ```

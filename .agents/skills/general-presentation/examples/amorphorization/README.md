@@ -15,8 +15,8 @@ summarizing the **mat-amorphorization** skill with LiCl as the example material.
 ## Usage
 
 ```bash
-# Env: base-agent
-conda run -n base-agent python .agents/skills/general-presentation/examples/amorphorization/amorphorization_slides.py
+# Env: base
+pixi run -e base python .agents/skills/general-presentation/examples/amorphorization/amorphorization_slides.py
 ```
 
 ## Slide Contents
@@ -36,6 +36,6 @@ conda run -n base-agent python .agents/skills/general-presentation/examples/amor
 
 ## Dependencies
 
-- `python-pptx`, `Pillow` (installed in `base-agent`)
+- `python-pptx`, `Pillow` (installed in `base`)
 - Structure images generated via `mcp_base_visualize_structure`
 - RDF plot from `mat-amorphorization/examples/LiCl/rdf_plot.png`

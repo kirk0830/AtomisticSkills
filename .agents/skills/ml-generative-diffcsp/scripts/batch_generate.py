@@ -25,7 +25,7 @@ JSON format:
     ]
 
 Requirements:
-    - Conda environment: diffcsp-agent
+    - Pixi environment: diffcsp
     - Required packages: torch, pyxtal, pymatgen, hydra-core
 """
 

@@ -8,13 +8,13 @@ predictor) and upserts entries keyed by (canonical_smiles, modality) into catalo
 Supported modalities: nmr_1h, ir
 
 Usage:
-    # Env: nmr-agent
+    # Env: nmr
     python register_spectrum.py \\
         --source_dir research/nmr_predictions/ \\
         --modality nmr_1h \\
         --catalog_dir research/spectrum_catalog/
 
-    # Env: base-agent  (for IR from chem-db-spectra)
+    # Env: base  (for IR from chem-db-spectra)
     python register_spectrum.py \\
         --source_dir research/ir_references/ \\
         --modality ir \\
@@ -23,7 +23,7 @@ Usage:
         --catalog_dir research/spectrum_catalog/
 
 Requirements:
-    - Conda environment: nmr-agent (or base-agent for IR-only registration)
+    - Pixi environment: nmr (or base for IR-only registration)
     - Required packages: rdkit
 """
 

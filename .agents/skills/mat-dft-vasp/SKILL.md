@@ -137,7 +137,7 @@ For complex workflows with MongoDB integration:
 # - mcp_atomate2_get_atomate2_results_by_id
 ```
 
-See the [Atomate2 remote setup guide](../../../conda-envs/atomate2-agent/atomate2_remote_worker_setup.md) for configuration details.
+See the [Atomate2 remote setup guide](../../../pixi.toml (feature: atomate2) / atomate2_remote_worker_setup.md) for configuration details.
 
 ### Step 3. Parse VASP Results
 

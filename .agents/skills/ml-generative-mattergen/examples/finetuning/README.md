@@ -32,7 +32,7 @@ Create a JSON file with your structures and properties:
 Or use the preparation script:
 
 ```bash
-conda activate mattergen-agent
+pixi shell -e mattergen
 
 python ../scripts/prepare_training_data.py \
   --structures-json your_data.json \

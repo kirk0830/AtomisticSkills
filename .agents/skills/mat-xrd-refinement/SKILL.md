@@ -12,7 +12,7 @@ Perform quantitative Rietveld refinement of powder X-ray diffraction (XRD) patte
 
 ## Requirements
 
-- Conda environment: `xrd-agent` (see [conda-envs/xrd-agent](../../../conda-envs/xrd-agent)).
+- Pixi environment: `xrd` (see [conda-envs/xrd](../../../conda-envs/xrd)).
 - Dependencies: `dara-xrd`, `pymatgen`. Optional: `kaleido` for PNG export (use `kaleido>=0.2.1,<0.3` to avoid needing Chrome).
 - BGMN: DARA uses BGMN; ensure it is installed. On HPC without network, set `--bgmn_dir` or `DARA_BGMN_DIR` to a local BGMN directory.
 
@@ -97,7 +97,7 @@ python .agents/skills/mat-xrd-refinement/scripts/refine.py \
 
 # If your shell or conda run still has trouble with parentheses in the path,
 # you can invoke the environment's Python explicitly instead of using `conda run`:
-/home/USER/.conda/envs/xrd-agent/bin/python .agents/skills/mat-xrd-refinement/scripts/refine.py \
+/home/USER/.conda/envs/xrd/bin/python .agents/skills/mat-xrd-refinement/scripts/refine.py \
   --xrd_data ".agents/skills/mat-xrd-refinement/examples/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO/CaNi(PO3)4_800_240_Ca(OH)2_(NH4)2HPO4_NiO.xy"
 ```
 

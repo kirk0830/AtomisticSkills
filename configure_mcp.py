@@ -2,7 +2,7 @@
 """Configure AtomisticSkills MCP servers for any supported AI agent.
 
 Writes MCP server configs to the correct location for each agent, adapting
-paths to the local conda installation.
+paths to the local Pixi installation.
 
 Supported agents:
   claude   - Claude Code (.mcp.json or ~/.claude/settings.json)
@@ -20,7 +20,6 @@ Usage:
     python configure_mcp.py                        # auto-detect installed agents
     python configure_mcp.py --agent claude         # specific agent only
     python configure_mcp.py --agent claude codex   # multiple agents
-    python configure_mcp.py --conda /path/to/miniforge3
     python configure_mcp.py --scope global         # write to global config only
     python configure_mcp.py --scope project        # write to project config only
     python configure_mcp.py --list-agents          # show detected agents
@@ -36,7 +35,6 @@ from pathlib import Path
 from src.config import (
     load_mcp_servers,
     detect_pixi_project_root,
-    detect_conda_base,
     PROJECT_ROOT,
     MCP_SOURCE,
 )
@@ -94,23 +92,6 @@ def main() -> None:
         "(default: auto-detect installed agents)",
     )
     parser.add_argument(
-        "--conda",
-        default=None,
-        metavar="PATH",
-        help="Path to conda/mamba base directory (auto-detected if omitted).",
-    )
-    parser.add_argument(
-        "--pixi",
-        action="store_true",
-        default=None,
-        help="Use Pixi environments (auto-detected if pixi.toml exists).",
-    )
-    parser.add_argument(
-        "--no-pixi",
-        action="store_true",
-        help="Force conda mode even if pixi.toml is present.",
-    )
-    parser.add_argument(
         "--scope",
         choices=["project", "global", "both"],
         default="project",
@@ -132,36 +113,21 @@ def main() -> None:
             print("No supported agents detected.")
         return
 
-    pixi_root: str | None = None
-    conda_base: str | None = None
-
-    if args.no_pixi:
-        use_pixi = False
-    else:
-        pixi_root = detect_pixi_project_root()
-        use_pixi = pixi_root is not None
-
-    if not use_pixi:
-        conda_base = args.conda
-        if conda_base is not None:
-            if not Path(conda_base).is_dir():
-                print(f"Error: {conda_base} is not a valid directory.", file=sys.stderr)
-                sys.exit(1)
-        else:
-            conda_base = detect_conda_base()
-            if conda_base is None:
-                print(
-                    "Error: Could not auto-detect a conda/mamba installation.\n"
-                    "Provide the base path explicitly: --conda /path/to/miniforge3",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
+    pixi_root = detect_pixi_project_root()
+    if pixi_root is None:
+        print(
+            "Error: Could not find pixi.toml in project root.\n"
+            "This project uses Pixi for environment management. "
+            "Please ensure pixi.toml is present.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     if not MCP_SOURCE.exists():
         print(f"Error: {MCP_SOURCE} not found.", file=sys.stderr)
         sys.exit(1)
 
-    servers = load_mcp_servers(conda_base=conda_base, pixi_root=pixi_root)
+    servers = load_mcp_servers(pixi_root=pixi_root)
 
     if args.agent is None:
         agents = detect_agents()
@@ -179,11 +145,7 @@ def main() -> None:
         agents = args.agent
 
     print(f"Project root : {PROJECT_ROOT}")
-    if use_pixi:
-        print(f"Env mode     : pixi (envs in .pixi/envs/)")
-    else:
-        print(f"Env mode     : conda")
-        print(f"Conda base   : {conda_base}")
+    print(f"Env mode     : pixi (envs in .pixi/envs/)")
     print(f"Scope        : {args.scope}")
     print()
 
