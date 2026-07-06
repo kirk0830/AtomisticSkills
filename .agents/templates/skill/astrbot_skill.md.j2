@@ -1,20 +1,33 @@
 ---
 name: atomisticskills
-description: Use AtomisticSkills from {{ project_root }} for atomistic research, materials simulation, molecular modeling, spectroscopy, MLIP, drug discovery, and scientific workflow tasks. Contains rules, workflows, MCP server info, and all skill references. This is the PRIMARY entry point — always read this first.
+description: Use AtomisticSkills for atomistic research, materials simulation, molecular modeling, spectroscopy, MLIP, drug discovery, and scientific workflow tasks. Contains rules, workflows, MCP server info, and all skill references. This is the PRIMARY entry point — always read this first.
 ---
 
 # AtomisticSkills — Primary Reference
 
-> **CRITICAL: Always read this skill first before any task.**
+> **🔴 CRITICAL: This is the ROOT skill. Read this first, always, before any other skill or action.**
 >
-> This skill is your entry point into the AtomisticSkills framework. It contains
-> the **rules**, **workflows**, **MCP server documentation**, and pointers to
-> all individual research skills. **Read the rules below and the relevant
-> workflow BEFORE starting any research task.**
+> This skill is the **single entry point** into the AtomisticSkills framework. It sits
+> **above** all other skills and must be consulted before any task. It contains the
+> **rules**, **workflows**, **MCP server documentation**, and a categorized index of
+> all individual research skills.
 
-The AtomisticSkills repository is installed at:
+## 📖 Progressive Disclosure — Read in This Order
 
-`{{ project_root }}`
+When processing any user request, follow this strict reading order:
+
+```
+1. THIS SKILL (atomisticskills)     ← you are here
+2. Rules (linked below)             ← protocols, coding standards, environments
+3. Workflows (linked below)         ← end-to-end research blueprints
+4. Individual Skills                ← use only when no workflow matches
+```
+
+**Never skip a level.** Do not jump directly to an individual skill without first
+checking whether a workflow covers the goal. Do not start any research task without
+first reading the rules.
+
+The AtomisticSkills skills are installed in your skills directory.
 
 ---
 
@@ -95,4 +108,5 @@ contains step-by-step instructions, helper scripts, and examples.
 4. **Plan before acting** — for computational research tasks, create a research plan artifact and get user approval.
 5. **Use the right tool** — pick the correct MCP server and environment for each operation.
 
-If the current workspace is already `{{ project_root }}` or one of its subdirectories, prefer the project-local AGENTS.md and project-local skills to avoid duplicate context.
+If the AtomisticSkills skills are already available in your skills directory,
+use them directly instead of searching for external copies.

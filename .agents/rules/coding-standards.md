@@ -8,7 +8,7 @@ These rules are universally applied across all aspects of this project. **You MU
 
 ## 1. Global Agent Guidelines
 1. **Language**: All code and comments must be in **English**.
-2. **Temporary Files**: All temporary log, validation, testing, and summary files must be created under `<project_root>/.agents/test` to maintain a clean project structure.
+2. **Temporary Files**: All temporary log, validation, testing, and summary files must be created under `.agents/test` in the project root to maintain a clean project structure.
 3. **Error Handling**: Avoid using `try...except` blocks unless absolutely necessary; ensure the code output expectation is static and predictable.
 4. **Cleanup**: After implementation changes, clean up temporary test code for previous deprecated functions.
 5. **Reusability**: Before implementing a new function, search whether the same function already exists in dependency packages. Do not reinvent the wheel.

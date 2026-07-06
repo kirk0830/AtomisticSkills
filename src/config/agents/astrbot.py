@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -72,6 +73,8 @@ def link_skills_to_astrbot(
     skipped: list[str] = []
     conflicts: list[str] = []
 
+    rewritten_skills = 0
+
     for project_skill in sorted(project_skills_dir.iterdir()):
         if not project_skill.is_dir():
             continue
@@ -97,6 +100,16 @@ def link_skills_to_astrbot(
             link_path.symlink_to(project_skill, target_is_directory=True)
             linked += 1
 
+        # Rewrite SKILL.md for AstrBot sandbox (breaks symlink for this file)
+        skill_md = link_path / "SKILL.md"
+        if skill_md.exists():
+            _copy_and_rewrite(
+                project_skill / "SKILL.md",
+                skill_md,
+                "skill",
+            )
+            rewritten_skills += 1
+
     write_index_skill(skills_dir, project_root)
 
     return {
@@ -105,7 +118,87 @@ def link_skills_to_astrbot(
         "skipped": len(skipped),
         "removed_stale": removed,
         "conflicts": conflicts,
+        "rewritten_skills": rewritten_skills,
     }
+
+
+def _rewrite_for_sandbox(text: str, context: str) -> str:
+    """Rewrite project-relative paths to AstrBot sandbox-relative paths.
+
+    Converts ``@.agents/...`` syntax (Claude Code/Cursor) and ``.agents/...``
+    paths into paths reachable within AstrBot's ``data/`` sandbox.
+
+    Parameters:
+        text: The markdown content to transform.
+        context: Where the content lives in the sandbox —
+            ``"rules"`` (``skills/atomisticskills/rules/``),
+            ``"workflows"`` (``skills/atomisticskills/workflows/``),
+            ``"skill"`` (``skills/<skill-name>/``).
+    """
+    # Map context → relative paths to other sandbox areas
+    _up_to_skills = {"rules": "../..", "workflows": "../..", "skill": ".."}
+    _up_to_index = {"rules": "..", "workflows": "..", "skill": "atomisticskills"}
+    _rules_ref = {"rules": "", "workflows": "../rules/", "skill": "atomisticskills/rules/"}
+    _workflows_ref = {"rules": "../workflows/", "workflows": "", "skill": "atomisticskills/workflows/"}
+
+    up = _up_to_skills[context]
+    up_index = _up_to_index[context]
+
+    # 1. file:// absolute paths FIRST (before .agents/skills/ rule consumes them)
+    text = re.sub(
+        r'file://[^ )]*?\.agents/skills/([\w\-.]+)/([^ )]+)',
+        lambda m: f"{up}/{m.group(1)}/{m.group(2)}",
+        text,
+    )
+
+    # 2. @.agents/rules/xxx.md  →  xxx.md (same dir) or ../rules/xxx.md
+    text = re.sub(
+        r'@\.agents/rules/([\w\-.]+\.md)',
+        lambda m: f"{_rules_ref[context]}{m.group(1)}",
+        text,
+    )
+
+    # 3. @.agents/skills/  →  ../../ or ../
+    text = re.sub(
+        r'@\.agents/skills/',
+        f"{up}/",
+        text,
+    )
+
+    # 4. .agents/skills/<skill>/  →  ../<skill>/  (cross-skill references)
+    text = re.sub(
+        r'\.agents/skills/([\w\-.]+)/',
+        lambda m: f"{up}/{m.group(1)}/",
+        text,
+    )
+
+    # 5. .agents/workflows/<file>  →  workflows/<file> or ../workflows/<file>
+    text = re.sub(
+        r'\.agents/workflows/([\w\-.]+\.md)',
+        lambda m: f"{_workflows_ref[context]}{m.group(1)}",
+        text,
+    )
+
+    # 6. .agents/rules/<file>  →  rules/<file> or ../rules/<file>
+    #    (non-@ references, e.g. in prose like "see .agents/rules/...")
+    text = re.sub(
+        r'\.agents/rules/([\w\-.]+\.md)',
+        lambda m: f"{_rules_ref[context]}{m.group(1)}",
+        text,
+    )
+
+    # 7. .agents/templates/  →  remove (templates are build-time only)
+    text = re.sub(r'\.agents/templates/', '', text)
+
+    return text
+
+
+def _copy_and_rewrite(src: Path, dst: Path, context: str) -> None:
+    """Copy *src* to *dst*, rewriting paths for the AstrBot sandbox."""
+    content = src.read_text(encoding="utf-8")
+    rewritten = _rewrite_for_sandbox(content, context)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_text(rewritten, encoding="utf-8")
 
 
 def _remove_stale_project_skill_symlinks(
@@ -129,17 +222,30 @@ def _remove_stale_project_skill_symlinks(
 
 
 def write_index_skill(skills_dir: Path, project_root: Path) -> None:
-    """Write the atomisticskills index SKILL.md and symlink sub-resources."""
+    """Write the atomisticskills index SKILL.md and sandbox-safe sub-resources.
+
+    Rules and workflows are **copied** (not symlinked) so that project-relative
+    paths (``@.agents/...``, ``.agents/...``) can be rewritten into sandbox-
+    relative paths that AstrBot can actually follow.
+    """
     index_dir = skills_dir / INDEX_SKILL_NAME
     index_dir.mkdir(parents=True, exist_ok=True)
 
+    # Workflows: copy + rewrite paths
     workflows_dir = index_dir / "workflows"
     workflows_dir.mkdir(parents=True, exist_ok=True)
-    symlink_dir_contents(WORKFLOWS_SRC, workflows_dir)
+    if WORKFLOWS_SRC.exists():
+        for wf_file in WORKFLOWS_SRC.iterdir():
+            if wf_file.suffix == ".md":
+                _copy_and_rewrite(wf_file, workflows_dir / wf_file.name, "workflows")
 
+    # Rules: copy + rewrite paths
     rules_dir = index_dir / "rules"
     rules_dir.mkdir(parents=True, exist_ok=True)
-    symlink_dir_contents(RULES_SRC, rules_dir)
+    if RULES_SRC.exists():
+        for rule_file in RULES_SRC.iterdir():
+            if rule_file.suffix == ".md":
+                _copy_and_rewrite(rule_file, rules_dir / rule_file.name, "rules")
 
     mcpservers_dir = index_dir / "mcpservers"
     mcpservers_dir.mkdir(parents=True, exist_ok=True)
@@ -195,21 +301,34 @@ def _build_index_skill_fallback(project_root: Path, index_dir: Path) -> str:
     return f"""\
 ---
 name: atomisticskills
-description: Use AtomisticSkills from {project_root} for atomistic research, materials simulation, molecular modeling, spectroscopy, MLIP, drug discovery, and scientific workflow tasks. Contains rules, workflows, MCP server info, and all skill references. This is the PRIMARY entry point — always read this first.
+description: Use AtomisticSkills for atomistic research, materials simulation, molecular modeling, spectroscopy, MLIP, drug discovery, and scientific workflow tasks. Contains rules, workflows, MCP server info, and all skill references. This is the PRIMARY entry point — always read this first.
 ---
 
 # AtomisticSkills — Primary Reference
 
-> **CRITICAL: Always read this skill first before any task.**
+> **🔴 CRITICAL: This is the ROOT skill. Read this first, always, before any other skill or action.**
 >
-> This skill is your entry point into the AtomisticSkills framework. It contains
-> the **rules**, **workflows**, **MCP server documentation**, and pointers to
-> all individual research skills. **Read the rules below and the relevant
-> workflow BEFORE starting any research task.**
+> This skill is the **single entry point** into the AtomisticSkills framework. It sits
+> **above** all other skills and must be consulted before any task. It contains the
+> **rules**, **workflows**, **MCP server documentation**, and a categorized index of
+> all individual research skills.
 
-The AtomisticSkills repository is installed at:
+## 📖 Progressive Disclosure — Read in This Order
 
-`{project_root}`
+When processing any user request, follow this strict reading order:
+
+```
+1. THIS SKILL (atomisticskills)     ← you are here
+2. Rules (linked below)             ← protocols, coding standards, environments
+3. Workflows (linked below)         ← end-to-end research blueprints
+4. Individual Skills                ← use only when no workflow matches
+```
+
+**Never skip a level.** Do not jump directly to an individual skill without first
+checking whether a workflow covers the goal. Do not start any research task without
+first reading the rules.
+
+The AtomisticSkills skills are installed in your skills directory.
 
 ---
 
@@ -220,12 +339,12 @@ These rules define how you operate as an AtomisticSkills research agent.
 
 | Rule File | Purpose |
 |-----------|---------|
-| [research-standards.md]({project_root}/.agents/rules/research-standards.md) | **Core research protocol** — intent classification, research plan workflow, artifact rules |
-| [coding-standards.md]({project_root}/.agents/rules/coding-standards.md) | Coding conventions, error handling, MCP stability rules |
-| [mcp-environments.md]({project_root}/.agents/rules/mcp-environments.md) | Which Pixi/Conda environment to use for each MCP server |
-| [skill-standards.md]({project_root}/.agents/rules/skill-standards.md) | How to read and follow a skill |
-| [workflow-standards.md]({project_root}/.agents/rules/workflow-standards.md) | How to execute a multi-step workflow |
-| [plot-standards.md]({project_root}/.agents/rules/plot-standards.md) | Plotting and visualization conventions |
+| [research-standards.md](research-standards.md) | **Core research protocol** — intent classification, research plan workflow, artifact rules |
+| [coding-standards.md](coding-standards.md) | Coding conventions, error handling, MCP stability rules |
+| [mcp-environments.md](mcp-environments.md) | Which Pixi environment to use for each MCP server |
+| [skill-standards.md](skill-standards.md) | How to read and follow a skill |
+| [workflow-standards.md](workflow-standards.md) | How to execute a multi-step workflow |
+| [plot-standards.md](plot-standards.md) | Plotting and visualization conventions |
 
 All rule files are also available as symlinks in the `rules/` subdirectory
 next to this SKILL.md:
@@ -245,15 +364,15 @@ Available workflows (also symlinked in `workflows/`):
 
 | Workflow | Description |
 |----------|-------------|
-| [materials-discovery.md]({project_root}/.agents/workflows/materials-discovery.md) | General materials discovery campaign using MLIP + DFT validation |
-| [sorption-discovery.md]({project_root}/.agents/workflows/sorption-discovery.md) | Gas sorption material screening in porous frameworks |
-| [mof-co2-dac-screening.md]({project_root}/.agents/workflows/mof-co2-dac-screening.md) | MOF screening for CO₂ direct air capture |
-| [drug-hit-finding-htvs.md]({project_root}/.agents/workflows/drug-hit-finding-htvs.md) | High-throughput virtual screening for drug hit discovery |
-| [generative-halide-discovery.md]({project_root}/.agents/workflows/generative-halide-discovery.md) | Generative AI + MLIP for halide perovskite discovery |
-| [mlip-benchmark-finetune.md]({project_root}/.agents/workflows/mlip-benchmark-finetune.md) | MLIP benchmarking and fine-tuning workflow |
-| [nmr-reaction-kinetics.md]({project_root}/.agents/workflows/nmr-reaction-kinetics.md) | NMR-based reaction kinetics analysis |
-| [reaction-to-nmr-quantification.md]({project_root}/.agents/workflows/reaction-to-nmr-quantification.md) | Reaction analysis with NMR quantification |
-| [image-to-xrd-phase.md]({project_root}/.agents/workflows/image-to-xrd-phase.md) | XRD phase identification from digitized plot images |
+| [materials-discovery.md](workflows/materials-discovery.md) | General materials discovery campaign using MLIP + DFT validation |
+| [sorption-discovery.md](workflows/sorption-discovery.md) | Gas sorption material screening in porous frameworks |
+| [mof-co2-dac-screening.md](workflows/mof-co2-dac-screening.md) | MOF screening for CO₂ direct air capture |
+| [drug-hit-finding-htvs.md](workflows/drug-hit-finding-htvs.md) | High-throughput virtual screening for drug hit discovery |
+| [generative-halide-discovery.md](workflows/generative-halide-discovery.md) | Generative AI + MLIP for halide perovskite discovery |
+| [mlip-benchmark-finetune.md](workflows/mlip-benchmark-finetune.md) | MLIP benchmarking and fine-tuning workflow |
+| [nmr-reaction-kinetics.md](workflows/nmr-reaction-kinetics.md) | NMR-based reaction kinetics analysis |
+| [reaction-to-nmr-quantification.md](workflows/reaction-to-nmr-quantification.md) | Reaction analysis with NMR quantification |
+| [image-to-xrd-phase.md](workflows/image-to-xrd-phase.md) | XRD phase identification from digitized plot images |
 
 All workflow files are also available as symlinks in the `workflows/`
 subdirectory next to this SKILL.md:
@@ -317,7 +436,8 @@ contains step-by-step instructions, helper scripts, and examples.
 4. **Plan before acting** — for computational research tasks, create a research plan artifact and get user approval.
 5. **Use the right tool** — pick the correct MCP server and environment for each operation.
 
-If the current workspace is already `{project_root}` or one of its subdirectories, prefer the project-local AGENTS.md and project-local skills to avoid duplicate context.
+If the AtomisticSkills skills are already available in your skills directory,
+use them directly instead of searching for external copies.
 """
 
 
@@ -512,7 +632,8 @@ def _build_persona_fallback(project_root: Path) -> str:
 ## Framework Reference
 
 本智能体基于 AtomisticSkills 框架运行:
-- **仓库位置**: `{project_root}`
+- **Skills 目录**: `skills/`（所有技能模块在此目录下）
+- **主入口**: `skills/atomisticskills/SKILL.md`（包含规则、Workflows、MCP 服务器文档）
 - **Skills**: 100+ 个专业研究技能模块
 - **Workflows**: 端到端研究方案
 - **MCP Servers**: base, mace, matgl, fairchem, smol, drugdisc, adit, diffcsp, mattergen 等

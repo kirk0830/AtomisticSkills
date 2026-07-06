@@ -231,7 +231,8 @@ def _run_astrbot_configure(args: argparse.Namespace) -> None:
     print(
         "[skills] "
         f"Linked {stats['linked']}, refreshed {stats['refreshed']}, "
-        f"skipped {stats['skipped']}, removed {stats['removed_stale']} stale"
+        f"skipped {stats['skipped']}, removed {stats['removed_stale']} stale, "
+        f"rewrote {stats['rewritten_skills']} SKILL.md for sandbox"
     )
     if stats["conflicts"]:
         print(
