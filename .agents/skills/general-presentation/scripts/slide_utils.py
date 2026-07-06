@@ -11,7 +11,7 @@ Usage:
     from slide_utils import *
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: python-pptx, Pillow
 """
 

@@ -218,10 +218,10 @@ See [examples/hiv1-protease/README.md](examples/hiv1-protease/README.md) for a f
 
 ## Constraints
 
-- **Environment**: `drugdisc-agent`.
-- **Python deps**: numpy, MDAnalysis (already in `drugdisc-agent`).
+- **Environment**: `drugdisc`.
+- **Python deps**: numpy, MDAnalysis (already in `drugdisc`).
 - **External CLI tools** (one of):
-  - `fpocket` 4.x via conda-forge. Add to `drugdisc-agent` with `mamba install -n drugdisc-agent -c conda-forge fpocket`.
+  - `fpocket` 4.x via conda-forge. Add to `drugdisc` with `mamba install -n drugdisc -c conda-forge fpocket`.
   - `prank` (P2Rank) from https://github.com/rdk/p2rank/releases. Current P2Rank requires **Java 17+** (tested up to Java 25). Very old releases (2.3 and earlier) supported Java 11+; only relevant if you are pinning to a legacy version.
 - **Input**: PDB (preferred) or any format MDAnalysis can read for residue extraction. fpocket itself accepts PDB and mmCIF.
 - **Pure geometry / ML on a single conformer**: cryptic pockets are missed by design. Use trajectory ensembles to detect those.

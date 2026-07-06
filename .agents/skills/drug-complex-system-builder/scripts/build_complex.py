@@ -10,7 +10,7 @@ Usage:
     python build_complex.py --receptor protein.pdb --ligand ligand.sdf --output_dir system/
 
 Requirements:
-    - Conda environment: drugmd-agent
+    - Pixi environment: drugmd
     - Required packages: openmm, openmmforcefields, openff-toolkit, rdkit, parmed
 """
 

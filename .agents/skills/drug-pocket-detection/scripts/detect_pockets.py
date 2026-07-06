@@ -19,7 +19,7 @@ Usage:
         --output_json pockets.json
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Pixi environment: drugdisc
     - Required packages: numpy, MDAnalysis
     - External CLI tools (one of):
         - fpocket: `conda install -c conda-forge fpocket` (default backend)

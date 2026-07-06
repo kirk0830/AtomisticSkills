@@ -6,8 +6,8 @@ These tests validate:
 - MACE calculator creation
 - MACE model loading
 
-Run in: mace-agent conda environment
-Command: conda activate mace-agent && pytest -m mace
+Run in: mace Pixi environment
+Command: pixi run -e mace pytest -m mace
 """
 
 import pytest

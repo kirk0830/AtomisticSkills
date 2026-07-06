@@ -30,7 +30,7 @@ A known implementation failure is mistakenly omitting the mathematical negative 
 
 ## Reproduction
 
-Run the following command from the project root using the `phasefield-agent` environment:
+Run the following command from the project root using the `phasefield` environment:
 
 ```bash
 python .agents/skills/mat-phase-field-non-conservative/scripts/run_grain_growth.py \

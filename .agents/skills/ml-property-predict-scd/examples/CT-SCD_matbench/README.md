@@ -14,17 +14,17 @@ The public `SelfConditionedDenoisingAtoms/README.md` explicitly notes that `conf
 
 ## Contents
 
-1. `run_ct_scd_matbench.py`: a wrapper script that locates the `SelfConditionedDenoisingAtoms` checkout, relaunches itself inside the `scd-agent` environment when needed, and runs a safe smoke test by default.
+1. `run_ct_scd_matbench.py`: a wrapper script that locates the `SelfConditionedDenoisingAtoms` checkout, relaunches itself inside the `scd` environment when needed, and runs a safe smoke test by default.
 
 ## Running the Example
 
-From a general environment, let the script restart itself inside `scd-agent`:
+From a general environment, let the script restart itself inside `scd`:
 
 ```bash
 python run_ct_scd_matbench.py --dry-run
 ```
 
-Inside `scd-agent`, you can run it directly:
+Inside `scd`, you can run it directly:
 
 ```bash
 python run_ct_scd_matbench.py
@@ -47,13 +47,13 @@ On shared machines, prefer a GPU with no active compute job and low memory usage
 To run on one selected GPU:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1
+conda run --no-capture-output -n scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=2 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1
 ```
 
 To run on all selected visible GPUs:
 
 ```bash
-conda run --no-capture-output -n scd-agent env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
+conda run --no-capture-output -n scd env WANDB_MODE=offline CUDA_VISIBLE_DEVICES=0,1,2,3 python -u run_ct_scd_matbench.py --num-steps 2 --val-interval 1 --use-all-visible-gpus
 ```
 
 The wrapper defaults to a single visible GPU unless `--use-all-visible-gpus` is requested.
@@ -64,10 +64,10 @@ For smoke tests without a live W&B session, pass:
 python run_ct_scd_matbench.py --wandb-mode offline
 ```
 
-For W&B online mode, first log in inside `scd-agent`:
+For W&B online mode, first log in inside `scd`:
 
 ```bash
-conda run -n scd-agent wandb login
+pixi run -e scd wandb login
 ```
 
 Then launch without `WANDB_MODE=offline`, or set `WANDB_MODE=online` explicitly.
@@ -109,7 +109,7 @@ python run_ct_scd_matbench.py --dataset-class MBdielectric --config configs/fine
 - Actual training requires a CUDA-visible GPU. On CPU-only hosts the wrapper now exits early with a clear message instead of letting `train.py` fail later inside PyTorch Lightning.
 - If the default Matplotlib config directory is not writable, the wrapper automatically uses a temporary `MPLCONFIGDIR`.
 - This example follows the upstream material finetuning settings: `noise_in_loader=True`, `allow_periodic=True`, and `set_head_agg: mean`.
-- The default target environment is `scd-agent`, matching the environment created in `AtomisticSkills/conda-envs/scd-agent`.
+- The default target environment is `scd`, matching the environment created in `AtomisticSkills/conda-envs/scd`.
 - Training outputs are written under `SelfConditionedDenoisingAtoms/experiments/<job_id>`.
 - The W&B project is derived by `train.py` from the dataset class name, so the default `MBgap` run appears under `SCD_bench_MBgap`.
 - On this public checkout, the Matbench dataset path still depends on `StructureCloud`, so W&B login alone is not enough to make the example runnable.

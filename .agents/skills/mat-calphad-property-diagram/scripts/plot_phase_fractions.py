@@ -5,7 +5,7 @@ Usage:
     python plot_phase_fractions.py input.tdb --elements Al Zn --composition Zn 0.1 --t-range 300 1000 10 --output phase_fractions.png
 
 Requirements:
-    - Conda environment: calphad-agent
+    - Pixi environment: calphad
     - Required packages: pycalphad, matplotlib
 """
 

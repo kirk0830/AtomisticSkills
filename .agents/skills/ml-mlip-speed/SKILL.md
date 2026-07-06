@@ -15,11 +15,11 @@ The `benchmark_mlips.py` script measures performance by running short MD simulat
 
 ### Usage
 
-Run the script within the appropriate conda environment for the models being tested. The script automatically skips models not supported by the current environment.
+Run the script within the appropriate pixi environment for the models being tested. The script automatically skips models not supported by the current environment.
 
 ### Multi-Environment Benchmarking
 
-Because different MLIPs require isolated Conda environments (e.g., `mace-agent`, `matgl-agent`, `fairchem-agent`), the benchmark results are built incrementally.
+Because different MLIPs require isolated Conda environments (e.g., `mace`, `matgl`, `fairchem`), the benchmark results are built incrementally.
 
 1. **Run the script in each environment:** The script gracefully skips models whose libraries are missing while preserving and updating the central `speed_benchmark.yaml` file.
 2. **Consolidate:** Run the script in any environment (that has `matplotlib`) with the `--only_plot` flag to generate the combined graphs from the accumulated total data.

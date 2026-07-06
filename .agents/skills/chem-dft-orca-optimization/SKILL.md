@@ -198,7 +198,7 @@ print(f"SCF converged: {result.scf_converged}")
 - **Single-ended TS:** Only single-ended TS optimization is available. For double-ended methods (NEB), pre-screen with MLIPs.
 - **TS guess quality:** The TS optimizer requires a reasonable initial guess. Generate one using constrained scans, interpolation, or MLIP-based TS search methods.
 - **ORCA binary:** `ORCA_BINARY_PATH` must be set and point to a working ORCA installation.
-- **Environment:** All commands require the `orca-agent` conda environment.
+- **Environment:** All commands require the `orca` pixi environment.
 - **Solvation:** When using `--solvation`, you must also provide `--solvent`.
 
 ## References

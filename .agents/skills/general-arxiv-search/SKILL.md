@@ -59,7 +59,7 @@ python .agents/skills/general-arxiv-search/scripts/arxiv_search.py --authors "Bo
 
 ## Constraints
 - **Rate Limiting**: The ArXiv API requires a minimum of 3 seconds between requests. This script includes a small delay, but frequent calls should be avoided.
-- **Environment**: Requires `base-agent` conda environment.
+- **Environment**: Requires `base` pixi environment.
 - **Dependencies**: Uses `feedparser` and `urllib`.
 - **Metadata**: Results include ID, URL, Title, Authors, Summary, Publication Date, and DOI (if available).
 ---

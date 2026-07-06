@@ -12,7 +12,7 @@ This example demonstrates searching the RCSB PDB for HIV-1 protease X-ray struct
 From the project root:
 
 ```bash
-# Env: base-agent
+# Env: base
 # Step 1: Search for HIV-1 protease structures
 python .agents/skills/drug-db-pdb/scripts/query_pdb.py \
   --search "HIV-1 protease" \

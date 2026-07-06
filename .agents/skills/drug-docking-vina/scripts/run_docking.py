@@ -20,7 +20,7 @@ Usage (batch):
         --output_dir results/
 
 Requirements:
-    - Conda environment: drugdisc-agent
+    - Pixi environment: drugdisc
     - Required packages: vina (AutoDock Vina Python bindings), numpy
 """
 

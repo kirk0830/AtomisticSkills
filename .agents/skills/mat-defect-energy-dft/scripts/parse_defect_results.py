@@ -10,7 +10,7 @@ Usage:
         --output formation_energies.json --plot formation_energy_diagram.png
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, pymatgen-analysis-defects, matplotlib
 """
 

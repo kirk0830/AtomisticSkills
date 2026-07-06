@@ -31,7 +31,7 @@ A 2024 study (Zubatyuk et al., *JCTC*) demonstrated that MACE potentials achieve
 
 ## 1. Prerequisites
 
-- **Conda Environment**: `mace-agent` (includes RDKit, ASE, and MACE)
+- **Conda Environment**: `mace` (includes RDKit, ASE, and MACE)
 - **Input**: SMILES string or structure file (`.sdf`, `.mol2`)
 - **RDKit**: Required for bond identification and molecular fragmentation
 
@@ -45,9 +45,9 @@ Refer to the [foundation-potentials skill](../ml-foundation-potentials/SKILL.md)
 > | Mode | Recommended model | `supports_charge_spin` | Validated? |
 > |:---|:---|:---|:---|
 > | `homolytic` | `MACE-OFF23-small/medium/large` | Not required | ✅ |
-> | `heterolytic` or `both` | **`MACE-OMOL-extra-large`** (env: `mace-agent`) | ✅ Required | ✅ |
-> | `heterolytic` or `both` | **`MACE-MH-1`** with omol head (env: `mace-agent`) | ✅ Required | ✅ |
-> | `heterolytic` or `both` | FairChem `uma-s-1p1` with `--task_name omol` (env: `fairchem-agent`) | ✅ Required | ✅ |
+> | `heterolytic` or `both` | **`MACE-OMOL-extra-large`** (env: `mace`) | ✅ Required | ✅ |
+> | `heterolytic` or `both` | **`MACE-MH-1`** with omol head (env: `mace`) | ✅ Required | ✅ |
+> | `heterolytic` or `both` | FairChem `uma-s-1p1` with `--task_name omol` (env: `fairchem`) | ✅ Required | ✅ |
 >
 > **Setting charge/spin on MACE models:** use `atoms.info["charge"]` and `atoms.info["spin"]`
 > (the calculator's default `info_keys` maps `"charge"` → `total_charge` / `"spin"` → `total_spin`).
@@ -212,8 +212,8 @@ Experimental BDEs for ethanol (Blanksby & Ellison, 2003):
 - **Ring bonds**: Breaking bonds in rings produces a single open-chain diradical. The script will warn and skip ring bonds.
 - **Accuracy**: Expect ~2–5 kcal/mol error for homolytic BDEs with MACE-OFF23. Heterolytic accuracy is less benchmarked with current MLIPs.
 - **Environments**:
-  - `mace-agent` for MACE models
-  - `fairchem-agent` for FairChem/UMA models
+  - `mace` for MACE models
+  - `fairchem` for FairChem/UMA models
 
 ## References
 

@@ -49,7 +49,7 @@ To determine the thermodynamic melting temperature ($T_m$) of a bulk material by
 
     First, extract reference atomic features:
     ```bash
-    # Env: mace (or matgl-agent)
+    # Env: mace (or matgl)
     # Extract from pure solid - use explicit output path
     mcp_mace_predict_atomic_features(
         structure_data="solid_supercell.cif",
@@ -157,7 +157,7 @@ python .agents/skills/mat-melting-point/scripts/create_interface.py Al_solid.cif
 ## Constraints
 - **Box Dimensions**: The lattice parameters perpendicular to the stacking axis must be identical for both solid and liquid blocks.
 - **Ensemble**: The final production run must be in the **NVE** ensemble to allow the temperature to evolve to $T_m$.
-- **Environments**: Different MLIPs require specific Conda environments (e.g., `mace-agent`, `matgl-agent`). Ensure the scripts are run within the correct environment for the chosen model.
+- **Environments**: Different MLIPs require specific Conda environments (e.g., `mace`, `matgl`). Ensure the scripts are run within the correct environment for the chosen model.
 ---
 
 **Author:** Bowen Deng

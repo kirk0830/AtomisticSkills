@@ -275,17 +275,17 @@ python .agents/skills/mat-kinetic-monte-carlo/scripts/analyze_kmc_msd.py \
 ### Example B: First-Principles H Diffusion (NEB → Phonon → hTST → KMC)
 End-to-end predictive workflow for H in BCC W using MLIP-computed parameters:
 ```bash
-# 1) Build + relax NEB endpoints (Env: mace-agent, GPU)
+# 1) Build + relax NEB endpoints (Env: mace, GPU)
 python examples/literature_validation/prepare_h_migration.py \
     --model_type mace --model_name MACE-OMAT-0-small
 
-# 2) NEB barrier (Env: mace-agent, GPU)
+# 2) NEB barrier (Env: mace, GPU)
 python .agents/skills/chem-neb-barrier/scripts/calculate_barrier.py \
     --start_structure start_relaxed.cif --end_structure end_relaxed.cif \
     --model_type mace --model_name MACE-OMAT-0-small \
     --n_images 5 --fmax 0.02 --output_dir neb_results
 
-# 3) Phonon at equilibrium + saddle point (Env: mace-agent, GPU)
+# 3) Phonon at equilibrium + saddle point (Env: mace, GPU)
 python .agents/skills/mat-phonon/scripts/calculate_phonon.py \
     --structure start_relaxed.cif --model_type mace --model_name MACE-OMAT-0-small \
     --supercell_matrix "[[2,0,0],[0,2,0],[0,0,2]]" --output_dir phonon_eq
@@ -293,12 +293,12 @@ python .agents/skills/mat-phonon/scripts/calculate_phonon.py \
     --structure saddle_point.cif --model_type mace --model_name MACE-OMAT-0-small \
     --supercell_matrix "[[2,0,0],[0,2,0],[0,0,2]]" --output_dir phonon_ts
 
-# 4) Vineyard hTST prefactor (Env: base-agent, CPU)
+# 4) Vineyard hTST prefactor (Env: base, CPU)
 python examples/literature_validation/compute_htst_prefactor.py \
     --phonon_eq phonon_eq/phonon.yaml --phonon_ts phonon_ts/phonon.yaml \
     --neb_results neb_results/neb_results.json --output htst_results.json
 
-# 5) KMC with MLIP-derived parameters (Env: base-agent, CPU)
+# 5) KMC with MLIP-derived parameters (Env: base, CPU)
 python examples/literature_validation/validate_h_in_bcc_w.py \
     --from_mlip htst_results.json --out_dir mlip_validation
 ```
@@ -317,7 +317,7 @@ See `examples/literature_validation/README.md` for full details.
 ---
 
 ## Constraints
-- **Environments**: All scripts require the **base-agent** conda environment.
+- **Environments**: All scripts require the **base** pixi environment.
 - **Lattice KMC only**: The included engine implements lattice KMC with fixed site networks. Off-lattice/on-the-fly KMC (AKMC, k-ART) is discussed but not implemented.
 - **Rate models**: Two built-in rate models (`constant`, `symmetric_site_energy`). Custom rate models require extending the engine.
 - **Barrier inputs**: Barriers are user-provided (from NEB, DFT, or literature). The scripts do not compute barriers.

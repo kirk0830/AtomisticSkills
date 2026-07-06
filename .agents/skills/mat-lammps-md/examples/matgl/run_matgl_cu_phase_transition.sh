@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Env: matgl-agent
+# Env: matgl
 # Cu heat-and-hold scan using ASE + CHGNet (no LAMMPS bridge).
 
 OUT_DIR="${OUT_DIR:-./out-matgl-cu-phase-transition}"

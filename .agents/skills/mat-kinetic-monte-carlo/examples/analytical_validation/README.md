@@ -17,7 +17,7 @@ where `c` is the carrier concentration (blocking correction for finite occupancy
 ### Running
 
 ```bash
-# Env: base-agent
+# Env: base
 python validate_random_walk.py --max_steps 500000 --n_replicas 10 \
     --out_dir .
 ```

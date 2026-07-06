@@ -13,14 +13,14 @@ To determine the initial affinity of a porous material (e.g., MOFs, COFs) for a 
 ## Prerequisites
 
 - **Input**: A relaxed framework structure in CIF (or XYZ) format. The structure should ideally be processed by [chem-sorption-relax](../chem-sorption-relax/SKILL.md) to ensure proper supercell dimensions.
-- **Conda environment**: Depends on the MLIP used (e.g., `fairchem-agent`, `mace-agent`, `matgl-agent`).
+- **Pixi environment**: Depends on the MLIP used (e.g., `fairchem`, `mace`, `matgl`).
 
 ## Instructions
 
 1. **Perform Widom Insertion**: Use the `run_widom.py` script, specifying the structure, gas, temperature, and your MLIP of choice.
 
 ```bash
-# Env: fairchem (if using fairchem), mace-agent (if using mace), etc.
+# Env: fairchem (if using fairchem), mace (if using mace), etc.
 python .agents/skills/chem-sorption-widom/scripts/run_widom.py \
     --structure path/to/relaxed_supercell.cif \
     --name MY_FRAMEWORK \

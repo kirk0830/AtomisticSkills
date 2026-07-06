@@ -77,7 +77,7 @@ mcp_drugdisc_convert_to_pdbqt(
 
 ## Constraints
 
-* **Environment**: Requires `drugdisc-agent`.
+* **Environment**: Requires `drugdisc`.
 * **3D/PDBQT**: Delegated to `mcp_drugdisc_convert_to_pdbqt` (Meeko/RDKit).
 * **State Enumeration**: The script handles batch enumeration of protonation/tautomer states, but 3D generation is done by the MCP tool.
 ---

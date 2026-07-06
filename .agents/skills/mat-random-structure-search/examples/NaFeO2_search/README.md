@@ -8,7 +8,7 @@ Discover low-energy polymorphs of NaFeO₂ (a ternary oxide cathode material) vi
 
 ### Step 1: Generate random structures
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-random-structure-search/scripts/generate_random_structures.py \
     --composition NaFeO2 \
     --num_structures 50 \

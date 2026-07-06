@@ -8,13 +8,13 @@ a MACE-bound LAMMPS binary:
 3. runs melt/quench/hold.
 
 ```bash
-# Env: mace-agent
+# Env: mace
 bash .agents/skills/mat-lammps-md/examples/mace/run_mace_na2si3o7_quench.sh
 ```
 
 Optional overrides:
 ```bash
-# Env: mace-agent
+# Env: mace
 INPUT_STRUCTURE=./na2si3o7_initial.cif \
 MACE_MODEL_NAME=MACE-MP-medium \
 MACE_HEAD=omat_pbe \

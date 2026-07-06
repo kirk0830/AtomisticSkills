@@ -4,7 +4,7 @@ One worked example demonstrating LC-MS/MS spectrum prediction via ICEBERG for a 
 
 ## Prerequisites
 
-- `ms-gen` conda environment activated (see `conda-envs/msms-agent/install.sh`)
+- `ms-gen` pixi environment activated (see `pixi install -e msms`)
 - ICEBERG checkpoints downloaded to `downloads/`:
   - `downloads/iceberg_dag_gen_msg_best.ckpt` (stage 1: fragment DAG generator)
   - `downloads/iceberg_dag_inten_msg_best.ckpt` (stage 2: intensity predictor)

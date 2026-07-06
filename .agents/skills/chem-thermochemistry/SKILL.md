@@ -121,9 +121,9 @@ python .agents/skills/chem-thermochemistry/scripts/calculate_thermochemistry.py 
 - **Harmonic approximation**: Vibrational contributions assume harmonic potentials. Accuracy degrades for floppy modes and near dissociation.
 - **Spin and symmetry**: The script includes a lookup table for common molecules, but exotic species may need manual `--spin` and `--symmetry_number` overrides.
 - **Environments**: Scripts require conda environments with MLIP packages:
-  - `mace-agent` for MACE models
-  - `matgl-agent` for MatGL/CHGNet models
-  - `fairchem-agent` for FairChem/UMA models
+  - `mace` for MACE models
+  - `matgl` for MatGL/CHGNet models
+  - `fairchem` for FairChem/UMA models
 
 ## References
 

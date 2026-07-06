@@ -8,11 +8,11 @@ We start with a basic crystalline unit cell of Silicon ([Si.cif](Si.cif)) and wa
 
 ### 1. Preparing the Calculation
 
-Using the `base-agent` environment, we convert the `Si` structure into a working VASP directory utilizing the `matpes-pbe` preset (a robust preset built for Machine Learning Interatomic Potential training data curation).
+Using the `base` environment, we convert the `Si` structure into a working VASP directory utilizing the `matpes-pbe` preset (a robust preset built for Machine Learning Interatomic Potential training data curation).
 
 ```bash
-# Env: base-agent
-conda activate base-agent
+# Env: base
+pixi shell -e base
 
 # Run the preparation script
 python ../../../scripts/prepare_vasp_inputs.py \
@@ -42,8 +42,8 @@ cd ..
 After the calculation completes, the simulation directory will contain standard output files such as `vasprun.xml` and `OUTCAR`. The parsing script will traverse the directory and extract all critical physics metrics (Energy, Forces, Stress) into a serialized JSON representation.
 
 ```bash
-# Env: base-agent
-conda activate base-agent
+# Env: base
+pixi shell -e base
 
 # Parse the directory locally
 python ../../../scripts/parse_vasp_results.py \

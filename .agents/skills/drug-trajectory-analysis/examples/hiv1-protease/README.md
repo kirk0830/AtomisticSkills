@@ -11,7 +11,7 @@ Uses outputs from the system builder and MD examples:
 ## Steps
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-trajectory-analysis/scripts/analyze_trajectory.py \
   --topology <path_to>/system/complex_solvated.pdb \
   --trajectory <path_to>/run/production.dcd \

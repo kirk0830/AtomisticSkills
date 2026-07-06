@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Env: fairchem-agent
+# Env: fairchem
 # CO adsorption on Cu(111) via FAIR-Chem lmp_fc.
 
 OUT_DIR="${OUT_DIR:-./out-fairchem-co-cu111}"
@@ -12,7 +12,7 @@ mkdir -p "${OUT_DIR}"
 
 if ! command -v "${LMP_FC_BIN}" >/dev/null 2>&1; then
   echo "Missing '${LMP_FC_BIN}' in PATH." >&2
-  echo "Install with: bash conda-envs/fairchem-agent/install_lammps.sh" >&2
+  echo "Install with: bash pixi.toml (feature: fairchem) / install_lammps.sh" >&2
   exit 1
 fi
 

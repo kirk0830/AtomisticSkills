@@ -8,7 +8,7 @@ Usage:
     python extract_spin_density.py <vasp_output_dir> --output spin_density.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen
 """
 
@@ -36,7 +36,7 @@ def extract_spin_density(vasp_dir: Path) -> Dict[str, Any]:
         from pymatgen.io.vasp import Chgcar
     except ImportError:
         print(
-            "Error: pymatgen is required. Please install it in base-agent environment.",
+            "Error: pymatgen is required. Please install it in base environment.",
             file=sys.stderr,
         )
         sys.exit(1)

@@ -13,25 +13,25 @@
 
 | Model | Env | N=5 Speedup | N=20 Speedup | ΔE max (eV) | ΔF max (eV/Å) |
 |-------|-----|:-----------:|:------------:|:-----------:|:-------------:|
-| MACE-OMAT-0-small | mace-agent | **21.7×** | **68.0×** | 9.5e-07 | 0.0 |
-| MACE-OMAT-0-medium | mace-agent | **22.9×** | **72.3×** | 9.5e-07 | 0.0 |
-| MACE-MH-1/omat_pbe | mace-agent | **14.3×** | **33.9×** | 1.6e-07 | 0.0 |
-| MACE-MH-1/matpes_r2scan | mace-agent | **14.4×** | **33.6×** | 1.2e-07 | 0.0 |
-| MACE-MP-medium-0b3 | mace-agent | **22.9×** | **76.2×** | 1.4e-06 | 0.0 |
-| MACE-MATPES-PBE-0 | mace-agent | **23.6×** | **77.4×** | 7.2e-07 | 0.0 |
-| MACE-MATPES-R2SCAN-0 | mace-agent | **24.2×** | **75.9×** | 1.9e-06 | 0.0 |
-| TensorNet-PES-MatPES-PBE-2025.2 | matgl-agent | 3.6× | 11.1× | 1.4e-07 | 0.0 |
-| TensorNet-PES-MatPES-r2SCAN-2025.2 | matgl-agent | 3.8× | 12.3× | 8.0e-07 | 0.0 |
-| M3GNet-PES-MatPES-PBE-2025.2 | matgl-agent | 3.7× | 11.4× | 1.3e-03² | 0.0 |
-| M3GNet-PES-MatPES-r2SCAN-2025.2 | matgl-agent | 3.9× | 10.8× | 7.2e-04² | 0.0 |
-| CHGNet-PES-MatPES-PBE-2025.2.10 | matgl-agent | 4.3× | 12.2× | 2.4e-07 | 0.0 |
-| CHGNet-PES-MatPES-r2SCAN-2025.2.10 | matgl-agent | 4.2× | 13.1× | 9.5e-07 | 0.0 |
-| QET-PES-MatPES-PBE-2025.2 | matgl-agent | 4.2× | 13.3× | 7.2e-07 | 0.0 |
-| QET-PES-MatPES-r2SCAN-2025.2 | matgl-agent | 3.9× | 13.6× | 9.5e-07 | 0.0 |
-| SO3Net-PES-ANI-1x-Subset | matgl-agent | — | — | — | — |
-| FairChem uma-s-1p2 (omat) | fairchem-agent | 3.0× | 2.9× | 1.6e-07 | 0.0 |
-| FairChem uma-m-1p1 (omat) | fairchem-agent | 2.9× | 3.5× | 1.7e-07 | 0.0 |
-| FairChem uma-s-1p1 (omat) | fairchem-agent | 3.4× | 5.5× | 2.5e-07 | 0.0 |
+| MACE-OMAT-0-small | mace | **21.7×** | **68.0×** | 9.5e-07 | 0.0 |
+| MACE-OMAT-0-medium | mace | **22.9×** | **72.3×** | 9.5e-07 | 0.0 |
+| MACE-MH-1/omat_pbe | mace | **14.3×** | **33.9×** | 1.6e-07 | 0.0 |
+| MACE-MH-1/matpes_r2scan | mace | **14.4×** | **33.6×** | 1.2e-07 | 0.0 |
+| MACE-MP-medium-0b3 | mace | **22.9×** | **76.2×** | 1.4e-06 | 0.0 |
+| MACE-MATPES-PBE-0 | mace | **23.6×** | **77.4×** | 7.2e-07 | 0.0 |
+| MACE-MATPES-R2SCAN-0 | mace | **24.2×** | **75.9×** | 1.9e-06 | 0.0 |
+| TensorNet-PES-MatPES-PBE-2025.2 | matgl | 3.6× | 11.1× | 1.4e-07 | 0.0 |
+| TensorNet-PES-MatPES-r2SCAN-2025.2 | matgl | 3.8× | 12.3× | 8.0e-07 | 0.0 |
+| M3GNet-PES-MatPES-PBE-2025.2 | matgl | 3.7× | 11.4× | 1.3e-03² | 0.0 |
+| M3GNet-PES-MatPES-r2SCAN-2025.2 | matgl | 3.9× | 10.8× | 7.2e-04² | 0.0 |
+| CHGNet-PES-MatPES-PBE-2025.2.10 | matgl | 4.3× | 12.2× | 2.4e-07 | 0.0 |
+| CHGNet-PES-MatPES-r2SCAN-2025.2.10 | matgl | 4.2× | 13.1× | 9.5e-07 | 0.0 |
+| QET-PES-MatPES-PBE-2025.2 | matgl | 4.2× | 13.3× | 7.2e-07 | 0.0 |
+| QET-PES-MatPES-r2SCAN-2025.2 | matgl | 3.9× | 13.6× | 9.5e-07 | 0.0 |
+| SO3Net-PES-ANI-1x-Subset | matgl | — | — | — | — |
+| FairChem uma-s-1p2 (omat) | fairchem | 3.0× | 2.9× | 1.6e-07 | 0.0 |
+| FairChem uma-m-1p1 (omat) | fairchem | 2.9× | 3.5× | 1.7e-07 | 0.0 |
+| FairChem uma-s-1p1 (omat) | fairchem | 3.4× | 5.5× | 2.5e-07 | 0.0 |
 
 ¹ M3GNet energy errors (~0.7–1.8×10⁻³ eV) arise from different neighbor-list graph connectivity (NValchemi GPU warp kernel vs. CPU `radius_graph_pbc` fallback) producing slightly different bond distances at the float32 precision boundary. Errors are within the 5×10⁻³ eV tolerance for PES screening applications.
 
@@ -39,7 +39,7 @@
 
 ## Detailed Results by Model
 
-### MACE (mace-agent, Python 3.12, mace-torch 0.3.15)
+### MACE (mace, Python 3.12, mace-torch 0.3.15)
 
 #### MACE-OMAT-0-small
 
@@ -106,7 +106,7 @@
 
 ---
 
-### MatGL (matgl-agent, Python 3.12, matgl 2025.2)
+### MatGL (matgl, Python 3.12, matgl 2025.2)
 
 #### TensorNet-PES-MatPES-PBE-2025.2
 
@@ -188,7 +188,7 @@
 
 ---
 
-### FairChem (fairchem-agent, Python 3.12, fairchem-core ≥ 2.18)
+### FairChem (fairchem, Python 3.12, fairchem-core ≥ 2.18)
 
 > FairChem's `FairChemWrapper` builds its own graph internally (no NValchemi `NeighborListHook`). The speedup comes from amortising Python overhead of sequential `predict_unit.predict()` calls.
 
@@ -246,6 +246,6 @@ wrapper = FAIRCHEMWrapper(model_name="uma-s-1p2", task_name="omol", device="cuda
 - **ANI-1x models** (TensorNet-ANI, M3GNet-ANI): ANI-1x training set covers only H/C/N/O; Cu atoms cause CUDA index OOB. Do not use with Cu or transition metals.
 
 ### Model Registry at Time of Benchmark
-- **mace-agent:** Python 3.12, mace-torch 0.3.15, nvalchemi-toolkit
-- **matgl-agent:** Python 3.12, matgl 2025.2, nvalchemi-toolkit
-- **fairchem-agent:** Python 3.12, fairchem-core ≥ 2.18, nvalchemi-toolkit
+- **mace:** Python 3.12, mace-torch 0.3.15, nvalchemi-toolkit
+- **matgl:** Python 3.12, matgl 2025.2, nvalchemi-toolkit
+- **fairchem:** Python 3.12, fairchem-core ≥ 2.18, nvalchemi-toolkit

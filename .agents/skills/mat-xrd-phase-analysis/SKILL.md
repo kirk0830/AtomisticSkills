@@ -24,7 +24,7 @@ DARA searches for structures in experimental databases. It supports:
 
 ## Requirements
 
-- Conda environment: `xrd-agent` (see `conda-envs/xrd-agent`).
+- Pixi environment: `xrd` (see `conda-envs/xrd`).
 - Dependencies: `dara-xrd` (and its Ray/BGMN stack).
 - BGMN: DARA will prompt to download or use a local BGMN installation.
 - For clusters where only some nodes have internet:

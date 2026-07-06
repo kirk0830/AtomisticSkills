@@ -1,8 +1,8 @@
 """
 Test that all pretrained models available via matgl.load_model() can be loaded successfully.
 
-Run in: matgl-agent conda environment
-Command: conda activate matgl-agent && pytest tests/matgl/test_matgl_load_all_models.py -v
+Run in: matgl Pixi environment
+Command: pixi run -e matgl pytest tests/matgl/test_matgl_load_all_models.py -v
 """
 
 import pytest

@@ -104,7 +104,7 @@ Default criterion: both pairs must pass with `rmsd_threshold = 0.20 A`.
 
 ## Prerequisites And Constraints
 
-- Activate `mace-agent` or `fairchem-agent` depending on backend.
+- Activate `mace` or `fairchem` depending on backend.
 - Script enforces `pbc=False` for all inputs.
 - Reactant/product/TS must have identical composition and consistent atom ordering.
 

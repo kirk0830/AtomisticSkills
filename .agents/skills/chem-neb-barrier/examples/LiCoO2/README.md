@@ -25,7 +25,7 @@ This example demonstrates how to calculate the activation energy barrier for a L
 
 1. Activate MACE environment:
    ```bash
-   conda activate mace-agent
+   pixi shell -e mace
    ```
 
 2. Run the example:

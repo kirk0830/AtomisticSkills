@@ -53,7 +53,7 @@ python .agents/skills/mat-phase-field-conservative/scripts/run_spinodal_decompos
 See the `examples/benchmark-spinodal/README.md` for the expected output.
 
 ## Constraints
-- **Environments**: Scripts require the `phasefield-agent` Conda environment. **Each code block MUST specify the environment.**
+- **Environments**: Scripts require the `phasefield` Pixi environment. **Each code block MUST specify the environment.**
 - **Conservation**: The Cahn-Hilliard PDE inherently conserves the global integral of $c$. If using explicit time-stepping with too large of a `dt`, numerical instability may break conservation.
 
 ## References

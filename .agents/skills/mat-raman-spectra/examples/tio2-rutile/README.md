@@ -21,12 +21,12 @@ Rutile TiO₂ is a standard benchmark for Raman calculations: four Raman-active 
 ### 1. Query and relax bulk structure
 
 ```bash
-# Env: base-agent
+# Env: base
 mcp_base_search_materials_project_by_formula(formula="TiO2", save_to_file="TiO2_bulk.cif")
 ```
 
 ```bash
-# Env: mace-agent
+# Env: mace
 mcp_mace_load_model(model_name="MACE-MH-1", task_name="matpes_r2scan")
 mcp_mace_relax_structure(
     structure_data="TiO2_bulk.cif",
@@ -41,7 +41,7 @@ Relaxed lattice parameters: a = b = 4.617 Å, c = 2.959 Å (experimental: a = 4.
 ### 2. Calculate phonons
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-phonon/scripts/calculate_phonon.py \
     --structure TiO2_relax/relaxed_structure.cif \
     --model_type mace \
@@ -56,7 +56,7 @@ No imaginary modes found at Γ — structure is mechanically stable.
 ### 3. Analyse Raman-active modes (MLIP tier)
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-raman-spectra/scripts/analyze_raman_modes.py \
     --phonon-yaml phonon/phonon.yaml \
     --structure TiO2_relax/relaxed_structure.cif \

@@ -41,41 +41,41 @@ nvidia-smi --query-gpu=name,compute_cap --format=csv,noheader
    **Path A: MACE**
 ```bash
 # Env: base
-bash conda-envs/mace-agent/install.sh
+bash pixi.toml (feature: mace) / install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
-bash conda-envs/mace-agent/install_lammps.sh
+bash pixi.toml (feature: mace) / install_lammps.sh
 ```
-   - Binary: `./lammps/mace-agent/lmp`
-   - Runtime env: `mace-agent`
+   - Binary: `./lammps/mace/lmp`
+   - Runtime env: `mace`
 
    **Path B: MatGL/CHGNet**
 ```bash
 # Env: base
-bash conda-envs/matgl-agent/install.sh
+bash pixi.toml (feature: matgl) / install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
-bash conda-envs/matgl-agent/install_lammps.sh
+bash pixi.toml (feature: matgl) / install_lammps.sh
 ```
-   - Binary: `./lammps/matgl-agent/lmp`
-   - Runtime env: `matgl-agent`
+   - Binary: `./lammps/matgl/lmp`
+   - Runtime env: `matgl`
 
    **Path C: FairChem**
 ```bash
 # Env: base
-bash conda-envs/fairchem-agent/install.sh
+bash pixi.toml (feature: fairchem) / install.sh
 KOKKOS_ARCH_FLAG=Kokkos_ARCH_AMPERE86 \
 LAMMPS_REF="stable_2Aug2023_update2" \
-bash conda-envs/fairchem-agent/install_lammps.sh
+bash pixi.toml (feature: fairchem) / install_lammps.sh
 ```
-   - Binary: `./lammps/fairchem-agent/lmp`
-   - Runtime env: `fairchem-agent`
+   - Binary: `./lammps/fairchem/lmp`
+   - Runtime env: `fairchem`
 
-5. **Run the selected binary with its matching conda environment**.
+5. **Run the selected binary with its matching pixi environment**.
 ```bash
 # Env: mace (example; switch env/binary pair as needed)
 pixi shell -e mace
-./lammps/mace-agent/lmp -h
+./lammps/mace/lmp -h
 ```
 
 6. **Launch MD with the same binary-env pair used during build**; do not cross-run binaries between MLIP stacks.
@@ -87,7 +87,7 @@ See the respective README.md files under [examples/mace/](examples/mace/), [exam
 
 ## Constraints
 - **Strict binary-env pairing**: each LAMMPS binary must run only with its own conda env.
-- **No stack mixing**: never run MACE binary in `matgl-agent`/`fairchem-agent`, etc.
+- **No stack mixing**: never run MACE binary in `matgl`/`fairchem`, etc.
 - **GPU arch alignment**: choose `KOKKOS_ARCH_*` from actual `compute_cap` output.
 - **Python-coupled mode**: this workflow targets `ML-IAP`/`mliappy` usage.
 

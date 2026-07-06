@@ -17,8 +17,8 @@ Use `SelfConditionedDenoisingAtoms` for four related workflows:
 
 ## First Checks
 
-1. Use the `scd-agent` environment from `conda-envs/scd-agent/`.
-2. Confirm the upstream repo exists at `../SelfConditionedDenoisingAtoms` relative to `AtomisticSkills`, or create it with `conda-envs/scd-agent/install.sh`.
+1. Use the `scd` environment from `pixi.toml` (feature `scd`).
+2. Confirm the upstream repo exists at `../SelfConditionedDenoisingAtoms` relative to `AtomisticSkills`, or create it with `pixi install -e scd`.
 3. Read the upstream `README.md` and `examples.ipynb`.
 4. Then read the local references in this skill:
    - `references/repo-map.md`
@@ -156,7 +156,7 @@ Check the detailed, reproducible examples in the `examples/` directory:
 
 ## Constraints
 
-- **Environments**: Scripts require the `scd-agent` Conda environment. Each code block MUST specify the environment.
+- **Environments**: Scripts require the `scd` Pixi environment. Each code block MUST specify the environment.
 
 - `train.py` always creates a `WandbLogger`.
 - For finetuning runs, `train.py` derives the W&B project from the config `dataset` field, currently as `SCD_bench_{dataset}`.

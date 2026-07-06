@@ -10,7 +10,7 @@ Usage:
     python plot_utils.py plot.png --draw-grid --grid-size 50
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: json (stdlib), copy (stdlib), opencv (cv2, for --draw-grid)
 """
 

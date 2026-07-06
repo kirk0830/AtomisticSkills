@@ -7,7 +7,7 @@ This example demonstrates how to find low-energy conformers of Acetylsalicylic a
 Run the following command from the project root:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-conformer-search/scripts/conformer_search.py \
     --smiles "CC(=O)Oc1ccccc1C(=O)O" \
     --num_conformers 50 \

@@ -11,7 +11,7 @@ Usage:
         --supercell_size 2 2 2 --output defect_energies.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, ase
 """
 

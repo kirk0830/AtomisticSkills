@@ -10,7 +10,7 @@
 ## How to Reproduce
 
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 python .agents/skills/chem-bond-dissociation/scripts/calculate_bde.py \
     --smiles CO \
     --all_bonds \

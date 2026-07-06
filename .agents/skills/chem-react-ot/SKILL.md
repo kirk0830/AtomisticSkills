@@ -11,7 +11,7 @@ category: [chemistry]
 Generate transition state (TS) structures given reactant and product structures using the React-OT model (Optimal Transport). React-OT is a generative model that predicts TS geometries directly without requiring an initial guess path (like NEB).
 
 **Category:** `chemistry`
-**Environment:** `react-ot-agent`
+**Environment:** `react-ot`
 
 ## Key Features
 
@@ -23,12 +23,11 @@ Generate transition state (TS) structures given reactant and product structures 
 
 ### 1. Environment Setup
 
-This skill requires the `react-ot-agent` conda environment. Ensure it is installed:
+This skill requires the `react-ot` pixi environment. Ensure it is installed:
 
 ```bash
 # Env: react-ot
-cd conda-envs/react-ot-agent
-bash install.sh
+pixi install -e react-ot
 ```
 
 ### 2. Download Models
@@ -36,9 +35,9 @@ bash install.sh
 Before running the skill for the first time, download the pre-trained model weights:
 
 ```bash
-# activate react-ot-agent first
+# activate react-ot first
 pixi shell -e react-ot
-python conda-envs/react-ot-agent/download_models.py
+python .agents/skills/chem-react-ot/scripts/download_models.py
 ```
 
 The checkpoint is saved to `~/.cache/react-ot/checkpoints/sb-pretrained.ckpt`.
@@ -75,7 +74,7 @@ python .agents/skills/chem-react-ot/scripts/generate_ts.py \
 
 ## Constraints
 
-- **Environment**: All scripts require the `react-ot-agent` conda environment.
+- **Environment**: All scripts require the `react-ot` pixi environment.
 - **Input Format**: Reactant and product structures must be in any format readable by ASE (XYZ, CIF, PDB, etc.).
 - **Atom Ordering**: Reactant and product structures must have the same number of atoms with consistent atom ordering.
 - **Model Checkpoint**: The pre-trained checkpoint must be downloaded before first use (see step 2).

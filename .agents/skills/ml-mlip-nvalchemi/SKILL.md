@@ -93,19 +93,19 @@ The gap grows with larger structures (more atoms → more FIRE steps → GPU sta
 
 Below is a three-way relaxation mode benchmark on 10 structures for 50 steps using MACE, TensorNet, and FairChem:
 
-#### MACE-OMAT-0-small (`mace-agent`)
+#### MACE-OMAT-0-small (`mace`)
 - **Serial Mode:** 13.24 s
 - **Fixed-Batch Mode:** 5.75 s (**2.3x speedup**)
 - **Inflight-Batch Mode:** 9.51 s (**1.4x speedup**)
 
-#### TensorNet-PES-MatPES-PBE-2025.2 (`matgl-agent`)
+#### TensorNet-PES-MatPES-PBE-2025.2 (`matgl`)
 - **Serial Mode:** 8.50 s
 - **Fixed-Batch Mode:** 12.95 s (0.7x - JIT compiler/graph overhead dominates for small datasets)
 - **Inflight-Batch Mode:** 14.53 s (0.6x - JIT compiler/graph overhead dominates for small datasets)
 
 > **Important (TensorNet Energy Increase Bug):** In TensorNet's inflight batching, a neighbor list graduation issue caused massive energy increases and force clipping in `relax.log` (e.g. from -390.7 eV to -268.5 eV) due to its COO-format neighbor lists not shifting index offsets correctly upon graduation. To prevent this, we explicitly set `_nvalchemi_supports_inflight = False` for the TensorNet wrapper, forcing it to fall back to fixed-batch or sequential mode, matching CHGNet and M3GNet.
 
-#### FairChem uma-s-1p2 (`fairchem-agent`)
+#### FairChem uma-s-1p2 (`fairchem`)
 - **Serial Mode:** 24.58 s
 - **Fixed-Batch Mode:** 30.89 s (0.8x - overhead dominates fixed-batch execution for small datasets)
 - **Inflight-Batch Mode:** 16.57 s (**1.5x speedup**)
@@ -115,15 +115,15 @@ Below is a three-way relaxation mode benchmark on 10 structures for 50 steps usi
 
 Speedup comparison for a 100-step MD simulation under the `nvt_nose_hoover` ensemble at 300 K on 20 strained Cu FCC structures, each expanded to a fixed 108-atom cubic supercell ($\ge 10\text{ \AA}$ sides). Sequential = NValchemi disabled, structures run one at a time; Batched = all 20 driven through NValchemi integrators in a single GPU batch. Best-of-2 wall time, measured serially (one environment at a time to avoid GPU contention).
 
-#### MACE-OMAT-0-small (`mace-agent`)
+#### MACE-OMAT-0-small (`mace`)
 - **Sequential MD:** 54.48 s
 - **Batched MD (NValchemi):** 11.12 s (**4.90x speedup**)
 
-#### TensorNet-PES-MatPES-PBE-2025.2 (`matgl-agent`)
+#### TensorNet-PES-MatPES-PBE-2025.2 (`matgl`)
 - **Sequential MD:** 58.28 s
 - **Batched MD:** disabled — routed to sequential (see note below; ~0.88x even when forced, i.e. *slower* than sequential)
 
-#### FairChem uma-s-1p2 (`fairchem-agent`)
+#### FairChem uma-s-1p2 (`fairchem`)
 - **Sequential MD:** 339.74 s
 - **Batched MD:** disabled — routed to sequential (see note below; measured ~0.64x, i.e. *slower*, before being disabled)
 
@@ -139,7 +139,7 @@ Speedup comparison for a 100-step MD simulation under the `nvt_nose_hoover` ense
 ### Step 1 — Verify NValchemi is Available
 
 ```python
-# Env: mace  (or matgl-agent, fairchem-agent)
+# Env: mace  (or matgl, fairchem)
 from src.utils.mlips.nvalchemi.nvalchemi_utils import NVALCHEMI_AVAILABLE
 print(NVALCHEMI_AVAILABLE)  # must be True
 
@@ -289,10 +289,10 @@ See [resources/benchmark_results.md](resources/benchmark_results.md) for the ful
 ## Constraints
 
 - **NValchemi required**: `nvalchemi-toolkit` must be installed. Check `NVALCHEMI_AVAILABLE` flag. Falls back to sequential if unavailable.
-- **Environment isolation**: Must use the correct conda environment per MLIP:
-  - `mace-agent` — MACE models
-  - `matgl-agent` — MatGL (TensorNet, M3GNet, CHGNet)
-  - `fairchem-agent` — FairChem UMA
+- **Environment isolation**: Must use the correct pixi environment per MLIP:
+  - `mace` — MACE models
+  - `matgl` — MatGL (TensorNet, M3GNet, CHGNet)
+  - `fairchem` — FairChem UMA
 - **Stress format**: NValchemi returns 3×3 Cauchy stress tensor (eV/Å³); sequential path returns ASE Voigt-6. Both formats are accepted downstream — `_extract_static()` in tests handles the conversion.
 - **FairChem dataset field**: UMA model requires `dataset` (e.g., `"omat"`) passed to `FCAtomicData`. This is handled automatically by `FairChemWrapper`; defaults to `"omat"` when `task_name=None`.
 - **CHGNet batch speedup**: CHGNet directed line graph construction parallelizes well on GPU (12–13× at N=20). CPU performance is marginal (<3×); always use `device="cuda"` for batch workloads.

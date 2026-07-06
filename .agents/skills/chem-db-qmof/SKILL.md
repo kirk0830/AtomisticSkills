@@ -13,7 +13,7 @@ To retrieve computational data and relaxed crystal structures (.cif) for roughly
 ## Prerequisites
 
 - **Dependency**: `mpcontribs-client` must be installed.
-- **Environment**: Execution happens in the `base-agent` environment.
+- **Environment**: Execution happens in the `base` environment.
 - **Credentials**: Requires the standard Materials Project API key exported as `MP_API_KEY`.
 
 ## Instructions

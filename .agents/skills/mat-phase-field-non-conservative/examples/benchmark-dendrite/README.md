@@ -34,7 +34,7 @@ To strictly enforce numerical stability within explicit explicit integration bou
 
 ## Reproduction
 
-Run the following command from the project root using the `phasefield-agent` environment:
+Run the following command from the project root using the `phasefield` environment:
 
 ```bash
 python .agents/skills/mat-phase-field-non-conservative/scripts/run_dendrite_growth.py \

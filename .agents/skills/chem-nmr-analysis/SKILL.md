@@ -143,11 +143,11 @@ All spectrum files must be two-column numeric data (ppm, intensity):
 
 ## Environment
 
-All scripts in this skill use the `nmr-agent` conda environment:
+All scripts in this skill use the `nmr` pixi environment:
 ```bash
-mamba activate nmr-agent
+pixi shell -e nmr
 ```
-Install: `conda-envs/nmr-agent/install.sh`
+Install: `pixi install -e nmr`
 
 Required packages: `numpy`, `scipy` (>= 1.7), `matplotlib`, `rdkit`, `requests`, `nmrsim`, `scikit-learn`.
 

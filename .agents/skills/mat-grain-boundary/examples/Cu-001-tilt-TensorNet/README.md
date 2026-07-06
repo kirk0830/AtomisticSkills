@@ -22,12 +22,12 @@ Cu [001] tilt grain boundaries are one of the most-studied CSL boundary series i
 ### 1. Query and relax bulk Cu
 
 ```bash
-# Env: base-agent
+# Env: base
 mcp_base_search_materials_project_by_formula(formula="Cu", save_to_file="Cu_bulk.cif")
 ```
 
 ```bash
-# Env: matgl-agent
+# Env: matgl
 mcp_matgl_load_model(model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES")
 mcp_matgl_relax_structure(
     structure_data="Cu_bulk.cif",
@@ -43,7 +43,7 @@ Bulk energy: **−10.825556 eV/atom**.
 ### 2. Generate [001] tilt CSL grain boundaries
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-grain-boundary/scripts/create_grain_boundary.py \
     --bulk Cu_bulk_relax/relaxed_structure.cif \
     --rotation-axis 0 0 1 \
@@ -58,7 +58,7 @@ Generated unique CSL boundaries covering Σ5 through Σ25. *(Note: To keep the r
 ### 3. Relax GB structures
 
 ```bash
-# Env: matgl-agent
+# Env: matgl
 mcp_matgl_load_model(model_name="TensorNet-MatPES-r2SCAN-v2025.1-PES")
 mcp_matgl_relax_structure(
     structure_data="Cu_gb_structures/",
@@ -71,7 +71,7 @@ mcp_matgl_relax_structure(
 ### 4. Calculate grain boundary energies
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-grain-boundary/scripts/calculate_gb_energy.py \
     --bulk-energy-per-atom -10.825556 \
     --gb-relaxation-dir Cu_gb_relax/ \

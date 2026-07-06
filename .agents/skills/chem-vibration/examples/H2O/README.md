@@ -8,7 +8,7 @@
 
 ## Command
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/chem-vibration/scripts/calculate_vibrations.py \
     --molecule H2O --model_type mace --model_name MACE-OMAT-0-small \
     --output_dir .agents/skills/chem-vibration/examples/H2O

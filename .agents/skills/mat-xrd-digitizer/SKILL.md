@@ -67,7 +67,7 @@ python .agents/skills/mat-xrd-digitizer/scripts/digitize_plot.py .agents/skills/
 
 - **Approximation:** The digitized plot is a mathematical approximation using pseudo-Voigt profiles. It does not perfectly recreate the exact pixel-by-pixel raw data of the original scan, but it is highly effective for downstream phase matching tools.
 - **Vision Accuracy:** The accuracy of the 2-theta positions entirely depends on the clarity of the provided image axes.
-- **Environments:** Scripts require the `base-agent` Conda environment. **Each code block MUST specify the environment.**
+- **Environments:** Scripts require the `base` Pixi environment. **Each code block MUST specify the environment.**
 
 ## References
 

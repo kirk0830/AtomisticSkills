@@ -18,7 +18,7 @@ Because `WAVECAR` files are extremely large (often tens or hundreds of gigabytes
 
 LOBSTER is free to download for non-commercial use from [http://www.cohp.de/](http://www.cohp.de/).
 
-To use this skill, deploy the compiled `lobster` binary to your remote HPC worker or local testing environment and ensure its path is exported in your environment `PATH`. All required Python packages (`lobsterpy`, `ijson`) are already provided by the `atomate2-agent` environment.
+To use this skill, deploy the compiled `lobster` binary to your remote HPC worker or local testing environment and ensure its path is exported in your environment `PATH`. All required Python packages (`lobsterpy`, `ijson`) are already provided by the `atomate2` environment.
 
 ## Instructions
 
@@ -62,7 +62,7 @@ python .agents/skills/mat-dft-lobster/scripts/analyze_lobster.py --cohpcar COHPC
 ```
 
 ## Constraints
-- **Environments**: Scripts require the `atomate2-agent` environment.
+- **Environments**: Scripts require the `atomate2` environment.
 - **HPC Execution**: You must map this flow to run on an HPC environment natively since `WAVECAR` sizes exceed optimal transfer limits. Ensure both `vasp_std` and `lobster` binaries are available to the workers.
 - **Basis Sets**: The `VaspLobsterMaker` optimally restricts VASP settings (e.g., setting `ISYM=-1`, generating all $k$-points explicitly) to comply with LOBSTER's mathematical constraints. Do not manually override these strict geometry settings unless required by standard pseudopotential edge cases.
 

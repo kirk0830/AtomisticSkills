@@ -7,7 +7,7 @@ For each compound, produces:
   - <name>_signals.csv : signal table (shift_ppm, multiplicity, J_Hz, nH)
 
 Usage:
-    # Env: nmr-agent
+    # Env: nmr
     python predict_nmr.py \
         --smiles "OC1CC2CCC1C2" "OC1CC2CCC1C2" \
         --names "borneol" "isoborneol" \

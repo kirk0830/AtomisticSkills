@@ -6,8 +6,8 @@ These tests validate:
 - MatGL calculator creation
 - MatGL model loading
 
-Run in: matgl-agent conda environment
-Command: conda activate matgl-agent && pytest -m matgl
+Run in: matgl Pixi environment
+Command: pixi run -e matgl pytest -m matgl
 """
 
 import pytest

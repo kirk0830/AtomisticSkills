@@ -76,7 +76,7 @@ python .agents/skills/ml-property-predictor/scripts/train_matgl_property.py \
 
 ## Constraints
 
-- **Environments**: MACE predictor strictly requires `mace-agent`, and MatGL requires `matgl-agent`. **Each code block MUST specify the environment.**
+- **Environments**: MACE predictor strictly requires `mace`, and MatGL requires `matgl`. **Each code block MUST specify the environment.**
 - **Data Format**: The dataset must be `.json` or XYZ formatted with the raw structures or ASE atoms.
 - **Subprocess Dependency**: The `train_mace_property.py` script spawns an underlying `mace.cli.run_train` subprocess to maintain compatibility with MACE's native optimizers.
 - **Pre-trained Architecture**: For MatGL, changing the intensive/extensive nature of a pre-trained model changes the head dimensions. Extensive model predictions are mathematically scaled down by the number of atoms dynamically at training time if an intensive property is targeted.

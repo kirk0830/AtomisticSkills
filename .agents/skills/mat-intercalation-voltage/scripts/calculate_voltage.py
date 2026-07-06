@@ -8,7 +8,7 @@ Usage:
     python calculate_voltage.py --e_full -123.45 --e_empty -98.76 --e_metal -1.23 --n_metal 16 --n_ions 4
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: argparse, json, pathlib
 """
 

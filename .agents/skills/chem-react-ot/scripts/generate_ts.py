@@ -17,7 +17,7 @@ except ImportError as e:
     import traceback
 
     traceback.print_exc()
-    print("Ensure you are in the 'react-ot-agent' environment.")
+    print("Ensure you are in the 'react-ot' environment.")
     sys.exit(1)
 
 

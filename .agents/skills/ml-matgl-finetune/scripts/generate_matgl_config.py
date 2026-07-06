@@ -105,7 +105,7 @@ def main():
     print(f"Configuration written to: {config_file}")
     print("=======================================================\n")
     print("To start training, simply run:")
-    print("  conda activate matgl-agent")
+    print("  pixi shell -e matgl")
     print(f"  python train_matgl.py --config {config_file.absolute()}")
 
     # Save input configs for reproducibility

@@ -23,7 +23,7 @@ Usage:
         --output_json binding_site.json
 
 Requirements:
-    - Conda environment: drugdisc-agent (stdlib only)
+    - Pixi environment: drugdisc (stdlib only)
 """
 
 from __future__ import annotations

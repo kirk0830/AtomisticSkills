@@ -56,7 +56,7 @@ python .agents/skills/mat-phase-field-non-conservative/scripts/run_grain_growth.
 See the `examples/benchmark-grain/README.md` for the expected output.
 
 ## Constraints
-- **Environments**: Scripts require the `phasefield-agent` Conda environment. **Each code block MUST specify the environment.**
+- **Environments**: Scripts require the `phasefield` Pixi environment. **Each code block MUST specify the environment.**
 - **Interface Thickness**: The spatial resolution `dx` must be small enough to resolve the diffuse interface (typically requiring at least 4-5 grid points across the interface controlled by $\epsilon$).
 
 ## References

@@ -8,7 +8,7 @@ This example runs adsorption energy with FAIR-Chem `lmp_fc`:
    `E_ads = E(CO/Cu111) - E(Cu111) - E(CO)`.
 
 ```bash
-# Env: fairchem-agent
+# Env: fairchem
 bash .agents/skills/mat-lammps-md/examples/fairchem/run_fairchem_co_cu111_adsorption.sh
 ```
 

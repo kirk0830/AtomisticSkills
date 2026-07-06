@@ -39,7 +39,7 @@ python .agents/skills/mat-calphad-phase-diagram/scripts/plot_phase_diagram.py .a
 
 ## Constraints
 - **Databases**: This skill strictly requires a valid `.tdb` file.
-- **Environments**: Scripts require the `calphad-agent` Conda environment because it isolates `pycalphad`.
+- **Environments**: Scripts require the `calphad` Pixi environment because it isolates `pycalphad`.
 - **Multicomponent**: This specific plotting script focuses on Binary Systems. Ternary isotherms require a separate script not yet implemented.
 
 ## References

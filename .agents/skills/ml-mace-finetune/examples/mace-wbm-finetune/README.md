@@ -13,8 +13,8 @@ The dataset is processed using the `prepare_mace_data.py` script. The training d
 Because the raw `vasp_s` labels in this WBM extraction are recorded in `kB`, we MUST pass the `--vasp-stress-conversion` flag to multiply them by `-1/1602.1766208` during extraction. The script also automatically unravels multi-layer dictionaries (e.g., `{wbm_id: [{config_id: {data}}]}`).
 
 ```bash
-# Env: mace-agent
-conda run -n mace-agent python .agents/skills/ml-mace-finetune/scripts/prepare_mace_data.py \
+# Env: mace
+pixi run -e mace python .agents/skills/ml-mace-finetune/scripts/prepare_mace_data.py \
     --data private_data/WBM_subset_200_configs.json \
     --model MACE-OMAT-0-small \
     --epochs 10 \
@@ -29,18 +29,18 @@ conda run -n mace-agent python .agents/skills/ml-mace-finetune/scripts/prepare_m
 The script generates a `finetune_config.yaml` file natively compatible with the `mace_run_train` CLI. Run the actual training loop:
 
 ```bash
-# Env: mace-agent
+# Env: mace
 cd .agents/skills/ml-mace-finetune/examples/mace-wbm-finetune
-conda run -n mace-agent mace_run_train --config finetune_config.yaml
+pixi run -e mace mace_run_train --config finetune_config.yaml
 ```
 
 ### 3. Extract Training Logs
 Once training converges, extract the diagnostic learning curves (energy, forces, and stress MAE) from the generated logs to evaluate performance.
 
 ```bash
-# Env: mace-agent
+# Env: mace
 cd /path/to/project_root
-conda run -n mace-agent python .agents/skills/ml-mace-finetune/scripts/extract_mace_logs.py \
+pixi run -e mace python .agents/skills/ml-mace-finetune/scripts/extract_mace_logs.py \
     --results-dir .agents/skills/ml-mace-finetune/examples/mace-wbm-finetune/results
 ```
 

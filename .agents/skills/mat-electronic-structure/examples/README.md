@@ -27,7 +27,7 @@ This example demonstrates calculating the electronic band structure of crystalli
 The band structure plot was generated using:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-electronic-structure/scripts/plot_band_structure.py band_structure_calc --output Si_band_structure.png
 ```
 
@@ -61,6 +61,6 @@ The DOS plot shows the distribution of electronic states as a function of energy
 The DOS plot was generated using:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/mat-electronic-structure/scripts/plot_dos.py dos_calc --output Si_dos.png
 ```

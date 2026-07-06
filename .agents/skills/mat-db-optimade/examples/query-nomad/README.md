@@ -7,7 +7,7 @@ NOMAD is registered under the provider short-id `nmd`.
 
 Run the query script:
 ```bash
-# Env: base-agent
+# Env: base
 python ../../scripts/query_optimade.py results_nomad.json --filter 'elements HAS ALL "Na", "Cl" AND nelements=2' --provider nmd
 ```
 

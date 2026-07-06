@@ -14,7 +14,7 @@ atoms = ase.build.bulk('Cu', 'fcc', a=3.61)
 structure = AseAtomsAdaptor.get_structure(atoms)
 structure.to(filename='Cu_bulk.cif')
 EOF
-conda run -n base-agent python get_bulk_cu.py
+pixi run -e base python get_bulk_cu.py
 
 # 2. Mock surface energies from literature for Cu (units format usually expected: J/m2)
 echo "Setting up surface_energies.json..."
@@ -39,6 +39,6 @@ EOF
 
 # 3. Generate Wulff shape
 echo "Generating Wulff shape..."
-conda run -n base-agent python ../../scripts/generate_wulff.py --energies_json surface_energies.json --bulk Cu_bulk.cif --output wulff_shape.png
+pixi run -e base python ../../scripts/generate_wulff.py --energies_json surface_energies.json --bulk Cu_bulk.cif --output wulff_shape.png
 
 echo "=== Success ==="

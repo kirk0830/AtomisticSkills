@@ -8,7 +8,7 @@ Usage:
     python get_pricing.py "Gold"
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pubchempy, beautifulsoup4, requests
 """
 

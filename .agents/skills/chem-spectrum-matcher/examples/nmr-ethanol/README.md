@@ -9,7 +9,7 @@ The same workflow applies to IR: replace `--modality nmr_1h` with `--modality ir
 ## Step 1 — Predict 1H NMR Reference Spectrum
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-nmr-predict/scripts/predict_nmr.py \
   --smiles "CCO" \
   --names "ethanol" \
@@ -24,7 +24,7 @@ Outputs in `research/nmr_predictions/`:
 ## Step 2 — Register into Local Catalog
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-spectrum-matcher/scripts/register_spectrum.py \
   --source_dir research/nmr_predictions/ \
   --modality nmr_1h \
@@ -42,7 +42,7 @@ Done: 1 registered, 0 skipped.
 Replace `<query>.xy` with a real two-column spectrum file (ppm vs intensity). For a self-consistency test, use the predicted spectrum itself — expect score ≈ 1.0.
 
 ```bash
-# Env: nmr-agent
+# Env: nmr
 python .agents/skills/chem-spectrum-matcher/scripts/match_spectrum.py \
   --query <query>.xy \
   --smiles "CCO" \
@@ -91,10 +91,10 @@ SPINUS correctly predicts the CH₂/CH₃ chemical shift separation and the trip
 To match against IR instead of NMR, fetch references from NIST WebBook and register them:
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/chem-db-spectra/scripts/query_spectra.py C2H6O research/ir_refs/ --type IR
 
-# Env: nmr-agent  (or base-agent)
+# Env: nmr  (or base)
 python .agents/skills/chem-spectrum-matcher/scripts/register_spectrum.py \
   --source_dir research/ir_refs/ \
   --modality ir \

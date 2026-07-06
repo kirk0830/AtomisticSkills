@@ -13,8 +13,8 @@ The dataset is processed using the `prepare_matgl_data.py` script. The training 
 Because the raw `vasp_s` labels in this dataset are recorded in `kB`, we MUST pass the `--vasp-stress-conversion` flag to multiply them by `-1/1602.1766208` during extraction, converting them to `eV/Å³` and matching standard convention.
 
 ```bash
-# Env: matgl-agent
-conda run -n matgl-agent python .agents/skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
+# Env: matgl
+pixi run -e matgl python .agents/skills/ml-matgl-finetune/scripts/prepare_matgl_data.py \
     --data private_data/WBM_high_energy_states.json \
     --output-dir .agents/skills/ml-matgl-finetune/examples/matgl-wbm-finetune \
     --val-split 0.1 \
@@ -25,8 +25,8 @@ conda run -n matgl-agent python .agents/skills/ml-matgl-finetune/scripts/prepare
 The script structures data internally with `MGLDataset` and natively connects directly to PyTorch Lightning via the `train_matgl.py` protocol. You can boot the loop directly onto GPU without supplementary extraction passes:
 
 ```bash
-# Env: matgl-agent
-conda run -n matgl-agent python .agents/skills/ml-matgl-finetune/scripts/train_matgl.py \
+# Env: matgl
+pixi run -e matgl python .agents/skills/ml-matgl-finetune/scripts/train_matgl.py \
     --train-data .agents/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/train_data.json \
     --val-data .agents/skills/ml-matgl-finetune/examples/matgl-wbm-finetune/val_data.json \
     --model CHGNet-MatPES-PBE-2025.2.10-2.7M-PES \

@@ -10,7 +10,7 @@ Usage:
         --output-dir /path/to/output_texts
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymupdf
 """
 

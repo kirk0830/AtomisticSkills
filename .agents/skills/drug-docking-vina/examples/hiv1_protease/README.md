@@ -15,7 +15,7 @@ This example demonstrates docking indinavir into HIV-1 protease (PDB: 1HSG) usin
 From the project root:
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 # Step 1: Prepare receptor
 python .agents/skills/drug-protein-prep/scripts/prepare_protein.py \
   --pdb_id 1HSG \

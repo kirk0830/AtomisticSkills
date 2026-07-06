@@ -14,7 +14,7 @@ Usage:
         --output_dir results/adsorption
 
 Requirements:
-    - Conda environment: mace-agent, matgl-agent, or fairchem-agent
+    - Pixi environment: mace, matgl, or fairchem
     - Required packages: matcalc, pymatgen, ase, mlip wrapper
 """
 

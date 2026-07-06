@@ -15,7 +15,7 @@ Select the appropriate machine learning interatomic potential (MLIP) for a given
 > This list is not exhaustive. For a full list of available pre-trained checkpoints, refer to the `load_model` function documentation for each respective MCP server.
 
 ### MatGL Models
-**Environment:** `matgl-agent`
+**Environment:** `matgl`
 
 - **CHGNet-MatPES-r2SCAN-2025.2.10-2.7M-PES**:
   - Use for r2SCAN-level inorganic materials simulation.
@@ -28,7 +28,7 @@ Select the appropriate machine learning interatomic potential (MLIP) for a given
   - Smaller and faster than CHGNet, suitable for dynamic simulations (MD, NEB, phonons).
 
 ### FAIRCHEM Models
-**Environment:** `fairchem-agent`
+**Environment:** `fairchem`
 
 - **uma-s-1p1**:
   - Use for organic and inorganic simulations.
@@ -39,7 +39,7 @@ Select the appropriate machine learning interatomic potential (MLIP) for a given
   - Use for organic ionic relaxation (ground state calculations).
 
 ### MACE Models
-**Environment:** `mace-agent`
+**Environment:** `mace`
 
 - **MACE-MH-1**:
   - Latest multi-head foundation model. Use as default for most tasks.

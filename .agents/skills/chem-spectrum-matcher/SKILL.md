@@ -111,7 +111,7 @@ python .agents/skills/chem-spectrum-matcher/scripts/register_spectrum.py \
 ```bash
 # Env: orca
 # Run ORCA frequency calculation → extract IR spectrum → register
-# See conda-envs/orca-agent/ for ORCA setup.
+# See pixi.toml (feature: orca) /  for ORCA setup.
 # After ORCA run, convert output with src/utils/dft/orca_utils.py
 # then call register_spectrum.py --modality ir
 ```
@@ -177,7 +177,7 @@ After reading scores, the agent must:
 | Ppm/wavenumber axis mismatch | Similarity scores all near 0 | Query and reference use different x-axis. Check `--field_mhz` or unit convention. |
 | SMILES canonicalization fails | RDKit error | SMILES invalid. Verify with RDKit before retry. |
 | NMRShiftDB2 / NIST timeout | HTTP error during public DB query | Retry once; if persistent, disable `--fallback_public_db` and predict locally. |
-| ORCA IR prediction unavailable | `ORCA_BINARY_PATH` not set | Set env var per `conda-envs/orca-agent/README.md` or fall back to NIST WebBook IR. |
+| ORCA IR prediction unavailable | `ORCA_BINARY_PATH` not set | Set env var per `pixi.toml (feature `orca`)` or fall back to NIST WebBook IR. |
 
 ---
 
@@ -197,15 +197,15 @@ chem-spectrum-matcher    → this skill: catalog + retrieval + similarity rankin
 
 **Primary (NMR matching):**
 ```bash
-mamba activate nmr-agent
+pixi shell -e nmr
 ```
 Required packages: `numpy`, `scipy`, `rdkit`, `requests`, `matplotlib`.
 
 **IR prediction via QM (optional):**
 ```bash
-mamba activate orca-agent
+pixi shell -e orca
 ```
-Requires `ORCA_BINARY_PATH` environment variable. See `conda-envs/orca-agent/README.md`.
+Requires `ORCA_BINARY_PATH` environment variable. See `pixi.toml (feature `orca`)`.
 
 ---
 

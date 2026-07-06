@@ -19,7 +19,7 @@ Calculate the elastic tensor ($C_{ij}$) of a material by applying systematic def
 ## 1. Prerequisites
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
-- `matcalc` must be installed in the relevant conda environment.
+- `matcalc` must be installed in the relevant pixi environment.
 - A structure file (CIF, POSCAR, or other ASE-readable format). The structure will be relaxed before deformation by default.
 
 ## 2. Choosing a Foundation Potential
@@ -86,9 +86,9 @@ python .agents/skills/mat-elasticity/scripts/calculate_elasticity.py \
 ## 6. Constraints
 
 - **Environment**: Scripts require conda environments with MLIP packages installed:
-  - `mace-agent` for MACE models
-  - `matgl-agent` for MatGL/CHGNet models
-  - `fairchem-agent` for FairChem/UMA models
+  - `mace` for MACE models
+  - `matgl` for MatGL/CHGNet models
+  - `fairchem` for FairChem/UMA models
 - **Structure Relaxation**: It is highly recommended to relax the structure before computing elastic properties. Use `--relax_structure` (enabled by default).
 - **Linear Regime**: Strains must be small enough to remain in the linear elastic regime. The default values are appropriate for most inorganic crystalline materials.
 - **Unit Conversion**: MatCalc returns moduli in eV/ų (bulk, shear) and Pa (Young's). The script converts all to GPa.

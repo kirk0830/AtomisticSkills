@@ -5,7 +5,7 @@ Usage:
     from spectra import load_spectrum, load_time_series
 
 Requirements:
-    - Environment: nmr-agent (conda)
+    - Environment: nmr (pixi)
     - Required packages: numpy
 """
 

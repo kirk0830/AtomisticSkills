@@ -18,7 +18,7 @@ Total input size is ~40 KB. The receptor itself is not needed: RMSD is computed 
 ## How to run it
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python .agents/skills/drug-redocking-rmsd/scripts/compute_rmsd.py \
   --docked .agents/skills/drug-redocking-rmsd/examples/cdk2-nu6102/inputs/cocrystal_NU6102_docked.pdbqt \
   --reference .agents/skills/drug-redocking-rmsd/examples/cdk2-nu6102/inputs/cocrystal_ligand_4SP.pdb \
@@ -57,7 +57,7 @@ For the HTVS workflow, this means the CDK2 / NU6102 protocol as configured **sho
 As a positive-control smoke test, you can run the script against pose 1 used as its own reference. The result should be `pose 1 = 0.0 A`, `gate_pass = True`, with the other poses at their real in-place distances from pose 1:
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python - <<'PY'
 from meeko import PDBQTMolecule, RDKitMolCreate
 from rdkit import Chem
@@ -81,7 +81,7 @@ Expected: `top_pose_rmsd = 0.0`, `gate_pass = True`, and the other nine poses re
 As another sanity check, point the script at a reference that is a different molecule than the docked compound:
 
 ```bash
-# Env: drugdisc-agent
+# Env: drugdisc
 python -c "
 from rdkit import Chem
 from rdkit.Chem import AllChem

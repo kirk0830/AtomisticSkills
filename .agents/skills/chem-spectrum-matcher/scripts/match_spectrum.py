@@ -12,7 +12,7 @@ Supported modalities: nmr_1h, ir
 Supported metrics:    l2, cosine, wasserstein
 
 Usage:
-    # Env: nmr-agent
+    # Env: nmr
     python match_spectrum.py \\
         --query experimental.xy \\
         --smiles "OC1CC2CCC1C2" "OC1CC2CCC1[C@@H]2C" \\
@@ -24,7 +24,7 @@ Usage:
         --plot
 
 Requirements:
-    - Conda environment: nmr-agent
+    - Pixi environment: nmr
     - Required packages: numpy, scipy, rdkit, requests, matplotlib
 """
 

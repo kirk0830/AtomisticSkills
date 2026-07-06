@@ -112,10 +112,10 @@ After prediction, the agent must:
 ## Environment
 
 ```bash
-mamba activate nmr-agent
+pixi shell -e nmr
 ```
 
-Install: `conda-envs/nmr-agent/install.sh`
+Install: `pixi install -e nmr`
 
 Required packages: `numpy`, `rdkit`, `requests`, `nmrsim`.
 

@@ -2,7 +2,7 @@
 # Example: Retrieve crystal structures by material ID from Materials Project
 # This demonstrates both single and batch structure retrieval
 
-# Env: base-agent
+# Env: base
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="${SCRIPT_DIR}"

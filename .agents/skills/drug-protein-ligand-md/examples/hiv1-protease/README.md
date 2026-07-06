@@ -13,7 +13,7 @@ Uses outputs from `drug-complex-system-builder/examples/hiv1-protease/system/`:
 Short test run (2 ps total, for pipeline validation only):
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-protein-ligand-md/scripts/run_md.py \
   --system_xml <path_to>/system/system.xml \
   --input_pdb <path_to>/system/complex_solvated.pdb \

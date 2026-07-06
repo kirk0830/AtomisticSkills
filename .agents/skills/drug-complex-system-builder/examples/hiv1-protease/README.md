@@ -10,7 +10,7 @@ Demonstrate building a solvated protein-ligand complex for OpenMM simulation usi
 ## Steps
 
 ```bash
-# Env: drugmd-agent
+# Env: drugmd
 python .agents/skills/drug-complex-system-builder/scripts/build_complex.py \
   --receptor .agents/skills/drug-complex-system-builder/examples/hiv1-protease/1HSG_prepared.pdb \
   --ligand .agents/skills/drug-complex-system-builder/examples/hiv1-protease/ligand.sdf \

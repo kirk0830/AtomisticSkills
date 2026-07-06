@@ -5,7 +5,7 @@ Example of generating crystal structures unconditionally from the MP-20 training
 ## Run
 
 ```bash
-# Env: diffcsp-agent
+# Env: diffcsp
 python .agents/skills/ml-generative-diffcsp/scripts/unconditional_generate.py \
     --model mp_gen \
     --num_structures 5 \

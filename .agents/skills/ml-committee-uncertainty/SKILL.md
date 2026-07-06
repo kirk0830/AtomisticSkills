@@ -127,7 +127,7 @@ mcp_base_register_model(
 - **Minimum committee size**: Use at least 3 models. Two models can give misleading std estimates; 5+ models provide more robust uncertainty quantification.
 - **Identical architecture**: All committee members must share the same base model architecture and chemical elements (same `--model` flag during fine-tuning). Different architectures cannot be meaningfully ensembled.
 - **Same data, different seeds**: Committee members should be trained on the same dataset with different random seeds. Using models trained on different datasets introduces epistemic uncertainty from data mismatch, not model uncertainty.
-- **Environment**: This script requires the `mace-agent` conda environment.
+- **Environment**: This script requires the `mace` pixi environment.
 
 ## References
 

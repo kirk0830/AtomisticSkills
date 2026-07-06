@@ -8,7 +8,7 @@ Usage:
     python upscale_image.py plot.png --factor 2 --output plot_upscaled.png
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: opencv (cv2)
 """
 

@@ -69,7 +69,7 @@ Provide numbered, step-by-step instructions. Each step should:
 **Format for code blocks:**
 ````markdown
 ```bash
-# Env: <conda-environment-name>
+# Env: <pixi-environment-name>
 python .agents/skills/<skill-name>/scripts/<script>.py [arguments]
 ```
 ````
@@ -86,7 +86,7 @@ mcp_<tool_name>(
 ````
 
 **Key principles:**
-- Always specify the conda environment required
+- Always specify the Pixi environment required
 - Use absolute paths from project root for script references
 - Provide inline comments explaining non-obvious parameters
 - Use realistic example values instead of generic placeholders
@@ -110,7 +110,7 @@ Provide concrete, runnable examples that demonstrate typical usage.
 
 Creating a solid-liquid interface for Aluminum:
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/melting-point/scripts/create_interface.py Al_solid.cif Al_liquid.cif --axis 0 --output Al_interface.cif
 ```
 ```
@@ -122,7 +122,7 @@ Document important limitations, safety rules, and requirements:
 ## Constraints
 - **Box Dimensions**: The lattice parameters perpendicular to the stacking axis must be identical.
 - **Ensemble**: The final production run must be in the **NVE** ensemble.
-- **Environments**: Scripts require specific Conda environments (e.g., `mace-agent`, `matgl-agent`). **Each code block MUST specify the environment.**
+- **Environments**: Scripts require specific Pixi environments (e.g., `mace`, `matgl`). **Each code block MUST specify the environment.**
 - **System Size**: Recommended for supercells with >50 atoms to reduce noise.
 ```
 
@@ -147,7 +147,7 @@ Usage:
     python script_name.py input.cif --option value
 
 Requirements:
-    - Conda environment: <env-name>
+    - Pixi environment: <env-name>
     - Required packages: ase, pymatgen, etc.
 """
 ```
@@ -179,7 +179,7 @@ def process_structure(atoms: Atoms, threshold: float = 0.5) -> dict:
 ## Environment Management Standards
 
 ### 1. Explicit Specification
-Every script execution in `SKILL.md` **MUST** include a `# Env: <conda-environment-name>` annotation in the code block. This ensures the agent and the user know exactly which environment to activate before running the script.
+Every script execution in `SKILL.md` **MUST** include a `# Env: <pixi-environment-name>` annotation in the code block. This ensures the agent and the user know exactly which environment to activate before running the script.
 
 ### 2. Environment Mapping
 Refer to `mcp-environments.md` for the standard environment mapping (Pixi environment names, no `-agent` suffix):

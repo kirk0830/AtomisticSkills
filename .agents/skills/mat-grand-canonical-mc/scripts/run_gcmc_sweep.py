@@ -16,7 +16,7 @@ Usage:
         --output_dir gcmc_results/
 
 Requirements:
-    - Conda environment: smol-agent
+    - Pixi environment: smol
     - Required packages: smol, pymatgen, numpy
 """
 

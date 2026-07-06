@@ -4,7 +4,7 @@ This example demonstrates a Quasi-Harmonic Approximation (QHA) calculation for b
 
 ## Command
 ```bash
-conda activate matgl-agent
+pixi shell -e matgl
 python .agents/skills/qha/scripts/calculate_qha.py \
     --structure tests/Li.cif \
     --model_type matgl \

@@ -13,7 +13,7 @@ This example demonstrates calculating the adsorption energy of a CO molecule on 
 ## Running the Calculation
 
 ```bash
-# Env: mace-agent
+# Env: mace
 python .agents/skills/mat-surface-adsorption/scripts/calculate_adsorption.py \
     --bulk .agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/Cu_bulk.cif \
     --adsorbate .agents/skills/mat-surface-adsorption/examples/CO_on_Cu111/CO.xyz \

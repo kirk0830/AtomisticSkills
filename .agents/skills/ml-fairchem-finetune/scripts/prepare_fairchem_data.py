@@ -323,7 +323,7 @@ def main():
     print(f"Dataset metadata written to: {metadata_path}")
     print("=======================================================\n")
     print("To generate training configs and start training, run:")
-    print("  conda activate fairchem-agent")
+    print("  pixi shell -e fairchem")
     print(
         f"  python generate_fairchem_config.py --data-metadata {metadata_path.absolute()} --output-dir {save_dir.absolute()}"
     )

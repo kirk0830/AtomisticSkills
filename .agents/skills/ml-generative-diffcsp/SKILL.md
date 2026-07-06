@@ -15,7 +15,7 @@ Generate novel crystal structures using DiffCSP++ (ICLR 2024), a diffusion model
 > [!IMPORTANT]
 > **GPU Required**: DiffCSP++ inference is significantly faster on GPU.
 
-- The `diffcsp-agent` conda environment must be installed.
+- The `diffcsp` pixi environment must be installed.
 - DiffCSP++ repo cloned to `/home/bdeng/projects/DiffCSP-PP`.
 - Pre-trained checkpoints downloaded to `checkpoints/` directory.
 
@@ -108,7 +108,7 @@ python .agents/skills/ml-generative-diffcsp/scripts/unconditional_generate.py \
 > [!NOTE]
 > **Wyckoff Notation**: Positions can be given as full labels (`"2a,2d,4g"`) or shorthand letters (`"adg"`). The number prefix is the site multiplicity — it's automatically determined from the space group.
 
-- **Environments**: All scripts require the `diffcsp-agent` conda environment.
+- **Environments**: All scripts require the `diffcsp` pixi environment.
 - **GPU**: A CUDA GPU is recommended for reasonable generation speed.
 - **CSP vs Gen models**: CSP models require `atom_types`; Gen models can generate without them.
 

@@ -26,7 +26,7 @@ Below is the expected canonical Spinodal Decomposition output produced by our Fi
 
 ## Reproduction
 
-Run the following command from the project root using the `phasefield-agent` environment:
+Run the following command from the project root using the `phasefield` environment:
 
 ```bash
 python .agents/skills/mat-phase-field-conservative/scripts/run_spinodal_decomposition.py \

@@ -209,7 +209,7 @@ def main():
     print(f"Configuration written to: {config_path}")
     print("=======================================================\\n")
     print("To start training, simply run:")
-    print("  conda activate mace-agent")
+    print("  pixi shell -e mace")
     print(f"  mace_run_train --config {config_path.absolute()}")
 
 

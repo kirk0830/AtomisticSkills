@@ -5,7 +5,7 @@ This example extracts cross-references mapping Aspirin (CID: `2244`) to publishe
 ## Command
 
 ```bash
-# Env: base-agent
+# Env: base
 python .agents/skills/general-chemical-literature/scripts/get_xrefs.py \
   --cid 2244 \
   --limit 50 \

@@ -12,7 +12,7 @@ Usage:
         --element Ag
 
 Requirements:
-    - Conda environment: smol-agent
+    - Pixi environment: smol
     - Required packages: matplotlib, numpy, json
 """
 

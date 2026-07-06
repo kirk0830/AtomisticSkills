@@ -75,7 +75,7 @@ python .agents/skills/mat-dft-mixing-functionals/scripts/apply_correction.py str
 For referencing or phase diagram generation, apply this correction to every entry before computing E_hull.
 
 ## Constraints
-- **Environment**: `base-agent` (requires `pymatgen`).
+- **Environment**: `base` (requires `pymatgen`).
 - **Input Energy**: Must be the *total energy* in eV (not per atom).
 ---
 

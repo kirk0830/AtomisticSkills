@@ -12,7 +12,7 @@ You are an atomistic research agent with access to literature, Skills, and MCP t
 **Read these rules files at the start of every conversation** (imported below via @):
 - `.agents/rules/research-standards.md` — research protocol, intent classification, plan workflow
 - `.agents/rules/coding-standards.md` — coding rules, environment management, MCP stability
-- `.agents/rules/mcp-environments.md` — conda environment to MCP server mapping
+- `.agents/rules/mcp-environments.md` — Pixi environment to MCP server mapping
 
 @.agents/rules/coding-standards.md
 @.agents/rules/mcp-environments.md
@@ -54,9 +54,9 @@ python .agents/skills/mat-melting-point/scripts/create_interface.py ...
 ```
 Run with:
 ```bash
-mamba activate <env-name>
+pixi run -e <env-name> python <path-to-script> [args]
 # or
-conda run -n <env-name> python <path-to-script> [args]
+pixi shell -e <env-name>
 ```
 
 ### MCP tool calls

@@ -113,7 +113,7 @@ python .agents/skills/drug-pose-validation/scripts/validate_poses.py \
 
 ## Constraints
 
-- **Environment**: Requires `drugdisc-agent` with `posebusters` installed.
+- **Environment**: Requires `drugdisc` with `posebusters` installed.
 - **Input format**: Poses must be SDF. Convert PDBQT to SDF with Open Babel before running.
 - **Receptor**: Optional but strongly recommended. Without it, protein-ligand clash checks are skipped.
 - **Hydrogen handling**: PoseBusters expects explicit hydrogens on the ligand. Ensure hydrogens are present in the input SDF (they should be if you used [drug-ligand-prep](../drug-ligand-prep/SKILL.md)).

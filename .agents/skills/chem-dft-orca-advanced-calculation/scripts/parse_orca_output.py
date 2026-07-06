@@ -11,7 +11,7 @@ Usage:
     python parse_orca_output.py --output_file calculation.out --property all
 
 Requirements:
-    - Conda environment: orca-agent
+    - Pixi environment: orca
     - No special packages required (pure Python regex parsing)
 """
 

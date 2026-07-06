@@ -5,7 +5,7 @@ Usage:
     python generate_inputs.py --output amset_flow.json
 
 Requirements:
-    - Conda environment: atomate2-agent
+    - Pixi environment: atomate2
     - Required packages: atomate2, pymatgen, jobflow, amset
 """
 

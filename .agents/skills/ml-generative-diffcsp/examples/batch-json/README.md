@@ -5,7 +5,7 @@ Example of generating multiple structures from a JSON specification file.
 ## Run
 
 ```bash
-# Env: diffcsp-agent
+# Env: diffcsp
 python .agents/skills/ml-generative-diffcsp/scripts/batch_generate.py \
     --json_file .agents/skills/ml-generative-diffcsp/examples/example.json \
     --model mp_csp \

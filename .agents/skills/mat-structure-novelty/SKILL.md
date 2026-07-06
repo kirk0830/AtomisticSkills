@@ -60,7 +60,7 @@ python .agents/skills/mat-structure-novelty/scripts/match_structure.py generated
 ```
 
 ## Constraints
-- **Environments**: The script uses the standard `StructureMatcher` from `pymatgen`. It MUST be run in the `base-agent` environment.
+- **Environments**: The script uses the standard `StructureMatcher` from `pymatgen`. It MUST be run in the `base` environment.
 - **Match Tolerances**: The structural matching relies on fractional length tolerance (`--ltol`), site tolerance (`--stol`), and angle tolerance (`--angle_tol`). The defaults (0.2, 0.3, 5.0) are typically suitable for DFT-relaxed comparison against MP structures, but can be tweaked if the test structure is highly distorted or unrelaxed.
 
 ---

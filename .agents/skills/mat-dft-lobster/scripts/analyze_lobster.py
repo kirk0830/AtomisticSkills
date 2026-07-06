@@ -5,7 +5,7 @@ Usage:
     python analyze_lobster.py --cohpcar COHPCAR.lobster --poscar POSCAR --save cohp_plot.png
 
 Requirements:
-    - Conda environment: atomate2-agent
+    - Pixi environment: atomate2
     - Required packages: pymatgen, lobsterpy
 """
 

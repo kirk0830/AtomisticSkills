@@ -10,7 +10,7 @@ Usage:
         --steps 100000 --temperature-K 298 --gases CO2 N2 --y 0.15 0.85 --p-total-bar 1.0
 
 Requirements:
-    - Conda environment: Varies based on `--calculator`
+    - Pixi environment: Varies based on `--calculator`
     - Required packages: ase, ase-mc, numpy, matplotlib, torch, MLIP backend package
 """
 

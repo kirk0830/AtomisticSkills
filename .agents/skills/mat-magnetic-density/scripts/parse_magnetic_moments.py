@@ -8,7 +8,7 @@ Usage:
     python parse_magnetic_moments.py results.json --output analysis.json
 
 Requirements:
-    - Conda environment: base-agent
+    - Pixi environment: base
     - Required packages: pymatgen, json
 """
 

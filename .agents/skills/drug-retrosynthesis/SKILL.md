@@ -42,7 +42,7 @@ python .agents/skills/drug-retrosynthesis/scripts/evaluate_ibm_rxn.py "FC(F)(F)C
 ```
 
 ## Constraints
-- **Environments**: Requires the `drugdisc-agent` conda environment.
+- **Environments**: Requires the `drugdisc` pixi environment.
 - **Dependencies**: The script relies on the `rxn4chemistry` python library (`pip install rxn4chemistry`). If not installed, the script will gracefully exit with instructions.
 - **Rate Limits**: The IBM RXN free tier has API limits. Do not use this in a high-throughput loop for thousands of molecules without a premium tier.
 - **Sourcing Constraints**: This tool does not directly check commercial availability of the proposed precursors. You must manually verify if the starting materials proposed by IBM RXN are commercially available.
