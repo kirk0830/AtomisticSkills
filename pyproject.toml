@@ -54,6 +54,9 @@ dev = [
     "ruff>=0.1",
 ]
 
+[project.scripts]
+atomisticskills = "src.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/learningmatter-mit/AtomisticSkills"
 Repository = "https://github.com/learningmatter-mit/AtomisticSkills"

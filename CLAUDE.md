@@ -64,11 +64,11 @@ Skills that reference `mcp_*` functions require MCP servers to be configured. If
 
 ## MCP Server Setup
 
-Run `configure_mcp.py` to write configs for your agent:
+Run `atomisticskills configure` to write configs for your agent:
 ```bash
-python configure_mcp.py                    # auto-detect installed agents
-python configure_mcp.py --agent claude    # Claude Code only
-python configure_mcp.py --scope global    # write to global user config
+atomisticskills configure                        # auto-detect installed agents
+atomisticskills configure --agent claude         # Claude Code only
+atomisticskills configure --agent claude --scope global  # write to global config
 ```
 
 See `README.md` for full installation instructions.
