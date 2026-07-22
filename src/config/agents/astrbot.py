@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import sys
 from pathlib import Path
 from typing import Any
@@ -66,13 +67,12 @@ def link_skills_to_astrbot(
     skills_dir = data_dir / "skills"
     skills_dir.mkdir(parents=True, exist_ok=True)
 
-    removed = _remove_stale_project_skill_symlinks(skills_dir, project_skills_dir)
+    removed = _remove_stale_project_skill_dirs(skills_dir, project_skills_dir)
 
     linked = 0
     refreshed = 0
     skipped: list[str] = []
     conflicts: list[str] = []
-
     rewritten_skills = 0
 
     for project_skill in sorted(project_skills_dir.iterdir()):
@@ -83,31 +83,37 @@ def link_skills_to_astrbot(
             skipped.append(name)
             continue
 
-        link_path = skills_dir / name
+        dst_path = skills_dir / name
 
-        if link_path.exists() or link_path.is_symlink():
-            if link_path.is_symlink():
-                target = symlink_target(link_path)
-                if is_relative_to(target, project_skills_dir):
-                    link_path.unlink()
-                    link_path.symlink_to(project_skill, target_is_directory=True)
-                    refreshed += 1
-                else:
-                    skipped.append(name)
+        # Handle existing entries (including old symlinks from prior configs)
+        if dst_path.exists() or dst_path.is_symlink():
+            if dst_path.is_symlink():
+                dst_path.unlink()
+                linked += 1
+            elif dst_path.is_dir():
+                shutil.rmtree(dst_path)
+                refreshed += 1
             else:
                 conflicts.append(name)
         else:
-            link_path.symlink_to(project_skill, target_is_directory=True)
             linked += 1
 
-        # Rewrite SKILL.md for AstrBot sandbox (breaks symlink for this file)
-        skill_md = link_path / "SKILL.md"
-        if skill_md.exists():
-            _copy_and_rewrite(
-                project_skill / "SKILL.md",
-                skill_md,
-                "skill",
-            )
+        # Copy entire skill directory tree (excluding SKILL.md — handled below)
+        def _ignore_skill_md(d, files):
+            return ["SKILL.md"] if "SKILL.md" in files else []
+
+        shutil.copytree(
+            project_skill,
+            dst_path,
+            ignore=_ignore_skill_md,
+            symlinks=False,
+            dirs_exist_ok=True,
+        )
+
+        # Rewrite and copy SKILL.md for AstrBot sandbox
+        skill_src = project_skill / "SKILL.md"
+        if skill_src.exists():
+            _copy_and_rewrite(skill_src, dst_path / "SKILL.md", "skill")
             rewritten_skills += 1
 
     write_index_skill(skills_dir, project_root)
@@ -201,18 +207,27 @@ def _copy_and_rewrite(src: Path, dst: Path, context: str) -> None:
     dst.write_text(rewritten, encoding="utf-8")
 
 
-def _remove_stale_project_skill_symlinks(
+def _remove_stale_project_skill_dirs(
     skills_dir: Path,
     project_skills_dir: Path,
 ) -> int:
-    """Remove symlinks that point to removed project skills."""
+    """Remove directories (or old symlinks) whose project skill no longer exists."""
     removed = 0
     if not skills_dir.exists():
         return removed
 
     for entry in skills_dir.iterdir():
-        if not entry.is_symlink():
+        if entry.name == INDEX_SKILL_NAME:
             continue
+
+        if not entry.is_symlink():
+            # Real directory — remove if the source skill is gone
+            if entry.is_dir() and not (project_skills_dir / entry.name).is_dir():
+                shutil.rmtree(entry)
+                removed += 1
+            continue
+
+        # Old symlink-based entry — clean up
         target = symlink_target(entry)
         if is_relative_to(target, project_skills_dir) and not target.exists():
             entry.unlink()
