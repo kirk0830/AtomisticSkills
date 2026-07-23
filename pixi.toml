@@ -46,6 +46,19 @@ pymatgen = "*"
 ase = ">=3.22"
 typing-extensions = "*"
 mcp = "*"
+pymupdf = "*"  # PyMuPDF; provides the fitz module used by paper_downloader and PDF-parsing skills
+pytest = "*"   # Required for running the test suite in every environment
+anyio = "*"
+feedparser = "*"
+jsonschema = "*"
+openai = "*"
+plotly = "*"
+psutil = "*"
+python-dotenv = "*"
+python-pptx = "*"
+requests = "*"
+scikit-image = "*"
+tomli = "*"
 
 [feature.core.pypi-dependencies]
 # PyPI-only packages
@@ -55,6 +68,9 @@ optimade = { version = "*", extras = ["client"] }
 atomistic-skills = { path = ".", editable = true }
 jinja2 = ">=3.0"  # For HPC job template generation
 pyyaml = ">=6.0"  # For HPC config loading
+google-api-python-client = "*"
+pubchempy = "*"
+tomli-w = "*"
 
 # -----------------------------------------------------------------------------
 # Chemistry Feature: Molecular chemistry tools
@@ -105,6 +121,9 @@ matgl = "*"
 matcalc = "*"
 cython = "*"
 nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
+# dgl is imported by several MatGL fine-tuning scripts, but it is normally pulled in
+# as a transitive dependency of matgl. If you hit "No module named dgl", install the
+# CPU/CUDA wheel matching your torch version manually (see https://www.dgl.ai/).
 
 # -----------------------------------------------------------------------------
 # MLIP-FairChem Feature: FairChem/UMA/ESEN potentials
@@ -180,6 +199,7 @@ jobflow-remote = "*"
 amset = "*"
 lobsterpy = "*"
 ijson = "*"
+jobflow = "*"
 
 # -----------------------------------------------------------------------------
 # DFT-Orca Feature: SCINE/ReaDuct for molecular DFT (x86_64 only)
@@ -194,6 +214,24 @@ scine-readuct-python = "*"
 
 [feature.dft-orca.pypi-dependencies]
 numpy = "<2"  # SCINE compatibility
+
+# -----------------------------------------------------------------------------
+# DFT-CP2K Feature: New open-source periodic DFT environment via CP2K (Phase 4)
+# -----------------------------------------------------------------------------
+[feature.dft-cp2k.dependencies]
+python = ">=3.11,<3.12"
+cp2k = "*"
+ase = "*"
+pymatgen = "*"
+
+# -----------------------------------------------------------------------------
+# DFT-QE Feature: New open-source periodic DFT environment via Quantum ESPRESSO (Phase 4)
+# -----------------------------------------------------------------------------
+[feature.dft-qe.dependencies]
+python = ">=3.11,<3.12"
+qe = "*"
+ase = "*"
+pymatgen = "*"
 
 # -----------------------------------------------------------------------------
 # Generative-Base Feature: Shared dependencies for generative models
@@ -216,6 +254,7 @@ torchdiffeq = "*"
 smact = "*"
 matminer = "*"
 einops = "*"
+pytorch-geometric = "*"
 
 # -----------------------------------------------------------------------------
 # Generative-MatterGen Feature: Diffusion-based material generation
@@ -273,6 +312,7 @@ pandas = ">=1.3"
 datasets = ">=2.0"
 huggingface-hub = ">=0.10"
 fastmcp = "*"
+pytorch-geometric = "*"
 
 # -----------------------------------------------------------------------------
 # Thermodynamics Feature: CALPHAD phase diagrams
@@ -317,6 +357,7 @@ pdbfixer = "*"
 fpocket = "*"
 # dimorphite-dl (PyPI) requires rdkit<2026; keep conda rdkit aligned
 rdkit = "<2026"
+pymol-open-source = "*"
 
 [feature.drugdiscovery.pypi-dependencies]
 meeko = "*"
@@ -326,6 +367,7 @@ biopython = "*"
 dimorphite_dl = "*"
 posebusters = "*"
 MDAnalysis = "*"
+rxn4chemistry = "*"
 
 # -----------------------------------------------------------------------------
 # OpenMM-MD Feature: OpenMM-based molecular dynamics for drug discovery
@@ -358,6 +400,7 @@ Pillow = ">=10.0"
 # nmrsim -> sparse -> numba; force a numba/llvmlite with Python 3.12 wheels
 numba = ">=0.60"
 llvmlite = ">=0.43.0"
+jcamp = "*"
 
 # -----------------------------------------------------------------------------
 # Spectroscopy-MSMS Feature: Mass spectrum prediction (ICEBERG)
@@ -389,6 +432,7 @@ scikit-learn = "*"
 networkx = "*"
 rdkit = "*"
 zeopp-lsmo = "*"
+pydantic = "*"
 
 [feature.porous-materials.pypi-dependencies]
 # VOID: Voronoi Clustering for docking is installed manually via `pixi run install-void`
@@ -408,12 +452,23 @@ numpy = "<2.5"
 [feature.analysis.pypi-dependencies]
 reaction-network = ">=6.1.1,<9"
 pymatgen-analysis-diffusion = "*"
+mp-api = "*"
+mpcontribs-client = "*"
+pymatviz = "*"
 
 # -----------------------------------------------------------------------------
 # XRD Feature: X-ray diffraction analysis
 # -----------------------------------------------------------------------------
 [feature.xrd.dependencies]
 # Inherits from core
+
+[feature.xrd.pypi-dependencies]
+# dara-xrd is imported by mat-xrd-* skills, but adding it here makes the xrd
+# environment unsatisfiable because dara-xrd requires reaction-network>=8.3.0,
+# which in turn requires numba>=0.58.1, and the conda solve pins numpy>=2.5.0.
+# Install it manually in the xrd environment when needed:
+#   pixi run -e xrd pip install dara-xrd
+# dara-xrd = "*"
 
 # =============================================================================
 # ENVIRONMENT DEFINITIONS
@@ -468,6 +523,15 @@ features = ["core", "chemistry", "dft", "analysis"]
 
 [environments.orca]
 features = ["core", "chemistry", "dft-orca", "analysis"]
+
+# -----------------------------------------------------------------------------
+# DFT-CP2K / DFT-QE Environments: Open-source periodic DFT alternatives to VASP
+# -----------------------------------------------------------------------------
+[environments.cp2k]
+features = ["core", "chemistry", "dft-cp2k", "analysis"]
+
+[environments.qe]
+features = ["core", "chemistry", "dft-qe", "analysis"]
 
 # -----------------------------------------------------------------------------
 # Generative Environments: Structure generation models

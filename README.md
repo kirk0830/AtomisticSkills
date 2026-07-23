@@ -57,7 +57,7 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 - [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
 - [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
 - [**DFT with ORCA**](.agents/skills/chem-dft-orca-singlepoint/SKILL.md): Run molecular DFT calculations (local or HPC)
-- [**DFT with VASP**](.agents/skills/mat-dft-vasp/SKILL.md): Run periodic DFT calculations (local, HPC, or Atomate2)
+- [**DFT with VASP (legacy)**](.agents/skills/mat-dft-vasp/SKILL.md): Run periodic DFT calculations (local, HPC, or Atomate2); CP2K/QE are the recommended open-source alternatives
 
 ### 🎯 Workflows (High-Level Research Objectives)
 
@@ -76,7 +76,7 @@ Workflows represent **complete, high-level research goals** that may span multip
 
 ### 1. Simulation Infrastructure
 - Multi-framework MLIP support (MACE, MatGL, FairChem) with unified API
-- DFT integration: VASP (periodic) and ORCA (molecular)
+- DFT integration: CP2K / Quantum ESPRESSO (periodic) and ORCA (molecular), with legacy VASP support
 - HPC job submission via unified Slurm module (local login node or SSH)
 - Lattice-level cluster expansion and Monte Carlo via SMOL
 
@@ -227,11 +227,13 @@ for per-environment notes and sizes.
 | `mace` | MACE models (MP, OMAT, MatPES) | ~15 GB, CUDA 12 |
 | `matgl` | MatGL models (CHGNet, M3GNet, TensorNet) | ~12 GB |
 | `fairchem` | FairChem models (UMA, ESEN) | ~16 GB, CUDA 12 |
-| `atomate2` | DFT workflow management via Atomate2 + jobflow-remote | Heavy (~5–10 GB), VASP workflows |
+| `atomate2` | legacy VASP / Atomate2 workflow management; CP2K/QE are recommended open-source alternatives | Heavy (~5–10 GB) |
+| `cp2k` | Periodic DFT via CP2K (open-source, conda-forge) | Heavy (~5–10 GB), includes MPI/OpenMP stacks and pseudopotentials |
+| `qe` | Periodic DFT via Quantum ESPRESSO (open-source, conda-forge) | Heavy (~5–10 GB), includes MPI/OpenMP stacks and pseudopotentials |
 | `smol` | Cluster expansion and Monte Carlo | ~2 GB |
 | `drugdisc` | Drug discovery tools (docking, ADMET, fingerprints) | ~2–3 GB |
 | `mattergen` | Generative crystal design | ~15 GB, CUDA 11.8 |
-| `orca` | Molecular DFT via ORCA (local or HPC) | Heavy (~3–5 GB), requires external ORCA binary |
+| `orca` | molecular DFT via ORCA (external binary required; not available on conda-forge) | Heavy (~3–5 GB), requires external ORCA binary |
 | `react-ot` | Transition state generation | ~1 GB, optional git build |
 | `lammps-mace` | LAMMPS with MACE backend | Very heavy, source build required |
 | `lammps-matgl` | LAMMPS with MatGL backend | Very heavy, source build required |
@@ -263,6 +265,22 @@ hpc:
 
 See [docs/hpc_job_submission.md](docs/hpc_job_submission.md) for full HPC configuration details.
 
+#### API Keys & Credentials
+
+AtomisticSkills integrates several external APIs. Without the corresponding keys, the related features will fail:
+
+| Use case | Required key(s) | What fails without them |
+| :--- | :--- | :--- |
+| Materials Project structure/property queries | `MP_API_KEY` | All Materials Project lookups fail. |
+| MOF / QMOF database queries | `MP_API_KEY` | QMOF queries fail. |
+| Literature full-text downloads | `ELSEVIER_API_KEY`, `SPRINGER_API_KEY`, `UNPAYWALL_EMAIL` | Automatic downloads from Elsevier / Springer / Unpaywall fail; only metadata/abstracts remain. |
+| Literature search politeness | `OPENALEX_EMAIL` (recommended) | OpenAlex falls back to a shared default email; Unpaywall cannot use `OPENALEX_EMAIL` as fallback unless it is set. |
+| IBM RXN retrosynthesis | `RXN_API_KEY` | Retrosynthesis predictions fail. |
+| HuggingFace gated models | `HF_TOKEN` | Model / dataset downloads fail. |
+| VLM plot digitization | `GOOGLE_API_KEY` or `OPENAI_API_KEY` | Chart metadata extraction fails. |
+
+See [docs/environment_variables.md](docs/environment_variables.md) for the full variable list and [docs/api_key_guide.md](docs/api_key_guide.md) for step-by-step acquisition instructions.
+
 ---
 
 ## Usage
@@ -278,7 +296,7 @@ pixi run -e orca python .agents/skills/chem-dft-orca-singlepoint/scripts/run_sin
     --functional B3LYP \
     --basis_set def2-TZVP
 
-# Run VASP stability calculation
+# Run material stability calculation (uses Materials Project data, not VASP)
 pixi run -e base python .agents/skills/mat-stability/scripts/calculate_stability.py \
     --structure LiFePO4.cif
 ```

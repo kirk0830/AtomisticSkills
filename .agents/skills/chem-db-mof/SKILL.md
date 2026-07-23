@@ -15,11 +15,13 @@ Provide a unified interface for retrieving Metal-Organic Framework (MOF) crystal
 | Quantum MOF (QMOF) | `qmof` | ~20,000 DFT-relaxed | MPContribs API | DFT-optimized CIFs + bandgaps |
 | ARC-MOF DB7 (Majumdar et al.) | `arcmof-majumdar` | 12,316 hypothetical | Zenodo stream | CIFs with REPEAT partial charges |
 
-## Prerequisites
+## Prerequisites / Environment Check
 
 - **Environment**: `base`
 - **Packages**: `mpcontribs-client`, `requests`, `pandas`, `pymatgen`
-- **Credentials**: `MP_API_KEY` environment variable (required for `qmof` only)
+- **Credentials**: `MP_API_KEY` environment variable (required for `qmof` only). This key is used to access the Materials Project / MPContribs API. Without it, QMOF queries will fail. Get a free key at https://next-gen.materialsproject.org/api. See `docs/api_key_guide.md` and `docs/environment_variables.md` for details.
+
+Before running the `qmof` path, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
 
 ## Instructions
 

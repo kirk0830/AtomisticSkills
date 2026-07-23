@@ -14,6 +14,14 @@ Retrieve pre-computed phase diagrams from Materials Project to analyze thermodyn
 - Competing phases that may form during synthesis
 - Thermodynamic driving forces for phase transformations
 
+## Prerequisites / Environment Check
+
+- `MP_API_KEY` (required) — Required to retrieve pre-computed phase diagrams from Materials Project. Without it, queries will fail. Get a free key at https://next-gen.materialsproject.org/api.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running this skill, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### 1. Basic Phase Diagram Retrieval

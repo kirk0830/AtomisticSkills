@@ -35,8 +35,12 @@ def evaluate_retrosynthesis(smiles: str, max_steps: int = 3):
     """
     api_key = os.environ.get("RXN_API_KEY")
     if not api_key:
-        print("Error: RXN_API_KEY environment variable not set.")
-        print("Please export RXN_API_KEY='your_api_key' before running.")
+        print(
+            "Error: RXN_API_KEY environment variable not set.\n"
+            "Get an API key at https://rxn.res.ibm.com/ and set the environment variable:\n"
+            "    export RXN_API_KEY='your_api_key'\n"
+            "See docs/api_key_guide.md and docs/environment_variables.md for details."
+        )
         sys.exit(1)
 
     wrapper = RXN4ChemistryWrapper(api_key=api_key)

@@ -15,6 +15,14 @@ To retrieve or generate reference spectra for a set of candidate molecules and r
 
 This pattern applies to any spectral modality: 1H NMR, 13C NMR, IR, mass spectrometry, UV-Vis, Raman. The concrete implementation here covers **1H NMR** and **IR**, with the NMR path fully implemented and IR sketched for extension.
 
+## Prerequisites / Environment Check
+
+- `ORCA_BINARY_PATH` (optional, for QM-backed IR predictions) — Required only when running ORCA frequency calculations for high-accuracy IR reference spectra. Without it, fall back to empirical predictors or NIST WebBook references. Download ORCA from https://www.faccts.de/orca (or your HPC support team), extract it, and set `export ORCA_BINARY_PATH=/path/to/orca`.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for details.
+
+Before running QM-backed IR predictions, verify `ORCA_BINARY_PATH` is set and points to an executable. If it is missing, ask the user to set it or use a non-QM reference source before proceeding.
+
 ## When to Use This Skill
 
 - Confirm a proposed structure against an experimental spectrum.

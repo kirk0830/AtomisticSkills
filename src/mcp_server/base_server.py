@@ -16,7 +16,7 @@ inject_config_into_env()
 import logging  # noqa: E402
 import warnings  # noqa: E402
 from mcp.server.fastmcp import FastMCP  # noqa: E402
-from typing import Any, Optional  # noqa: E402
+from typing import Any, List, Optional  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 # Suppress all warnings to prevent protocol pollution
@@ -41,6 +41,10 @@ from src.utils.model_registry import (  # noqa: E402
     search_models as _registry_search,
     get_model as _registry_get,
     _format_entry,
+)
+from src.utils.env_check_utils import (  # noqa: E402
+    check_required_env_vars,
+    check_recommended_env_vars,
 )
 
 # Configure logging
@@ -90,7 +94,11 @@ def search_materials_project_by_formula(
     """
     mp_key = api_key or os.getenv("MP_API_KEY")
     if not mp_key:
-        return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
+        return check_required_env_vars(
+            {
+                "MP_API_KEY": "Materials Project API key (get one at https://next-gen.materialsproject.org/api)"
+            }
+        )
 
     try:
         from mp_api.client import MPRester
@@ -156,7 +164,11 @@ def search_materials_project_by_chemsys(
     """
     mp_key = api_key or os.getenv("MP_API_KEY")
     if not mp_key:
-        return "Error: Materials Project API key not found. Please provide api_key or set MP_API_KEY environment variable."
+        return check_required_env_vars(
+            {
+                "MP_API_KEY": "Materials Project API key (get one at https://next-gen.materialsproject.org/api)"
+            }
+        )
 
     try:
         from mp_api.client import MPRester
@@ -399,6 +411,7 @@ def search_literature(
     limit: int = 10,
     download: bool = True,
     save_to_file: Optional[str] = None,
+    sort: str = "relevance",
 ) -> str:
     """Search the OpenAlex database for scientific literature and optionally download full-text.
 
@@ -407,6 +420,10 @@ def search_literature(
         limit: Maximum number of results to return (default 10, max 50).
         download: Whether to automatically attempt downloading the full text of discovered papers.
         save_to_file: Optional path to save the full JSON results.
+        sort: Sort strategy for OpenAlex results. One of:
+            - "relevance" (default): most semantically relevant to the query.
+            - "citations": most cited papers; useful for finding foundational works.
+            - "recent": most recently published; useful for tracking latest progress.
 
     Returns:
         Formatted markdown summary of the top papers found, downloading status, and paywall warnings.
@@ -416,11 +433,41 @@ def search_literature(
         from pathlib import Path
         from src.utils.literature_utils import query_openalex, reconstruct_abstract
 
+        # Proactive environment-variable checks so the agent/user knows which
+        # credentials may be missing before external calls fail.
+        warning_messages: List[str] = []
+        recommended_msg = check_recommended_env_vars(
+            {
+                "OPENALEX_EMAIL": "Email for the OpenAlex polite pool (https://openalex.org/)"
+            }
+        )
+        if recommended_msg:
+            warning_messages.append(recommended_msg)
+
+        if download:
+            publisher_key_msg = check_required_env_vars(
+                {
+                    "ELSEVIER_API_KEY": "API key for Elsevier ScienceDirect downloads (https://dev.elsevier.com/)",
+                    "SPRINGER_API_KEY": "API key for Springer Nature downloads (https://dev.springernature.com/)",
+                }
+            )
+            if publisher_key_msg:
+                warning_messages.append(
+                    "Full-text download is enabled but some publisher API keys are missing. "
+                    "Paywalled papers will not be downloaded:\n" + publisher_key_msg
+                )
+            if not (os.getenv("UNPAYWALL_EMAIL") or os.getenv("OPENALEX_EMAIL")):
+                warning_messages.append(
+                    "Full-text download is enabled but neither UNPAYWALL_EMAIL nor OPENALEX_EMAIL is set. "
+                    "Unpaywall downloads will fail. Set UNPAYWALL_EMAIL (or OPENALEX_EMAIL as a fallback). "
+                    "See docs/api_key_guide.md and docs/environment_variables.md for details."
+                )
+
         limit = min(limit, 50)  # Cap at 50 to avoid massive responses
-        results = query_openalex(query, limit)
+        results = query_openalex(query, limit, sort)
 
         if not results:
-            return f"No results found on OpenAlex for query: '{query}'"
+            return f"No results found on OpenAlex for query: '{query}' (sorted by {sort})"
 
         # Optional: Save raw JSON data
         if save_to_file:
@@ -430,7 +477,15 @@ def search_literature(
                 json.dump(results, f, indent=2)
 
         # Format the output summary
-        summary = f"Found {len(results)} papers on OpenAlex for query '{query}':\\n\\n"
+        summary = f"Found {len(results)} papers on OpenAlex for query '{query}' (sorted by {sort}):\\n\\n"
+
+        if warning_messages:
+            summary = (
+                "### ⚠️ Environment Variable Notice\n\n"
+                + "\n\n".join(warning_messages)
+                + "\n\n---\n\n"
+                + summary
+            )
 
         # Determine download directory early
         output_dir = None

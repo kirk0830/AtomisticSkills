@@ -14,6 +14,14 @@ To determine the thermodynamic stability of a material at 0K by computing the en
 >
 > **Electrochemical Stability**: The phase diagram constructed here can be seamlessly reused to calculate the material's electrochemical window (ECW) against a specific mobile ion (e.g., Li/Li+). See the [mat-electrochemical-window](../mat-electrochemical-window/SKILL.md) skill for detailed methods.
 
+## Prerequisites / Environment Check
+
+- `MP_API_KEY` (required) — Required to query Materials Project for stable hull structures and competing phases. Without it, the `query_mp_hull.py` step will fail. Get a free key at https://next-gen.materialsproject.org/api.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running this skill, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 1.  **Select Level of Theory**: Choose the target accuracy level for stability calculations.

@@ -5,6 +5,8 @@ import fitz  # PyMuPDF
 import tempfile
 from pathlib import Path
 
+from src.utils.env_check_utils import check_required_env_vars
+
 # Configure logging
 logger = logging.getLogger(__name__)
 
@@ -14,8 +16,13 @@ def download_elsevier(doi: str, output_dir: Path) -> str:
     api_key = os.getenv("ELSEVIER_API_KEY")
     inst_token = os.getenv("ELSEVIER_INST_TOKEN")
 
-    if not api_key:
-        logger.error("ELSEVIER_API_KEY environment variable not set.")
+    missing_msg = check_required_env_vars(
+        {
+            "ELSEVIER_API_KEY": "API key for Elsevier ScienceDirect downloads (get one at https://dev.elsevier.com/)"
+        }
+    )
+    if missing_msg:
+        logger.error(missing_msg)
         return None
 
     url = f"https://api.elsevier.com/content/article/doi/{doi}"
@@ -86,9 +93,13 @@ def download_elsevier(doi: str, output_dir: Path) -> str:
 def download_springer(doi: str, output_dir: Path) -> str:
     """Download full text from Springer API."""
     api_key = os.getenv("SPRINGER_API_KEY")
-
-    if not api_key:
-        logger.error("SPRINGER_API_KEY environment variable not set.")
+    missing_msg = check_required_env_vars(
+        {
+            "SPRINGER_API_KEY": "API key for Springer Nature downloads (get one at https://dev.springernature.com/)"
+        }
+    )
+    if missing_msg:
+        logger.error(missing_msg)
         return None
 
     safe_doi = doi.replace("/", "_")
@@ -149,7 +160,10 @@ def download_unpaywall(doi: str, output_dir: Path) -> str:
     email = os.getenv("UNPAYWALL_EMAIL") or os.getenv("OPENALEX_EMAIL")
     if not email:
         logger.error(
-            "UNPAYWALL_EMAIL or OPENALEX_EMAIL environment variable not set. It is required by Unpaywall."
+            "UNPAYWALL_EMAIL (or OPENALEX_EMAIL as fallback) is not set. "
+            "Unpaywall requires an email to use the polite pool. "
+            "Set UNPAYWALL_EMAIL=your_email@example.com. "
+            "See docs/api_key_guide.md."
         )
         return None
 

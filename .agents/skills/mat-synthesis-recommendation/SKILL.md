@@ -10,6 +10,14 @@ category: [materials]
 
 To provide experimentally validated synthesis routes for target inorganic materials by querying Materials Project's text-mined database of synthesis recipes extracted from scientific literature. This skill returns precursor materials, synthesis procedures, reaction equations, and DOI references to published papers.
 
+## Prerequisites / Environment Check
+
+- `MP_API_KEY` (required) — Required to query Materials Project's synthesis recipes. Without it, requests will fail. Get a free key at https://next-gen.materialsproject.org/api.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running this skill, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### 1. Query Synthesis Recipes

@@ -49,6 +49,20 @@ def test_search_literature(skip_if_wrong_env):
     assert isinstance(res, str)
 
 
+@pytest.mark.base
+def test_search_literature_sort_citations(skip_if_wrong_env):
+    res = base_server.search_literature("battery", sort="citations")
+    assert isinstance(res, str)
+    assert "sorted by citations" in res
+
+
+@pytest.mark.base
+def test_search_literature_sort_recent(skip_if_wrong_env):
+    res = base_server.search_literature("battery", sort="recent")
+    assert isinstance(res, str)
+    assert "sorted by recent" in res
+
+
 @pytest.fixture
 def mock_registry_file(tmp_path, monkeypatch):
     from src.utils import model_registry

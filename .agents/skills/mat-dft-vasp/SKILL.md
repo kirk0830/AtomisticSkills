@@ -6,6 +6,9 @@ category: materials
 
 # mat-dft-vasp
 
+> [!CAUTION]
+> **Legacy skill.** VASP is a commercial periodic DFT engine. AtomisticSkills is migrating to the open-source conda-forge alternatives **CP2K** and **Quantum ESPRESSO**, which are available via the `cp2k` and `qe` Pixi environments. For new periodic DFT work, prefer the forthcoming `mat-dft-cp2k` / `mat-dft-qe` skills (see [DFT migration report](../../../.trae/documents/dft_migration_report.md)). VASP support is retained here only for backwards compatibility.
+
 ## Goal
 
 To prepare VASP input files (INCAR, POTCAR, KPOINTS, POSCAR) locally for a structure or list of structures, and to parse the resulting VASP output files (`vasprun.xml`, `OUTCAR`) to extract the final energies, forces, stress, and geometries.
@@ -28,6 +31,18 @@ This skill supports three execution modes:
 > - **HPC mode** (`VaspHPCRunner`): Quick single calculations, simple relaxations, no MongoDB setup needed
 > - **Atomate2 mode**: Complex workflows (NEB, defect calculations, phase diagrams), database integration, dynamic error correction
 > - **Manual mode**: When you need full control over job submission
+
+## Prerequisites / Environment Check
+
+VASP is a licensed periodic DFT engine. Before running, confirm the variables for your chosen mode are set. For new periodic DFT work, consider **CP2K** or **Quantum ESPRESSO** (installed via the `cp2k` / `qe` Pixi environments) instead; they are the preferred open-source alternatives and do not require these credentials.
+
+- `VASP_CMD` or `ATOMATE2_VASP_CMD` (required for local VASP / Atomate2) — Command to run VASP, e.g. `mpirun -np 16 vasp_std`. `ATOMATE2_VASP_CMD` takes precedence. Without it, local VASP/Atomate2 execution will fail.
+- `PMG_VASP_PSP_DIR` (required for local POTCAR generation) — Path to a valid VASP POTCAR directory. Without it, POTCAR files cannot be generated. Can also be set in `~/.pmgrc.yaml`.
+- `ATOMATE2_REMOTE_PROJECT` (recommended for remote Atomate2) — Default project name for remote job submission. Only needed when `jobflow-remote` cannot auto-detect the project.
+
+See `docs/api_key_guide.md`, `docs/environment_variables.md`, and `docs/hpc_job_submission.md` for setup details.
+
+Before running this skill, verify these variables are set for the chosen mode. If any required variable is missing, ask the user to set it before proceeding.
 
 ## Instructions
 

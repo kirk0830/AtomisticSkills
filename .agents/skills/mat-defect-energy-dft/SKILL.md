@@ -13,6 +13,18 @@ $$E_f[D^q] = E[D^q] - E[\text{bulk}] + \sum_i \Delta n_i \mu_i + q(E_\text{VBM} 
 
 where $q$ is the charge state, $E_\text{VBM}$ is the valence band maximum, $\Delta E_F$ is the Fermi energy relative to VBM, and $E_\text{corr}$ is the finite-size correction (Freysoldt/FNV).
 
+## Prerequisites / Environment Check
+
+This skill uses atomate2 VASP workflows. Confirm the variables for your chosen execution mode are set before submitting calculations.
+
+- `VASP_CMD` or `ATOMATE2_VASP_CMD` (required for local VASP / Atomate2) — Command to run VASP, e.g. `mpirun -np 16 vasp_std`. `ATOMATE2_VASP_CMD` takes precedence. Without it, local VASP/Atomate2 execution will fail.
+- `PMG_VASP_PSP_DIR` (required for local POTCAR generation) — Path to a valid VASP POTCAR directory. Without it, POTCAR files cannot be generated. Can also be set in `~/.pmgrc.yaml`.
+- `ATOMATE2_REMOTE_PROJECT` (recommended for remote Atomate2) — Default project name for remote job submission. Only needed when `jobflow-remote` cannot auto-detect the project.
+
+See `docs/api_key_guide.md`, `docs/environment_variables.md`, and `docs/hpc_job_submission.md` for setup details.
+
+Before running this skill, verify these variables are set for the chosen mode. If any required variable is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### 1. Obtain Bulk Structure

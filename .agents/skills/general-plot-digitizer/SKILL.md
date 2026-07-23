@@ -10,6 +10,18 @@ category: [general, machine-learning]
 
 Extract calibrated numeric X-Y data from images of experimental spectra (Raman, XRD, UV-Vis, IR, NMR, etc.) using a deterministic "Agent-in-the-Loop" workflow.
 
+## Prerequisites / Environment Check
+
+This skill uses a Vision-Language Model (VLM) for metadata extraction. Choose one provider and set the corresponding key:
+
+- `GOOGLE_API_KEY` (required for Gemini) — Required to call Google Gemini vision-language models. Get a key at https://ai.google.dev/.
+- `OPENAI_API_KEY` (required for OpenAI) — Required to call OpenAI GPT-4V / GPT-4o vision models. Get a key at https://platform.openai.com/.
+- `GEMINI_MODEL` (optional) — Override the default Gemini model ID (default: `gemini-2.5-flash-lite`).
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for details.
+
+Before running this skill, verify that at least one of `GOOGLE_API_KEY` or `OPENAI_API_KEY` is set. If neither is set, ask the user to set one before proceeding.
+
 The labor is divided between two models:
 1. **Vision-Language Model (Visual Sensor)**: Reads the image and returns a rich, unstructured narrative description of axes, colors, and visual obstacles. It does **not** produce JSON.
 2. **Coding Agent (Translator & Executor)**: Translates the VLM narrative into a precise `metadata.json`, runs the CV pipeline, inspects the overlay, and iterates until the curve is correctly isolated.

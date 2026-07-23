@@ -15,6 +15,14 @@ The agent should use this skill's scripts when:
 
 For end-to-end workflows that chain this skill with other skills, see: `.agents/workflows/reaction-to-nmr-quantification.md` and `.agents/workflows/nmr-reaction-kinetics.md`.
 
+## Prerequisites / Environment Check
+
+- `HF_TOKEN` (required for `predict_products.py`) — Required to download the gated ReactionT5 model from HuggingFace. Without it, product prediction will fail. Get a token at https://huggingface.co/settings/tokens.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running product prediction, verify `HF_TOKEN` is set. If it is missing, ask the user to set it before proceeding.
+
 ## When NOT to Use This Skill
 
 - **13C NMR, 2D NMR (COSY, HSQC, etc.), or solid-state NMR** -- this skill handles 1H solution-state NMR only.

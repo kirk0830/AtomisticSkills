@@ -10,6 +10,17 @@ category: [materials]
 
 To calculate the electronic band structure of a crystalline material, revealing the energy-momentum relationship for electrons and determining whether the material is metallic, semiconducting, or insulating. This includes computing the band gap ($E_g$), identifying direct vs. indirect transitions, and visualizing the dispersion along high-symmetry k-paths.
 
+## Prerequisites / Environment Check
+
+- `MP_API_KEY` (recommended) — Required when retrieving pre-computed electronic structure from Materials Project via `get_mp_electronic_structure.py` (or when using the MCP search tool). Without it, MP retrieval will fail. Get a free key at https://next-gen.materialsproject.org/api.
+- `VASP_CMD` or `ATOMATE2_VASP_CMD` (required for local VASP / Atomate2 calculations) — Command to run VASP, e.g. `mpirun -np 16 vasp_std`. `ATOMATE2_VASP_CMD` takes precedence. Without it, local VASP/Atomate2 execution will fail.
+- `PMG_VASP_PSP_DIR` (required for local POTCAR generation) — Path to a valid VASP POTCAR directory. Without it, POTCAR files cannot be generated. Can also be set in `~/.pmgrc.yaml`.
+- `ATOMATE2_REMOTE_PROJECT` (recommended for remote Atomate2) — Default project name for remote job submission. Only needed when `jobflow-remote` cannot auto-detect the project.
+
+See `docs/api_key_guide.md`, `docs/environment_variables.md`, and `docs/hpc_job_submission.md` for setup details.
+
+Before running this skill, verify the variables for your chosen data source and execution mode are set. If any required variable is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### 1. Obtain or Prepare the Input Structure

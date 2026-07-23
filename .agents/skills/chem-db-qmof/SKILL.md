@@ -10,11 +10,13 @@ category: [materials, chemistry]
 
 To retrieve computational data and relaxed crystal structures (.cif) for roughly 20,000 Metal-Organic Frameworks (MOFs) that have been thoroughly characterized using DFT. QMOF is hosted by the Materials Project under the "MPContribs" project (`qmof`). This skill allows you to retrieve relaxed CIF structures by reference name, CSD refcode, or specific structural/electronic properties like bandgap.
 
-## Prerequisites
+## Prerequisites / Environment Check
 
 - **Dependency**: `mpcontribs-client` must be installed.
 - **Environment**: Execution happens in the `base` environment.
-- **Credentials**: Requires the standard Materials Project API key exported as `MP_API_KEY`.
+- **Credentials**: `MP_API_KEY` (required) — Required to query the QMOF database via Materials Project / MPContribs. Without it, the query will fail. Get a free key at https://next-gen.materialsproject.org/api. See `docs/api_key_guide.md` and `docs/environment_variables.md` for details.
+
+Before running this skill, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
 
 ## Instructions
 

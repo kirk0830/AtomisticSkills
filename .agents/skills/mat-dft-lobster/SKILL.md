@@ -20,6 +20,17 @@ LOBSTER is free to download for non-commercial use from [http://www.cohp.de/](ht
 
 To use this skill, deploy the compiled `lobster` binary to your remote HPC worker or local testing environment and ensure its path is exported in your environment `PATH`. All required Python packages (`lobsterpy`, `ijson`) are already provided by the `atomate2` environment.
 
+## Prerequisites / Environment Check
+
+- **LOBSTER binary** — The `lobster` executable must be available on the remote HPC worker (or local environment) via `PATH`. Download LOBSTER from http://www.cohp.de/.
+- `VASP_CMD` or `ATOMATE2_VASP_CMD` (required for local VASP / Atomate2) — Command to run VASP, e.g. `mpirun -np 16 vasp_std`. `ATOMATE2_VASP_CMD` takes precedence. Without it, local execution will fail.
+- `PMG_VASP_PSP_DIR` (required for local POTCAR generation) — Path to a valid VASP POTCAR directory. Without it, POTCAR files cannot be generated. Can also be set in `~/.pmgrc.yaml`.
+- `ATOMATE2_REMOTE_PROJECT` (recommended for remote Atomate2) — Default project name for remote job submission. Only needed when `jobflow-remote` cannot auto-detect the project.
+
+See `docs/api_key_guide.md`, `docs/environment_variables.md`, and `docs/hpc_job_submission.md` for setup details.
+
+Before running this skill, verify these variables and the LOBSTER binary are configured for the chosen mode. If anything required is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### 1. Generate and Execute the Workflow

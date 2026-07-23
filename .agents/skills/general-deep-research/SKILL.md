@@ -9,6 +9,19 @@ category: general
 ## Goal
 To perform an in-depth, iterative, and comprehensive literature and web research campaign to answer complex scientific questions (e.g., "What are the synthesis methods and solid-state electrolyte performance of LiInCl3?"). This skill produces a high-quality, synthesized research report with citations, significantly exceeding the depth of a single simple literature query.
 
+## Prerequisites / Environment Check
+
+Before starting, confirm the environment variables below. Missing required variables will prevent full-text downloads; missing recommended variables may reduce search reliability or politeness.
+
+- `OPENALEX_EMAIL` (recommended) — Used for the OpenAlex polite pool. If missing, OpenAlex queries fall back to a default email. Set it at https://openalex.org/.
+- `UNPAYWALL_EMAIL` (required for Unpaywall) — Unpaywall requires an email to access the polite pool and download open-access PDFs. Set it at https://unpaywall.org/.
+- `ELSEVIER_API_KEY` (required for Elsevier full text) — Required to download papers from ScienceDirect via the Elsevier API. Get a key at https://dev.elsevier.com/.
+- `SPRINGER_API_KEY` (required for Springer full text) — Required to download papers from Springer Nature via the Springer Meta/TDM API. Get a key at https://dev.springernature.com/.
+
+For setup details, see `docs/api_key_guide.md` and `docs/environment_variables.md`.
+
+Before running this skill, verify these variables are set. If any required variable is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 When the user requests deep research on a topic, the agent MUST follow this multi-step iterative protocol. Do not implement this as a python script, but rather execute these steps logically using your own tool-calling capabilities.
@@ -19,13 +32,53 @@ Break down the user's broad research topic into 3-5 specific sub-queries.
 
 Create a rough outline for the final research report in your task plan.
 
+### Step 1.5: Search Strategy Selection (Recommended)
+
+Before executing literature searches, decide on the ranking strategy. The default strategy is **dual-route**: for each sub-query, run the search twice to avoid missing either the most relevant recent solutions or the foundational highly-cited works.
+
+**Default dual-route strategy (use unless the user specifies otherwise):**
+1. `sort="relevance", limit=10` — captures the papers most semantically aligned with the sub-query.
+2. `sort="citations", limit=10` — captures the high-impact foundational literature behind the topic.
+
+If the user is clearly asking for the latest developments (e.g., "recent progress", "state-of-the-art", "newest solution"), add a third search:
+3. `sort="recent", limit=10` — captures the most recently published papers.
+
+Optionally, you may use `AskUserQuestion` to let the user choose the strategy. Explain the trade-offs:
+- **Most relevant top 10**: best for understanding the literature most closely tied to the scientific question.
+- **Most cited top 10**: best for understanding the classic/foundational works underlying the question.
+- **Most recent top 10**: best for tracking the latest trends and potential breakthroughs.
+- **Dual default (recommended)**: runs both relevance and citation searches, covering both the most pertinent and the most influential papers.
+
 ### Step 2: Iterative Literature Search
 For *each* sub-query, use the `mcp_base_search_literature` tool to search the OpenAlex database. **Always set `download=True`** to attempt downloading the full text of discovered papers.
+
+Run the default dual-route search for every sub-query:
+
+```bash
+# Most relevant papers
+mcp_base_search_literature(
+    query="Lithium Indium Chloride ionic conductivity",
+    sort="relevance",
+    limit=10,
+    download=True
+)
+
+# Most cited papers
+mcp_base_search_literature(
+    query="Lithium Indium Chloride ionic conductivity",
+    sort="citations",
+    limit=10,
+    download=True
+)
+```
+
+If the user asks for latest progress, also run:
 
 ```bash
 mcp_base_search_literature(
     query="Lithium Indium Chloride ionic conductivity",
-    limit=50,
+    sort="recent",
+    limit=10,
     download=True
 )
 ```
@@ -37,6 +90,8 @@ search_web(
     query="Li-In-Cl solid state electrolyte review"
 )
 ```
+
+**Deduplication**: If the same paper appears in multiple sorted result sets, keep only one record in your synthesis, but note that it ranked highly under multiple criteria (e.g., both relevance and citations).
 
 ### Step 3: Information Extraction & Synthesis
 Do not just list papers. You must read the content (or the provided summaries/full texts from the MCP tool).
@@ -69,6 +124,8 @@ notify_user(
 - **Depth Over Speed**: Take the time to run multiple tool calls to search and read. Do not stop after one search query.
 - **Data Specificity**: Extract quantitative data (values, temperatures, error margins) wherever possible rather than qualitative statements.
 - **Resource Utilization**: Use both `mcp_base_search_literature` and `search_web`.
+- **Ranking Strategy**: Do not rely on a single sort order. Deep-research tasks must use at least two perspectives (relevance + citations by default; add recent when tracking latest progress).
+- **Deduplication**: When merging results from multiple sort strategies, deduplicate papers and preserve metadata about which sort criteria they satisfied.
 
 ## Examples
 

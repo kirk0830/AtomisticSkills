@@ -18,6 +18,14 @@ The substitution probability model is trained on the ICSD (Inorganic Crystal Str
 > [!TIP]
 > After generating candidate structures, relax them with an MLIP and compute their [stability (E_hull)](../mat-stability/SKILL.md) to prioritize the most thermodynamically viable candidates.
 
+## Prerequisites / Environment Check
+
+- `MP_API_KEY` (required for reverse mode) — Required when querying Materials Project for precursor structures in Mode 2 (reverse). Without it, the reverse search cannot fetch structures. Get a free key at https://next-gen.materialsproject.org/api.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running the reverse mode, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### Mode 1: Forward — Propose substitutions from a structure

@@ -26,6 +26,15 @@ This skill supports two execution modes:
 > [!IMPORTANT]
 > This skill provides **single-ended TS optimization** only. For reaction pathway methods (NEB, IRC), consider using the MLIP-based [NEB skill](../chem-neb-barrier/SKILL.md) or [IRC skill](../chem-irc-verification/SKILL.md) with MLIP pre-screening, then refine with DFT. For advanced ORCA features, use the [advanced ORCA skill](../chem-dft-orca-advanced-calculation/SKILL.md).
 
+## Prerequisites / Environment Check
+
+Before choosing an execution mode, confirm the required environment variables and configuration are set.
+
+- **Local mode**: `ORCA_BINARY_PATH` must point to the ORCA executable. Without it, local ORCA calculations cannot run. Download ORCA from https://www.faccts.de/orca (or your HPC support team), extract it, and set `export ORCA_BINARY_PATH=/path/to/orca`.
+- **HPC mode**: HPC connection must be configured via `~/.atomistic_skills.yaml` or environment variables such as `HPC_MODE`, `HPC_SSH_HOST`, `HPC_SSH_USER`, `HPC_SSH_KEY`, and `HPC_MODULES_ORCA`. See `docs/hpc_job_submission.md` and `docs/environment_variables.md`.
+
+Before running this skill, verify that the variables for the chosen mode are set. If anything required is missing, ask the user to set it before proceeding.
+
 ## Background
 
 Geometry optimization iteratively adjusts nuclear positions to minimize (or, for TS search, to find a first-order saddle point of) the potential energy surface $E(\mathbf{R})$. The SCINE/ReaDuct optimizer handles step control, coordinate transformations, and convergence criteria internally.
@@ -41,6 +50,8 @@ Geometry optimization iteratively adjusts nuclear positions to minimize (or, for
   ```bash
   export ORCA_BINARY_PATH=/path/to/orca
   ```
+  > [!WARNING]
+  > ORCA **cannot** be installed from `conda-forge`. The `orca` package on conda-forge is an unrelated Python workflow library. You must download the ORCA quantum chemistry binary separately (e.g. from the ORCA forum or your HPC support team), extract it, and set `ORCA_BINARY_PATH` to the absolute path of the `orca` executable. Verify it runs with `$ORCA_BINARY_PATH --version` before starting calculations.
 - **Input structure:** A molecular structure file readable by ASE (`.xyz`, `.cif`, `.mol`, etc.)
 - For **TS optimization:** Provide a reasonable TS guess geometry. Poor initial guesses will likely fail to converge to the correct saddle point.
 
@@ -200,6 +211,9 @@ print(f"SCF converged: {result.scf_converged}")
 - **ORCA binary:** `ORCA_BINARY_PATH` must be set and point to a working ORCA installation.
 - **Environment:** All commands require the `orca` pixi environment.
 - **Solvation:** When using `--solvation`, you must also provide `--solvent`.
+
+> [!CAUTION]
+> ORCA is a commercially/academically licensed quantum-chemistry binary and is **not** available on conda-forge. The `orca` package on conda-forge is an unrelated Python workflow library, not the quantum-chemistry ORCA program. You must download and install ORCA separately, then set `ORCA_BINARY_PATH` to the absolute path of the `orca` executable. Before running calculations, verify that the path exists and is executable (e.g., `test -x "$ORCA_BINARY_PATH"` or run `$ORCA_BINARY_PATH --version`).
 
 ## References
 

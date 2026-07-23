@@ -25,7 +25,10 @@ DARA searches for structures in experimental databases. It supports:
 ## Requirements
 
 - Pixi environment: `xrd` (see `conda-envs/xrd`).
-- Dependencies: `dara-xrd` (and its Ray/BGMN stack).
+- Dependencies: `dara-xrd` (and its Ray/BGMN stack).  **Note:** `dara-xrd` is not included in `pixi.toml` because it currently makes the `xrd` environment unsatisfiable together with the pinned numpy/reaction-network stack. Install it manually when needed:
+  ```bash
+  pixi run -e xrd pip install dara-xrd
+  ```
 - BGMN: DARA will prompt to download or use a local BGMN installation.
 - For clusters where only some nodes have internet:
   - You can optionally use a **two-step workflow** (download CIFs on a node with internet, run Ray search elsewhere).

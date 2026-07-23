@@ -8,10 +8,15 @@ category: [materials]
 
 This skill provides tools for calculating vibrational properties of materials using Machine Learning Interatomic Potentials (MLIPs).
 
-## 1. Prerequisites
+## 1. Prerequisites / Environment Check
 
 - The appropriate MLIP wrapper must be available (`MACEWrapper`, `MatGLWrapper`, or `FAIRCHEMWrapper`).
 - `matcalc`, `phonopy`, and `phono3py` must be installed in the relevant pixi environment.
+- `MP_API_KEY` (required for Option B — MP retrieval) — Required to retrieve pre-computed phonon data from Materials Project via `get_mp_phonon.py`. Without it, MP retrieval will fail. Get a free key at https://next-gen.materialsproject.org/api.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running Option B, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
 
 ## 2. Choosing a Foundation Potential
 

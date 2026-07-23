@@ -10,6 +10,17 @@ category: [materials]
 
 To calculate the magnetic moments and optionally extract the spin density ($\rho_{\text{spin}}$) of magnetic materials using spin-polarized DFT calculations. This skill enables the characterization of magnetic ordering, local magnetic moments on individual atoms, and spatial distribution of spin density.
 
+## Prerequisites / Environment Check
+
+- `MP_API_KEY` (recommended) — Required when querying the input structure from Materials Project via the MCP search tool. Without it, MP structure search will fail. Get a free key at https://next-gen.materialsproject.org/api.
+- `VASP_CMD` or `ATOMATE2_VASP_CMD` (required for local VASP / Atomate2) — Command to run VASP, e.g. `mpirun -np 16 vasp_std`. `ATOMATE2_VASP_CMD` takes precedence. Without it, local execution will fail.
+- `PMG_VASP_PSP_DIR` (required for local POTCAR generation) — Path to a valid VASP POTCAR directory. Without it, POTCAR files cannot be generated. Can also be set in `~/.pmgrc.yaml`.
+- `ATOMATE2_REMOTE_PROJECT` (recommended for remote Atomate2) — Default project name for remote job submission. Only needed when `jobflow-remote` cannot auto-detect the project.
+
+See `docs/api_key_guide.md`, `docs/environment_variables.md`, and `docs/hpc_job_submission.md` for setup details.
+
+Before running this skill, verify the variables for your chosen execution mode are set. If any required variable is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### 1. Structure Preparation

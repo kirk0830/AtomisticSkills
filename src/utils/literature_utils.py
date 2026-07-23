@@ -5,29 +5,60 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def query_openalex(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+def query_openalex(
+    query: str, limit: int = 10, sort: Optional[str] = "relevance"
+) -> List[Dict[str, Any]]:
     """
     Search the OpenAlex API for scholarly works based on a search query.
 
     Args:
         query: The search term (e.g., "solid state battery LGPS").
         limit: Maximum number of results to return (max 200).
+        sort: Sort strategy for results. Supported values:
+            - "relevance" (default): most semantically relevant papers.
+            - "citations": most cited papers (descending by cited_by_count).
+            - "recent": most recently published papers.
 
     Returns:
         A list of dictionaries containing parsed metadata for each work.
+
+    Raises:
+        ValueError: If ``sort`` is not one of the supported strategies.
     """
     base_url = "https://api.openalex.org/works"
 
     import os
 
+    openalex_email = os.getenv("OPENALEX_EMAIL")
+    if not openalex_email:
+        logger.info(
+            "OPENALEX_EMAIL is not set. query_openalex will use the fallback email "
+            "support@openalex.org. Setting OPENALEX_EMAIL=your_email@example.com is "
+            "recommended to use the polite pool and comply with OpenAlex usage guidelines "
+            "(https://openalex.org/). See docs/api_key_guide.md."
+        )
+        openalex_email = "support@openalex.org"
+
+    sort_mapping = {
+        "relevance": "relevance_score:desc",
+        "citations": "cited_by_count:desc",
+        "recent": "publication_date:desc",
+    }
+
+    if sort not in sort_mapping:
+        raise ValueError(
+            f"Unsupported sort strategy '{sort}'. "
+            f"Supported values: {', '.join(sort_mapping.keys())}."
+        )
+
     # We use the search parameter for full-text and title search
     params = {
         "search": query,
         "per-page": min(limit, 200),
-        # Sort by relevance
-        "sort": "relevance_score:desc",
+        # Sort by the chosen strategy
+        "sort": sort_mapping[sort],
         # Access the Polite Pool for faster/more reliable responses
-        "mailto": os.getenv("OPENALEX_EMAIL", "support@openalex.org"),
+        "mailto": openalex_email,
     }
 
     try:

@@ -16,6 +16,16 @@ To retrieve crystal structures and computed properties from the Materials Projec
 
 **Note**: For quick structure retrieval by formula or chemical system, MCP tools are also available (see [MCP Tools](#mcp-tools-for-quick-retrieval) section).
 
+## Prerequisites / Environment Check
+
+This skill queries the Materials Project API.
+
+- `MP_API_KEY` (required) — Required for all Materials Project queries. Without it, structure and property lookups will fail. Get a free key at https://next-gen.materialsproject.org/api.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running this skill, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### 1. Query Materials by Chemical System or Formula

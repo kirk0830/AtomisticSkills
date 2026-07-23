@@ -82,6 +82,37 @@ class TestOpenAlexTool(unittest.TestCase):
         result = search_literature(query=query, limit=2)  # Keep test fast
         self.assertIsInstance(result, str)
 
+    def test_search_with_sort_relevance(self):
+        """Test search sorted by relevance (default)."""
+        query = "solid state battery"
+        result = search_literature(query=query, limit=2, sort="relevance", download=False)
+        self.assertIsInstance(result, str)
+        self.assertIn("sorted by relevance", result)
+
+    def test_search_with_sort_citations(self):
+        """Test search sorted by citations."""
+        query = "machine learning interatomic potential"
+        result = search_literature(query=query, limit=2, sort="citations", download=False)
+        self.assertIsInstance(result, str)
+        self.assertIn("sorted by citations", result)
+        if "No results found" not in result:
+            self.assertIn("Citations:", result)
+
+    def test_search_with_sort_recent(self):
+        """Test search sorted by recent publication date."""
+        query = "lithium solid electrolyte"
+        result = search_literature(query=query, limit=2, sort="recent", download=False)
+        self.assertIsInstance(result, str)
+        self.assertIn("sorted by recent", result)
+
+    def test_invalid_sort(self):
+        """Test that an invalid sort value returns a friendly error string."""
+        query = "battery"
+        result = search_literature(query=query, limit=1, sort="invalid_sort", download=False)
+        self.assertIsInstance(result, str)
+        self.assertIn("Error executing search_literature", result)
+        self.assertIn("Unsupported sort strategy", result)
+
 
 if __name__ == "__main__":
     unittest.main()

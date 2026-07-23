@@ -9,6 +9,14 @@ category: drug-discovery
 ## Goal
 To predict the retrosynthetic pathways and synthetic accessibility of novel small molecules (such as undocumented fluorinated gases) using the state-of-the-art transformer models provided by IBM RXN for Chemistry.
 
+## Prerequisites / Environment Check
+
+- `RXN_API_KEY` (required) — Required to call the IBM RXN for Chemistry API. Without it, retrosynthesis and reaction predictions cannot run. Sign up and get a key at https://rxn.res.ibm.com/.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running this skill, verify `RXN_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
+
 ## Instructions
 
 ### 1. Identify Target Molecule

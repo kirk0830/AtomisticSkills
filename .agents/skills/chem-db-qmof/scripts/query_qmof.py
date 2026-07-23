@@ -30,7 +30,9 @@ def main():
     api_key = os.environ.get("MP_API_KEY")
     if not api_key:
         print(
-            "Error: MP_API_KEY environment variable is not set. Please set it to use this tool."
+            "Error: MP_API_KEY environment variable is not set.\n"
+            "Get a free Materials Project API key at https://next-gen.materialsproject.org/api\n"
+            "See docs/api_key_guide.md and docs/environment_variables.md for details."
         )
         return
 

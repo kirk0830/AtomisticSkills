@@ -16,6 +16,14 @@ To calculate thermodynamically consistent Pourbaix (pH-voltage) diagrams for ass
 - Aqueous battery electrodes
 - Electrochemical stability screening
 
+## Prerequisites / Environment Check
+
+- `MP_API_KEY` (required for the Pure MP method and structure retrieval) — Required to fetch Materials Project entries and aqueous ion data. Without it, the MP-based paths will fail. Get a free key at https://next-gen.materialsproject.org/api.
+
+See `docs/api_key_guide.md` and `docs/environment_variables.md` for setup instructions.
+
+Before running the Pure MP path or fetching structures from Materials Project, verify `MP_API_KEY` is set. If it is missing, ask the user to set it before proceeding.
+
 ## Features
 
 - **Automated Referenced**: Fetches elemental energies from `elemental-energies` skill to fill missing terminal entries (e.g., if you relaxed `LiCoO2` but forgot `Li` metal, it will be auto-loaded).

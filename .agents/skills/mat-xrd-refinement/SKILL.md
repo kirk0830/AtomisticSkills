@@ -13,7 +13,11 @@ Perform quantitative Rietveld refinement of powder X-ray diffraction (XRD) patte
 ## Requirements
 
 - Pixi environment: `xrd` (see [conda-envs/xrd](../../../conda-envs/xrd)).
-- Dependencies: `dara-xrd`, `pymatgen`. Optional: `kaleido` for PNG export (use `kaleido>=0.2.1,<0.3` to avoid needing Chrome).
+- Dependencies: `dara-xrd`, `pymatgen`.  **Note:** `dara-xrd` is not included in `pixi.toml` because it currently makes the `xrd` environment unsatisfiable together with the pinned numpy/reaction-network stack. Install it manually when needed:
+  ```bash
+  pixi run -e xrd pip install dara-xrd
+  ```
+- Optional: `kaleido` for PNG export (use `kaleido>=0.2.1,<0.3` to avoid needing Chrome).
 - BGMN: DARA uses BGMN; ensure it is installed. On HPC without network, set `--bgmn_dir` or `DARA_BGMN_DIR` to a local BGMN directory.
 
 ## Scripts

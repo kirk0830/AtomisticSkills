@@ -154,7 +154,11 @@ def call_gemini(image_path: str, prompt: str, model_name: str | None = None) -> 
 
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
-        raise RuntimeError("GOOGLE_API_KEY environment variable not set")
+        raise RuntimeError(
+            "GOOGLE_API_KEY environment variable not set. "
+            "Get an API key at https://ai.google.dev/ and set the environment variable. "
+            "See docs/api_key_guide.md and docs/environment_variables.md for details."
+        )
 
     resolved = (
         model_name or os.environ.get("GEMINI_MODEL", "").strip() or DEFAULT_GEMINI_MODEL
@@ -178,7 +182,11 @@ def call_openai(image_path: str, prompt: str) -> dict:
 
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        raise RuntimeError("OPENAI_API_KEY environment variable not set")
+        raise RuntimeError(
+            "OPENAI_API_KEY environment variable not set. "
+            "Get an API key at https://platform.openai.com/ and set the environment variable. "
+            "See docs/api_key_guide.md and docs/environment_variables.md for details."
+        )
 
     client = OpenAI(api_key=api_key)
 

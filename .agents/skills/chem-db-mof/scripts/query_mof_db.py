@@ -81,7 +81,11 @@ def query_qmof(
 
     api_key = os.environ.get("MP_API_KEY")
     if not api_key:
-        print("Error: MP_API_KEY environment variable is not set.")
+        print(
+            "Error: MP_API_KEY environment variable is not set.\n"
+            "Get a free Materials Project API key at https://next-gen.materialsproject.org/api\n"
+            "See docs/api_key_guide.md and docs/environment_variables.md for details."
+        )
         sys.exit(1)
 
     print("Initializing MPContribs client for QMOF...")
