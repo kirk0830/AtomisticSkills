@@ -223,6 +223,13 @@ python = ">=3.11,<3.12"
 cp2k = "*"
 ase = "*"
 pymatgen = "*"
+seekpath = "*"  # Phase 6: automatic k-path generation for band-structure/post-processing
+
+[feature.dft-cp2k.pypi-dependencies]
+# Phase 6: cp2k-input-tools provides robust CP2K input parsing/generation.
+# If it is unavailable in the current PyPI mirror, fall back to ASE's built-in
+# cp2k input tools (ase.calculators.cp2k / ase.io.cp2k).
+# cp2k-input-tools = "*"
 
 # -----------------------------------------------------------------------------
 # DFT-QE Feature: New open-source periodic DFT environment via Quantum ESPRESSO (Phase 4)
@@ -232,6 +239,7 @@ python = ">=3.11,<3.12"
 qe = "*"
 ase = "*"
 pymatgen = "*"
+seekpath = "*"  # Phase 6: automatic k-path generation for band-structure/post-processing
 
 # -----------------------------------------------------------------------------
 # Generative-Base Feature: Shared dependencies for generative models

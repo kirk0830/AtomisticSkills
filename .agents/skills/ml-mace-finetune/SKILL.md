@@ -31,7 +31,8 @@ MACE fine-tuning is divided into a data preparation step, a configuration genera
 | `--output-dir` | str | `./fine_tuning_data` | Directory to save the converted .xyz data |
 | `--val-split` | float | 0.1 | Fraction of data to set aside for validation |
 | `--seed` | int | 42 | Random seed for validation splitting |
-| `--vasp-stress-conversion`| flag | - | If set, multiplies stress values by -1/160.2x to convert VASP raw kB to eV/Å³ |
+| `--stress-engine` | choice | `none` | Source DFT engine for stress units: `none` (default, eV/Å³), `vasp` (apply kB → eV/Å³), `qe`/`cp2k` (keep ASE eV/Å³) |
+| `--vasp-stress-conversion`| flag | - | Deprecated alias for `--stress-engine vasp` |
 
 ### Basic Arguments (Configuration Generation Script)
 
@@ -107,7 +108,7 @@ MACE fine-tuning is divided into a data preparation step, a configuration genera
 | `compute_stress` | bool | False | `True`, `False` | Include stress in training (auto-enabled by data script). |
 
 > [!WARNING]
-> **Stress Units**: MACE expects stress in `eV/Å³`. Raw VASP stress obtained directly via some JSON files may be in kilo-Bar (`kB`), which is ~160x larger and will cause catastrophic training divergence. The Atomate2 MCP tool handles this conversion automatically when `convert_units=True`. However, if your JSON labels contain raw `kB` stress, you MUST pass the `--vasp-stress-conversion` flag to `scripts/prepare_mace_data.py` to automatically scale them by `-1/160.2x`. For more details on unit standardization, see @[.agents/skills/general-property-units/SKILL.md].
+> **Stress Units**: MACE expects stress in `eV/Å³`. Stress written by ASE (e.g. from QE or CP2K) is already in `eV/Å³`, so no conversion is needed and the default `--stress-engine none` is correct. Raw VASP stress obtained directly via some JSON files may be in kilo-Bar (`kB`), which is ~160x larger and will cause catastrophic training divergence. If your JSON labels contain raw `kB` stress, you MUST pass `--stress-engine vasp` (or the deprecated `--vasp-stress-conversion` alias) to `scripts/prepare_mace_data.py` to automatically scale them by `-1/160.2x`. For more details on unit standardization, see @[.agents/skills/general-property-units/SKILL.md].
 
 > [!WARNING]
 > **Learning rate sensitivity for MACE-OMAT**: The official MACE docs recommend `lr=0.01` for MACE-MP-0, but MACE-OMAT-0-small requires `lr=1e-4` to avoid divergence. Higher values (1e-3, 0.01) cause catastrophic forgetting even with frozen backbone + EMA.
@@ -150,7 +151,7 @@ See the [mace-wbm-finetune](examples/mace-wbm-finetune/README.md) directory for 
 ## Constraints
 - **Data Size**: For small datasets (<500 structures), `freeze_backbone=True` is strongly recommended.
 - **Reference Energies (E0s)**: If your fine-tuning data is computed using the same DFT functional (e.g., PBE) as the foundation model's original training data, you should reuse the foundation model's original isolated atom reference energies (E0s) instead of re-fitting them. This maintains thermodynamic compatibility across the periodic table for elements not in your fine-tuning set.
-- **Units (input)**: Stress labels must be in eV/Å³ as per project standards.
+- **Units (input)**: Stress labels must be in eV/Å³ as per project standards. ASE-written stress from QE/CP2K already satisfies this; only raw VASP kB stress requires `--stress-engine vasp`.
 - **Units (output)**: All `training_history.json` files use **meV** units: energy MAE in meV/atom, force MAE in meV/Å, stress MAE in meV/Å³.
 
 ---

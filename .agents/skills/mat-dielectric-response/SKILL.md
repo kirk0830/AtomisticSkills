@@ -155,6 +155,8 @@ See [examples/](examples/) for a SiC dielectric-response tutorial and example pl
 
 ## Constraints
 
+> **Note**: This skill currently requires VASP because the underlying atomate2 workflow is not yet available for QE or CP2K.
+
 - **Structure Requirements**: Input must be a well-relaxed crystalline structure.
 - **Workflow Scope**: This skill covers atomate2's `OpticsMaker` workflow for the frequency-dependent dielectric function.
 - **Local-Field Effects**: Advanced manual `ALGO=CHI` local-field corrections are not part of the atomate2 optics workflow documented here.

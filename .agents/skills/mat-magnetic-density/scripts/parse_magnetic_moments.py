@@ -21,17 +21,22 @@ import sys
 
 def parse_magnetic_moments(results_data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Extract and analyze magnetic moments from atomate2 results.
+    Extract and analyze magnetic moments from DFT results.
+
+    Supports:
+      - atomate2 VASP result JSON (contains a ``data`` field).
+      - ASE + CP2K ``results.json`` (DFTResult format, contains
+        ``magnetic_moments`` or ``mulliken_spins``).
 
     Args:
-        results_data: Dictionary containing atomate2 calculation results
+        results_data: Dictionary containing calculation results.
 
     Returns:
         Dictionary containing magnetic analysis with keys:
         - 'total_magnetization': Total magnetic moment (μB)
         - 'site_moments': List of magnetic moments per site
         - 'magnetic_ordering': Classification of ordering type
-        - 'structure': Structure information
+        - 'structure_formula': Structure formula if available
     """
     analysis = {
         "total_magnetization": None,
@@ -41,7 +46,25 @@ def parse_magnetic_moments(results_data: Dict[str, Any]) -> Dict[str, Any]:
         "structure_formula": None,
     }
 
-    # Extract data from results
+    # CP2K / ASE DFTResult path
+    if "magnetic_moments" in results_data or "mulliken_spins" in results_data:
+        site_moments = results_data.get("magnetic_moments") or results_data.get(
+            "mulliken_spins"
+        )
+        if isinstance(site_moments, (list, tuple)):
+            analysis["site_moments"] = [float(m) for m in site_moments]
+        analysis["structure_formula"] = results_data.get("metadata", {}).get(
+            "formula"
+        ) or results_data.get("structure_formula")
+
+        if analysis["site_moments"]:
+            analysis["total_magnetization"] = sum(analysis["site_moments"])
+            analysis["magnetic_ordering"] = classify_magnetic_ordering(
+                analysis["site_moments"]
+            )
+        return analysis
+
+    # atomate2 VASP path
     if "data" in results_data:
         data = results_data["data"]
 

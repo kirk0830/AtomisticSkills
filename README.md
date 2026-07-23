@@ -57,7 +57,7 @@ Skills are **flexible tutorials** that combine multiple tool calls to solve focu
 - [**Material Stability**](.agents/skills/mat-stability/SKILL.md): Calculate 0K thermodynamic stability and $E_{hull}$
 - [**Diffusion Analysis**](.agents/skills/mat-diffusion-analysis/SKILL.md): Compute diffusion coefficients and activation energies
 - [**DFT with ORCA**](.agents/skills/chem-dft-orca-singlepoint/SKILL.md): Run molecular DFT calculations (local or HPC)
-- [**DFT with VASP (legacy)**](.agents/skills/mat-dft-vasp/SKILL.md): Run periodic DFT calculations (local, HPC, or Atomate2); CP2K/QE are the recommended open-source alternatives
+- [**DFT with VASP (legacy)**](.agents/skills/mat-dft-vasp/SKILL.md): Run periodic DFT calculations (local, HPC, or Atomate2); CP2K/QE are the recommended open-source alternatives for new workflows, while VASP is retained for atomate2 workflows not yet available for QE/CP2K
 
 ### 🎯 Workflows (High-Level Research Objectives)
 
@@ -76,7 +76,7 @@ Workflows represent **complete, high-level research goals** that may span multip
 
 ### 1. Simulation Infrastructure
 - Multi-framework MLIP support (MACE, MatGL, FairChem) with unified API
-- DFT integration: CP2K / Quantum ESPRESSO (periodic) and ORCA (molecular), with legacy VASP support
+- DFT integration: CP2K / Quantum ESPRESSO (recommended open-source periodic DFT), ORCA (molecular), and legacy VASP retained for atomate2 workflows not yet available for QE/CP2K (dielectric response, ferroelectric, electronic transport)
 - HPC job submission via unified Slurm module (local login node or SSH)
 - Lattice-level cluster expansion and Monte Carlo via SMOL
 
@@ -227,7 +227,7 @@ for per-environment notes and sizes.
 | `mace` | MACE models (MP, OMAT, MatPES) | ~15 GB, CUDA 12 |
 | `matgl` | MatGL models (CHGNet, M3GNet, TensorNet) | ~12 GB |
 | `fairchem` | FairChem models (UMA, ESEN) | ~16 GB, CUDA 12 |
-| `atomate2` | legacy VASP / Atomate2 workflow management; CP2K/QE are recommended open-source alternatives | Heavy (~5–10 GB) |
+| `atomate2` | legacy VASP / Atomate2 workflow management; retained for workflows not yet available for QE/CP2K; CP2K/QE are recommended for new periodic DFT | Heavy (~5–10 GB) |
 | `cp2k` | Periodic DFT via CP2K (open-source, conda-forge) | Heavy (~5–10 GB), includes MPI/OpenMP stacks and pseudopotentials |
 | `qe` | Periodic DFT via Quantum ESPRESSO (open-source, conda-forge) | Heavy (~5–10 GB), includes MPI/OpenMP stacks and pseudopotentials |
 | `smol` | Cluster expansion and Monte Carlo | ~2 GB |
@@ -407,7 +407,7 @@ See [`.agents/rules/skill-standards.md`](.agents/rules/skill-standards.md) for d
 ## Best Practices
 
 1. **Leverage Local GPUs**: MLIP tasks run fastest with local GPU resources
-2. **Use HPC for DFT**: Submit ORCA/VASP calculations to HPC clusters via the unified module
+2. **Use HPC for DFT**: Submit ORCA, VASP, CP2K, or Quantum ESPRESSO calculations to HPC clusters via the unified module (for ASE-QE/CP2K skills, generate inputs locally and submit the run directory manually)
 3. **Configure Once**: Set up `~/.atomistic_skills.yaml` with all your API keys and HPC settings
 4. **Contribute Back**: Submit PRs for new skills, tools, or bug fixes
 

@@ -44,6 +44,10 @@ BUILTIN_PROFILES: Dict[str, HPCProfile] = {
         default_ntasks_per_node=4,
         default_cpus_per_task=1,
         time_limit="01:00:00",
+        modules={
+            "cp2k": ["cp2k/2024.1"],
+            "qe": ["qe/7.3", "openmpi/4.1.5"],
+        },
     ),
     "nersc_perlmutter": HPCProfile(
         name="nersc_perlmutter",
@@ -63,6 +67,8 @@ BUILTIN_PROFILES: Dict[str, HPCProfile] = {
             "lammps": ["lammps/2024-cpu"],
             "lammps_gpu": ["lammps/2024-gpu", "cudatoolkit/12.2"],
             "orca": ["orca/5.0.4", "openmpi/4.1.5"],
+            "cp2k": ["cp2k/2024.1"],
+            "qe": ["qe/7.3", "openmpi/4.1.5"],
         },
         partition_aliases={"cpu": "cpu", "gpu": "gpu_gres"},
         pre_run_commands="export OMP_NUM_THREADS=4",
@@ -83,6 +89,8 @@ BUILTIN_PROFILES: Dict[str, HPCProfile] = {
         modules={
             "vasp_gpu": ["vasp/6.4.2-gpu", "cudatoolkit/12.2"],
             "lammps_gpu": ["lammps/2024-gpu", "cudatoolkit/12.2"],
+            "cp2k": ["cp2k/2024.1"],
+            "qe": ["qe/7.3", "openmpi/4.1.5"],
         },
         pre_run_commands="export OMP_NUM_THREADS=32",
         extra_directives=["--constraint=gpu", "--gres=gpu:4"],
@@ -100,6 +108,8 @@ BUILTIN_PROFILES: Dict[str, HPCProfile] = {
             "vasp": ["vasp/6.4"],
             "lammps": ["lammps/stable"],
             "orca": ["orca/5.0"],
+            "cp2k": ["cp2k/2024.1"],
+            "qe": ["qe/7.3", "openmpi/4.1.5"],
         },
     ),
     "umich_arc": HPCProfile(
@@ -114,6 +124,8 @@ BUILTIN_PROFILES: Dict[str, HPCProfile] = {
             "vasp": ["vasp/6.4"],
             "lammps": ["lammps/2024"],
             "orca": ["orca/5.0.4"],
+            "cp2k": ["cp2k/2024.1"],
+            "qe": ["qe/7.3", "openmpi/4.1.5"],
         },
     ),
 }

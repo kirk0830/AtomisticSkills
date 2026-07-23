@@ -18,7 +18,7 @@ from ase import Atoms
 
 
 def prepare_training_data(
-    training_data, has_stress_forced=False, vasp_stress_conversion=False
+    training_data, has_stress_forced=False, stress_engine="none"
 ):
     """
     Prepare training data in MACE format.
@@ -34,7 +34,7 @@ def prepare_training_data(
     # 1 kBar = 100 MPa = 0.1 GPa.
     # Therefore, 1 eV/A^3 = 1602.1766208 kBar.
     # So if VASP gives stress in kB, we divide by 1602.1766208 to get eV/A^3.
-    stress_conversion = -1.0 / 1602.1766208 if vasp_stress_conversion else 1.0
+    stress_conversion = -1.0 / 1602.1766208 if stress_engine == "vasp" else 1.0
 
     for data in training_data:
         structure = data.get("atoms", data.get("structure"))
@@ -152,12 +152,27 @@ def main():
 
     # Data units
     parser.add_argument(
+        "--stress-engine",
+        choices=["none", "vasp", "qe", "cp2k"],
+        default="none",
+        help="Source DFT engine for stress units. 'none' assumes eV/Å³; 'vasp' applies kB → eV/Å³ conversion; 'qe' and 'cp2k' keep ASE-output eV/Å³ units unchanged",
+    )
+    parser.add_argument(
         "--vasp-stress-conversion",
         action="store_true",
-        help="If flag is present, multiplies stress arrays by -1/1602.1766208 to convert from kB (VASP) to eV/Å³",
+        help="Deprecated alias for --stress-engine vasp. If set, maps to --stress-engine vasp.",
     )
 
     args = parser.parse_args()
+
+    # Backward compatibility: deprecated flag maps to stress-engine vasp
+    if args.vasp_stress_conversion:
+        args.stress_engine = "vasp"
+
+    if args.stress_engine == "vasp":
+        print("Applying VASP stress unit conversion (kB → eV/Å³).")
+    elif args.stress_engine != "none":
+        print(f"Stress engine '{args.stress_engine}': assuming ASE-output eV/Å³ units (no conversion).")
 
     print(f"Loading data from {args.data}...")
     with open(args.data, "r") as f:
@@ -198,7 +213,7 @@ def main():
 
     train_structures, train_energies, train_forces, train_stresses = (
         prepare_training_data(
-            train_data, vasp_stress_conversion=args.vasp_stress_conversion
+            train_data, stress_engine=args.stress_engine
         )
     )
     has_stress = any(s is not None for s in train_stresses)
@@ -206,7 +221,7 @@ def main():
     val_structures, val_energies, val_forces, val_stresses = None, None, None, None
     if val_data:
         val_structures, val_energies, val_forces, val_stresses = prepare_training_data(
-            val_data, vasp_stress_conversion=args.vasp_stress_conversion
+            val_data, stress_engine=args.stress_engine
         )
 
     train_xyz_path = output_path / "train.xyz"
@@ -259,13 +274,13 @@ def main():
     except Exception as e:
         print(f"Could not generate label distributions plot: {e}")
 
-    print("\\n=======================================================")
+    print("\n=======================================================")
     print("Data successfully prepared!")
     print(f"Training structures: {len(train_structures)}")
     if val_data:
         print(f"Validation structures: {len(val_structures)}")
     print(f"Files written to: {output_path}")
-    print("=======================================================\\n")
+    print("=======================================================\n")
 
 
 if __name__ == "__main__":

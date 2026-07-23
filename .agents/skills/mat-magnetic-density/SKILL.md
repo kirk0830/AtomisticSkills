@@ -1,6 +1,6 @@
 ---
 name: mat-magnetic-density
-description: Calculate magnetic moments and spin density from spin-polarized DFT calculations using VASP.
+description: Calculate magnetic moments and spin density from spin-polarized DFT calculations using ASE + CP2K.
 category: [materials]
 ---
 
@@ -8,14 +8,15 @@ category: [materials]
 
 ## Goal
 
-To calculate the magnetic moments and optionally extract the spin density ($\rho_{\text{spin}}$) of magnetic materials using spin-polarized DFT calculations. This skill enables the characterization of magnetic ordering, local magnetic moments on individual atoms, and spatial distribution of spin density.
+To calculate the magnetic moments of magnetic materials using spin-polarized DFT calculations. This skill enables the characterization of magnetic ordering and local magnetic moments on individual atoms.
+
+This skill uses **ASE + CP2K**. The previous atomate2 + VASP path is retained as a legacy option for spin-density cube extraction (see below).
 
 ## Prerequisites / Environment Check
 
 - `MP_API_KEY` (recommended) — Required when querying the input structure from Materials Project via the MCP search tool. Without it, MP structure search will fail. Get a free key at https://next-gen.materialsproject.org/api.
-- `VASP_CMD` or `ATOMATE2_VASP_CMD` (required for local VASP / Atomate2) — Command to run VASP, e.g. `mpirun -np 16 vasp_std`. `ATOMATE2_VASP_CMD` takes precedence. Without it, local execution will fail.
-- `PMG_VASP_PSP_DIR` (required for local POTCAR generation) — Path to a valid VASP POTCAR directory. Without it, POTCAR files cannot be generated. Can also be set in `~/.pmgrc.yaml`.
-- `ATOMATE2_REMOTE_PROJECT` (recommended for remote Atomate2) — Default project name for remote job submission. Only needed when `jobflow-remote` cannot auto-detect the project.
+- `CP2K_DATA_DIR` (required for ASE + CP2K calculations) — Path to CP2K data directory containing `BASIS_SET` and `POTENTIAL` files.
+- `ASE_CP2K_COMMAND` or `CP2K_COMMAND` (optional) — Command to run CP2K, e.g. `mpirun -np 4 cp2k`. If unset, ASE defaults to `cp2k`.
 
 See `docs/api_key_guide.md`, `docs/environment_variables.md`, and `docs/hpc_job_submission.md` for setup details.
 
@@ -36,88 +37,56 @@ Obtain or prepare the structure of the magnetic material you want to study. You 
 - Systems where you need accurate total energies (not just magnetic moments)
 - Strongly correlated oxides with significant magnetic-structural coupling
 
-### 2. Run Spin-Polarized DFT Calculation
+### 2. Run Spin-Polarized CP2K Calculation
 
-Use the atomate2 MCP tool to run a spin-polarized static calculation. The `mp` preset (MPStaticSet) automatically enables spin polarization and applies appropriate settings for magnetic systems.
+Use the ASE + CP2K command-line script to run a spin-polarized calculation:
 
-```python
-mcp_atomate2_run_atomate2_vasp_calculation(
-    structures_path="structure.cif",  # Path to your structure file
-    output_dir="magnetic_calc",       # Directory to save results
-    preset_type="mp",  # MPStaticSet with PBE (includes spin polarization)
-    calculation_type="static",         # Static calculation
-)
+```bash
+# Env: cp2k
+python .agents/skills/mat-magnetic-density/scripts/run_cp2k_magnetic.py \
+    Fe.cif \
+    --output-dir ./Fe_magnetic \
+    --spin-polarized \
+    --initial-magmoms 2.2 \
+    --cutoff 400 \
+    --kpts 4 4 4 \
+    --xc PBE
 ```
 
 **Important - Functional Selection**:
-- **For metallic ferromagnets** (Fe, Co, Ni): Use `mp` preset (MPStaticSet with PBE). PBE provides excellent accuracy for magnetic moments (typically within ~2% of experimental values)[1].
-- **For strongly correlated oxides** (NiO, CoO, FeO): Use `mp` preset (see Example 2 below). MPStaticSet automatically applies appropriate GGA+U corrections for transition metal oxides. Standard PBE fails to predict the correct insulating antiferromagnetic ground state and severely underestimates band gaps[3]. **Note**: +U corrections improve electronic structure but do not guarantee better magnetic moments (e.g., GGA+U may overestimate for NiO or underestimate for CoO due to missing orbital contributions)[4].
-- **Avoid r2SCAN for metallic ferromagnets**: r2SCAN significantly overestimates magnetic moments in itinerant ferromagnets like Fe (by ~24% compared to experimental values)[2].
+- **For metallic ferromagnets** (Fe, Co, Ni): Use PBE. PBE provides good accuracy for magnetic moments at modest cost.
+- **For strongly correlated oxides** (NiO, CoO, FeO): CP2K supports +U corrections via custom input, but the CLI above does not set them automatically. Standard PBE may fail to predict the correct insulating antiferromagnetic ground state.
+- **Avoid r2SCAN for metallic ferromagnets**: r2SCAN can overestimate magnetic moments in itinerant ferromagnets like Fe.
 
-**References**:
-[1] PBE underestimates Fe magnetization by only 1.8%: Zhang et al., *Phys. Rev. Materials* **6**, 013801 (2022). DOI: [10.1103/PhysRevMaterials.6.013801](https://doi.org/10.1103/PhysRevMaterials.6.013801)
-[2] r2SCAN and SCAN overestimate Fe magnetization by 24% and 17% respectively: ibid.
-[3] PBE+U opens band gaps and corrects ground state in transition metal oxides: Kulik, *J. Chem. Phys.* **142**, 240901 (2015). DOI: [10.1063/1.4922693](https://doi.org/10.1063/1.4922693)
-[4] CoO magnetic moments: PBE+U underestimates due to missing orbital contributions: Radi et al., *Z. Naturforsch. A* **70**, 789 (2015). DOI: [10.1515/zna-2015-0216](https://doi.org/10.1515/zna-2015-0216)
+### 3. Parse and Analyze Results
 
-See the "Functional Selection Guide" section below for detailed recommendations.
-
-### 3. Monitor Job Status
-
-After submitting the calculation, monitor its progress:
-
-```python
-mcp_atomate2_get_atomate2_job_status(
-    job_id="<job_id_from_step_2>"  # Job ID returned from step 2
-)
-```
-
-### 4. Extract Magnetic Moments
-
-Once the calculation is complete, retrieve the results to extract magnetic moments:
-
-```python
-mcp_atomate2_get_atomate2_results_by_id(
-    job_ids=["<job_id>"],  # List of job IDs
-    save_to_file="magnetic_results.json"  # Save results to file
-)
-```
-
-The results will include:
-- **Total magnetization**: Net magnetic moment of the unit cell
-- **Site magnetic moments**: Magnetic moment on each atom
-- **Energy**: Total energy of the magnetic configuration
-
-### 5. Parse and Analyze Results
-
-Use the provided script to parse the magnetic moments from the results:
+Use the provided script to parse the magnetic moments from `results.json`:
 
 ```bash
-# Env: base
-python .agents/skills/mat-magnetic-density/scripts/parse_magnetic_moments.py magnetic_results.json --output magnetic_analysis.json
+# Env: cp2k (or base)
+python .agents/skills/mat-magnetic-density/scripts/parse_magnetic_moments.py \
+    Fe_magnetic/results.json \
+    --output magnetic_analysis.json
 ```
 
 This script will:
-- Extract site-resolved magnetic moments
+- Extract site-resolved magnetic moments from the Mulliken spin population analysis
 - Calculate the total magnetization
 - Identify the magnetic ordering pattern
 - Generate a summary report
 
-### 6. Extract Spin Density (Optional)
+### 4. Extract Spin Density (Optional, VASP legacy)
 
-For detailed analysis of spin density distribution, use the spin density extraction script:
+CP2K spin-density cube parsing is not yet implemented in this skill. The VASP spin-density extraction script is kept for historical VASP results:
 
 ```bash
 # Env: base
-python .agents/skills/mat-magnetic-density/scripts/extract_spin_density.py <output_dir> --output spin_density.json
+python .agents/skills/mat-magnetic-density/scripts/extract_spin_density.py <vasp_output_dir> --output spin_density.json
 ```
 
-This requires access to the CHGCAR file from the VASP calculation and will:
-- Read the spin density from CHGCAR
-- Calculate integrated spin moments
-- Optionally generate 3D visualization data
+This requires access to the CHGCAR file from the VASP calculation.
 
-### 7. Visualize Magnetic Ordering (Optional)
+### 5. Visualize Magnetic Ordering (Optional)
 
 Visualize the magnetic ordering by creating a structure with magnetic moment vectors:
 
@@ -130,49 +99,39 @@ python .agents/skills/mat-magnetic-density/scripts/visualize_magnetic_structure.
 
 ### Example 1: Calculate magnetic moments for bulk Fe
 
-```python
-# Step 1: Get Fe structure from Materials Project
-mcp_base_search_materials_project_by_formula(
-    formula="Fe",
-    save_to_file="Fe_mp.cif"
-)
+```bash
+# Step 1: Get Fe structure from Materials Project (or use a local Fe.cif)
 
-# Step 2: Run spin-polarized static calculation
-mcp_atomate2_run_atomate2_vasp_calculation(
-    structures_path="Fe_mp.cif",
-    output_dir="Fe_magnetic",
-    preset_type="mp",  # MPStaticSet with PBE
-    calculation_type="static",
-    execution_mode="remote"
-)
+# Step 2: Run spin-polarized CP2K calculation
+# Env: cp2k
+python .agents/skills/mat-magnetic-density/scripts/run_cp2k_magnetic.py \
+    Fe.cif \
+    --output-dir Fe_magnetic \
+    --spin-polarized \
+    --initial-magmoms 2.2 \
+    --cutoff 400 \
+    --kpts 4 4 4 \
+    --xc PBE
 
-# Step 3: After completion, retrieve results
-mcp_atomate2_get_atomate2_results_by_id(
-    job_ids=["<job_id>"],
-    save_to_file="Fe_magnetic_results.json"
-)
+# Step 3: Parse magnetic moments
+python .agents/skills/mat-magnetic-density/scripts/parse_magnetic_moments.py \
+    Fe_magnetic/results.json --output Fe_moments.json
 ```
+
+### Example 2: Antiferromagnetic NiO
 
 ```bash
-# Step 4: Parse magnetic moments
-# Env: base
-python .agents/skills/mat-magnetic-density/scripts/parse_magnetic_moments.py Fe_magnetic_results.json --output Fe_moments.json
-```
-
-### Example 2: NiO with automatic GGA+U
-
-```python
-# For transition metal oxides like NiO, use 'mp' preset
-# MPStaticSet automatically applies appropriate U parameters (e.g., U=6.2 eV for Ni in oxides)
-# This ensures correct insulating antiferromagnetic ground state
-
-mcp_atomate2_run_atomate2_vasp_calculation(
-    structures_path="NiO.cif",
-    output_dir="NiO_magnetic",
-    preset_type="mp",  # MPStaticSet automatically handles +U for transition metal oxides
-    calculation_type="static",
-    execution_mode="remote"
-)
+# For antiferromagnetic ordering, provide alternating initial moments.
+# Here a 2-atom NiO cell is assumed; adjust --initial-magmoms for your supercell.
+# Env: cp2k
+python .agents/skills/mat-magnetic-density/scripts/run_cp2k_magnetic.py \
+    NiO.cif \
+    --output-dir NiO_magnetic \
+    --spin-polarized \
+    --initial-magmoms 1.0,-1.0 \
+    --cutoff 500 \
+    --kpts 4 4 4 \
+    --xc PBE
 ```
 
 ## Functional Selection Guide
@@ -181,25 +140,22 @@ Choosing the right exchange-correlation functional is critical for accurate magn
 
 ### For Metallic Ferromagnets (Fe, Co, Ni, etc.)
 
-**Recommended**: PBE (use `preset_type="mp"` for MPStaticSet)
-- PBE underestimates magnetic moments by only ~1.8% for Fe
-- Provides excellent agreement with experimental spin magnetization
+**Recommended**: PBE
+- Provides good agreement with experimental spin magnetization
 - Computational efficiency superior to meta-GGA functionals
-- **Do NOT use**: r2SCAN overestimates by ~24% for Fe
+- **Be cautious**: r2SCAN can overestimate magnetic moments in itinerant ferromagnets
 
 **Example**: Bulk Fe experimental value = 2.2 μB/atom
-- PBE prediction: ~2.15 μB/atom (2% error) ✓
-- r2SCAN prediction: ~2.73 μB/atom (24% error) ✗
+- PBE prediction: ~2.15 μB/atom
 
 ### For Transition Metal Oxides and Strongly Correlated Systems
 
-**Recommended**: PBE with automatic +U (use `preset_type="mp"` - MPStaticSet handles this automatically)
+**Recommended**: PBE + U via custom CP2K input (not yet automated in the CLI)
 
 **When to use PBE+U**:
 1. **Localized d-electrons**: Systems where d-electrons exhibit strong correlation (NiO, CoO, Fe₂O₃)
 2. **Band gap issues**: Standard PBE underestimates band gaps significantly
 3. **Magnetic ground states**: PBE gives incorrect magnetic ordering or underestimates moments
-4. **Redox chemistry**: Systems involving oxidation state changes
 
 **U parameter selection**:
 - U values are material-dependent and typically calibrated against experimental band gaps or magnetic moments
@@ -214,20 +170,19 @@ Choosing the right exchange-correlation functional is critical for accurate magn
 
 ## Constraints
 
-- **Spin Polarization**: The `mp` preset (MPStaticSet) automatically enables spin polarization (ISPIN=2) for magnetic systems. MAGMOM values are also automatically initialized (default 0.6 per magnetic atom).
-- **Initial Magnetic Moments**: For complex magnetic ordering (e.g., antiferromagnetic), you should provide initial MAGMOM values through the config parameter to help convergence.
-- **Environment**: The parsing scripts require the `base` pixi environment with pymatgen installed.
-- **Remote Execution**: DFT calculations are computationally expensive and should typically be run on remote clusters using `execution_mode="remote"`.
-- **CHGCAR Access**: Extracting spin density requires access to the CHGCAR file, which may not be automatically retrieved. You may need to manually download it from the remote execution directory.
+- **DFT Engine**: Requires CP2K (`CP2K_DATA_DIR`). VASP parsing is retained for legacy atomate2 results.
+- **Spin Polarization**: Pass `--spin-polarized` and `--initial-magmoms` to the CP2K runner.
+- **Initial Magnetic Moments**: For complex magnetic ordering (e.g., antiferromagnetic), provide alternating `--initial-magmoms` values.
+- **Environment**: The CP2K runner requires the `cp2k` pixi environment with ASE installed. Parsing works in `cp2k` or `base`.
+- **Spin Density**: CP2K spin-density cube extraction is not yet implemented; use the legacy VASP path if 3D spin density is required.
 - **Convergence**: Magnetic systems can be challenging to converge. If calculations fail to converge, try:
-  - Adjusting MAGMOM initial values
-  - Increasing NELM (max electronic steps)
-  - Using a denser k-point mesh
-  - Enabling LDAU for strongly correlated systems
+  - Adjusting `--initial-magmoms`
+  - Increasing `--cutoff` or k-point density
+  - Enabling +U for strongly correlated systems via custom CP2K input
 
 ## References
 
-- VASP Manual: [Spin-polarized calculations](https://www.vasp.at/wiki/index.php/Spin-polarized_calculations)
+- CP2K Manual: [FORCE_EVAL / DFT / SPIN_POLARIZED](https://manual.cp2k.org/)
 - Pymatgen Documentation: [Magnetic Structure Analysis](https://pymatgen.org/pymatgen.analysis.magnetism.html)
 
 ---

@@ -22,19 +22,34 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 
 
-def parse_vasp_energy(calc_dir: Path) -> Optional[float]:
+def parse_dft_energy(calc_dir: Path) -> Optional[float]:
     """
-    Parse total energy from VASP output files.
+    Parse total energy from DFT output files.
 
-    Looks for vasprun.xml(.gz), OSZICAR, or relaxation result JSON files.
+    Priority:
+      1. ``results.json`` written by ASE/QE/CP2K runners (DFTResult format).
+      2. VASP ``vasprun.xml`` / ``OSZICAR``.
+      3. Legacy MCP-style result files.
 
     Args:
-        calc_dir: Directory containing VASP outputs.
+        calc_dir: Directory containing DFT outputs.
 
     Returns:
         Total energy in eV, or None if not found.
     """
-    # Try vasprun.xml first
+    # 1. ASE/QE/CP2K unified results.json
+    results_path = calc_dir / "results.json"
+    if results_path.exists():
+        try:
+            with open(results_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            energy = data.get("energy")
+            if energy is not None:
+                return float(energy)
+        except Exception:
+            pass
+
+    # 2. VASP outputs
     for vr_name in ["vasprun.xml", "vasprun.xml.gz"]:
         vr_path = calc_dir / vr_name
         if vr_path.exists():
@@ -43,7 +58,6 @@ def parse_vasp_energy(calc_dir: Path) -> Optional[float]:
             vr = Vasprun(str(vr_path), parse_dos=False, parse_eigen=False)
             return vr.final_energy
 
-    # Try OSZICAR
     oszicar_path = calc_dir / "OSZICAR"
     if oszicar_path.exists():
         from pymatgen.io.vasp import Oszicar
@@ -51,7 +65,7 @@ def parse_vasp_energy(calc_dir: Path) -> Optional[float]:
         osz = Oszicar(str(oszicar_path))
         return osz.final_energy
 
-    # Try MCP-style result files
+    # 3. Legacy MCP-style result files
     for fname in ["relaxation_results.json", "result.json"]:
         fpath = calc_dir / fname
         if fpath.exists():
@@ -74,16 +88,38 @@ def parse_vasp_energy(calc_dir: Path) -> Optional[float]:
     return None
 
 
-def parse_vasp_vbm_bandgap(calc_dir: Path) -> Tuple[Optional[float], Optional[float]]:
+def parse_dft_vbm_bandgap(calc_dir: Path) -> Tuple[Optional[float], Optional[float]]:
     """
-    Parse VBM and band gap from VASP bulk calculation.
+    Parse VBM and band gap from a bulk DFT calculation.
+
+    Priority:
+      1. ``results.json`` written by ASE/QE/CP2K runners.
+      2. VASP ``vasprun.xml``.
 
     Args:
-        calc_dir: Directory containing bulk VASP outputs.
+        calc_dir: Directory containing bulk DFT outputs.
 
     Returns:
         Tuple of (VBM in eV, band gap in eV), or (None, None).
     """
+    # 1. ASE/QE/CP2K unified results.json
+    results_path = calc_dir / "results.json"
+    if results_path.exists():
+        try:
+            with open(results_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            band_gap = data.get("band_gap")
+            # The DFTResult format does not store VBM directly. Approximate VBM
+            # from the Fermi energy minus half the band gap for non-metals.
+            fermi_energy = data.get("fermi_energy")
+            if band_gap is not None and fermi_energy is not None:
+                bg = float(band_gap)
+                vbm = float(fermi_energy) - bg / 2.0
+                return vbm, bg
+        except Exception:
+            pass
+
+    # 2. VASP outputs
     for vr_name in ["vasprun.xml", "vasprun.xml.gz"]:
         vr_path = calc_dir / vr_name
         if vr_path.exists():
@@ -321,7 +357,7 @@ def main():
 
     # Parse bulk energy
     bulk_dir = Path(args.bulk_dir)
-    bulk_energy = parse_vasp_energy(bulk_dir)
+    bulk_energy = parse_dft_energy(bulk_dir)
     if bulk_energy is None:
         raise FileNotFoundError(f"No energy found in bulk directory: {bulk_dir}")
     print(
@@ -329,7 +365,7 @@ def main():
     )
 
     # Try to get VBM and band gap
-    vbm, band_gap = parse_vasp_vbm_bandgap(bulk_dir)
+    vbm, band_gap = parse_dft_vbm_bandgap(bulk_dir)
     if vbm is None:
         print("⚠️  Could not parse VBM/band gap from bulk calculation.")
         print("   Using VBM=0.0 and band_gap=5.0 as defaults. Update manually.")
@@ -356,7 +392,7 @@ def main():
             print(f"⚠️  No results directory for {name}, skipping")
             continue
 
-        energy = parse_vasp_energy(subdir)
+        energy = parse_dft_energy(subdir)
         if energy is None:
             print(f"⚠️  No energy for {name}, skipping")
             continue

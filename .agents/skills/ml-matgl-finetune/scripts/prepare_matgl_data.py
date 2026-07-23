@@ -45,12 +45,27 @@ def main():
         "--seed", type=int, default=42, help="Random seed for splitting validation data"
     )
     parser.add_argument(
+        "--stress-engine",
+        choices=["none", "vasp", "qe", "cp2k"],
+        default="none",
+        help="Source DFT engine for stress units. 'none' assumes eV/Å³; 'vasp' applies kB → eV/Å³ conversion; 'qe' and 'cp2k' keep ASE-output eV/Å³ units unchanged",
+    )
+    parser.add_argument(
         "--vasp-stress-conversion",
         action="store_true",
-        help="If flag is present, multiplies stress arrays by -1/160.21766208 to convert from kB to eV/Å³",
+        help="Deprecated alias for --stress-engine vasp. If set, maps to --stress-engine vasp.",
     )
 
     args = parser.parse_args()
+
+    # Backward compatibility: deprecated flag maps to stress-engine vasp
+    if args.vasp_stress_conversion:
+        args.stress_engine = "vasp"
+
+    if args.stress_engine == "vasp":
+        print("Applying VASP stress unit conversion (kB → eV/Å³).")
+    elif args.stress_engine != "none":
+        print(f"Stress engine '{args.stress_engine}': assuming ASE-output eV/Å³ units (no conversion).")
 
     print(f"Loading data from {args.data}...")
     with open(args.data, "r") as f:
@@ -71,7 +86,7 @@ def main():
 
         stress = data_dict.get("vasp_s") or data_dict.get("stress")
         if stress is not None:
-            if args.vasp_stress_conversion:
+            if args.stress_engine == "vasp":
                 import numpy as np
 
                 item["stress"] = (np.array(stress) * (-1.0 / 1602.1766208)).tolist()

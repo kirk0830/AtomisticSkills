@@ -47,6 +47,8 @@ hpc:
     vasp_gpu: ["vasp/6.4.2-gpu", "cuda/12.2"]
     orca: ["orca/5.0.4", "openmpi/4.1.5"]
     lammps: ["lammps/2024"]
+    cp2k: ["cp2k/2024.1"]
+    qe: ["qe/7.3", "openmpi/4.1.5"]
 ```
 
 ### Environment Variables
@@ -65,11 +67,11 @@ hpc:
 
 | Profile | Description | Default Partition | Modules Example |
 |---------|-------------|------------------|-----------------|
-| `generic` | Minimal defaults | None | None |
-| `nersc_perlmutter` | NERSC Perlmutter CPU | `cpu` | `vasp: ["vasp/6.4.2-cpu"]` |
-| `nersc_perlmutter_gpu` | NERSC Perlmutter GPU | `gpu_gres` | `vasp_gpu: ["vasp/6.4.2-gpu"]` |
-| `mit_supercloud` | MIT SuperCloud | `batch` | `vasp: ["vasp/6.4"]` |
-| `umich_arc` | University of Michigan ARC | `standard` | `vasp: ["vasp/6.4"]` |
+| `generic` | Minimal defaults | None | `cp2k`, `qe` |
+| `nersc_perlmutter` | NERSC Perlmutter CPU | `cpu` | `vasp`, `cp2k`, `qe`, ... |
+| `nersc_perlmutter_gpu` | NERSC Perlmutter GPU | `gpu_gres` | `vasp_gpu`, `cp2k`, `qe`, ... |
+| `mit_supercloud` | MIT SuperCloud | `batch` | `vasp`, `cp2k`, `qe`, ... |
+| `umich_arc` | University of Michigan ARC | `standard` | `vasp`, `cp2k`, `qe`, ... |
 
 ## Quick Start
 
@@ -138,6 +140,52 @@ export HPC_PROFILE="nersc_perlmutter"
 loader = HPCConfigLoader()
 modules = loader.get_modules("vasp")  # Returns ["vasp/6.5.0-cpu", "intel/2024"]
 ```
+
+### CP2K / Quantum ESPRESSO on HPC
+
+The new ASE-QE/CP2K skills are primarily local-script workflows: they generate input files, run the calculation via the ASE calculator, and parse outputs in the same Python process. For HPC execution, the recommended workflow is to generate the input on your local machine or login node first, then submit the generated run directory manually:
+
+```bash
+# 1. Generate CP2K input files locally
+pixi run -e cp2k python .agents/skills/mat-dft-cp2k-relax/scripts/generate_inputs.py \
+    --structure Si.cif --output-dir ./Si_cp2k
+
+# 2. Submit the generated directory to HPC (example with sbatch)
+cat > submit.sh <<'EOF'
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=04:00:00
+module load cp2k/2024.1
+export CP2K_DATA_DIR=/path/to/cp2k/data
+cd Si_cp2k
+mpirun -np 16 cp2k.popt -i Si.inp -o Si.out
+EOF
+sbatch submit.sh
+```
+
+For Quantum ESPRESSO, the pattern is analogous:
+
+```bash
+# 1. Generate QE input files locally
+pixi run -e qe python .agents/skills/mat-dft-qe-relax/scripts/generate_inputs.py \
+    --structure Si.cif --output-dir ./Si_qe
+
+# 2. Submit to HPC
+cat > submit.sh <<'EOF'
+#!/bin/bash
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#SBATCH --time=04:00:00
+module load qe/7.3 openmpi/4.1.5
+export ESPRESSO_PSEUDO=/path/to/pseudo
+cd Si_qe
+mpirun -np 16 pw.x -in Si.pwi > Si.pwo
+EOF
+sbatch submit.sh
+```
+
+If you prefer to submit through the Python `JobManager`, set `HPC_MODULES_CP2K` or `HPC_MODULES_QE` (or override the `cp2k`/`qe` entries in `~/.atomistic_skills.yaml`) and pass the generated command as the `command` field of a `JobSpec`.
 
 ## Jinja2 Templates
 

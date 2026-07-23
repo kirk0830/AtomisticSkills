@@ -46,10 +46,15 @@ instructions, see [`docs/api_key_guide.md`](./api_key_guide.md).
 | `PMG_VASP_PSP_DIR` | Local VASP POTCAR **Required** | Path to the VASP POTCAR directory. | `pymatgen`, `atomate2` | `/path/to/vasp/potcar` |
 | `ATOMATE2_CONFIG_FILE` | Optional | Path to the Atomate2 configuration file. | `atomate2` | `~/.config/atomate2/config.yaml` |
 | `atomate2_remote_project` (or `ATOMATE2_REMOTE_PROJECT`) | Remote Atomate2 **Recommended** | Default project name for remote job submission (auto-detected when only one project exists). | `atomate2` | `remote_perlmutter` |
+| `DFT_ENGINE` | Optional (default `cp2k`) | Default periodic DFT engine for skills that support multiple backends: `cp2k`, `qe`, or `vasp`. | ASE-QE/CP2K skills, `src/utils/dft/*` | `cp2k` |
+| `ESPRESSO_PSEUDO` | **Required** for QE | Directory containing Quantum ESPRESSO pseudopotential files (UPF format). | ASE ESPRESSO calculator, QE skills | `/path/to/pseudo` |
+| `ASE_ESPRESSO_COMMAND` or `ESPRESSO_COMMAND` | Local QE **Required** | Shell command to run `pw.x` (ASE checks `ASE_ESPRESSO_COMMAND` first, then `ESPRESSO_COMMAND`). | ASE ESPRESSO calculator, QE skills | `mpirun -np 16 pw.x` |
+| `CP2K_DATA_DIR` | **Required** for CP2K | Directory containing CP2K basis sets and pseudopotentials (e.g. `BASIS_SET`, `POTENTIAL`). | ASE CP2K calculator, CP2K skills | `/path/to/cp2k/data` |
+| `ASE_CP2K_COMMAND` or `CP2K_COMMAND` | Local CP2K **Required** | Shell command to run `cp2k.popt`/`cp2k.psmp` (ASE checks `ASE_CP2K_COMMAND` first, then `CP2K_COMMAND`). | ASE CP2K calculator, CP2K skills | `mpirun -np 16 cp2k.popt` |
 
-> **CP2K / Quantum ESPRESSO**: These open-source periodic DFT engines are installed from conda-forge via the `cp2k` and `qe` environments and do not require additional API keys or binary-path variables. See the [DFT migration report](../.trae/documents/dft_migration_report.md) for details.
+> **CP2K / Quantum ESPRESSO**: These open-source periodic DFT engines are installed from conda-forge via the `cp2k` and `qe` environments. They require the pseudopotential and binary-path variables listed above for local execution; on HPC these are usually supplied via modules and `CP2K_DATA_DIR` / `ESPRESSO_PSEUDO`. See the [DFT migration report](../.trae/documents/dft_migration_report.md) for details.
 
-> **VASP deprecation note**: VASP support is retained as a legacy path. New periodic DFT workflows should use **CP2K** or **Quantum ESPRESSO**.
+> **VASP deprecation note**: VASP support is retained as a legacy path. New periodic DFT workflows should use **CP2K** or **Quantum ESPRESSO**, except for atomate2 workflows (dielectric response, ferroelectric, electronic transport) that are not yet available for QE or CP2K.
 
 ## HPC Execution Environment
 

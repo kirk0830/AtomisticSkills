@@ -39,6 +39,8 @@ python ../../scripts/generate_inputs.py --output batio3_flow.json
 ```
 
 ## Constraints
+> **Note**: This skill currently requires VASP because the underlying atomate2 workflow is not yet available for QE or CP2K.
+
 - **Environments**: Scripts require the `atomate2` environment.
 - **Reference State Requirement**: The user *must* provide both a chemically identical polar and non-polar (reference) structure.
 - **Continuous Mapping**: The atoms in the polar structure must map one-to-one to the non-polar structure without crossing periodic boundaries incorrectly. Large arbitrary translations will break the Berry phase continuity assumption.
