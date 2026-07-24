@@ -16,7 +16,7 @@ Generate novel crystal structures using DiffCSP++ (ICLR 2024), a diffusion model
 > **GPU Required**: DiffCSP++ inference is significantly faster on GPU.
 
 - The `diffcsp` pixi environment must be installed.
-- DiffCSP++ repo cloned to `/home/bdeng/projects/DiffCSP-PP`.
+- DiffCSP++ repo must be cloned (see the diffcsp MCP server setup).
 - Pre-trained checkpoints downloaded to `checkpoints/` directory.
 
 ## 2. Available Models

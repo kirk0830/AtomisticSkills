@@ -132,10 +132,14 @@ Workflows represent **complete, high-level research goals** that may span multip
 >
 > | Install scope | Approx. disk required |
 > |---------------|----------------------:|
-> | Minimal (`base` only) | ~3 GB |
-> | Lightweight (no VASP/ORCA/LAMMPS) | ~80–100 GB |
+> | Minimal (`supercomputing` or `base`) | ~3 GB |
+> | Core research (MLIP + DFT) | ~40–60 GB |
 > | Full (all environments) | ≥150 GB, prefer 200 GB |
 > | Full + optional build tasks (VOID, SCD, react-ot, ICEBERG) | 200 GB+ |
+>
+> **New**: `supercomputing` environment (~3 GB) is all you need on the login node
+> for Slurm job submission. Heavy environments (mace, vasp, cp2k, …) are only needed
+> on compute nodes. See `pixi.toml` for per-environment disk estimates.
 
 AtomisticSkills uses **Pixi** for reproducible, isolated environment management:
 
@@ -153,9 +157,9 @@ contains one isolated environment per research area and grows quickly.
 
 Recommended free space:
 
-- **Minimal / single environment**: ~3 GB for `base`
-- **Lightweight install** (no VASP, ORCA, or LAMMPS): ~80–100 GB
-- **Full install** (all `pixi.toml` environments): ≥150 GB, 200 GB recommended
+- **Login node / supercomputing only**: ~3 GB for `supercomputing` or `base`
+- **Core research** (MLIP + DFT, no LAMMPS/generative/specialized): ~40–60 GB
+- **Full install** (all 25 environments): ≥150 GB, 200 GB recommended
 - **Full install + optional build tasks**: 200 GB+
 
 Check available space before you start:
@@ -209,35 +213,78 @@ for per-environment notes and sizes.
    | **AstrBot** | n/a — see [AstrBot Integration](docs/astrbot-integration.md) | n/a |
 
    ```bash
-   # IDE-embedded agents (project scope)
-   pixi run -e base atomisticskills configure
+    # IDE-embedded agents (project scope)
+    pixi run -e base atomisticskills configure
 
-   # IDE-embedded agents (global scope)
-   pixi run -e base atomisticskills configure --scope global
+    # IDE-embedded agents (global scope)
+    pixi run -e base atomisticskills configure --scope global
 
-   # AstrBot chatbot framework (uses symlinks into data/skills/ + WebUI MCP config)
-   pixi run -e base atomisticskills configure --agent astrbot --data-dir /path/to/astrbot/data
+    # AstrBot chatbot framework
+    pixi run -e base atomisticskills configure --agent astrbot --data-dir /path/to/astrbot/data
    ```
+
+   > **Which environment?** The `atomisticskills configure` command only needs
+   > the `base` environment (~3 GB) — it doesn't require heavy MLIP or DFT
+   > environments.  The actual computation (MCP servers, Slurm jobs) runs in
+   > the environments specified in each Skill's `# Env:` annotation.
 
 ### Available Environments
 
-| Environment | Description | Size / Notes |
-|-------------|-------------|--------------|
-| `base` | Materials Project queries, VASP I/O, base tools (recommended) | ~2–3 GB |
-| `mace` | MACE models (MP, OMAT, MatPES) | ~15 GB, CUDA 12 |
-| `matgl` | MatGL models (CHGNet, M3GNet, TensorNet) | ~12 GB |
-| `fairchem` | FairChem models (UMA, ESEN) | ~16 GB, CUDA 12 |
-| `atomate2` | legacy VASP / Atomate2 workflow management; retained for workflows not yet available for QE/CP2K; CP2K/QE are recommended for new periodic DFT | Heavy (~5–10 GB) |
-| `cp2k` | Periodic DFT via CP2K (open-source, conda-forge) | Heavy (~5–10 GB), includes MPI/OpenMP stacks and pseudopotentials |
-| `qe` | Periodic DFT via Quantum ESPRESSO (open-source, conda-forge) | Heavy (~5–10 GB), includes MPI/OpenMP stacks and pseudopotentials |
-| `smol` | Cluster expansion and Monte Carlo | ~2 GB |
-| `drugdisc` | Drug discovery tools (docking, ADMET, fingerprints) | ~2–3 GB |
-| `mattergen` | Generative crystal design | ~15 GB, CUDA 11.8 |
-| `orca` | molecular DFT via ORCA (external binary required; not available on conda-forge) | Heavy (~3–5 GB), requires external ORCA binary |
-| `react-ot` | Transition state generation | ~1 GB, optional git build |
-| `lammps-mace` | LAMMPS with MACE backend | Very heavy, source build required |
-| `lammps-matgl` | LAMMPS with MatGL backend | Very heavy, source build required |
-| `lammps-fairchem` | LAMMPS with FairChem backend | Very heavy, source build required |
+**Tier: Lightweight** (login-node safe, no CUDA/MLIP/DFT software)
+
+| Environment | Description | Size |
+|-------------|-------------|------|
+| `supercomputing` | **Slurm job submission MCP server** — all `*_via_slurm` tools. Recommended for login nodes. | ~3 GB |
+| `base` | General research: Materials Project, literature, structure tools, plotting. | ~3.5 GB |
+
+**Tier: MLIP** (GPU recommended)
+
+| Environment | Description | Size |
+|-------------|-------------|------|
+| `mace` | MACE MLIP (OMAT, MatPES heads) with CUDA | ~12 GB |
+| `matgl` | MatGL (CHGNet, M3GNet, TensorNet) with CPU PyTorch | ~10 GB |
+| `fairchem` | FairChem (UMA/ESEN) with CUDA | ~15 GB |
+
+**Tier: DFT** (open-source unless noted)
+
+| Environment | Description | Size |
+|-------------|-------------|------|
+| `orca` | Molecular DFT via ORCA ⚠️ external binary required | ~6 GB |
+| `vasp` | Periodic DFT via VASP/Atomate2 ⚠️ VASP license required | ~8 GB |
+| `cp2k` | Periodic DFT via CP2K — fully open-source | ~6 GB |
+| `qe` | Periodic DFT via Quantum ESPRESSO — fully open-source | ~6 GB |
+
+**Tier: MD / LAMMPS**
+
+| Environment | Description | Size |
+|-------------|-------------|------|
+| `mace-lammps` | LAMMPS + MACE (ACEsuit fork, source build) | ~15 GB |
+| `matgl-lammps` | LAMMPS + MatGL (conda-forge, CUDA) | ~13 GB |
+| `fairchem-lammps` | LAMMPS + FairChem | ~18 GB |
+
+**Tier: Generative**
+
+| Environment | Description | Size |
+|-------------|-------------|------|
+| `diffcsp` | DiffCSP++ crystal generation | ~10 GB |
+| `mattergen` | MatterGen diffusion-based generation (CUDA 11.8) | ~15 GB |
+| `adit` | ADiT all-atom diffusion transformer | ~8 GB |
+| `react-ot` | React-OT TS generation (git build) | ~4 GB |
+| `scd` | SCD property prediction (TorchMD kernel build) | ~10 GB |
+
+**Tier: Specialized**
+
+| Environment | Description | Size |
+|-------------|-------------|------|
+| `smol` | Cluster expansion + Monte Carlo | ~4 GB |
+| `calphad` | CALPHAD phase diagrams (pycalphad) | ~5 GB |
+| `phasefield` | Cahn-Hilliard / Allen-Cahn (FiPy) | ~4 GB |
+| `drugdisc` | Drug discovery (docking, ADMET, fingerprints) | ~6 GB |
+| `drugmd` | Drug discovery + OpenMM MD | ~10 GB |
+| `nmr` | NMR prediction/analysis (nmrsim) | ~5 GB |
+| `msms` | MS/MS prediction (ICEBERG, Python 3.10) | ~8 GB |
+| `xrd` | XRD analysis (DARA, manual install) | ~4 GB |
+| `void` | Porous materials docking (VOID, git build) | ~5 GB |
 
 ### Configuration
 

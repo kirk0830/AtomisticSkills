@@ -78,4 +78,32 @@ With Pixi, this translates to:
 pixi run -e mace python .agents/skills/ml-mace-finetune/scripts/train_mace.py
 ```
 
+## The Pixi MCP Server (Script Runner)
+
+When you are running in an environment **without shell access** (e.g. astrbot
+in non-admin mode), you cannot execute ``pixi run`` directly.  Instead, use
+the **pixi MCP server** via ``mcp_pixi_run``:
+
+```
+mcp_pixi_run(environment="<name>", script=".agents/skills/<skill>/scripts/<script>.py", args=[...])
+```
+
+**How to use it:**
+- Most SKILL.md files have already been rewritten by the build system so
+  ``# Env:`` code blocks contain pre-filled ``mcp_pixi_run()`` calls.  Copy
+  them verbatim.
+- If you encounter an un-rewritten ``# Env:`` block, split the ``python``
+  command into ``script`` and ``args`` manually.
+- Add ``capture_patterns`` to retrieve output files (e.g.
+  ``capture_patterns=["research/**", "*.json"]``).
+
+**Security:** ``mcp_pixi_run`` rejects path traversal, only allows ``.py``
+files under ``.agents/skills/`` or ``research/``, and runs with ``shell=False``.
+
+**When to use pixi run vs mcp_pixi_run:**
+- If you have shell access (Claude Code, Cursor, Codex, Gemini):
+  → ``pixi run -e <env> python <script>``
+- If you do NOT have shell access (astrbot non-admin):
+  → ``mcp_pixi_run(environment="<env>", script="...", args=[...])``
+
 Note: Pixi environment names do not use the `-agent` suffix — use `mace`, `matgl`, `base`, etc.

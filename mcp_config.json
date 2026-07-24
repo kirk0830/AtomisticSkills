@@ -99,6 +99,16 @@
         "PYTHONPATH": "PIXI_PROJECT",
         "CONDA_OVERRIDE_CUDA": "11.8"
       }
+    },
+    "pixi": {
+      "command": "PIXI_PROJECT/.pixi/envs/base/bin/python",
+      "args": [
+        "-m",
+        "src.mcp_server.pixi_server"
+      ],
+      "env": {
+        "PYTHONPATH": "PIXI_PROJECT"
+      }
     }
   }
 }

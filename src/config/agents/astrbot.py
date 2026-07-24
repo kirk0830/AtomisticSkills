@@ -17,6 +17,7 @@ from ..base import (
     is_relative_to,
     symlink_dir_contents,
 )
+from ..env_block_rewriter import transform_env_blocks
 from ..mcp_loader import load_mcp_servers
 
 SKILLS_SRC = PROJECT_ROOT / ".agents" / "skills"
@@ -196,6 +197,45 @@ def _rewrite_for_sandbox(text: str, context: str) -> str:
     # 7. .agents/templates/  →  remove (templates are build-time only)
     text = re.sub(r'\.agents/templates/', '', text)
 
+    # 8. ../skills/<skill>/  →  ../../<skill>/  (workflow context only)
+    #    Workflows at data/skills/atomisticskills/workflows/ reference skills via
+    #    ../skills/<name>/SKILL.md. In the sandbox layout, skills are siblings under
+    #    data/skills/, so the correct path is ../../<name>/SKILL.md.
+    if context == "workflows":
+        text = re.sub(
+            r'\.\./skills/([\w\-.]+)/',
+            r'../../\1/',
+            text,
+        )
+
+    # 9. docs/<file>  →  remove (external docs not available in sandbox)
+    #    References like docs/hpc_job_submission.md are not copied into the
+    #    sandbox. Replace with a note to consult the project site.
+    text = re.sub(
+        r'`docs/([^`]+)`',
+        r'(see project documentation for `docs/\1`)',
+        text,
+    )
+    text = re.sub(
+        r'\[([^\]]+)\]\(docs/([^)]+)\)',
+        r'\1 (project documentation)',
+        text,
+    )
+
+    # 10. ~/.atomistic_skills.yaml  →  keep as-is
+    #     In local mode with administrator access, ~ resolves to the real home
+    #     directory, so this reference remains valid. No rewrite needed.
+
+    # 11. # Env: code blocks → rewrite as pre-filled mcp_pixi_run() calls.
+    #     The Agent in astrbot (non-admin) has no shell/Python — every
+    #     ``# Env:`` command must go through the pixi MCP server.  Instead
+    #     of asking the LLM to parse command text and guess parameters, we
+    #     rewrite the block so the Agent sees a ready-to-copy MCP call with
+    #     all fields pre-filled.  Script paths are restored from sandbox-
+    #     relative (``../...``) back to project-relative (``.agents/skills/...``)
+    #     so the pixi server can find them.
+    text = transform_env_blocks(text)
+
     return text
 
 
@@ -274,28 +314,34 @@ def write_index_skill(skills_dir: Path, project_root: Path) -> None:
 
 
 def _symlink_mcp_resources(mcpservers_dir: Path, project_root: Path) -> None:
-    """Symlink MCP-related resources into the mcpservers/ subdirectory."""
-    config_link = mcpservers_dir / "mcp_config.json"
-    if MCP_CONFIG_SRC.exists():
-        if config_link.exists() or config_link.is_symlink():
-            if config_link.is_symlink():
-                target = symlink_target(config_link)
-                if target.resolve() != MCP_CONFIG_SRC.resolve():
-                    config_link.unlink()
-                    config_link.symlink_to(MCP_CONFIG_SRC)
-        else:
-            config_link.symlink_to(MCP_CONFIG_SRC)
+    """Copy MCP-related resources into the mcpservers/ subdirectory.
 
-    servers_link = mcpservers_dir / "servers"
+    Uses physical copies (not symlinks) because AstrBot's sandbox resolves
+    symlinks and then blocks access to paths outside the workspace.
+    """
+    # --- mcp_config.json ---
+    config_dst = mcpservers_dir / "mcp_config.json"
+    if MCP_CONFIG_SRC.exists():
+        # Remove any existing entry (symlink, file, or directory)
+        if config_dst.exists() or config_dst.is_symlink():
+            config_dst.unlink()
+        shutil.copy2(MCP_CONFIG_SRC, config_dst)
+
+    # --- servers/ ---
+    servers_dst = mcpservers_dir / "servers"
     if MCP_SERVERS_SRC.exists():
-        if servers_link.exists() or servers_link.is_symlink():
-            if servers_link.is_symlink():
-                target = symlink_target(servers_link)
-                if target.resolve() != MCP_SERVERS_SRC.resolve():
-                    servers_link.unlink()
-                    servers_link.symlink_to(MCP_SERVERS_SRC, target_is_directory=True)
-        else:
-            servers_link.symlink_to(MCP_SERVERS_SRC, target_is_directory=True)
+        # Remove any existing entry
+        if servers_dst.exists() or servers_dst.is_symlink():
+            if servers_dst.is_dir() and not servers_dst.is_symlink():
+                shutil.rmtree(servers_dst)
+            else:
+                servers_dst.unlink()
+        shutil.copytree(
+            MCP_SERVERS_SRC,
+            servers_dst,
+            symlinks=False,
+            dirs_exist_ok=True,
+        )
 
 
 def _build_index_skill_md(project_root: Path, index_dir: Path) -> str:
@@ -360,6 +406,7 @@ These rules define how you operate as an AtomisticSkills research agent.
 | [skill-standards.md](skill-standards.md) | How to read and follow a skill |
 | [workflow-standards.md](workflow-standards.md) | How to execute a multi-step workflow |
 | [plot-standards.md](plot-standards.md) | Plotting and visualization conventions |
+| [hpc-standards.md](hpc-standards.md) | HPC/Slurm job submission rules — never run heavy computation locally |
 
 All rule files are also available as symlinks in the `rules/` subdirectory
 next to this SKILL.md:

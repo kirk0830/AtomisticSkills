@@ -1,0 +1,55 @@
+# AtomisticSkills HPC Configuration Template
+# ==========================================
+#
+# Copy this file to ~/.atomistic_skills.yaml and edit for your cluster.
+# Priority: JobSpec arguments > Environment variables > This file > Built-in profiles
+
+hpc:
+  # Execution mode: "local" (sbatch on this machine), "ssh" (remote), "auto"
+  mode: local
+
+  # Default Slurm partition/queue
+  # profile: my_cluster    # uncomment if you define a custom profile below
+
+  # Default time limit (HH:MM:SS)
+  default_time_limit: "24:00:00"
+
+  # Local work directory for job scripts and outputs
+  # local_work_dir: /path/to/jobs
+
+  # -----------------------------------------------------------------------
+  # Per-application modules (loaded via "module load" on compute nodes)
+  # -----------------------------------------------------------------------
+  modules:
+    orca: ["orca/5.0.4", "openmpi/4.1.5"]
+    vasp: ["vasp/6.4.2"]
+    cp2k: ["cp2k/2024.1"]
+    qe: ["qe/7.3", "openmpi/4.1.5"]
+    lammps: ["lammps/stable"]
+
+  # -----------------------------------------------------------------------
+  # SSH mode settings (only needed if mode=ssh)
+  # -----------------------------------------------------------------------
+  # ssh_host: cluster.example.com
+  # ssh_user: myuser
+  # ssh_key: /home/myuser/.ssh/id_rsa
+  # ssh_port: 22
+  # ssh_remote_work_dir: ~/hpc_jobs
+
+# ---------------------------------------------------------------------------
+# Custom cluster profiles (overrides built-in generic)
+# ---------------------------------------------------------------------------
+# profiles:
+#   my_cluster:
+#     name: my_cluster
+#     description: "My HPC cluster with md queue"
+#     partition: md           # Slurm partition name
+#     default_nodes: 1
+#     default_ntasks_per_node: 32
+#     default_cpus_per_task: 1
+#     time_limit: "24:00:00"
+#     gres: "gpu:1"           # e.g. "gpu:4090d:1" for specific GPU model
+#     modules:
+#       orca: ["orca/5.0.4", "openmpi/4.1.5"]
+#       cp2k: ["cp2k/2024.1"]
+#       qe: ["qe/7.3", "openmpi/4.1.5"]

@@ -9,6 +9,13 @@
 # 3. Lockfile (pixi.lock) ensures reproducibility
 # 4. Tasks replace shell scripts
 # 5. Multiple environments in one workspace
+#
+# Hierarchy:
+#   Layer 0  core            — pymatgen, ase, numpy, atomistic-skills, mcp
+#   Layer 1  base-{dft,ml,md,chem} — domain foundations
+#   Layer 2  engine-{name}   — computational backends (ORCA, MACE, CP2K, …)
+#   Layer 3  feat-{name}     — property tools (phonon, diffusion, …)
+#   Layer 4  environments    — full environments with disk estimates
 
 [workspace]
 name = "atomistic-skills"
@@ -19,24 +26,26 @@ platforms = ["linux-64"]
 # Note: Some environments (orca, CUDA) are platform-specific
 
 # -----------------------------------------------------------------------------
-# PyPI Options: use Tsinghua mirror for default PyPI and PyTorch CUDA 11.8 index
-# for mattergen's torch==2.2.1+cu118 requirement.
+# PyPI Options
 # -----------------------------------------------------------------------------
+# Default index: Tsinghua mirror (faster in mainland China).
+# extra-index-urls includes PyTorch CUDA 11.8 wheels required ONLY by
+# mattergen (torch==2.2.1+cu118).  Other environments use conda-forge
+# pytorch and are unaffected — the cu118 index only offers packages that
+# explicitly request +cu118 suffixes, so it won't replace conda pytorch.
+# find-links points to locally downloaded PyG wheels because uv cannot
+# fetch https://data.pyg.org from this network (TLS handshake issue).
 [pypi-options]
 index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 extra-index-urls = ["https://download.pytorch.org/whl/cu118"]
-# PyG wheels for torch==2.2.1+cu118 are downloaded locally because uv cannot
-# fetch https://data.pyg.org in this network environment (TLS handshake issue).
 find-links = [{ path = ".pixi/wheels/pyg-cu118" }]
 
+
 # =============================================================================
-# FEATURE DEFINITIONS
-# Features are dependency groups that can be combined into environments
+# LAYER 0 — CORE
+# Shared base dependencies for ALL environments.  ~2 GB
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# Core Feature: Shared base dependencies for all environments
-# -----------------------------------------------------------------------------
 [feature.core.dependencies]
 python = ">=3.10,<3.13"
 pip = "*"
@@ -46,8 +55,8 @@ pymatgen = "*"
 ase = ">=3.22"
 typing-extensions = "*"
 mcp = "*"
-pymupdf = "*"  # PyMuPDF; provides the fitz module used by paper_downloader and PDF-parsing skills
-pytest = "*"   # Required for running the test suite in every environment
+pymupdf = "*"  # PyMuPDF; fitz module for paper_downloader + PDF-parsing skills
+pytest = "*"  # Required for running the test suite
 anyio = "*"
 feedparser = "*"
 jsonschema = "*"
@@ -61,139 +70,79 @@ scikit-image = "*"
 tomli = "*"
 
 [feature.core.pypi-dependencies]
-# PyPI-only packages
 optimade = { version = "*", extras = ["client"] }
-# Install atomistic_skills as editable local package
-# This makes `from src.utils...` importable in ALL pixi environments
 atomistic-skills = { path = ".", editable = true }
-jinja2 = ">=3.0"  # For HPC job template generation
-pyyaml = ">=6.0"  # For HPC config loading
+jinja2 = ">=3.0"
+pyyaml = ">=6.0"
 google-api-python-client = "*"
 pubchempy = "*"
 tomli-w = "*"
 
-# -----------------------------------------------------------------------------
-# Chemistry Feature: Molecular chemistry tools
-# -----------------------------------------------------------------------------
-[feature.chemistry.dependencies]
+
+# =============================================================================
+# LAYER 1 — DOMAIN BASES  (each ~0.1–5 GB added on top of core)
+# =============================================================================
+
+# --- base-chem: molecular chemistry (rdkit, packmol) ---
+# + ~0.5 GB
+[feature.base-chem.dependencies]
 rdkit = "*"
 packmol = "*"
 
-# -----------------------------------------------------------------------------
-# PyTorch Base Feature: Shared PyTorch (CPU variant)
-# -----------------------------------------------------------------------------
-[feature.torch-base.dependencies]
-pytorch = ">=2.0"
+# --- base-dft: DFT input generation and output parsing ---
+# + ~0.1 GB (just seekpath; pymatgen+ase already in core)
+[feature.base-dft.dependencies]
+seekpath = "*"  # k-path generation for QE/CP2K band structure
 
-# -----------------------------------------------------------------------------
-# PyTorch CUDA Feature: GPU-accelerated PyTorch (linux-64 only)
-# -----------------------------------------------------------------------------
-[feature.torch-cuda]
+# --- base-ml: PyTorch CUDA for MLIP ---
+# + ~5 GB
+[feature.base-ml]
 platforms = ["linux-64"]
 channels = ["nvidia", "pytorch", "conda-forge"]
 
-[feature.torch-cuda.system-requirements]
+[feature.base-ml.system-requirements]
 cuda = "12"
 
-[feature.torch-cuda.dependencies]
+[feature.base-ml.dependencies]
 pytorch = { version = ">=2.0", build = "*cuda*" }
-# CUDA toolkit from conda-forge
 cuda-toolkit = "*"
 
-# -----------------------------------------------------------------------------
-# MLIP-MACE Feature: MACE machine learning interatomic potential
-# -----------------------------------------------------------------------------
-[feature.mlip-mace.dependencies]
-setuptools = "<70"  # Compatibility requirement, also pinned for conda solve
+# --- base-md: MD trajectory analysis ---
+# + ~0.3 GB
+[feature.base-md.dependencies]
+h5py = "*"
+# Note: base-chem (rdkit+packmol) is assumed for MD environments that need
+# molecular building.  Atomic-only MD (LAMMPS) doesn't need it.
 
-[feature.mlip-mace.pypi-dependencies]
-mace-torch = "==0.3.15"
-sella = "*"
-matcalc = "*"
-setuptools = "<70"  # Compatibility requirement
-nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
 
-# -----------------------------------------------------------------------------
-# MLIP-MatGL Feature: MatGL/CHGNet/TensorNet potentials
-# -----------------------------------------------------------------------------
-[feature.mlip-matgl.pypi-dependencies]
-matgl = "*"
-matcalc = "*"
-cython = "*"
-nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
-# dgl is imported by several MatGL fine-tuning scripts, but it is normally pulled in
-# as a transitive dependency of matgl. If you hit "No module named dgl", install the
-# CPU/CUDA wheel matching your torch version manually (see https://www.dgl.ai/).
+# =============================================================================
+# LAYER 2 — COMPUTATIONAL ENGINES
+# =============================================================================
 
-# -----------------------------------------------------------------------------
-# MLIP-FairChem Feature: FairChem/UMA/ESEN potentials
-# -----------------------------------------------------------------------------
-[feature.mlip-fairchem.dependencies]
-setuptools = "<70"  # Compatibility requirement, also pinned for conda solve
-# fairchem-core (>=2.18.0) requires torch>=2.8,<2.9; keep the conda pytorch pin aligned
-pytorch = { version = ">=2.0,<2.9", build = "*cuda*" }
-# hydra-core (pulled in by fairchem-core) pins antlr4-python3-runtime==4.9.3; provide it via conda-forge
-# to avoid slow/unreliable PyPI mirror fetches during lock.
-antlr4-python3-runtime = "==4.9.3"
+# -------------------------------------------------------------------
+# DFT Engines
+# -------------------------------------------------------------------
 
-[feature.mlip-fairchem.pypi-dependencies]
-fairchem-core = ">=2.18.0"
-matcalc = "*"
-setuptools = "<70"
-nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference (optional)
+# --- engine-orca: molecular DFT via ORCA + SCINE/ReaDuct ---
+# + ~1 GB; platforms: linux-64, osx-64
+[feature.engine-orca]
+platforms = ["linux-64", "osx-64"]
 
-# -----------------------------------------------------------------------------
-# LAMMPS-CPU Feature: conda-forge lammps (CPU variant, for FairChem)
-# Includes ML-IAP, MLIAP_ENABLE_PYTHON, ML-SNAP, USER-M3GNET, OPENMP, MPI
-# -----------------------------------------------------------------------------
-[feature.lammps-cpu.dependencies]
-lammps = "*"
+[feature.engine-orca.dependencies]
+python = ">=3.11,<3.12"
+scine-utilities-python = "*"
+scine-readuct-python = "*"
 
-# -----------------------------------------------------------------------------
-# LAMMPS-CUDA Feature: conda-forge lammps with Kokkos+CUDA (for MatGL)
-# linux-64 only; requires CUDA 12.x runtime
-# Note: conda-forge builds with Kokkos_ARCH_MAXWELL50 (forward-compatible PTX)
-# -----------------------------------------------------------------------------
-[feature.lammps-cuda]
-platforms = ["linux-64"]
+[feature.engine-orca.pypi-dependencies]
+numpy = "<2"  # SCINE compatibility
 
-[feature.lammps-cuda.system-requirements]
-cuda = "12"
+# --- engine-vasp: periodic DFT via Atomate2 (VASP workflows) ---
+# + ~2 GB; python 3.10 only
+[feature.engine-vasp.dependencies]
+python = ">=3.10,<3.11"
+rich = "<15"  # jobflow-remote requires rich<15
 
-[feature.lammps-cuda.dependencies]
-lammps = { version = "*", build = "*cuda*" }
-
-# -----------------------------------------------------------------------------
-# LAMMPS-MACE-Build Feature: build tools for compiling ACEsuit/lammps fork
-# MACE's native pair_style requires PKG_ML-MACE, not available in conda-forge
-# The actual build is performed by the build-lammps-mace task
-# -----------------------------------------------------------------------------
-[feature.lammps-mace-build]
-platforms = ["linux-64"]
-
-[feature.lammps-mace-build.dependencies]
-cmake = "*"
-gxx = "*"
-openmpi = "*"        # provides mpicxx
-mkl-devel = "*"
-
-# -----------------------------------------------------------------------------
-# FairChem-LAMMPS Feature: pip package providing lmp_fc binary
-# Pairs with conda-forge lammps (lammps-cpu feature)
-# -----------------------------------------------------------------------------
-[feature.fairchem-lammps-pkg.pypi-dependencies]
-fairchem-lammps = "*"
-fairchem-core = { version = ">=2.18.0", extras = ["extras"] }
-
-# -----------------------------------------------------------------------------
-# DFT Feature: Atomate2 VASP workflows
-# -----------------------------------------------------------------------------
-[feature.dft.dependencies]
-python = ">=3.10,<3.11"  # Atomate2 requires Python 3.10
-# jobflow-remote requires rich<15; keep conda rich aligned
-rich = "<15"
-
-[feature.dft.pypi-dependencies]
+[feature.engine-vasp.pypi-dependencies]
 atomate2 = "*"
 jobflow-remote = "*"
 amset = "*"
@@ -201,62 +150,134 @@ lobsterpy = "*"
 ijson = "*"
 jobflow = "*"
 
-# -----------------------------------------------------------------------------
-# DFT-Orca Feature: SCINE/ReaDuct for molecular DFT (x86_64 only)
-# -----------------------------------------------------------------------------
-[feature.dft-orca]
-platforms = ["linux-64", "osx-64"]
-
-[feature.dft-orca.dependencies]
-python = ">=3.11,<3.12"
-scine-utilities-python = "*"
-scine-readuct-python = "*"
-
-[feature.dft-orca.pypi-dependencies]
-numpy = "<2"  # SCINE compatibility
-
-# -----------------------------------------------------------------------------
-# DFT-CP2K Feature: New open-source periodic DFT environment via CP2K (Phase 4)
-# -----------------------------------------------------------------------------
-[feature.dft-cp2k.dependencies]
+# --- engine-cp2k: periodic DFT via CP2K ---
+# + ~1 GB (cp2k binary); python 3.11–3.12
+# ase and pymatgen inherited from core; not re-declared here.
+[feature.engine-cp2k.dependencies]
 python = ">=3.11,<3.12"
 cp2k = "*"
-ase = "*"
-pymatgen = "*"
-seekpath = "*"  # Phase 6: automatic k-path generation for band-structure/post-processing
 
-[feature.dft-cp2k.pypi-dependencies]
-# Phase 6: cp2k-input-tools provides robust CP2K input parsing/generation.
-# If it is unavailable in the current PyPI mirror, fall back to ASE's built-in
-# cp2k input tools (ase.calculators.cp2k / ase.io.cp2k).
+[feature.engine-cp2k.pypi-dependencies]
+# cp2k-input-tools provides robust CP2K input parsing/generation.
+# If unavailable in the current PyPI mirror, fall back to ASE's built-in
+# cp2k tools (ase.calculators.cp2k / ase.io.cp2k).
 # cp2k-input-tools = "*"
 
-# -----------------------------------------------------------------------------
-# DFT-QE Feature: New open-source periodic DFT environment via Quantum ESPRESSO (Phase 4)
-# -----------------------------------------------------------------------------
-[feature.dft-qe.dependencies]
+# --- engine-qe: periodic DFT via Quantum ESPRESSO ---
+# + ~1 GB (qe binary); python 3.11–3.12
+# ase and pymatgen inherited from core; not re-declared here.
+[feature.engine-qe.dependencies]
 python = ">=3.11,<3.12"
 qe = "*"
-ase = "*"
-pymatgen = "*"
-seekpath = "*"  # Phase 6: automatic k-path generation for band-structure/post-processing
 
-# -----------------------------------------------------------------------------
-# Generative-Base Feature: Shared dependencies for generative models
-# -----------------------------------------------------------------------------
-[feature.generative-base.dependencies]
-# Use conda-forge versions to avoid PyPI sdist lock contention for antlr4-python3-runtime
+# -------------------------------------------------------------------
+# MLIP Engines
+# -------------------------------------------------------------------
+
+# --- engine-mace: MACE MLIP ---
+# + ~3 GB
+# Torch is expected from base-ml (CUDA).  Without base-ml, mace-torch pulls
+# torch from PyPI (CPU-only), which is functional but much slower for MLIP work.
+[feature.engine-mace.dependencies]
+# setuptools <70 required by mace-torch 0.3.15
+setuptools = "<70"
+
+[feature.engine-mace.pypi-dependencies]
+mace-torch = "==0.3.15"
+sella = "*"
+matcalc = "*"
+# Also pinned via conda above; both channels need the constraint.
+setuptools = "<70"
+nvalchemi-toolkit = "*"  # NVIDIA ALCHEMI Toolkit for GPU batched inference
+
+# --- engine-matgl: MatGL (CHGNet, M3GNet, TensorNet) ---
+# + ~2 GB
+[feature.engine-matgl.pypi-dependencies]
+matgl = "*"
+matcalc = "*"
+cython = "*"
+nvalchemi-toolkit = "*"
+
+# --- engine-fairchem: FairChem (UMA/ESEN) ---
+# + ~5 GB
+# pytorch (CUDA) is declared here independently so this feature can also
+# function without base-ml, but base-ml is still used in production envs.
+[feature.engine-fairchem.dependencies]
+numpy = "<2.5"  # fairchem-core>=2.18.0 requires numpy>=2.0,<2.5
+setuptools = "<70"
+pytorch = { version = ">=2.0,<2.9", build = "*cuda*" }
+antlr4-python3-runtime = "==4.9.3"
+
+[feature.engine-fairchem.pypi-dependencies]
+fairchem-core = ">=2.18.0"
+matcalc = "*"
+# Also pinned via conda above; both channels need the constraint.
+setuptools = "<70"
+nvalchemi-toolkit = "*"
+
+# -------------------------------------------------------------------
+# MD Engines
+# -------------------------------------------------------------------
+
+# --- engine-lammps-cpu: conda-forge LAMMPS (CPU) ---
+# + ~2 GB
+[feature.engine-lammps-cpu.dependencies]
+lammps = "*"
+
+# --- engine-lammps-cuda: conda-forge LAMMPS with Kokkos+CUDA ---
+# + ~3 GB; linux-64 only
+[feature.engine-lammps-cuda]
+platforms = ["linux-64"]
+
+[feature.engine-lammps-cuda.system-requirements]
+cuda = "12"
+
+[feature.engine-lammps-cuda.dependencies]
+lammps = { version = "*", build = "*cuda*" }
+
+# --- engine-lammps-mace-build: build tools for ACEsuit/lammps fork ---
+# + ~2 GB (build tools only; actual lammps binary compiled from source)
+[feature.engine-lammps-mace-build]
+platforms = ["linux-64"]
+
+[feature.engine-lammps-mace-build.dependencies]
+cmake = "*"
+gxx = "*"
+openmpi = "*"
+mkl-devel = "*"
+
+# --- engine-fairchem-lammps: pip package providing lmp_fc binary ---
+# Pairs with engine-lammps-cpu
+[feature.engine-fairchem-lammps.pypi-dependencies]
+fairchem-lammps = "*"
+fairchem-core = { version = ">=2.18.0", extras = ["extras"] }
+
+# --- engine-openmm: OpenMM-based MD for drug discovery ---
+# + ~3 GB
+[feature.engine-openmm.dependencies]
+openmm = "*"
+openmmforcefields = "*"
+ambertools = "*"
+parmed = "*"
+
+[feature.engine-openmm.pypi-dependencies]
+openff-toolkit = "*"
+prolif = "*"
+matplotlib = "*"
+
+# -------------------------------------------------------------------
+# Generative Engines
+# -------------------------------------------------------------------
+
+# --- engine-diffcsp: DiffCSP++ crystal structure generation ---
+# + ~2 GB
+[feature.engine-diffcsp.dependencies]
 hydra-core = ">=1.3.1,<1.4"
 omegaconf = "==2.3.0"
 
-[feature.generative-base.pypi-dependencies]
+[feature.engine-diffcsp.pypi-dependencies]
 pytorch-lightning = ">=2.0"
 wandb = "*"
-
-# -----------------------------------------------------------------------------
-# Generative-DiffCSP Feature: Crystal structure generation
-# -----------------------------------------------------------------------------
-[feature.generative-diffcsp.pypi-dependencies]
 pyxtal = "*"
 torchdiffeq = "*"
 smact = "*"
@@ -264,56 +285,50 @@ matminer = "*"
 einops = "*"
 pytorch-geometric = "*"
 
-# -----------------------------------------------------------------------------
-# Generative-MatterGen Feature: Diffusion-based material generation
-# -----------------------------------------------------------------------------
-[feature.generative-mattergen]
+# --- engine-mattergen: MatterGen diffusion-based material generation ---
+# + ~5 GB; strict CUDA 11.8 / Python 3.10 requirement
+[feature.engine-mattergen]
 channels = ["pytorch", "nvidia", "conda-forge"]
 channel-priority = "disabled"
 
-[feature.generative-mattergen.system-requirements]
+[feature.engine-mattergen.system-requirements]
 cuda = "11.8"
 
-[feature.generative-mattergen.dependencies]
-# mattergen 1.0.3 has strict transitive pins; align conda packages accordingly
-python = "3.10.*"  # PyG wheels in .pixi/wheels/pyg-cu118 are built for cp310
+[feature.engine-mattergen.dependencies]
+python = "3.10.*"
 numpy = "<2"
 monty = "==2024.7.30"
 matplotlib = "==3.8.4"
 hydra-core = "==1.3.1"
 cuda-toolkit = "==11.8"
 
-[feature.generative-mattergen.pypi-dependencies]
-# Use PyPI torch with the exact CUDA 11.8 local version that mattergen requires.
-# The conda pytorch package cannot satisfy torch==2.2.1+cu118.
+[feature.engine-mattergen.pypi-dependencies]
 torch = "==2.2.1+cu118"
 mattergen = "*"
 
-[feature.generative-mattergen.activation.env]
-# MatterGen declares cuda = "11.8"; allow it to run on CPU-only hosts.
+[feature.engine-mattergen.activation.env]
 CONDA_OVERRIDE_CUDA = "11.8"
 
-# -----------------------------------------------------------------------------
-# Generative-ADiT Feature: All-atom Diffusion Transformer
-# -----------------------------------------------------------------------------
-[feature.generative-adit]
-# Minimal dependencies - most installed via pip from source
+# --- engine-adit: ADiT all-atom diffusion transformer ---
+# + ~3 GB; minimal feature — most deps installed from source.
+# ADiT has no packages on conda-forge or PyPI; the model weights and
+# inference code are cloned and installed manually at runtime.
+# This feature exists mainly as an environment anchor for script defaults.
+[feature.engine-adit]
 
-# -----------------------------------------------------------------------------
-# Generative-ReactOT Feature: Transition state generation
-# -----------------------------------------------------------------------------
-[feature.generative-reactot.dependencies]
+# --- engine-reactot: React-OT transition state generation ---
+# + ~1 GB
+[feature.engine-reactot.dependencies]
 python = "==3.10.14"
 numpy = "==1.26.4"
 pytest = "*"
 
-# -----------------------------------------------------------------------------
-# Generative-SCD Feature: SelfConditionedDenoisingAtoms
-# -----------------------------------------------------------------------------
-[feature.generative-scd.dependencies]
-git = "*"  # For cloning external repo
+# --- engine-scd: SelfConditionedDenoisingAtoms property prediction ---
+# + ~3 GB
+[feature.engine-scd.dependencies]
+git = "*"
 
-[feature.generative-scd.pypi-dependencies]
+[feature.engine-scd.pypi-dependencies]
 lightning-utilities = "*"
 scikit-learn = ">=1.0"
 pandas = ">=1.3"
@@ -322,10 +337,21 @@ huggingface-hub = ">=0.10"
 fastmcp = "*"
 pytorch-geometric = "*"
 
-# -----------------------------------------------------------------------------
-# Thermodynamics Feature: CALPHAD phase diagrams
-# -----------------------------------------------------------------------------
-[feature.thermo-calphad.dependencies]
+# -------------------------------------------------------------------
+# Special Engines
+# -------------------------------------------------------------------
+
+# --- engine-smol: cluster expansion + Monte Carlo ---
+# + ~1 GB
+[feature.engine-smol.pypi-dependencies]
+smol = "*"
+polytope = "*"
+scikit-learn = "*"
+pyyaml = "*"
+
+# --- engine-calphad: CALPHAD phase diagrams ---
+# + ~2 GB
+[feature.engine-calphad.dependencies]
 numpy = "*"
 scipy = "*"
 matplotlib = "*"
@@ -336,38 +362,26 @@ sympy = "*"
 jupyter = "*"
 ipython = "*"
 
-[feature.thermo-calphad.pypi-dependencies]
+[feature.engine-calphad.pypi-dependencies]
 pycalphad = "*"
 
-# -----------------------------------------------------------------------------
-# PhaseField Feature: Cahn-Hilliard / Allen-Cahn simulations
-# -----------------------------------------------------------------------------
-[feature.phasefield.dependencies]
+# --- engine-phasefield: Cahn-Hilliard / Allen-Cahn (FiPy) ---
+# + ~1 GB
+[feature.engine-phasefield.dependencies]
 fipy = "*"
 imageio = "*"
 tqdm = "*"
 
-# -----------------------------------------------------------------------------
-# ClusterExpansion Feature: smol for Monte Carlo
-# -----------------------------------------------------------------------------
-[feature.cluster-expansion.pypi-dependencies]
-smol = "*"
-polytope = "*"
-scikit-learn = "*"
-pyyaml = "*"
-
-# -----------------------------------------------------------------------------
-# DrugDiscovery Feature: Drug discovery tools
-# -----------------------------------------------------------------------------
-[feature.drugdiscovery.dependencies]
+# --- engine-drugdisc: drug discovery tools ---
+# + ~3 GB
+[feature.engine-drugdisc.dependencies]
 vina = "*"
 pdbfixer = "*"
 fpocket = "*"
-# dimorphite-dl (PyPI) requires rdkit<2026; keep conda rdkit aligned
 rdkit = "<2026"
 pymol-open-source = "*"
 
-[feature.drugdiscovery.pypi-dependencies]
+[feature.engine-drugdisc.pypi-dependencies]
 meeko = "*"
 gemmi = "*"
 openbabel-wheel = "*"
@@ -377,43 +391,23 @@ posebusters = "*"
 MDAnalysis = "*"
 rxn4chemistry = "*"
 
-# -----------------------------------------------------------------------------
-# OpenMM-MD Feature: OpenMM-based molecular dynamics for drug discovery
-# Includes OpenMM, OpenFF, ParmEd, ProLIF, and AmberTools (MMPBSA.py, cpptraj)
-# -----------------------------------------------------------------------------
-[feature.openmm-md.dependencies]
-openmm = "*"
-openmmforcefields = "*"
-ambertools = "*"
-parmed = "*"
-
-[feature.openmm-md.pypi-dependencies]
-openff-toolkit = "*"
-prolif = "*"
-matplotlib = "*"
-
-# -----------------------------------------------------------------------------
-# Spectroscopy-NMR Feature: NMR spectrum prediction
-# -----------------------------------------------------------------------------
-[feature.spectroscopy-nmr.dependencies]
+# --- engine-nmr: NMR spectrum prediction ---
+# + ~2 GB
+[feature.engine-nmr.dependencies]
 rdkit = "*"
-# nmrsim -> sparse -> numba; keep numpy compatible with recent numba wheels
 numpy = "<2.5"
 
-[feature.spectroscopy-nmr.pypi-dependencies]
-# Pin to versions that provide wheels for Python 3.10+ and avoid old sdists with py<3.10 guards
+[feature.engine-nmr.pypi-dependencies]
 nmrsim = ">=0.6.0.post1"
 opencv-python-headless = ">=4.8"
 Pillow = ">=10.0"
-# nmrsim -> sparse -> numba; force a numba/llvmlite with Python 3.12 wheels
 numba = ">=0.60"
 llvmlite = ">=0.43.0"
 jcamp = "*"
 
-# -----------------------------------------------------------------------------
-# Spectroscopy-MSMS Feature: Mass spectrum prediction (ICEBERG)
-# -----------------------------------------------------------------------------
-[feature.spectroscopy-msms.dependencies]
+# --- engine-msms: MS/MS spectrum prediction (ICEBERG) ---
+# + ~3 GB; python 3.10 only
+[feature.engine-msms.dependencies]
 python = "==3.10"
 cython = "*"
 rdkit = "*"
@@ -424,17 +418,16 @@ einops = "*"
 seaborn = "*"
 h5py = "*"
 
-[feature.spectroscopy-msms.pypi-dependencies]
+[feature.engine-msms.pypi-dependencies]
 ray = { version = "==2.7.2", extras = ["tune"] }
 pygmtools = "*"
 msbuddy = "*"
 lightgbm = "*"
 CairoSVG = "*"
 
-# -----------------------------------------------------------------------------
-# PorousMaterials Feature: VOID for sorption calculations
-# -----------------------------------------------------------------------------
-[feature.porous-materials.dependencies]
+# --- engine-void: porous materials docking ---
+# + ~1 GB; VOID installed manually via `pixi run install-void`
+[feature.engine-void.dependencies]
 numpy = "*"
 scikit-learn = "*"
 networkx = "*"
@@ -442,176 +435,247 @@ rdkit = "*"
 zeopp-lsmo = "*"
 pydantic = "*"
 
-[feature.porous-materials.pypi-dependencies]
-# VOID: Voronoi Clustering for docking is installed manually via `pixi run install-void`
-# because the git dependency is not reachable during lock generation in this network environment.
+# --- engine-xrd: X-ray diffraction ---
+# + ~0.5 GB
+# dara-xrd cannot be installed here because it conflicts with
+# reaction-network's numpy pin (<2.5).  Install it manually inside
+# the xrd environment when needed:
+#   pixi run -e xrd pip install dara-xrd
+[feature.engine-xrd.dependencies]
 
-# -----------------------------------------------------------------------------
-# Analysis Feature: Trajectory analysis, plotting, etc.
-# -----------------------------------------------------------------------------
-[feature.analysis.dependencies]
-h5py = "*"
+[feature.engine-xrd.pypi-dependencies]
+# dara-xrd = "*"  -- manual install only; see comment above
+
+
+# =============================================================================
+# LAYER 3 — PROPERTY TOOLS  (optional add-ons, ~0.1–0.5 GB each)
+# =============================================================================
+
+# --- feat-phonon: phonopy for vibrational analysis ---
+[feature.feat-phonon.dependencies]
 phonopy = "*"
-beautifulsoup4 = "*"
-# reaction-network (>=6.1.1) requires numba; recent numba supports numpy<2.5.
-# fairchem-core also requires numpy>=2.0,<2.5. Pin here to keep analysis environments compatible.
+
+# --- feat-diffusion: pymatgen-analysis-diffusion ---
+[feature.feat-diffusion.pypi-dependencies]
+pymatgen-analysis-diffusion = "*"
+
+# --- feat-reaction: reaction-network for synthesis prediction ---
+[feature.feat-reaction.dependencies]
 numpy = "<2.5"
 
-[feature.analysis.pypi-dependencies]
+[feature.feat-reaction.pypi-dependencies]
 reaction-network = ">=6.1.1,<9"
-pymatgen-analysis-diffusion = "*"
+
+# --- feat-mp: Materials Project API + MPContribs ---
+[feature.feat-mp.pypi-dependencies]
 mp-api = "*"
 mpcontribs-client = "*"
+
+# --- feat-viz: pymatviz for visualization ---
+[feature.feat-viz.pypi-dependencies]
 pymatviz = "*"
 
-# -----------------------------------------------------------------------------
-# XRD Feature: X-ray diffraction analysis
-# -----------------------------------------------------------------------------
-[feature.xrd.dependencies]
-# Inherits from core
+# --- feat-misc: beautifulsoup4 + other small analysis utilities ---
+[feature.feat-misc.dependencies]
+beautifulsoup4 = "*"
 
-[feature.xrd.pypi-dependencies]
-# dara-xrd is imported by mat-xrd-* skills, but adding it here makes the xrd
-# environment unsatisfiable because dara-xrd requires reaction-network>=8.3.0,
-# which in turn requires numba>=0.58.1, and the conda solve pins numpy>=2.5.0.
-# Install it manually in the xrd environment when needed:
-#   pixi run -e xrd pip install dara-xrd
-# dara-xrd = "*"
 
 # =============================================================================
-# ENVIRONMENT DEFINITIONS
-# Environments combine features and define which MCP server they support
+# LAYER 4 — ENVIRONMENTS
+#
+# Disk estimates are APPROXIMATE and include all transitive dependencies.
+# "base" column counts from core upward; total = base + engine + feats.
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# Base Environment: Core tools and MCP server
-# -----------------------------------------------------------------------------
+# ═══════════════════════════════════════════════════════════════
+# CORE — lightweight, for slurm submission and data processing
+# ═══════════════════════════════════════════════════════════════
+
+# --- supercomputing: slurm MCP server on login node ---
+# Disk: ~3 GB.  No CUDA, no MLIP, no DFT software.
+# Use this for ALL *_via_slurm MCP tools.
+[environments.supercomputing]
+features = ["core", "base-chem", "base-dft", "feat-misc"]
+
+# --- base: general-purpose research (same as supercomputing + analysis tools) ---
+# Disk: ~3.5 GB
 [environments.base]
-features = ["core", "chemistry", "analysis"]
+features = ["core", "base-chem", "feat-phonon", "feat-misc"]
 
-# -----------------------------------------------------------------------------
-# MLIP Environments: Machine Learning Interatomic Potentials
-# Using solve-group "mlip" to share dependency resolution
-# -----------------------------------------------------------------------------
+# ═══════════════════════════════════════════════════════════════
+# MLIP — machine learning interatomic potentials
+# ═══════════════════════════════════════════════════════════════
 
+# --- mace: MACE MLIP with CUDA ---
+# Disk: ~12 GB.  GPU required for reasonable performance.
 [environments.mace]
-features = ["core", "torch-cuda", "mlip-mace", "analysis"]
+features = ["core", "base-chem", "base-ml", "engine-mace", "base-md",
+            "feat-phonon", "feat-diffusion", "feat-mp", "feat-viz"]
 solve-group = "mlip-cuda"
 
-# MACE-LAMMPS: no conda-forge lammps; uses ACEsuit fork compiled via task
-[environments.mace-lammps]
-features = ["core", "torch-cuda", "mlip-mace", "lammps-mace-build", "analysis"]
-solve-group = "mlip-cuda"
-
+# --- matgl: MatGL (CHGNet/M3GNet/TensorNet) with CPU PyTorch ---
+# Disk: ~10 GB
 [environments.matgl]
-features = ["core", "torch-base", "mlip-matgl", "analysis"]
+features = ["core", "base-chem", "engine-matgl", "base-md",
+            "feat-phonon", "feat-diffusion", "feat-mp", "feat-viz"]
 solve-group = "mlip-base"
 
-# MatGL-LAMMPS: conda-forge lammps with CUDA (includes ML-IAP, USER-M3GNET)
-[environments.matgl-lammps]
-features = ["core", "torch-base", "mlip-matgl", "lammps-cuda", "analysis"]
-solve-group = "mlip-base"
-
+# --- fairchem: FairChem (UMA/ESEN) with CUDA ---
+# Disk: ~15 GB
 [environments.fairchem]
-features = ["core", "torch-cuda", "mlip-fairchem", "analysis"]
-# Separate solve-group from mace because mace-torch pins e3nn==0.4.4 while fairchem-core requires e3nn>=0.5
+features = ["core", "base-chem", "base-ml", "engine-fairchem", "base-md",
+            "feat-phonon", "feat-diffusion", "feat-mp", "feat-viz"]
 solve-group = "fairchem-cuda"
 
-# FairChem-LAMMPS: conda-forge lammps (CPU) + fairchem-lammps pip package (lmp_fc)
-[environments.fairchem-lammps]
-features = ["core", "torch-cuda", "mlip-fairchem", "lammps-cpu", "fairchem-lammps-pkg", "analysis"]
-solve-group = "fairchem-cuda"
+# ═══════════════════════════════════════════════════════════════
+# DFT — first-principles calculations
+# ═══════════════════════════════════════════════════════════════
 
-# -----------------------------------------------------------------------------
-# DFT Environments: First-principles calculations
-# -----------------------------------------------------------------------------
-
-[environments.atomate2]
-features = ["core", "chemistry", "dft", "analysis"]
-
+# --- orca: molecular DFT via ORCA + SCINE ---
+# Disk: ~6 GB.  ORCA binary must be installed separately (not on conda-forge).
+# Platforms: linux-64, osx-64
 [environments.orca]
-features = ["core", "chemistry", "dft-orca", "analysis"]
+features = ["core", "base-chem", "base-dft", "engine-orca",
+            "feat-phonon", "feat-misc"]
 
-# -----------------------------------------------------------------------------
-# DFT-CP2K / DFT-QE Environments: Open-source periodic DFT alternatives to VASP
-# -----------------------------------------------------------------------------
+# --- vasp: periodic DFT via Atomate2 (VASP) ---
+# Disk: ~8 GB.  VASP license + binary required separately.
+# Python 3.10 only.
+[environments.vasp]
+features = ["core", "base-chem", "base-dft", "engine-vasp",
+            "feat-phonon", "feat-diffusion", "feat-mp", "feat-reaction"]
+
+# --- cp2k: periodic DFT via CP2K ---
+# Disk: ~6 GB.  Fully open-source. Python 3.11–3.12.
 [environments.cp2k]
-features = ["core", "chemistry", "dft-cp2k", "analysis"]
+features = ["core", "base-chem", "base-dft", "engine-cp2k",
+            "feat-phonon", "feat-diffusion", "feat-misc"]
 
+# --- qe: periodic DFT via Quantum ESPRESSO ---
+# Disk: ~6 GB.  Fully open-source. Python 3.11–3.12.
 [environments.qe]
-features = ["core", "chemistry", "dft-qe", "analysis"]
+features = ["core", "base-chem", "base-dft", "engine-qe",
+            "feat-phonon", "feat-diffusion", "feat-misc"]
 
-# -----------------------------------------------------------------------------
-# Generative Environments: Structure generation models
-# -----------------------------------------------------------------------------
+# ═══════════════════════════════════════════════════════════════
+# MD — molecular dynamics
+# ═══════════════════════════════════════════════════════════════
 
+# --- mace-lammps: MACE + LAMMPS (ACEsuit fork, compiled from source) ---
+# Disk: ~15 GB
+[environments.mace-lammps]
+features = ["core", "base-chem", "base-ml", "engine-mace",
+            "engine-lammps-mace-build", "base-md", "feat-phonon", "feat-diffusion"]
+solve-group = "mlip-cuda"
+
+# --- matgl-lammps: MatGL + LAMMPS-Kokkos-CUDA (conda-forge) ---
+# Disk: ~13 GB
+[environments.matgl-lammps]
+features = ["core", "base-chem", "engine-matgl", "engine-lammps-cuda",
+            "base-md", "feat-phonon", "feat-diffusion"]
+solve-group = "mlip-base"
+
+# --- fairchem-lammps: FairChem + LAMMPS + fairchem-lammps ---
+# Disk: ~18 GB
+[environments.fairchem-lammps]
+features = ["core", "base-chem", "base-ml", "engine-fairchem",
+            "engine-lammps-cpu", "engine-fairchem-lammps", "base-md",
+            "feat-phonon", "feat-diffusion"]
+solve-group = "fairchem-cuda"
+
+# ═══════════════════════════════════════════════════════════════
+# GENERATIVE — structure generation models
+# ═══════════════════════════════════════════════════════════════
+
+# --- diffcsp: DiffCSP++ crystal generation ---
+# Disk: ~10 GB
 [environments.diffcsp]
-features = ["core", "torch-base", "generative-base", "generative-diffcsp"]
+features = ["core", "engine-diffcsp"]
 
+# --- mattergen: MatterGen diffusion-based generation ---
+# Disk: ~15 GB. Strict CUDA 11.8 / Python 3.10.
 [environments.mattergen]
-# torch-base is omitted; mattergen requires the PyPI torch==2.2.1+cu118 wheel
-features = ["core", "generative-base", "generative-mattergen"]
+features = ["core", "engine-mattergen"]
 
+# --- adit: ADiT all-atom diffusion transformer ---
+# Disk: ~8 GB
 [environments.adit]
-features = ["core", "torch-base", "generative-base", "generative-adit"]
+features = ["core", "engine-adit"]
 
+# --- react-ot: React-OT transition state generation ---
+# Disk: ~4 GB
 [environments.react-ot]
-features = ["core", "generative-reactot"]
+features = ["core", "engine-reactot"]
 
+# --- scd: SelfConditionedDenoisingAtoms property prediction ---
+# Disk: ~10 GB
 [environments.scd]
-features = ["core", "torch-base", "generative-base", "generative-scd"]
+features = ["core", "engine-scd"]
 
-# -----------------------------------------------------------------------------
-# Thermodynamics Environments: Phase diagrams and CALPHAD
-# -----------------------------------------------------------------------------
+# ═══════════════════════════════════════════════════════════════
+# SPECIALIZED — thermodynamics, phase field, cluster expansion
+# ═══════════════════════════════════════════════════════════════
 
-[environments.calphad]
-features = ["core", "thermo-calphad"]
-
-[environments.phasefield]
-features = ["core", "phasefield"]
-
+# --- smol: cluster expansion + Monte Carlo ---
+# Disk: ~4 GB
 [environments.smol]
-features = ["core", "chemistry", "cluster-expansion"]
+features = ["core", "base-chem", "engine-smol"]
 
-# -----------------------------------------------------------------------------
-# Drug Discovery Environment
-# -----------------------------------------------------------------------------
+# --- calphad: CALPHAD phase diagrams ---
+# Disk: ~5 GB
+[environments.calphad]
+features = ["core", "engine-calphad"]
 
+# --- phasefield: Cahn-Hilliard / Allen-Cahn (FiPy) ---
+# Disk: ~4 GB
+[environments.phasefield]
+features = ["core", "engine-phasefield"]
+
+# ═══════════════════════════════════════════════════════════════
+# DRUG DISCOVERY
+# ═══════════════════════════════════════════════════════════════
+
+# --- drugdisc: drug discovery (docking, ADMET, fingerprints) ---
+# Disk: ~6 GB
 [environments.drugdisc]
-features = ["core", "chemistry", "drugdiscovery"]
+features = ["core", "base-chem", "engine-drugdisc"]
 
-# -----------------------------------------------------------------------------
-# Drug Discovery MD Environment (with OpenMM)
-# Extends drugdisc with OpenMM, OpenFF, ParmEd, AmberTools, ProLIF
-# -----------------------------------------------------------------------------
-
+# --- drugmd: drugdisc + OpenMM MD ---
+# Disk: ~10 GB
 [environments.drugmd]
-features = ["core", "chemistry", "drugdiscovery", "openmm-md"]
+features = ["core", "base-chem", "engine-drugdisc", "engine-openmm"]
 
-# -----------------------------------------------------------------------------
-# Spectroscopy Environments
-# -----------------------------------------------------------------------------
+# ═══════════════════════════════════════════════════════════════
+# SPECTROSCOPY
+# ═══════════════════════════════════════════════════════════════
 
+# --- nmr: NMR prediction/analysis ---
+# Disk: ~5 GB
 [environments.nmr]
-features = ["core", "chemistry", "spectroscopy-nmr"]
+features = ["core", "base-chem", "engine-nmr"]
 
+# --- msms: MS/MS prediction (ICEBERG) ---
+# Disk: ~8 GB. Python 3.10 only.
 [environments.msms]
-features = ["core", "chemistry", "torch-base", "spectroscopy-msms"]
+features = ["core", "base-chem", "engine-msms"]
 
+# ═══════════════════════════════════════════════════════════════
+# MATERIALS ANALYSIS
+# ═══════════════════════════════════════════════════════════════
+
+# --- xrd: X-ray diffraction (DARA) ---
+# Disk: ~4 GB
 [environments.xrd]
-features = ["core", "chemistry", "xrd"]
+features = ["core", "base-chem", "engine-xrd"]
 
-# -----------------------------------------------------------------------------
-# Porous Materials Environment
-# -----------------------------------------------------------------------------
-
+# --- void: porous materials docking (VOID) ---
+# Disk: ~5 GB
 [environments.void]
-features = ["core", "chemistry", "porous-materials"]
+features = ["core", "base-chem", "engine-void"]
+
 
 # =============================================================================
 # TASKS
-# Tasks replace shell scripts with declarative commands
 # =============================================================================
 
 # Common tasks
@@ -644,7 +708,7 @@ default-environment = "fairchem"
 [tasks.test-atomate2]
 description = "Run Atomate2 server tests"
 cmd = "pytest tests/atomate2/"
-default-environment = "atomate2"
+default-environment = "vasp"
 
 # MACE LAMMPS build task
 # Compiles ACEsuit/lammps fork with PKG_ML-MACE into the mace-lammps environment.
@@ -707,18 +771,11 @@ echo "Done: $CONDA_PREFIX/bin/lmp"
 """
 default-environment = "mace-lammps"
 
-# -----------------------------------------------------------------------------
-# Git Clone Dependencies Installation Tasks
-# These replace install.sh scripts for dependencies that need special handling
-# -----------------------------------------------------------------------------
-
 # React-OT: Transition state structure generation
-# Requires 3 sed patches to pyproject.toml and _utils.py
 [tasks.install-react-ot]
-description = "Install react-ot with required patches (pyproject.toml + ASE NEB import)"
+description = "Install react-ot with required patches"
 cmd = """
 set -euo pipefail
-
 REACT_OT_REPO="${REACT_OT_REPO:-https://github.com/deepprinciple/react-ot.git}"
 REACT_OT_REF="${REACT_OT_REF:-main}"
 BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/react-ot"
@@ -738,20 +795,17 @@ fi
 
 echo "Applying patches..."
 bash "$PATCH_SCRIPT" "$BUILD_DIR"
-
 echo "Installing..."
 pixi run -e react-ot pip install --no-deps "$BUILD_DIR"
-
 echo "Done: react-ot installed"
 """
 default-environment = "react-ot"
 
-# VOID fallback task (if pixi git install fails due to network)
+# VOID fallback task
 [tasks.install-void]
 description = "Install VOID manually (fallback if pixi git dep fails)"
 cmd = """
 set -euo pipefail
-
 VOID_REPO="${VOID_REPO:-https://github.com/learningmatter-mit/VOID.git}"
 VOID_REF="${VOID_REF:-main}"
 BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/void"
@@ -765,18 +819,15 @@ fi
 
 echo "Installing..."
 pixi run -e void pip install --no-deps "$BUILD_DIR"
-
 echo "Done: VOID installed"
 """
 default-environment = "void"
 
-# SelfConditionedDenoisingAtoms (SCD): Property prediction with denoising
-# Requires torchmd kernel compilation
+# SCD: SelfConditionedDenoisingAtoms with TorchMD kernel
 [tasks.install-scd]
 description = "Install SelfConditionedDenoisingAtoms with TorchMD kernel"
 cmd = """
 set -euo pipefail
-
 SCD_REPO="${SCD_REPO:-https://github.com/robinweber/SelfConditionedDenoisingAtoms.git}"
 SCD_REF="${SCD_REF:-main}"
 BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/scd"
@@ -790,30 +841,20 @@ fi
 
 echo "Installing dependencies..."
 pixi run -e scd pip install -r "$BUILD_DIR/requirements.txt"
-
 echo "Installing SCD..."
 pixi run -e scd pip install --no-deps "$BUILD_DIR"
-
 echo "Building TorchMD C++ extension..."
 cd "$BUILD_DIR/torchmd"
 pixi run -e scd python setup.py build_ext --inplace
-
 echo "Done: SCD installed with TorchMD kernel"
 """
 default-environment = "scd"
 
 # ms-pred (ICEBERG): MS/MS spectrum prediction
-# WARNING: This script applies extensive patches to upstream code including:
-# - Rewriting setup.py to remove Cython extension
-# - Patching 9 Python source files
-# - Modifying DGL site-packages files
-# - Creating fake torchdata package
-# Consider forking ms-pred and applying patches there instead
 [tasks.install-msms-iceberg]
-description = "Install ms-pred (ICEBERG) with patched setup.py (pure Python, no Cython)"
+description = "Install ms-pred (ICEBERG) with patched setup.py"
 cmd = """
 set -euo pipefail
-
 MS_PRED_REPO="${MS_PRED_REPO:-https://github.com/coleygroup/ms-pred.git}"
 MS_PRED_REF="${MS_PRED_REF:-main}"
 BUILD_DIR="${PIXI_PROJECT_ROOT}/.pixi/build/ms-pred"
@@ -831,67 +872,47 @@ else
   git clone --branch "$MS_PRED_REF" --depth 1 "$MS_PRED_REPO" "$BUILD_DIR"
 fi
 
-echo "Applying setup.py patch (removing Cython extension)..."
+echo "Applying setup.py patch..."
 cp "$PATCH_FILE" "$BUILD_DIR/setup.py"
-
 echo "Installing ms-pred..."
 pixi run -e msms pip install --no-deps "$BUILD_DIR"
-
-echo "Done: ms-pred installed (with setup.py patch)"
+echo "Done: ms-pred installed"
 """
 default-environment = "msms"
 
 # PyG packages for ARM/aarch64 systems (MatterGen)
-# These packages require CUDA compilation on ARM systems like NVIDIA DGX Spark
 [tasks.install-pyg-aarch64]
-description = "Install PyG packages (torch-scatter, torch-cluster, torch-sparse) for ARM/aarch64"
+description = "Install PyG packages for ARM/aarch64"
 cmd = """
 set -euo pipefail
-
 echo "Installing PyG packages for ARM/aarch64..."
 export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
 export PATH="$CUDA_HOME/bin:$PATH"
 export LD_LIBRARY_PATH="$CUDA_HOME/lib64:$LD_LIBRARY_PATH"
-
 echo "CUDA_HOME=$CUDA_HOME"
 nvcc --version || echo "nvcc not found, CUDA may not be installed"
-
 echo "Installing torch-scatter..."
 pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_scatter.git --no-cache-dir
-
 echo "Installing torch-cluster..."
 pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_cluster.git --no-cache-dir
-
 echo "Installing torch-sparse..."
-pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_sparse.git --no-cache-dir || echo "torch-sparse failed - may need alternative approach"
-
+pixi run -e mattergen pip install git+https://github.com/rusty1s/pytorch_sparse.git --no-cache-dir || echo "torch-sparse failed"
 echo "Verifying..."
 pixi run -e mattergen python -c "import torch_scatter; print('torch-scatter:', torch_scatter.__version__)"
-
 echo "Done: PyG packages installed for ARM"
 """
 default-environment = "mattergen"
 
+
 # =============================================================================
 # ACTIVATION SCRIPTS
-# Environment-specific activation (replaces source conda.sh)
 # =============================================================================
 
-[feature.mlip-mace.activation.env]
-# Set environment variables for MACE
+[feature.engine-mace.activation.env]
 MACE_BACKEND = "torch"
 
-[feature.torch-cuda.activation.env]
-# Allow these environments to run on machines without a GPU by overriding the
-# CUDA virtual package version used by Pixi/Rattler.
+[feature.base-ml.activation.env]
+# Allow environments to run on CPU-only hosts by overriding CUDA virtual package
 CONDA_OVERRIDE_CUDA = "12"
 CUDA_LAUNCH_BLOCKING = "1"
 TORCH_USE_CUDA_DSA = "1"
-
-# =============================================================================
-# PYTHON PATH CONFIGURATION
-# Instead of hardcoding PYTHONPATH, use workspace-relative paths
-# =============================================================================
-
-# The workspace PYTHONPATH is automatically set by Pixi when running tasks
-# No need for: PYTHONPATH=/home/user/projects/AtomisticSkills

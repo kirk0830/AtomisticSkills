@@ -108,5 +108,31 @@ contains step-by-step instructions, helper scripts, and examples.
 4. **Plan before acting** — for computational research tasks, create a research plan artifact and get user approval.
 5. **Use the right tool** — pick the correct MCP server and environment for each operation.
 
+## 🔧 Running Scripts — The ``# Env:`` Convention
+
+AtomisticSkills SKILL.md files contain code blocks annotated with
+``# Env: <environment>``.  These blocks have already been **rewritten
+by the build system** into ready-to-use ``mcp_pixi_run()`` calls:
+
+```bash
+# Env: base
+# Call via pixi MCP server:
+mcp_pixi_run(environment='base', script='.agents/skills/mat-stability/scripts/query_mp_hull.py', args=['--formula', 'Li-Fe-P-O', '--target', 'LiFePO4', '--output', 'hull_structures/'])
+```
+
+Algorithm:
+1. Call ``mcp_pixi_run`` **exactly as shown** — all fields are pre-filled.
+2. If the SKILL.md mentions output files that you need to inspect, add
+   ``capture_patterns`` (e.g. ``capture_patterns=["hull_structures/**"]``).
+   Decode base64 content from the ``files`` dict in the response.
+3. The ``pixi`` MCP server runs inside the project root with full access
+   to all Pixi environments (``base``, ``mace``, ``orca``, …).
+
+> ⚠️ **Security:** ``pixi_run`` only accepts ``.py`` scripts under
+> ``.agents/skills/`` or ``research/``.  ``shell=False`` (no injection).
+> ``args`` are passed as a list.  All paths are validated.
+
+---
+
 If the AtomisticSkills skills are already available in your skills directory,
 use them directly instead of searching for external copies.

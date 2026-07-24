@@ -860,5 +860,215 @@ def register_model(
         return f"Error registering model: {str(e)}\n{traceback.format_exc()}"
 
 
+# ---------------------------------------------------------------------------
+# HPC / Slurm job management tools
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+def submit_hpc_job(
+    name: str,
+    command: str,
+    partition: str = "md",
+    ntasks_per_node: int = 32,
+    cpus_per_task: int = 1,
+    gres: Optional[str] = "gpu:1",
+    time_limit: str = "24:00:00",
+    work_dir: Optional[str] = None,
+    modules: Optional[str] = None,
+) -> str:
+    """Submit a computation job to the HPC cluster via Slurm.
+
+    Use this for ANY heavy computation (DFT, MD, MLIP relaxation, phonon, etc.).
+    Never run heavy jobs locally on the login node — always submit via this tool.
+
+    Args:
+        name: Short job name (e.g. "vasp_LiFePO4").
+        command: Shell command to execute on the compute node.
+        partition: Slurm partition/queue name (default: "md").
+        ntasks_per_node: Number of CPU cores per node (default: 32).
+        cpus_per_task: CPUs per task (default: 1).
+        gres: Generic resources, e.g. "gpu:1" (default). Pass empty string for CPU-only jobs.
+        time_limit: Wall time limit in HH:MM:SS format.
+        work_dir: Working directory for the job (default: current directory).
+        modules: Comma-separated module names to load before execution.
+
+    Returns:
+        Job ID string on success.
+    """
+    try:
+        from src.utils.hpc import JobManager, JobSpec, HPCConfigLoader
+
+        loader = HPCConfigLoader()
+        backend_config = loader.get_backend_config()
+        manager = JobManager.from_config(backend_config)
+
+        if not manager.check_available():
+            return (
+                "Error: Slurm commands (sbatch/squeue) not found. "
+                "This tool requires an HPC login node with Slurm installed."
+            )
+
+        module_list = [m.strip() for m in modules.split(",") if m.strip()] if modules else []
+
+        resolved = loader.resolve_job_spec(
+            {
+                "name": name,
+                "command": command,
+                "partition": partition,
+                "ntasks_per_node": ntasks_per_node,
+                "cpus_per_task": cpus_per_task,
+                "time_limit": time_limit,
+                "gres": gres if gres else None,
+                "work_dir": work_dir,
+                "modules": module_list,
+            },
+        )
+        job_spec = JobSpec.from_dict(resolved)
+        job_id = manager.submit(job_spec)
+        return (
+            f"Job submitted successfully.\n"
+            f"  Job ID: {job_id}\n"
+            f"  Name: {name}\n"
+            f"  Partition: {partition}\n"
+            f"  CPUs: {ntasks_per_node}\n"
+            f"  GPU: {gres if gres else 'none'}\n"
+            f"  Time limit: {time_limit}\n"
+            f"Use check_hpc_job_status to monitor progress."
+        )
+
+    except Exception as e:
+        import traceback
+        return f"Error submitting HPC job: {str(e)}\n{traceback.format_exc()}"
+
+
+@mcp.tool()
+def check_hpc_job_status(job_id: str) -> str:
+    """Check the status of a previously submitted Slurm job.
+
+    Args:
+        job_id: The job ID returned by submit_hpc_job.
+
+    Returns:
+        Job status string: PENDING, RUNNING, COMPLETED, FAILED, etc.
+    """
+    try:
+        from src.utils.hpc import JobManager, HPCConfigLoader
+
+        loader = HPCConfigLoader()
+        manager = JobManager.from_config(loader.get_backend_config())
+        status = manager.status(job_id)
+
+        lines = [
+            f"Job {job_id}: {status.state.value}",
+        ]
+        if status.name:
+            lines.append(f"  Name: {status.name}")
+        if status.queue:
+            lines.append(f"  Queue: {status.queue}")
+        if status.nodes:
+            lines.append(f"  Nodes: {status.nodes}")
+        if status.elapsed_time:
+            lines.append(f"  Elapsed: {status.elapsed_time}")
+        if status.exit_code is not None:
+            lines.append(f"  Exit code: {status.exit_code}")
+        if status.error_message:
+            lines.append(f"  Error: {status.error_message}")
+        return "\n".join(lines)
+
+    except Exception as e:
+        import traceback
+        return f"Error checking job status: {str(e)}\n{traceback.format_exc()}"
+
+
+@mcp.tool()
+def wait_for_hpc_job(
+    job_id: str,
+    poll_interval: int = 30,
+    timeout: Optional[int] = None,
+) -> str:
+    """Wait for a Slurm job to complete, polling at regular intervals.
+
+    This blocks until the job finishes or the timeout is reached.
+    Use for jobs that should complete within a known timeframe.
+
+    Args:
+        job_id: The job ID returned by submit_hpc_job.
+        poll_interval: Seconds between status checks (default: 30).
+        timeout: Maximum wait time in seconds (default: no timeout).
+
+    Returns:
+        Final job status and instructions for reading output.
+    """
+    try:
+        from src.utils.hpc import JobManager, HPCConfigLoader, JobState
+
+        loader = HPCConfigLoader()
+        manager = JobManager.from_config(loader.get_backend_config())
+        status = manager.wait_for_completion(
+            job_id, poll_interval=poll_interval, timeout=timeout
+        )
+
+        if status.state == JobState.COMPLETED:
+            return (
+                f"Job {job_id} completed successfully.\n"
+                f"  Elapsed: {status.elapsed_time}\n"
+                f"Use read_hpc_job_output to read the output files.\n"
+                f"If you know the output path, call read_hpc_job_output "
+                f"with job_id={job_id!r} and file_path='<path>'."
+            )
+        elif status.state == JobState.FAILED:
+            return (
+                f"Job {job_id} FAILED (exit code: {status.exit_code}).\n"
+                f"  Error: {status.error_message or 'Unknown error'}\n"
+                f"Check the job's .err file with read_hpc_job_output."
+            )
+        elif status.state == JobState.TIMEOUT:
+            return f"Job {job_id} timed out. Consider increasing the time limit."
+        elif status.state == JobState.CANCELLED:
+            return f"Job {job_id} was cancelled."
+        else:
+            return f"Job {job_id}: {status.state.value}"
+
+    except TimeoutError:
+        return f"Timeout waiting for job {job_id}. The job may still be running."
+    except Exception as e:
+        import traceback
+        return f"Error waiting for job: {str(e)}\n{traceback.format_exc()}"
+
+
+@mcp.tool()
+def read_hpc_job_output(job_id: str, file_path: str) -> str:
+    """Read the content of an output file from an HPC job.
+
+    Use after a job completes (COMPLETED or FAILED) to read stdout, stderr,
+    or any result files generated by the job.
+
+    Args:
+        job_id: The job ID returned by submit_hpc_job.
+        file_path: Path to the file to read (absolute or relative).
+
+    Returns:
+        File content as string (truncated to 10000 chars if very long).
+    """
+    try:
+        from pathlib import Path
+
+        path = Path(file_path)
+        if not path.exists():
+            return f"Error: File not found: {file_path}"
+
+        content = path.read_text(encoding="utf-8", errors="replace")
+        if len(content) > 10000:
+            content = content[:10000] + (
+                f"\n\n... [truncated, {len(content) - 10000} more chars]"
+            )
+        return content
+
+    except Exception as e:
+        import traceback
+        return f"Error reading file: {str(e)}\n{traceback.format_exc()}"
+
+
 if __name__ == "__main__":
     run_fastmcp_server(mcp, mcp_pipe_binary)

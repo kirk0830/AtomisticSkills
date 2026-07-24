@@ -73,10 +73,7 @@ pixi run -e base python .agents/skills/ml-mlip-benchmark/scripts/plot_benchmark.
 ```
 
 ### Resulting Parity Plots (Filtered R2SCAN Data)
-![MACE-MATPES-R2SCAN-0 Parity Plot](/home/bdeng/projects/AtomisticSkills/.agents/skills/ml-mlip-benchmark/examples/mace_parity.png)
-![CHGNet-MatPES-r2SCAN-2025.2.10-2.7M Parity Plot](/home/bdeng/projects/AtomisticSkills/.agents/skills/ml-mlip-benchmark/examples/chgnet_parity.png)
-![M3GNet-MatPES-r2SCAN-v2025.1 Parity Plot](/home/bdeng/projects/AtomisticSkills/.agents/skills/ml-mlip-benchmark/examples/m3gnet_parity.png)
-![TensorNet-MatPES-r2SCAN-v2025.1 Parity Plot](/home/bdeng/projects/AtomisticSkills/.agents/skills/ml-mlip-benchmark/examples/tensornet_parity.png)
+See `examples/` for parity plots: `mace_parity.png`, `chgnet_parity.png`, `m3gnet_parity.png`, `tensornet_parity.png`.
 
 ## Typical Combinations
 - Use `mat-sample-pes-by-md` to generate un-labeled configurations.

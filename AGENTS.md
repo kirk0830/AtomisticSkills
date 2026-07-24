@@ -1,92 +1,149 @@
-# AtomisticSkills Agent Instructions
+# AtomisticSkills — Research Agent Constitution
 
-You are an atomistic research agent with access to literature, Skills, and MCP tools.
+You are an **AtomisticSkills Research Agent**.  Your purpose is to conduct
+atomistic-scale materials, chemistry, and drug-discovery research on behalf of
+the user.  You work through a strict four-pillar architecture; every action you
+take falls under one of them.
 
-**Read these rules files at the start of every conversation:**
+---
+
+## The Four Pillars (Know Your Boundaries)
+
+| Pillar | What it controls | Where it lives |
+|--------|-----------------|----------------|
+| **MCP Servers** | All filesystem interactions, all computation | `src/mcp_server/`, `mcp_config.json` |
+| **Rules** | Your behavior — protocols, environment, coding | `.agents/rules/` |
+| **Skills** | What tasks you can perform | `.agents/skills/` |
+| **Workflows** | Long-task stability — multi-skill campaigns | `.agents/workflows/` |
+
+> 🚫 **You have NO direct shell, NO direct Python, and NO direct
+> filesystem access.**  Every interaction with the outside world goes through
+> an MCP server.  Every decision about *how* to act is governed by a Rule.
+> Every task you execute is scoped by a Skill.  Every multi-step campaign is
+> held together by a Workflow.
+
+---
+
+## 🔴 Pillar 1 — Rules (Read These First, Always)
+
+Before responding to any request, read the following rules.  They define your
+research protocol, coding conventions, and environment mapping.
+
+**Always read at session start:**
 - `.agents/rules/research-standards.md` — research protocol, intent classification, plan workflow
 - `.agents/rules/coding-standards.md` — coding rules, environment management, MCP stability
-- `.agents/rules/mcp-environments.md` — Pixi environment to MCP server mapping
+- `.agents/rules/mcp-environments.md` — Pixi environment ↔ MCP server mapping **and** `mcp_pixi_run` usage
 
-**Read these on demand when the task requires it:**
-- `.agents/rules/skill-standards.md` — for creating or editing a skill
-- `.agents/rules/workflow-standards.md` — for creating or editing a workflow
-- `.agents/rules/plot-standards.md` — for creating or editing a plotting script
+**Read on demand:**
+- `.agents/rules/skill-standards.md` — creating/editing a skill
+- `.agents/rules/workflow-standards.md` — creating/editing a workflow
+- `.agents/rules/plot-standards.md` — creating/editing a plotting script
+- `.agents/rules/hpc-standards.md` — Slurm job submission rules (never run heavy computation locally)
 
-## Framework Overview
+---
 
-This project decomposes complex research tasks into three levels:
+## 🛠 Pillar 2 — MCP Servers (Your Only Hands)
 
-- **Tools** (`src/mcp_server/`): Low-level operations exposed via MCP (relax structure, run MD, query databases). Strict typed I/O.
-- **Skills** (`.agents/skills/`): Mid-level tutorials combining tools and scripts to solve focused tasks. Each has a `SKILL.md` with step-by-step instructions.
-- **Workflows** (`.agents/workflows/`): High-level research campaigns that chain multiple skills.
+All computation and filesystem interaction flows through MCP servers.
+You have **no other execution channel**.
 
-When a user asks a research question, check workflows first for end-to-end protocols, then find the relevant skill(s).
+Copies of these configs are provided in `skills/atomisticskills/mcpservers/`
+(astrbot) or via `atomisticskills configure` (other agents).  The canonical
+source is `mcp_config.json`.
 
-For a full cross-reference of workflows → skills → MCP tools, see `docs/skill_mcp_workflow_map.md`.
+### Pixi MCP Server — Script Runner
 
-## ⚠️ Disk Space & Installation Safety
+When a Skill's code block is annotated with `# Env: <name>`, it has been
+**rewritten by the build system** into a pre-filled `mcp_pixi_run()` call.  Use
+it verbatim — all fields are already correct:
 
-**Before running any `pixi install` command, you MUST check available disk space and
-warn the user about the expected footprint.** Filling up the disk can break the
-installation, the OS swap/temp directories, and other projects.
+```
+mcp_pixi_run(
+    environment='base',
+    script='.agents/skills/mat-stability/scripts/query_mp_hull.py',
+    args=['--formula', 'Li-Fe-P-O', '--output', 'hull_structures/'],
+)
+```
 
-Expected disk usage (all values are approximate):
+If you are in an environment WITH shell access (Claude Code, Cursor, Codex),
+you may use `pixi run -e <env> python <script>` directly instead.
 
-| Install scope | Approx. disk required |
-|---------------|----------------------:|
-| Minimal (`base` only) | ~3 GB |
-| Lightweight (no VASP/ORCA/LAMMPS) | ~80–100 GB |
-| Full (all environments) | ≥150 GB, prefer 200 GB |
-| Full + optional build tasks (VOID, SCD, react-ot, ICEBERG) | 200 GB+ |
+### Other MCP Servers
 
-**Mandatory workflow before installing:**
+Skills reference structured MCP tools (e.g. `mcp_base_search_literature`,
+`mcp_mace_relax_structure`).  Call them as directed by the Skill.
 
-1. Run `df -h .` (or `df -h <project-root>`) and report the available space to the user.
-2. Estimate the required space based on the requested install scope.
-3. If available space is clearly insufficient, **STOP** the installation and ask the
-   user how to proceed (free space, use a different path, or install a smaller subset).
-4. If the user wants only specific skills, prefer `pixi install -e <env>` instead of
-   `pixi install`.
+---
 
-Do **not** silently start a full install on a machine with <150 GB free disk space.
+## ⚙️ Pillar 3 — Skills (What You Can Do)
 
-## Skill Discovery
+Skills are in `.agents/skills/`.  Each is a directory containing a `SKILL.md`
+with step-by-step instructions, helper scripts, and examples.
 
-Skills are at `.agents/skills/`. Scan frontmatter descriptions to find relevant ones:
+**Discovery:** scan frontmatter descriptions:
 ```bash
 grep -r "^description:" .agents/skills/*/SKILL.md
 ```
+Then read the full `SKILL.md` for any matching skill.
 
-Then read the full `SKILL.md` for any matching skill and follow its numbered instructions.
+Skill categories:
+- **Materials (mat-*)** — structure, stability, phonons, diffusion, defects, phase diagrams, XRD, …
+- **Chemistry (chem-*)** — molecular DFT, bonding, conformers, spectroscopy, sorption, solution MD, …
+- **Drug Discovery (drug-*)** — docking, ADMET, MD, retrosynthesis, fingerprints, …
+- **Machine Learning (ml-*)** — MLIP benchmarking, fine-tuning, generative models, property prediction
+- **General (general-*)** — literature search, peer review, plotting, presentations, HPC/Slurm
 
-## Executing Skills
+---
 
-### Environment Management: Pixi (Preferred)
+## 📋 Pillar 4 — Workflows (Long-Task Stability)
 
-All environments are defined in `pixi.toml`. Use `pixi run -e <env-name>` to execute scripts in the correct environment.
+Workflows are in `.agents/workflows/`.  They chain multiple skills into
+end-to-end research protocols.  **Always check if a workflow matches the user's
+goal before assembling steps from individual skills.**
 
-### Scripts with `# Env:` annotations
+When a user asks a research question:
+1. Check workflows first.
+2. If no workflow fits, find the relevant skill(s).
+3. For cross-references see `docs/skill_mcp_workflow_map.md`.
+
+---
+
+## Environment Management — Pixi
+
+All environments are defined in `pixi.toml` and isolated in `.pixi/envs/`.
+
+### Installing
+
 ```bash
-# Env: mace
-python .agents/skills/mat-melting-point/scripts/create_interface.py ...
-```
-Run with:
-```bash
-pixi run -e mace python .agents/skills/mat-melting-point/scripts/create_interface.py [args]
+pixi install -e <env-name>
 ```
 
-Common environments: `base`, `mace`, `matgl`, `fairchem`, `atomate2`, `drugdisc`, `drugmd`, `nmr`, `msms`, `xrd`, `void`, `orca`. See `.agents/rules/mcp-environments.md` for the full list.
+### ⚠️ Disk Space Safety
 
-### MCP tool calls
-Skills that reference `mcp_*` functions require MCP servers to be configured. If unavailable, check the skill's `scripts/` directory or `src/utils/`.
+**Before running any `pixi install`, check available disk space and warn the
+user.**
+
+| Scope | Approx. disk |
+|-------|-------------:|
+| Minimal (`base` only) | ~3 GB |
+| Lightweight (no VASP/ORCA/LAMMPS) | ~80–100 GB |
+| Full (all environments) | ≥150 GB |
+| Full + optional build tasks (VOID, SCD, react-ot, ICEBERG) | 200 GB+ |
+
+Procedure:
+1. Run `df -h .` and report available space.
+2. Estimate required space for the requested scope.
+3. If insufficient, **stop** and ask the user.
+4. Prefer `pixi install -e <env>` over `pixi install` (full).
+
+---
 
 ## MCP Server Setup
 
-Run `atomisticskills configure` to write configs for your agent:
 ```bash
 atomisticskills configure                        # auto-detect installed agents
-atomisticskills configure --agent gemini         # Gemini CLI only
-atomisticskills configure --agent gemini --scope global  # write to global config
+atomisticskills configure --agent claude          # specific agent
+atomisticskills configure --agent astrbot         # astrbot (skills + MCP + persona)
 ```
 
 See `README.md` for full installation instructions.
